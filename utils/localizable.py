@@ -32,3 +32,7 @@ class Localizable:
         key = self.get_localized_key(field)
         localized_value = t(key, default=None)
         return localized_value is not None
+
+    def translate(self, key: str, default: str | None = None, **kwargs: Any) -> str:
+        """统一的翻译调用入口，直接透传到 localization.t。"""
+        return t(key, default=default, **kwargs)

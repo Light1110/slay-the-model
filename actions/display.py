@@ -11,27 +11,19 @@ class DisplayTextAction(Action):
     """Display text to user
 
     Required:
-        text (str): Text to display
-        OR
-        text_key (str): Localization key
+        text_key (str): key for localized text
 
     Optional:
         None
     """
     REQUIRED_PARAMS = {}
     OPTIONAL_PARAMS = {
-        "text": (str, ""),
-        "text_key": (str, None),
+        "text_key": (str, ""),
     }
 
     def execute(self):
-        from localization import t
-        text_key = self.kwargs.get('text_key')
-        text = self.kwargs.get('text', '')
-        if text_key:
-            text = t(text_key, default=text, **self.kwargs)
-        elif isinstance(text, str) and text.startswith("@"):
-            text = t(text[1:], default=text[1:], **self.kwargs)
+        text_key = self.kwargs.get('text_key', '')
+        text = self.translate(text_key, default=text_key)
         print(text)
 
 @register("action")
@@ -73,7 +65,6 @@ class SelectAction(Action):
 
     def execute(self):
         """执行选择流程，返回需要执行的动作列表。"""
-        from localization import t
 
         # 1) 基础选项（不含“返回菜单”）
         base_choices = self._normalize_options()
@@ -97,17 +88,11 @@ class SelectAction(Action):
         )
 
         # 3) 展示标题与选项
-        title = self.title
-        if self.title_key:
-            title = t(self.title_key, default=title)
-        elif isinstance(title, str) and title.startswith("@"):
-            title = t(title[1:], default=title[1:])
+        title = self.translate(self.title, default=self.title)
         if bool(game_state.config.get("show_menu", True)):
             print(f"\n=== {title} ===")
             for i, (description, _) in enumerate(effective_choices):
                 label = description
-                if isinstance(label, str) and label.startswith("@"):
-                    label = t(label[1:], default=label[1:])
                 print(f"{i+1}. {label}")
 
         # 4) AI 调试模式可自动选择第一项
@@ -118,7 +103,7 @@ class SelectAction(Action):
         # 5) 交互式选择
         while True:
             try:
-                prompt = t(
+                prompt = self.translate(
                     "ui.select_prompt",
                     default=f"Choose (1-{len(effective_choices)}): ",
                     count=len(effective_choices),
@@ -127,6 +112,6 @@ class SelectAction(Action):
                 if 0 <= choice < len(effective_choices):
                     _, action_list = effective_choices[choice]
                     return action_list
-                print(t("ui.invalid_choice", default="Invalid choice!"))
+                print(self.translate("ui.invalid_choice", default="Invalid choice!"))
             except (ValueError, EOFError):
-                print(t("ui.invalid_number", default="Please enter a valid number"))
+                print(self.translate("ui.invalid_number", default="Please enter a valid number"))

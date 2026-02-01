@@ -50,9 +50,7 @@ def set_language(lang: str):
         current_language = lang
 
 def t(key: str, default: str | None = None, **kwargs) -> str:
-    """Translate a key. If key starts with '@', use the rest as key."""
-    if key.startswith('@'):
-        key = key[1:]
+    """Translate a key."""
     trans = translations.get(current_language, {}).get(key)
     if trans is None:
         trans = default or key

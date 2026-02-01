@@ -268,8 +268,7 @@ class Card(Localizable):
         # Regenerate description with new values
         self.update_description()
 
-        from localization import t
-        print(t(
+        print(self.translate(
             "ui.card_upgraded",
             default=f"Upgraded {self.display_name} (level {self.upgrade_level})",
             card=self.display_name,

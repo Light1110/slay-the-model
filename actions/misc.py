@@ -42,8 +42,7 @@ class GenerateMapAction(Action):
     def execute(self):
         from engine.game_state import game_state
         game_state.generate_initial_map()
-        from localization import t
-        print(t("ui.map_generated", default="Map generated for new act!"))
+        print(self.translate("ui.map_generated", default="Map generated for new act!"))
 
 @register("action")
 class StartEventAction(Action):
@@ -106,8 +105,7 @@ class AddRelicAction(Action):
             relic = create_relic(relic_name)
             if relic:
                 game_state.player.relics.append(relic)
-                from localization import t
-                print(t("ui.received_relic", default=f"Received relic: {relic.name}!", name=relic.name))
+                print(self.translate("ui.received_relic", default=f"Received relic: {relic.name}!", name=relic.name))
                 return relic
             
 @register("action")
@@ -133,8 +131,7 @@ class AddRandomRelicAction(Action):
             relic = create_random_relic(rarity)
             if relic:
                 game_state.player.relics.append(relic)
-                from localization import t
-                print(t("ui.received_relic", default=f"Received relic: {relic.name}!", name=relic.name))
+                print(self.translate("ui.received_relic", default=f"Received relic: {relic.name}!", name=relic.name))
                 return relic
             
 @register("action")
@@ -221,14 +218,13 @@ class AddRandomPotionAction(Action):
             if potion:
                 if len(game_state.player.potions) >= game_state.player.potion_limit:
                     from actions.display import SelectAction
-                    from localization import t
                     options = [
-                        ("@ui.skip_potion", []),
+                        ("ui.skip_potion", []),
                     ]
                     for index, existing in enumerate(game_state.player.potions):
                         options.append(
                             (
-                                t(
+                                self.translate(
                                     "ui.replace_potion_option",
                                     default=f"Replace {existing.name}",
                                     name=existing.name,
@@ -238,14 +234,13 @@ class AddRandomPotionAction(Action):
                         )
                     return [
                         SelectAction(
-                            title="@ui.potion_full_title",
+                            title="ui.potion_full_title",
                             options=options,
                         )
                     ]
                 added = game_state.player.potions.append(potion)
                 if added:
-                    from localization import t
-                    print(t("ui.received_potion", default=f"Received potion: {potion.name}!", name=potion.name))
+                    print(self.translate("ui.received_potion", default=f"Received potion: {potion.name}!", name=potion.name))
                     return potion
                 return None
 
@@ -278,7 +273,6 @@ class ReplacePotionAction(Action):
         potions = game_state.player.potions
         if 0 <= index < len(potions):
             potions[index] = new_potion
-            from localization import t
-            print(t("ui.received_potion", default=f"Received potion: {new_potion.name}!", name=new_potion.name))
+            print(self.translate("ui.received_potion", default=f"Received potion: {new_potion.name}!", name=new_potion.name))
             return new_potion
         return None

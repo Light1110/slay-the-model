@@ -21,8 +21,7 @@ class ModifyMaxHpAction(Action):
         amount = self.kwargs.get('amount', 0)
         if game_state.player:
             game_state.player.max_hp += amount
-            from localization import t
-            print(t("ui.max_hp_changed", default=f"Max HP changed by {amount}!"))
+            print(self.translate("ui.max_hp_changed", default=f"Max HP changed by {amount}!"))
             
 @register("action")
 class LoseHpAction(Action):

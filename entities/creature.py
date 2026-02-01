@@ -2,8 +2,10 @@
 
 from typing import List, Optional, Callable, Any
 
+from utils.localizable import Localizable
 
-class Creature:
+
+class Creature(Localizable):
     """Base creature with health, block, and powers.
 
     The on_death callback allows the game manager to respond to death events.

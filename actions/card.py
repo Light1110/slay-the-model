@@ -33,8 +33,7 @@ class CreateRandomCardAction(Action):
             if location == 'deck':
                 game_state.player.card_manager.add_to_deck(card_id)
             card = create_card(card_id)
-            from localization import t
-            print(t("ui.received_card", default=f"Received card: {card.name if card else card_id}!", name=card.name if card else card_id))
+            print(self.translate("ui.received_card", default=f"Received card: {card.name if card else card_id}!", name=card.name if card else card_id))
          
 @register("action")   
 class ChooseRemoveCardAction(Action):
@@ -64,8 +63,7 @@ class ChooseRemoveCardAction(Action):
         elif pile == 'deck':
             game_state.player.card_manager.remove(amount, location='deck')
             
-        from localization import t
-        print(t("ui.removed_cards", default=f"Removed {amount} cards from {pile}!", amount=amount, pile=pile))
+        print(self.translate("ui.removed_cards", default=f"Removed {amount} cards from {pile}!", amount=amount, pile=pile))
 
 @register("action")         
 class ChooseTransformCardAction(Action):
@@ -95,8 +93,7 @@ class ChooseTransformCardAction(Action):
         elif pile == 'deck':
             game_state.player.card_manager.transform(amount, location='deck')
             
-        from localization import t
-        print(t("ui.transformed_cards", default=f"Transformed {amount} cards from {pile}!", amount=amount, pile=pile))
+        print(self.translate("ui.transformed_cards", default=f"Transformed {amount} cards from {pile}!", amount=amount, pile=pile))
       
 @register("action")     
 class ChooseUpgradeCardAction(Action):
@@ -126,8 +123,7 @@ class ChooseUpgradeCardAction(Action):
         elif pile == 'deck':
             game_state.player.card_manager.upgrade(amount, location='deck')
             
-        from localization import t
-        print(t("ui.upgraded_cards", default=f"Upgraded {amount} cards from {pile}!", amount=amount, pile=pile))
+        print(self.translate("ui.upgraded_cards", default=f"Upgraded {amount} cards from {pile}!", amount=amount, pile=pile))
      
 @register("action")      
 class ChooseCardAction(Action):
@@ -163,8 +159,7 @@ class ChooseCardAction(Action):
         elif pile == 'deck':
             game_state.player.card_manager.obtain(total, card_type, rarity, location='deck')
             
-        from localization import t
-        print(t("ui.obtained_cards", default=f"Obtained {total} cards from {pile}!", total=total, pile=pile))       
+        print(self.translate("ui.obtained_cards", default=f"Obtained {total} cards from {pile}!", total=total, pile=pile))       
         
 @register("action")   
 class ObtainRandomCardAction(Action):

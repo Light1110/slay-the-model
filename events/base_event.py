@@ -2,7 +2,8 @@
 Base event definitions for the new architecture.
 """
 from engine.game_state import game_state
-class Event:
+from utils.localizable import Localizable
+class Event(Localizable):
     """Base event class - contains multiple stages"""
 
     def __init__(self, callback=None, **kwargs):
@@ -51,7 +52,7 @@ class Event:
         return f"{self.__class__.__name__}()"
 
 
-class EventStage:
+class EventStage(Localizable):
     """Base class for event stages"""
 
     def __init__(self, stage_name):

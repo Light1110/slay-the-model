@@ -2,10 +2,11 @@
 Base action system
 """
 from engine.game_state import game_state
+from utils.localizable import Localizable
 
 from enum import Enum
 
-class Action:
+class Action(Localizable):
     """Base action class - executable game logic unit"""
 
     REQUIRED_PARAMS = {}

@@ -4,8 +4,9 @@ Base room definitions for the new architecture.
 
 from actions.base import action_queue
 from engine.game_state import game_state
+from utils.localizable import Localizable
 
-class Room:
+class Room(Localizable):
     """Base room class - represents a location where events occur"""
 
     def __init__(self, **kwargs):
