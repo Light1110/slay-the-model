@@ -2,7 +2,7 @@ from entities import Creature
 from player.card_manager import CardManager
 from player.orb_manager import OrbManager
 from player.status_manager import StatusManager
-from player.potion_collection import PotionCollection
+from entities.collection import Collection
 
 
 class Player(Creature):
@@ -15,7 +15,7 @@ class Player(Creature):
     base_potion_limit = 3
 
     def __init__(self):
-        from game.cards.namespaces import get_namespace_for_character
+        from cards.namespaces import get_namespace_for_character
         self.namespace = get_namespace_for_character(self.character)
 
         # Initialize Creature base class
@@ -28,9 +28,8 @@ class Player(Creature):
 
         # Stats
         self._gold = self.__class__.starting_gold
-        self.relics = []
-        self._potion_limit = self.__class__.base_potion_limit
-        self._potions = PotionCollection(self, [])
+        self.potions = Collection(self.__class__.base_potion_limit)
+        self.relics = Collection()
 
         # Combat-related properties
         self.max_energy = self.__class__.base_energy
@@ -44,7 +43,7 @@ class Player(Creature):
             if hasattr(game_state, "handle_creature_death"):
                 game_state.handle_creature_death(self)
             elif getattr(game_state, "combat_state", None):
-                game_state.combat_state.game_phase = "game_over"
+                game_state.game_phase = "game_over"
         except Exception:
             pass
 
@@ -66,17 +65,11 @@ class Player(Creature):
 
     @property
     def potion_limit(self) -> int:
-        return self._potion_limit
+        return self.potions.limit
 
     @potion_limit.setter
     def potion_limit(self, value: int) -> None:
-        self._potion_limit = max(0, int(value))
-        if len(self._potions) > self._potion_limit:
-            self._potions.trim_to_limit()
-
-    @property
-    def potions(self):
-        return self._potions
+        self.potions.trim_to_limit(value)
 
     def gain_energy(self, amount=1):
         if amount <= 0:

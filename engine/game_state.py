@@ -44,6 +44,9 @@ class GameState:
         self.current_room = None
         self.event_stack = []
         
+        # Game phase
+        self.game_phase: str = "room"  # "map", "room", "menu", "gameover"
+        
         # Combat state
         self.combat_state = CombatState()
         
@@ -57,7 +60,7 @@ class GameState:
     def handle_creature_death(self, creature):
         """Handle creature death notifications."""
         if creature is self.player:
-            self.combat_state.game_phase = "game_over"
+            self.game_phase = "game_over"
 
     @property
     def current_event(self):

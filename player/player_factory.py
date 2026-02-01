@@ -1,3 +1,6 @@
-def create_player(character):
+def create_player(character=None):
     from player.player import Player
-    return Player(character)
+    player = Player()
+    if character:
+        player.character = character
+    return player

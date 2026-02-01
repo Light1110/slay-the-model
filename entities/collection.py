@@ -6,13 +6,17 @@ if TYPE_CHECKING:
     from player.player import Player
 
 
-class PotionCollection(list):
-    def __init__(self, owner: "Player", *args):
+class Collection(list):
+    def __init__(self, limit=9999, *args):
         super().__init__(*args)
-        self._owner = owner
+        self._limit = limit
+
+    @property
+    def limit(self) -> int:
+        return self._limit
 
     def _within_limit(self) -> bool:
-        return len(self) < self._owner.potion_limit
+        return len(self) < self._limit
 
     def append(self, potion) -> bool:  # type: ignore[override]
         if not self._within_limit():
@@ -30,9 +34,9 @@ class PotionCollection(list):
             return
         super().insert(index, potion)
 
-    def trim_to_limit(self) -> None:
-        limit = self._owner.potion_limit
+    def trim_to_limit(self, limit) -> None:
         if limit < 0:
             return
+        self._limit = limit
         if len(self) > limit:
             del self[limit:]

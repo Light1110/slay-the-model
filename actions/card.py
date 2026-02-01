@@ -23,18 +23,15 @@ class CreateRandomCardAction(Action):
         if not game_state.player:
             return
 
-        # Generate a random card
+        # Generate a random card using the new registry system
         import random
-        from cards.namespaces import CARD_NAMESPACES
-        all_cards = []
-        for namespace in CARD_NAMESPACES.values():
-            all_cards.extend(namespace.keys())
+        from cards.registry import get_all_card_ids, create_card
+        all_cards = get_all_card_ids()
 
         if all_cards:
             card_id = random.choice(all_cards)
             if location == 'deck':
                 game_state.player.card_manager.add_to_deck(card_id)
-            from cards.registry import create_card
             card = create_card(card_id)
             from localization import t
             print(t("ui.received_card", default=f"Received card: {card.name if card else card_id}!", name=card.name if card else card_id))

@@ -1,8 +1,15 @@
-1. card: namespace
-2. 重构当前所有对card数据的引用调用方式（特别是action）
-3. 重构SelecAction，逐个查看action
-4. 重构AI Debug模式
-5. 重构combat_state
-6. 将player的各个manager落实实现
-7. 基类：potion, relic, orb
-8. 基类：enemy
+# todo
+
+## 为所有的类增加基类：一个用于本地化的基类
+## 将player的各个manager落实实现
+## 基类：enemy
+## card_id残留
+## 重构当前所有对card数据的引用调用方式
+
+## 地图生成系统 （只有1层）
+
+## 虚拟room，以及路径选择系统
+
+## 每个room的测试
+
+## 最复杂的是战斗，放在最后

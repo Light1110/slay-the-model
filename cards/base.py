@@ -1,17 +1,13 @@
 """
-Card base class - class-driven card system
+Card base class - class-driven card system with namespace support
 """
+from typing import List
+from actions.base import Action
 from entities.creature import Creature
-from actions.combat import (
-    DealDamageAction,
-    GainBlockAction,
-    HealAction,
-    DrawCardsAction,
-    GainEnergyAction,
-)
-from actions.card import ExhaustCardAction
 from cards.description_parser import description_parser
 from engine.game_state import game_state
+from utils.types import TargetType
+from cards.namespaces import get_color_for_namespace, _namespace_from_module
 
 COST_X = -1
 COST_UNPLAYABLE = -2
@@ -23,7 +19,6 @@ class Card:
     # * card attributes
     card_type = "Attack"  # Attack, Skill, Power, Status, Curse
     rarity = "Starter"  # Starter, Common, Uncommon, Rare
-    color = "Red"  # Red, Green, Blue, Purple, Colorless
     description_template = ""
     upgrade_description_template = None
 
@@ -64,31 +59,28 @@ class Card:
     target_type = None
 
     def __init__(self, card_name=None):
-        # ***** Basic card attributes
-        # todo: card registry
-        from cards.registry import _namespace_from_module
-        self.card_id = getattr(self, "card_id", None)
-        if not self.card_id:
-            namespace = _namespace_from_module(self.__class__.__module__)
-            if namespace:
-                self.card_id = f"{namespace}.{self.name}"
-        self.base_name = self.name
-        if card_name:
-            self.name = card_name
-        else:
-            self.name = self.base_name
+        # ***** Basic card attributes with namespace support
+        # Determine namespace from module path
+        self.namespace = _namespace_from_module(self.__class__.__module__)
+        
+        # Set color based on namespace
+        self.color = get_color_for_namespace(self.namespace)
+        
+        # Get class name as base name
+        self.base_name = self.__class__.__name__
+            
+        # Apply localization for name
         from localization import t
-        key_name = self.card_id or self.base_name
-        self.name = t(f"cards.{key_name}.name", default=self.name)
-        if self.name == (self.card_id or self.base_name):
-            self.name = t(f"cards.{self.base_name}.name", default=self.name)
-        self.display_name_base = self.name
+        self.localized_name = t(f"cards.{self.namespace}.{self.base_name}.name", default="NONE")
+        self.display_name = self.localized_name
+        
+        # Resolve description templates with localization
         self.description_template = self._resolve_description_template(
-            key_name,
+            f"{self.namespace}.{self.base_name}",
             self.description_template,
         )
         self.upgrade_description_template = self._resolve_description_template(
-            key_name,
+            f"{self.namespace}.{self.base_name}",
             self.upgrade_description_template,
             suffix="description_upgraded",
         )
@@ -112,6 +104,7 @@ class Card:
         self.description = self._generate_description()
  
     def __str__(self):
+        """Display name for in-game use (without namespace)"""
         cost = self.get_temp_value("cost")
         if cost == COST_X:
             cost_str = "X"
@@ -119,10 +112,18 @@ class Card:
             cost_str = "-"
         else:
             cost_str = str(cost)
-        return f"{self.name} ({cost_str}) - {self.card_type}"
+        return f"{self.display_name} ({cost_str}) - {self.card_type}"
     
     def __repr__(self):
-        return self.__str__()
+        """Debug representation with namespace"""
+        cost = self.get_temp_value("cost")
+        if cost == COST_X:
+            cost_str = "X"
+        elif cost == COST_UNPLAYABLE:
+            cost_str = "-"
+        else:
+            cost_str = str(cost)
+        return f"{self.namespace}.{self.base_name}:{self.display_name} ({cost_str}) - {self.card_type}"
     
     def _extract_base_values(self):
         """Extract base values from class attributes"""
@@ -144,18 +145,16 @@ class Card:
 
     def _resolve_target(self):
         target_type = getattr(self, "target_type", None)
-        if target_type:
+        if target_type and isinstance(target_type, TargetType):
             return target_type
         card_type = str(getattr(self, "type", "") or "").lower()
         if card_type in ("skill", "power"):
-            return "self"
+            return TargetType.SELF
         if card_type == "attack":
-            # 单体/群体，默认为单体
-            return "select"
-        return target_type
+            # 单体/群体, 默认为单体
+            return TargetType.ENEMY_SELECT
+        return None
 
-    # * * * value 相关
-    
     def get_temp_value(self, key):
         """Get current value considering all modifiers"""
         return self.temp_values[key]
@@ -167,7 +166,7 @@ class Card:
         
     def recalculate_temp_value(self, key, value):
         """Modify a card value (for buffs/debuffs)"""
-        # todo: 调用util里的函数
+        # todo: 调用util里的函数，更新self.temp_values
         # Regenerate description with new values
         self.description = self._generate_description()
     
@@ -194,31 +193,45 @@ class Card:
 
     # * * * actions 相关
 
-    def on_play(self, target:Creature|None=None):
+    def on_play(self, target:Creature|None=None) -> List[Action]:
         """卡牌被打出时触发，默认返回 Action 列表。"""
-        actions = []
-        if self.base_values.get('block', 0) > 0:
-            actions.append(GainBlockAction(block=lambda: self.get_temp_value('block')))
-        if self.base_values.get('damage', 0) > 0:
-            hits = max(1, int(self.get_temp_value('attack_times')))
-            for _ in range(hits):
-                action = DealDamageAction(
-                    "deal_damage_action",
-                    damage=lambda: self.get_temp_value('damage'),
-                    target=target,
-                    damage_type="direct",
-                )
-                action.card = self
-                actions.append(action)
-        if self.base_values.get('heal', 0) > 0:
-            actions.append(HealAction(heal=lambda: self.get_temp_value('heal')))
-        if self.base_values.get('draw', 0) > 0:
-            actions.append(DrawCardsAction(count=lambda: self.get_temp_value('draw')))
-        if self.base_values.get('energy_gain', 0) > 0:
-            actions.append(GainEnergyAction(energy=lambda: self.get_temp_value('energy_gain')))
-        if self.base_values.get('exhaust', False):
-            actions.append(ExhaustCardAction(card=self, source_pile="hand"))
-        return actions
+        # Import actions here to avoid circular imports
+        try:
+            from actions.combat import (
+                DealDamageAction,
+                GainBlockAction,
+                HealAction,
+                DrawCardsAction,
+                GainEnergyAction,
+            )
+            from actions.card import ExhaustCardAction
+            
+            actions = []
+            if self.base_values.get('block', 0) > 0:
+                actions.append(GainBlockAction(block=lambda: self.get_temp_value('block')))
+            if self.base_values.get('damage', 0) > 0:
+                hits = max(1, int(self.get_temp_value('attack_times')))
+                for _ in range(hits):
+                    action = DealDamageAction(
+                        "deal_damage_action",
+                        damage=lambda: self.get_temp_value('damage'),
+                        target=target,
+                        damage_type="direct",
+                    )
+                    action.card = self
+                    actions.append(action)
+            if self.base_values.get('heal', 0) > 0:
+                actions.append(HealAction(heal=lambda: self.get_temp_value('heal')))
+            if self.base_values.get('draw', 0) > 0:
+                actions.append(DrawCardsAction(count=lambda: self.get_temp_value('draw')))
+            if self.base_values.get('energy_gain', 0) > 0:
+                actions.append(GainEnergyAction(energy=lambda: self.get_temp_value('energy_gain')))
+            if self.base_values.get('exhaust', False):
+                actions.append(ExhaustCardAction(card=self, source_pile="hand"))
+            return actions
+        except ImportError:
+            # Return empty list if actions are not available
+            return []
 
     def on_discard(self):
         """卡牌被弃置时触发，默认返回 Action 列表。"""
@@ -262,10 +275,10 @@ class Card:
 
         # Update name with upgrade level
         if self.upgrade_level == 1:
-            self.name = f"{self.display_name_base}+"
+            self.display_name = f"{self.localized_name}+"
         else:
             # For cards that can be upgraded multiple times (like Searing Blow)
-            self.name = f"{self.display_name_base}+{self.upgrade_level}"
+            self.display_name = f"{self.localized_name}+{self.upgrade_level}"
 
         # Apply upgrade effects
         self.apply_upgrade()
@@ -278,8 +291,8 @@ class Card:
         from localization import t
         print(t(
             "ui.card_upgraded",
-            default=f"Upgraded {self.name} (level {self.upgrade_level})",
-            card=self.name,
+            default=f"Upgraded {self.display_name} (level {self.upgrade_level})",
+            card=self.display_name,
             level=self.upgrade_level,
         ))
         return True
@@ -324,4 +337,3 @@ class Card:
             self.base_values['innate'] = self.upgrade_innate
             
         self.recalculate_all_temp_values()
-    
