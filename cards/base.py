@@ -8,10 +8,9 @@ from entities.creature import Creature
 def get_game_state():
     from engine.game_state import game_state
     return game_state
-from utils.types import TargetType
+from utils.types import TargetType, RarityType
 from cards.namespaces import get_color_for_namespace, namespace_from_module
 from localization import Localizable
-from utils.parser import parse
 from localization import BaseLocalStr, LocalStr
 
 COST_X = -1
@@ -23,7 +22,7 @@ class Card(Localizable):
 
     # * card attributes
     card_type = "Attack"  # Attack, Skill, Power, Status, Curse
-    rarity = "Starter"  # Starter, Common, Uncommon, Rare
+    rarity = RarityType.COMMON
 
     # * card values
     base_cost = 0
@@ -161,7 +160,7 @@ class Card(Localizable):
 
     def update_description(self):
         """Regenerate description based on current temp values"""
-        self.description = parse(self.description_template, self.temp_values)
+        self.description = self.local("description", **self.temp_values)
 
     # * * * actions 相关
 

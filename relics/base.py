@@ -1,9 +1,9 @@
 from localization import Localizable
-
+from utils.types import RarityType
 
 class Relic(Localizable):
     localization_prefix = "relics"
-    rarity = "Common"
+    rarity = RarityType.COMMON
 
     def __init__(self):
         pass

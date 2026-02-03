@@ -3,39 +3,10 @@ Base action system
 """
 from localization import Localizable
 
-from enum import Enum
-
 class Action(Localizable):
     """Base action class - executable game logic unit"""
-
-    REQUIRED_PARAMS = {}
-    OPTIONAL_PARAMS = {}
-
-    def __init__(self, **kwargs):
-        # Remaining kwargs stored for action use
-        self.kwargs = kwargs
-        self._validate_params()
-        
-    def translate(self, key: str, default: str | None = None, **kwargs) -> str:
-        """Translate a key using localization system."""
-        from localization import t
-        return t(key, default, **kwargs)
-
-    def _validate_params(self):
-        """Validate required params and inject optional defaults"""
-        for name, typ in self.REQUIRED_PARAMS.items():
-            if name not in self.kwargs:
-                raise ValueError(
-                    f"{self.__class__.__name__} missing required param: {name}"
-                )
-            if typ and not isinstance(self.kwargs[name], typ):
-                raise TypeError(f"{name} must be {typ}")
-
-        for name, (typ, default) in self.OPTIONAL_PARAMS.items():
-            if name not in self.kwargs:
-                self.kwargs[name] = default
-            elif typ and not isinstance(self.kwargs[name], typ):
-                raise TypeError(f"{name} must be {typ}")
+    def __init__(self):
+        pass
 
     def execute(self):
         """Execute this action - to be overridden"""

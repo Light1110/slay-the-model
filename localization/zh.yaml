@@ -1,10 +1,9 @@
 ui:
   choose_enemy: "选择敌人："
   select_prompt: "选择 (1-{count}): "
-  invalid_choice: "无效选择！"
+  invalid_option: "无效选择！"
   invalid_number: "请输入有效数字"
   choose_blessings: "选择祝福"
-  blessing_choice: "祝福 {index}: {name}"
   game_welcome: "欢迎来到杀戮尖塔！"
   game_awaken: "你醒来在尖塔中，开始你的攀登..."
   seed_display: "种子: {seed}"

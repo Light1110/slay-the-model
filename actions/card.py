@@ -1,40 +1,120 @@
 from actions.base import Action
+from localization import LocalStr, t
+from utils.option import Option
 from utils.registry import register, get_registered, list_registered
-
+from utils.types import CardType, PilePosType, RarityType
+from utils.random import get_random_card
+            
 @register("action")
-class CreateRandomCardAction(Action):
-    """Create a random card and add to deck
+class RemoveCardAction(Action):
+    """Choose a card to remove from src pile
     
     Required:
-        None
+        card (Card): Card to remove
+        src_pile (str): Card location
         
     Optional:
-        location (str): Card location ('deck' or 'hand')
+        None
     """
-    REQUIRED_PARAMS = {}
-    OPTIONAL_PARAMS = {
-        "location": (str, "deck"),
-    }
+    def __init__(self, card, src_pile: str):
+        self.card = card
+        self.src_pile = src_pile
     
     def execute(self):
         from engine.game_state import game_state
-        location = self.kwargs.get('location', 'deck')
+        if self.card and game_state.player:
+            if hasattr(game_state.player, "card_manager"):
+                game_state.player.card_manager.remove_from_pile(self.card, self.src_pile)
+                
+@register("action")
+class AddCardAction(Action):
+    """Add a specific card to a pile
+    
+    Required:
+        card (Card): Card to add
+        dest_pile (str): Destination pile
+        
+    Optional:
+        None
+    """
+    def __init__(self, card, dest_pile: str):
+        self.card = card
+        self.dest_pile = dest_pile
+    
+    def execute(self):
+        from engine.game_state import game_state
+        if self.card and game_state.player:
+            if hasattr(game_state.player, "card_manager"):
+                game_state.player.card_manager.add_to_pile(self.card, self.dest_pile, pos=PilePosType.TOP)
+                
+@register("action")
+class TransformCardAction(Action):
+    """Choose a card to transform from pile
+    
+    Required:
+        card (Card): Card to remove
+        pile (str): Card location
+        
+    Optional:
+        reason (str): Transform reason (for UI / logging)
+    """
+    def __init__(self, card, pile: str, reason: str | None = None):
+        self.card = card
+        self.pile = pile
+        self.reason = reason
+    
+    def execute(self):
+        # 相当于删掉原卡，随机获得一张新卡
+        from actions import action_queue
+        namespace = self.card.namespace # ??
+        
+        action_queue.add_action(
+            RemoveCardAction(self.card, self.pile, reason=self.reason or 'Unknown'),
+            to_front=True
+        )
+        action_queue.add_action(
+            AddCardAction(card=get_random_card(namespaces=[namespace]), dest_pile=self.pile),
+            to_front=True
+        )
 
-        if not game_state.player:
-            return
+@register("action")
+class ExhaustCardAction(Action):
+    """Exhaust a card into exhaust pile.
 
-        # Generate a random card using the new registry system
-        import random
-        from cards.registry import get_all_card_ids, create_card
-        all_cards = get_all_card_ids()
+    Required:
+        card (Card): Card to exhaust
 
-        if all_cards:
-            card_id = random.choice(all_cards)
-            if location == 'deck':
-                game_state.player.card_manager.add_to_deck(card_id)
-            card = create_card(card_id)
-            print(self.translate("ui.received_card", default=f"Received card: {card.name if card else card_id}!", name=card.name if card else card_id))
-         
+    Optional:
+        source_pile (str): Source pile name
+    """
+    def __init__(self, card, source_pile: str | None = None):
+        self.card = card
+        self.source_pile = source_pile
+
+    def execute(self):
+        from engine.game_state import game_state
+        if self.card and game_state.player and hasattr(game_state.player, "card_manager"):
+            return game_state.player.card_manager.exhaust(self.card, src=self.source_pile)
+        return False
+    
+class UpgradeCardAction(Action):
+    """Upgrade a specific card.
+    
+    Required:
+        card (Card): Card to upgrade
+        
+    Optional:
+        None
+    """
+    def __init__(self, card):
+        self.card = card
+    
+    def execute(self):
+        if self.card and self.card.can_upgrade():
+            self.card.upgrade()
+            return True
+        return False
+    
 @register("action")   
 class ChooseRemoveCardAction(Action):
     """Choose a card to remove from hand
@@ -46,24 +126,46 @@ class ChooseRemoveCardAction(Action):
     Optional:
         None
     """
-    REQUIRED_PARAMS = {
-        "pile": str,
-        "amount": int,
-    }
-    OPTIONAL_PARAMS = {}
+    def __init__(self, pile: str = 'hand', amount: int = 1):
+        self.pile = pile
+        self.amount = amount
     
     def execute(self):
         from engine.game_state import game_state
         if not game_state.player:
             return
-        pile = self.kwargs.get('pile', 'hand')
-        amount = self.kwargs.get('amount', 1)
-        if pile == 'hand':
-            game_state.player.card_manager.remove(amount, location='hand')
-        elif pile == 'deck':
-            game_state.player.card_manager.remove(amount, location='deck')
+        pile = self.pile
+        amount = self.amount
+        
+        # * build SelecAction options
+        
+        card_manager = game_state.player.card_manager
+        
+        from actions import action_queue
+        from actions.display import SelectAction
+        
+        # todo: 暂时只支持单选
+        for _ in range(amount):
+            options = []
+            cards_in_pile = card_manager.get_pile(pile)
             
-        print(self.translate("ui.removed_cards", default=f"Removed {amount} cards from {pile}!", amount=amount, pile=pile))
+            for card in cards_in_pile:
+                option = card.display_name
+                options.append(
+                    Option(
+                        name = option,
+                        actions = [
+                            RemoveCardAction(card=card, src_pile=pile),
+                        ]
+                    )
+                )
+            select_action = SelectAction(
+                title = LocalStr("ui.choose_cards_to_remove"),
+                options = options
+            )
+            action_queue.add_action(select_action, to_front=True)
+            
+        # todo: print remove info message
 
 @register("action")         
 class ChooseTransformCardAction(Action):
@@ -76,24 +178,43 @@ class ChooseTransformCardAction(Action):
     Optional:
         None
     """
-    REQUIRED_PARAMS = {
-        "pile": str,
-        "amount": int,
-    }
-    OPTIONAL_PARAMS = {}
+    def __init__(self, pile: str = 'hand', amount: int = 1):
+        self.pile = pile
+        self.amount = amount
     
     def execute(self):
         from engine.game_state import game_state
         if not game_state.player:
             return
-        pile = self.kwargs.get('pile', 'hand')
-        amount = self.kwargs.get('amount', 1)
-        if pile == 'hand':
-            game_state.player.card_manager.transform(amount, location='hand')
-        elif pile == 'deck':
-            game_state.player.card_manager.transform(amount, location='deck')
+        pile = self.pile
+        amount = self.amount
+        # * build SelecAction options
+        card_manager = game_state.player.card_manager
+        from actions import action_queue
+        from actions.display import SelectAction
+        
+        # todo: 暂时只支持单选
+        for _ in range(amount):
+            options = []
+            cards_in_pile = card_manager.get_pile(pile)
             
-        print(self.translate("ui.transformed_cards", default=f"Transformed {amount} cards from {pile}!", amount=amount, pile=pile))
+            for card in cards_in_pile:
+                option = card.display_name
+                options.append(
+                    Option(
+                        name = option,
+                        actions = [
+                            TransformCardAction(card=card, pile=pile),
+                        ]
+                    )
+                )
+            select_action = SelectAction(
+                title = LocalStr("ui.choose_cards_to_transform"),
+                options = options
+            )
+            action_queue.add_action(select_action, to_front=True)
+            
+        # todo: print transform info message
       
 @register("action")     
 class ChooseUpgradeCardAction(Action):
@@ -106,136 +227,133 @@ class ChooseUpgradeCardAction(Action):
     Optional:
         None
     """
-    REQUIRED_PARAMS = {
-        "pile": str,
-        "amount": int,
-    }
-    OPTIONAL_PARAMS = {}
+    def __init__(self, pile: str = 'hand', amount: int = 1):
+        self.pile = pile
+        self.amount = amount
     
     def execute(self):
         from engine.game_state import game_state
         if not game_state.player:
             return
-        pile = self.kwargs.get('pile', 'hand')
-        amount = self.kwargs.get('amount', 1)
-        if pile == 'hand':
-            game_state.player.card_manager.upgrade(amount, location='hand')
-        elif pile == 'deck':
-            game_state.player.card_manager.upgrade(amount, location='deck')
+        pile = self.pile
+        amount = self.amount
+        
+        # * build SelecAction options
+        card_manager = game_state.player.card_manager
+        from actions import action_queue
+        from actions.display import SelectAction
+        
+        # todo: 暂时只支持单选
+        for _ in range(amount):
+            options = []
+            cards_in_pile = card_manager.get_pile(pile)
             
-        print(self.translate("ui.upgraded_cards", default=f"Upgraded {amount} cards from {pile}!", amount=amount, pile=pile))
-     
+            for card in cards_in_pile:
+                if not card.can_upgrade():
+                    continue
+                option = card.display_name
+                options.append(
+                    Option(
+                        name = option,
+                        actions = [
+                            UpgradeCardAction(card)
+                        ]
+                    )
+                )
+            select_action = SelectAction(
+                title = LocalStr("ui.choose_cards_to_upgrade"),
+                options = options
+            )
+            action_queue.add_action(select_action, to_front=True)
+            
+        # todo: print upgrade info message
+        
 @register("action")      
-class ChooseCardAction(Action):
-    """Choose a card to obtain
+class ChooseAddRandomCardAction(Action):
+    """Choose a random card to add to pile
     
     Required:
         pile (str): Card location ('deck' or 'hand')
-        total (int): Total amount of cards to obtain
-        card_type (str): Card type
+        total (int): Total amount of cards to choose from
+        namespace (str): Card namespace
         rarity (str): Card rarity
         
     Optional:
         None
     """
-    REQUIRED_PARAMS = {
-        "pile": str,
-        "total": int,
-        "card_type": str,
-        "rarity": str,
-    }
-    OPTIONAL_PARAMS = {}
+    def __init__(self, pile: str = 'hand', total: int = 3, namespace: str | None = None, rarity: RarityType | None = None):
+        self.pile = pile
+        self.total = total
+        self.namespace = namespace
+        self.rarity = rarity
     
     def execute(self):
         from engine.game_state import game_state
         if not game_state.player:
             return
-        pile = self.kwargs.get('pile', 'hand')
-        total = self.kwargs.get('total', 1)
-        card_type = self.kwargs.get('card_type', None)
-        rarity = self.kwargs.get('rarity', None)
-        if pile == 'hand':
-            game_state.player.card_manager.obtain(total, card_type, rarity, location='hand')
-        elif pile == 'deck':
-            game_state.player.card_manager.obtain(total, card_type, rarity, location='deck')
-            
-        print(self.translate("ui.obtained_cards", default=f"Obtained {total} cards from {pile}!", total=total, pile=pile))       
+        
+        # 构造 SelectAction options
+        from actions import action_queue
+        from actions.display import SelectAction
+        
+        options = []
+        for _ in range(self.total):
+            random_card = get_random_card(
+                namespaces=[self.namespace] if self.namespace else None,
+                rarities=[self.rarity] if self.rarity else None
+            )
+            if not random_card:
+                continue
+            option = random_card.display_name
+            options.append(
+                Option(
+                    name = option,
+                    actions = [
+                        AddCardAction(card=random_card, dest_pile=self.pile),
+                    ]
+                )
+            )
+        select_action = SelectAction(
+            title = LocalStr("ui.choose_random_card_to_add"),
+            options = options
+        )
+        action_queue.add_action(select_action, to_front=True)
+        
+        # todo: print add card info message       
         
 @register("action")   
-class ObtainRandomCardAction(Action):
+class AddRandomCardAction(Action):
     """Obtain a random card
     
     Required:
         pile (str): Card location ('deck' or 'hand')
-        card_type (str): Card type
+        namespace (str): Card namespace
+        card_type (CardType): Card type
         rarity (str): Card rarity
         
     Optional:
         None
     """
-    REQUIRED_PARAMS = {
-        "pile": str,
-        "card_type": str,
-        "rarity": str,
-    }
-    OPTIONAL_PARAMS = {}
+    def __init__(self, pile: str = 'hand', card_type: CardType | None = None, rarity: RarityType | None = None):
+        self.pile = pile
+        self.card_type = card_type
+        self.rarity = rarity
     
     def execute(self):
         from engine.game_state import game_state
         if not game_state.player:
             return
-        pile = self.kwargs.get('pile', 'hand')
-        card_type = self.kwargs.get('card_type', None)
-        rarity = self.kwargs.get('rarity', None)
-        if pile == 'hand':
-            game_state.player.card_manager.obtain(1, card_type, rarity, location='hand')
-            
-@register("action")
-class RemoveCardAction(Action):
-    """Choose a card to remove from hand
-    
-    Required:
-        card (Card): Card to remove
         
-    Optional:
-        reason (str): Removal reason (for UI / logging)
-    """
-    REQUIRED_PARAMS = {
-        "card": None,  # Card type, use None to skip type checking
-    }
-    OPTIONAL_PARAMS = {
-        "reason": (str, None),
-    }
-    
-    def execute(self):
-        from engine.game_state import game_state
-        card = self.kwargs.get('card', None)
-        if card and game_state.player:
-            if hasattr(game_state.player, "card_manager"):
-                game_state.player.card_manager.remove_from_deck(card)
-
-
-@register("action")
-class ExhaustCardAction(Action):
-    """Exhaust a card into exhaust pile.
-
-    Required:
-        card (Card): Card to exhaust
-
-    Optional:
-        source_pile (str): Source pile name
-    """
-    REQUIRED_PARAMS = {
-        "card": None,
-    }
-    OPTIONAL_PARAMS = {
-        "source_pile": (str, None),
-    }
-
-    def execute(self):
-        from engine.game_state import game_state
-        card = self.kwargs.get("card")
-        source_pile = self.kwargs.get("source_pile")
-        if card and game_state.player and hasattr(game_state.player, "card_manager"):
-            return game_state.player.card_manager.exhaust(card, source_pile=source_pile)
-        return False
+        random_card = get_random_card(
+            namespaces=[game_state.player.character],
+            card_types=[self.card_type] if self.card_type else None,
+            rarities=[self.rarity] if self.rarity else None
+        )
+        
+        from actions import action_queue
+        action_queue.add_action(
+            AddCardAction(card=random_card, dest_pile=self.pile),
+            to_front=True
+        )
+        
+        # todo: print add card info message

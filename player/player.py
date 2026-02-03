@@ -3,6 +3,7 @@ from player.card_manager import CardManager
 from player.orb_manager import OrbManager
 from player.status_manager import StatusManager
 from entities.collection import Collection
+from utils.types import StatusType
 
 
 class Player(Creature):
@@ -24,7 +25,7 @@ class Player(Creature):
         # Initialize managers
         self.card_manager = CardManager(self.__class__.starting_deck)
         self.orb_manager = OrbManager(getattr(self.__class__, "orb_slots", 1))
-        self.status_manager = StatusManager("Neutral")
+        self.status_manager = StatusManager(StatusType.NEUTRAL)
 
         # Stats
         self._gold = self.__class__.starting_gold

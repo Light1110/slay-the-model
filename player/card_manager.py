@@ -82,41 +82,46 @@ class CardManager:
             return True
         return False
 
-    def move_to(self, card: Card, pile: str, pos: PilePosType) -> bool:
+    def move_to(self, card: Card, dst: str, src: str | None, pos: PilePosType) -> bool:
         """Move a card to a specified pile.
         
         Args:
             card: The card to move (Card object)
-            pile: Destination pile name ('deck', 'draw_pile', 'discard_pile', 'hand', 'exhaust_pile')
+            dst: Destination pile name ('deck', 'draw_pile', 'discard_pile', 'hand', 'exhaust_pile')
+            src: Source pile name ('deck', 'draw_pile', 'discard_pile', 'hand', 'exhaust_pile')
+            pos: Position to add the card in the destination pile (PilePosType)
             
         Returns:
             bool: True if the card was successfully moved, False otherwise.
         """
-        if pile not in self.piles:
+        if dst not in self.piles:
             return False
             
-        source_pile = self.get_card_location(card)
+        source_pile = src if src in self.piles else self.get_card_location(card)
         if not source_pile:
             return False  # Card not found in any pile
         
         self.remove_from_pile(card, source_pile)
-        return self.add_to_pile(card, pile, pos)
+        return self.add_to_pile(card, dst, pos)
 
-    def exhaust(self, card: Card) -> bool:
+    def exhaust(self, card: Card, src: str | None) -> bool:
         """Exhaust a card (move to exhaust pile).
         
         Args:
             card: The card to exhaust (Card object or card ID)
-            source_pile: Optional source pile name. If not provided, will search all piles.
+            src: Source pile name ('deck', 'draw_pile', 'discard_pile', 'hand')
             
         Returns:
             bool: True if the card was successfully exhausted, False otherwise.
         """
-        source_pile = self.get_card_location(card)
+        source_pile = src if src in self.piles else self.get_card_location(card)
         if not source_pile:
             return False  # Card not found in any pile
-        return self.move_to(card, 'exhaust_pile', PilePosType.TOP)
+        return self.move_to(card, 'exhaust_pile', None, PilePosType.TOP)
 
-    def get_pile(self, pile: str) -> Optional[List[Card]]:
+    def get_pile(self, pile: str) -> List[Card]:
         """Get a pile by location name."""
-        return self.piles.get(pile, None)
+        target_pile = self.piles.get(pile)
+        if target_pile is None:
+            raise ValueError(f"Invalid pile name: {pile}")
+        return target_pile

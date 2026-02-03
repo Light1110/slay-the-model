@@ -2,14 +2,18 @@
 Neo blessing event.
 """
 
-from actions.card import ChooseCardAction, ChooseRemoveCardAction, ChooseTransformCardAction, ChooseUpgradeCardAction, ObtainRandomCardAction
+from actions.card import ChooseAddRandomCardAction, ChooseRemoveCardAction, ChooseTransformCardAction, ChooseUpgradeCardAction, AddRandomCardAction
 from events.base_event import Event, EventStage
 from actions.display import SelectAction
-from actions.misc import AddGoldAction, AddRandomPotionAction, AddRandomRelicAction, AddRelicAction, EndEventAction, LoseGoldAction, LoseRelicAction
+from actions.misc import EndEventAction
+from actions.reward import AddGoldAction, AddRandomPotionAction, AddRandomRelicAction, AddRelicAction, LoseGoldAction, LoseRelicAction
 from actions.combat import LoseHpAction, ModifyMaxHpAction
 from actions.base import action_queue
 from engine.game_state import game_state
 from engine.game_stats import game_stats
+from localization import LocalStr
+from utils.option import Option
+from utils.types import CardType, RarityType
 
 class NeoEvent(Event):
     """Neo blessing event"""
@@ -39,20 +43,18 @@ class NeoBlessingStage(EventStage):
         max_hp_small_increase = game_stats.neow_max_hp_small_increases.get(game_state.player.character, 0)
         action_queue.add_action(
             SelectAction(
-                title_key = "ui.choose_blessings",
+                title = LocalStr("ui.choose_blessings"),
                 options = [
-                    {
-                        "name_key": "blessing.max_hp_option",
-                        "actions": [
+                    Option(name = LocalStr("blessing.max_hp_option"),
+                        actions = [
                             ModifyMaxHpAction(amount=max_hp_small_increase),
                         ]
-                    },
-                    {
-                        "name_key": "blessing.neow_option",
-                        "actions": [
+                    ),
+                    Option(name = LocalStr("blessing.random_common_relic_option"),
+                        actions = [
                             AddRelicAction(relic="Neow's Blessing"),
                         ]
-                    }
+                    )
                 ]
             )
         )
@@ -64,149 +66,127 @@ class NeoBlessingStage(EventStage):
         damage_taken = (game_state.player.hp // 10) * 3
         
         card_blessings = [
-            {
-                "name_key": "blessing.remove_card_option",
-                "actions": [
+            Option(name = LocalStr("blessing.remove_card_option"),
+                actions = [
                     ChooseRemoveCardAction(pile="deck", amount=1),
                 ]
-            },
-            {
-                "name_key": "blessing.transform_card_option",
-                "actions": [
+            ),
+            Option(name = LocalStr("blessing.transform_card_option"),
+                actions = [
                     ChooseTransformCardAction(pile="deck", amount=1),
                 ]
-            },
-            {
-                "name_key": "blessing.upgrade_card_option",
-                "actions": [
+            ),
+            Option(name = LocalStr("blessing.upgrade_card_option"),
+                actions = [
                     ChooseUpgradeCardAction(pile="deck", amount=1),
                 ]
-            },
-            {
-                "name_key": "blessing.choose_card_option",
-                "actions": [
-                    ChooseCardAction(pile="deck", total=3, card_type=game_state.player.character, rarity=None),
+            ),
+            Option(name = LocalStr("blessing.choose_card_option"),
+                actions = [
+                    ChooseAddRandomCardAction(pile="deck", total=3, namespace=game_state.player.character, rarity=None),
                 ]
-            },
-            {
-                "name_key": "blessing.uncommon_colorless_option",
-                "actions": [
-                    ChooseCardAction(pile="deck", total=3, card_type="colorless", rarity="uncommon"),
+            ),
+            Option(name = LocalStr("blessing.uncommon_colorless_option"),
+                actions = [
+                    ChooseAddRandomCardAction(pile="deck", total=3, namespace="colorless", rarity=RarityType.UNCOMMON),
                 ]
-            },
-            {
-                "name_key": "blessing.random_rare_card_option",
-                "actions": [
-                    ObtainRandomCardAction(pile="deck", card_type=game_state.player.character, rarity="rare"),
+            ),
+            Option(name = LocalStr("blessing.random_rare_card_option"),
+                actions = [
+                    AddRandomCardAction(pile="deck", namespace=game_state.player.character, rarity=RarityType.RARE),
                 ]
-            }
+            )
         ]
 
         non_card_blessings = [
-            {
-                "name_key": "blessing.max_hp_option",
-                "actions": [
+            Option(name = LocalStr("blessing.max_hp_option"),
+                actions = [
                     ModifyMaxHpAction(amount=max_hp_small_increase),
                 ]
-            },
-            {
-                "name_key": "blessing.neow_option",
-                "actions": [
+            ),
+            Option(name = LocalStr("blessing.neow_option"),
+                actions = [
                     AddRelicAction(relic="Neow's Blessing"),
                 ]
-            },
-            {
-                "name_key": "blessing.random_common_relic_option",
-                "actions": [
-                    AddRandomRelicAction(rarity="common"),
+            ),
+            Option(name = LocalStr("blessing.random_common_relic_option"),
+                actions = [
+                    AddRandomRelicAction(rarity=RarityType.COMMON),
                 ]
-            },
-            {
-                "name_key": "blessing.receive_100_gold_option",
-                "actions": [
+            ),
+            Option(name = LocalStr("blessing.receive_100_gold_option"),
+                actions = [
                     AddGoldAction(amount=100),
                 ]
-            },
-            {
-                "name_key": "blessing.three_random_potions_option",
-                "actions": [
+            ),
+            Option(name = LocalStr("blessing.three_random_potions_option"),
+                actions = [
                     AddRandomPotionAction(),
                     AddRandomPotionAction(),
                     AddRandomPotionAction(),
                 ]
-            }
+            )
         ]
         
         disadvantage_blessings = [
-            {
-                "name_key": "blessing.lose_max_hp_option",
-                "actions": [
+            Option(name = LocalStr("blessing.lose_max_hp_option"),
+                actions = [
                     ModifyMaxHpAction(amount=-max_hp_small_decrease),
                 ]
-            },
-            {
-                "name_key": "blessing.take_damage_option",
-                "actions": [
+            ),
+            Option(name = LocalStr("blessing.take_damage_option"),
+                actions = [
                     LoseHpAction(amount=damage_taken),
                 ]
-            },
-            {
-                "name_key": "blessing.obtian_curse_option",
-                "actions": [
-                    ObtainRandomCardAction(pile="deck", card_type="curse", rarity=None),
+            ),
+            Option(name = LocalStr("blessing.obtian_curse_option"),
+                actions = [
+                    AddRandomCardAction(pile="deck", card_type=CardType.CURSE, rarity=None),
                 ]
-            },
-            {
-                "name_key": "blessing.lose_all_gold_option",
-                "actions": [
+            ),
+            Option(name = LocalStr("blessing.lose_all_gold_option"),
+                actions = [
                     LoseGoldAction(amount=game_state.player.gold),
                 ]
-            }
+            )
         ]
         
         advantage_blessings = [
-            {
-                "name_key": "blessing.remove_two_cards_option",
-                "actions": [
+            Option(name = LocalStr("blessing.remove_two_cards_option"),
+                actions = [
                     ChooseRemoveCardAction(pile="deck", amount=2),
                 ]
-            },
-            {
-                "name_key": "blessing.transform_two_cards_option",
-                "actions": [
+            ),
+            Option(name = LocalStr("blessing.transform_two_cards_option"),
+                actions = [
                     ChooseTransformCardAction(pile="deck", amount=2),
                 ]
-            },
-            {
-                "name_key": "blessing.gain_250_gold_option",
-                "actions": [
+            ),
+            Option(name = LocalStr("blessing.gain_250_gold_option"),
+                actions = [
                     AddGoldAction(amount=250),
                 ]
-            },
-            {
-                "name_key": "blessing.choose_rare_card_option",
-                "actions": [
-                    ChooseCardAction(pile="deck", total=3, card_type=game_state.player.character, rarity="rare"),
+            ),
+            Option(name = LocalStr("blessing.choose_rare_card_option"),
+                actions = [
+                    ChooseAddRandomCardAction(pile="deck", total=3, namespace=game_state.player.character, rarity=RarityType.RARE)
                 ]
-            },
-            {
-                "name_key": "blessing.choose_rare_colorless_card_option",
-                "actions": [
-                    ChooseCardAction(pile="deck", total=3, card_type="colorless", rarity="rare"),
+            ),
+            Option(name = LocalStr("blessing.choose_rare_colorless_card_option"),
+                actions = [
+                    ChooseAddRandomCardAction(pile="deck", total=3, namespace="colorless", rarity=RarityType.RARE)
                 ]
-            },
-            {
-                "name_key": "blessing.random_rare_relic_option",
-                "actions": [
-                    AddRandomRelicAction(rarity="rare"),
+            ),
+            Option(name = LocalStr("blessing.random_rare_relic_option"),
+                actions = [
+                    AddRandomRelicAction(rarity=RarityType.RARE),
                 ]
-            },
-            {
-                "name_key": "blessing.big_max_hp_option",
-                "actions": [
+            ),
+            Option(name = LocalStr("blessing.big_max_hp_option"),
+                actions = [
                     ModifyMaxHpAction(amount=max_hp_large_increase),
                 ]
-            }
+            )
         ]
 
         import random
@@ -221,23 +201,23 @@ class NeoBlessingStage(EventStage):
         advantage_blessing_idx = random.randint(0, len(advantage_blessings) - 1)
         disadvantage_blessing = disadvantage_blessings[disadvantage_blessing_idx]
         advantage_blessing = advantage_blessings[advantage_blessing_idx]
-        mixed_blessing = {
-            "name_key": disadvantage_blessing["name_key"] + " + " + advantage_blessing["name_key"],
-            "actions": disadvantage_blessing["name_key"] + advantage_blessing["name_key"]
-        }
+        mixed_blessing = Option(
+            name = disadvantage_blessing.name + " + " + advantage_blessing.name,
+            actions = disadvantage_blessing.actions + advantage_blessing.actions
+        )
 
-        relic_blessing = {
-            "name_key": "blessing.replace_starter_relic_option",
-            "actions": [
-                LoseRelicAction(name = game_state.player.relics[0].name),
-                AddRandomRelicAction(rarity="boss"),
+        relic_blessing = Option(
+            name = LocalStr("blessing.replace_starter_relic_option"),
+            actions = [
+                LoseRelicAction(relic = game_state.player.relics[0]),
+                AddRandomRelicAction(rarity=RarityType.BOSS),
             ]
-        }
+        )
         
         action_queue.add_action(
             SelectAction(
-                title_key = "ui.choose_blessings",
-                options = [card_blessing, non_card_blessing, mixed_blessing, relic_blessing],
+                title = LocalStr("ui.choose_blessings"),
+                options = [card_blessing, non_card_blessing, mixed_blessing, relic_blessing]
             )
         )
         

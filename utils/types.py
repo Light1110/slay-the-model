@@ -19,3 +19,21 @@ class StatusType(str, Enum):
     WRATH = "Wrath"
     DIVINITY = "Divinity"
     
+class CardType(str, Enum):
+    ATTACK = "Attack"
+    SKILL = "Skill"
+    POWER = "Power"
+    CURSE = "Curse"
+    STATUS = "Status"
+    
+class RarityType(str, Enum):
+    STARTER = "Starter"
+    COMMON = "Common"
+    UNCOMMON = "Uncommon"
+    RARE = "Rare"
+    SPECIAL = "Special"
+    BOSS = "Boss"
+    SHOP = "Shop"
+    EVENT = "Event"
+    BLIGHT = "Blight" 
+    CURSE = "Curse"

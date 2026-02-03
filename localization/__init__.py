@@ -85,12 +85,12 @@ class ConcatLocalStr(BaseLocalStr):
         return left_str + right_str
 
 class LocalStr(BaseLocalStr):
-    def __init__(self, key: str, fmt_dict: dict[str, Any] = {}):
+    def __init__(self, key: str, **kwargs: Any):
         self.key = key
-        self.fmt_dict = fmt_dict
+        self.kwargs = kwargs
 
     def resolve(self) -> str:
-        return t(self.key, **self.fmt_dict)
+        return t(self.key, **self.kwargs)
     
 class Localizable:
     """Provide localized fields via prefix + class name."""
@@ -107,9 +107,9 @@ class Localizable:
         """构建字段对应的本地化 key。"""
         return f"{self.localization_prefix}.{self.idstr}.{field}"
 
-    def local(self, field: str, fmt_dict: dict[str, Any] = {}) -> LocalStr:
+    def local(self, field: str, **kwargs: Any) -> LocalStr:
         """返回字段对应的本地化字符串对象。"""
-        return LocalStr(key=self._get_localized_key(field), fmt_dict=fmt_dict)
+        return LocalStr(key=self._get_localized_key(field), **kwargs)
     
     def has_local(self, field: str) -> bool:
         """检查是否存在字段对应的本地化 field。"""

@@ -5,15 +5,14 @@ ui:
   character_display: "Character: {character}"
   choose_enemy: "Choose an enemy:"
   select_prompt: "Choose (1-{count}): "
-  invalid_choice: "Invalid choice!"
+  invalid_option: "Invalid option!"
   invalid_number: "Please enter a valid number"
   choose_blessings: "Choose blessings"
-  blessing_choice: "Blessing {index}: {name}"
   potion_full_title: "Potion slots full"
   skip_potion: "Skip"
   replace_potion_option: "Replace {name}"
-  game_over: "Game Over! You have fallen in the Spire. =€"
-  game_won: "Congratulations! You have conquered the Spire! <‰"
+  game_over: "Game Over! You have fallen in the Spire. =ï¿½"
+  game_won: "Congratulations! You have conquered the Spire! <ï¿½"
 
 combat:
   deal_damage_enemy: "Deal {amount} damage to enemy"

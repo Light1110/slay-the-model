@@ -1,4 +1,5 @@
 from actions.base import Action
+from localization import t
 from utils.registry import register
 
 @register("action")
@@ -11,17 +12,14 @@ class ModifyMaxHpAction(Action):
     Optional:
         None
     """
-    REQUIRED_PARAMS = {
-        "amount": int,
-    }
-    OPTIONAL_PARAMS = {}
+    def __init__(self, amount: int):
+        self.amount = amount
     
     def execute(self):
         from engine.game_state import game_state
-        amount = self.kwargs.get('amount', 0)
         if game_state.player:
-            game_state.player.max_hp += amount
-            print(self.translate("ui.max_hp_changed", default=f"Max HP changed by {amount}!"))
+            game_state.player.max_hp += self.amount
+            print(t("ui.max_hp_changed", default=f"Max HP changed by {self.amount}!", amount=self.amount))
             
 @register("action")
 class LoseHpAction(Action):
@@ -33,13 +31,10 @@ class LoseHpAction(Action):
     Optional:
         None
     """
-    REQUIRED_PARAMS = {
-        "amount": int,
-    }
-    OPTIONAL_PARAMS = {}
+    def __init__(self, amount: int):
+        self.amount = amount
     
     def execute(self):
         from engine.game_state import game_state
-        amount = self.kwargs.get('amount', 0)
         if game_state.player:
-            game_state.player.hp -= amount
+            game_state.player.hp -= self.amount

@@ -2,8 +2,10 @@
 """
 Display-related actions
 """
+from typing import List
 from actions.base import Action
-from utils.parser import parse
+from localization import BaseLocalStr, t
+from utils.option import Option
 from utils.registry import register
 # 延迟导入以避免循环导入
 def get_game_state():
@@ -20,22 +22,21 @@ class DisplayTextAction(Action):
     Optional:
         None
     """
-    REQUIRED_PARAMS = {}
-    OPTIONAL_PARAMS = {
-        "text_key": (str, ""),
-    }
+    def __init__(self, text_key: str = "", **fmt):
+        self.text_key = text_key
+        self.fmt = fmt
 
     def execute(self):
-        text_key = self.kwargs.get('text_key', '')
-        text = self.translate(text_key, default=text_key)
+        text = t(self.text_key, default=self.text_key, **self.fmt)
         print(text)
 
 @register("action")
 class SelectAction(Action):
     """向用户展示选项并返回所选的动作列表。
-
-    选项格式：
-        - dict: {"name_key": str, "actions": list}
+    
+    参数：
+        title (BaseLocalStr): 选择标题的本地化键
+        options (List[Option]): 可供选择的选项列表
 
     自动化行为：
         - 仅有一个选项时可自动选择（AI 或配置允许时）
@@ -43,80 +44,56 @@ class SelectAction(Action):
         - AI 调试模式可自动选择第一项
     """
 
-    REQUIRED_PARAMS = {
-        "title_key": str,
-        "options": list,
-        "format_dict": dict | None,
-    }
-    OPTIONAL_PARAMS = {}
-    def __init__(self, title_key, options, format_dict, **kwargs):
-        super().__init__(**kwargs)
-        self.title_key = title_key
-        self.options = options  # List of dicts with 'name_key' and 'actions'
-        self.format_dict = format_dict or {}
-
-    def _normalize_options(self):
-        """将选项统一为 (name_key, actions) 元组列表。"""
-        normalized = []
-        for option in self.options:
-            if isinstance(option, dict):
-                normalized.append((option.get('name_key', ''), option.get('actions', [])))
-            elif isinstance(option, (list, tuple)) and len(option) == 2:
-                normalized.append(option)
-            else:
-                # Invalid format, skip or handle
-                normalized.append(('', []))
-        return normalized
+    def __init__(self, title : BaseLocalStr, options : List[Option]):
+        self.title = title
+        self.options = options
 
     def execute(self):
         """执行选择流程，返回需要执行的动作列表。"""
 
         # 1) 基础选项（不含"返回菜单"）
-        base_choices = self._normalize_options()
-        if len(base_choices) == 1:
+        if len(self.options) == 1:
             if get_game_state().config.get("mode") != "human":
-                _, action_list = base_choices[0]
+                action_list = self.options[0].actions
                 return action_list
             if bool(get_game_state().config.get("auto_select_single_option", False)):
-                _, action_list = base_choices[0]
+                action_list = self.options[0].actions
                 return action_list
-        if len(base_choices) == 0:
+        if len(self.options) == 0:
             return []
 
         # 2) 若为人类玩家，追加"返回菜单"选项
         # menu_action 内部可选择 return，将当前 SelectAction 插回队首
         # todo
-        from actions.menu import add_menu_choice_if_human
-        effective_choices = add_menu_choice_if_human(
-            base_choices,
+        from actions.menu import add_menu_option_if_human
+        effective_options = add_menu_option_if_human(
+            self.options,
             self,
         )
 
-        # 3) 展示标题与选项（翻译 title_key）
-        title = parse()
+        # 3) 展示标题与选项（翻译 name）
         if bool(get_game_state().config.get("show_menu", True)):
-            print(f"\n=== {title} ===")
-            for i, (title_key, _) in enumerate(effective_choices):
-                label = self.translate(title_key, default=title_key)
-                print(f"{i+1}. {label}")
+            print(f"\n=== {self.title} ===")
+            for i, option in enumerate(effective_options):
+                print(f"{i+1}. {option.name}")
 
         # 4) AI 调试模式可自动选择第一项
-        if effective_choices and bool(get_game_state().config.get("ai_debug", False)):
-            _, action_list = effective_choices[0]
+        if effective_options and bool(get_game_state().config.get("ai_debug", False)):
+            action_list = effective_options[0].actions
             return action_list
 
         # 5) 交互式选择
         while True:
             try:
-                prompt = self.translate(
+                prompt = t(
                     "ui.select_prompt",
-                    default=f"Choose (1-{len(effective_choices)}): ",
-                    count=len(effective_choices),
+                    default=f"Choose (1-{len(effective_options)}): ",
+                    count=len(effective_options),
                 )
-                choice = int(input(prompt)) - 1
-                if 0 <= choice < len(effective_choices):
-                    _, action_list = effective_choices[choice]
+                option = int(input(prompt)) - 1
+                if 0 <= option < len(effective_options):
+                    action_list = effective_options[option].actions
                     return action_list
-                print(self.translate("ui.invalid_choice", default="Invalid choice!"))
+                print(t("ui.invalid_option", default="Invalid option!"))
             except (ValueError, EOFError):
-                print(self.translate("ui.invalid_number", default="Please enter a valid number"))
+                print(t("ui.invalid_number", default="Please enter a valid number"))
