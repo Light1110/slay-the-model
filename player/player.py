@@ -24,7 +24,7 @@ class Player(Creature):
         # Initialize managers
         self.card_manager = CardManager(self.__class__.starting_deck)
         self.orb_manager = OrbManager(getattr(self.__class__, "orb_slots", 1))
-        self.status_manager = StatusManager("Calm")
+        self.status_manager = StatusManager("Neutral")
 
         # Stats
         self._gold = self.__class__.starting_gold

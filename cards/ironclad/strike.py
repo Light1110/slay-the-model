@@ -2,10 +2,10 @@
 Ironclad's Strike card
 """
 from cards.base import Card
-from cards.registry import register
+from utils.registry import register
 
 
-@register("ironclad")
+@register("card")
 class Strike(Card):
     """Deal damage"""
     

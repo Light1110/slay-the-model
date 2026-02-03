@@ -3,12 +3,7 @@ from actions import (
     action_queue,
     DisplayTextAction,
 )
-from utils.registry import get_registered
-import random
-import time
-
-# Import rooms to register them
-import rooms
+from utils.registry import get_registered_instance
 
 
 class GameFlow:
@@ -28,8 +23,7 @@ class GameFlow:
         ]
         action_queue.add_actions(setup_actions)
         # Start with neo room
-        neo_room_class = get_registered("room", "NeoRewardRoom")
-        neo_room = neo_room_class()
+        neo_room = get_registered_instance("room", "NeoRewardRoom")
         game_state.current_room = neo_room
         neo_room.enter_room()
 
@@ -52,3 +46,5 @@ class GameFlow:
             # If result is a list of actions, add them to queue
             elif isinstance(result, list):
                 action_queue.add_actions(result)
+                
+        

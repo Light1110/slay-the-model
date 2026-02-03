@@ -8,5 +8,14 @@ class TargetType(str, Enum):
     ENEMY_LOWEST_HP = "enemy_lowest_hp"
     ENEMY_ALL = "enemy_all"
 
+class PilePosType(str, Enum):
+    TOP = "top"
+    BOTTOM = "bottom"
+    RANDOM = "random"
 
-target_type = TargetType
+class StatusType(str, Enum):
+    NEUTRAL = "Neutral"
+    CALM = "Calm"
+    WRATH = "Wrath"
+    DIVINITY = "Divinity"
+    

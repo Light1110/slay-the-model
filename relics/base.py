@@ -1,4 +1,4 @@
-from utils.localizable import Localizable
+from localization import Localizable
 
 
 class Relic(Localizable):

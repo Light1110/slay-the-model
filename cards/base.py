@@ -4,11 +4,15 @@ Card base class - class-driven card system with namespace support
 from typing import Any, List
 from actions.base import Action
 from entities.creature import Creature
-from engine.game_state import game_state
+# 延迟导入以避免循环导入
+def get_game_state():
+    from engine.game_state import game_state
+    return game_state
 from utils.types import TargetType
-from cards.namespaces import get_color_for_namespace, _namespace_from_module
-from utils.localizable import Localizable
+from cards.namespaces import get_color_for_namespace, namespace_from_module
+from localization import Localizable
 from utils.parser import parse
+from localization import BaseLocalStr, LocalStr
 
 COST_X = -1
 COST_UNPLAYABLE = -2
@@ -16,8 +20,6 @@ COST_UNPLAYABLE = -2
 
 class Card(Localizable):
     """Advanced card class with dynamic values and multiple triggers"""
-
-    localization_prefix = "cards"
 
     # * card attributes
     card_type = "Attack"  # Attack, Skill, Power, Status, Curse
@@ -64,15 +66,14 @@ class Card(Localizable):
     def __init__(self):
         # ***** Basic card attributes with namespace support
         # Determine namespace from module path
-        self.namespace = _namespace_from_module(self.__class__.__module__)
+        self.namespace = namespace_from_module(self.__class__.__module__)
         
         # Set color based on namespace
         self.color = get_color_for_namespace(self.namespace)
         
         # Get class name as base name
-        self.base_name = self.__class__.__name__
-        self.display_name = self.get_localized_value("name")
-        self.description_template = self.get_localized_value("description")
+        self.display_name : BaseLocalStr = self.local("name")
+        self.description_template : BaseLocalStr = self.local("description")
         
         # ************************
 
@@ -92,28 +93,21 @@ class Card(Localizable):
         # Computed properties
         self.target_type = self._resolve_target()
         self.update_description()
+        
+    @property
+    def idstr(self) -> str:
+        """Card ID with namespace, e.g. 'Base.Strike'"""
+        return f"{self.namespace}.{self.__class__.__name__}"
  
     def __str__(self):
         """Display name for in-game use (without namespace)"""
-        cost = self.get_temp_value("cost")
-        if cost == COST_X:
-            cost_str = "X"
-        elif cost == COST_UNPLAYABLE:
-            cost_str = "-"
-        else:
-            cost_str = str(cost)
-        return f"{self.display_name} ({cost_str}) - {self.card_type}"
+        # todo
+        pass
     
     def __repr__(self):
         """Debug representation with namespace"""
-        cost = self.get_temp_value("cost")
-        if cost == COST_X:
-            cost_str = "X"
-        elif cost == COST_UNPLAYABLE:
-            cost_str = "-"
-        else:
-            cost_str = str(cost)
-        return f"{self.namespace}.{self.base_name}:{self.display_name} ({cost_str}) - {self.card_type}"
+        # todo
+        pass
     
     def _extract_base_values(self):
         """Extract base values from class attributes"""
@@ -163,7 +157,7 @@ class Card(Localizable):
     def recalculate_all_temp_values(self):
         """Modify a card value (for buffs/debuffs)"""
         for key, value in self.base_values.items():
-            self.recalculate_temp_value(key, value)     
+            self.recalculate_temp_value(key, value)
 
     def update_description(self):
         """Regenerate description based on current temp values"""
@@ -228,12 +222,12 @@ class Card(Localizable):
         if self.get_temp_value('cost') == COST_UNPLAYABLE:
             return False, "Unplayable card."
 
-        if not ignore_energy and game_state.player and hasattr(game_state.player, 'energy'):
+        if not ignore_energy and get_game_state().player and hasattr(get_game_state().player, 'energy'):
             cost = self.get_temp_value('cost')
             if cost == COST_X:
-                if game_state.player.energy <= 0:
+                if get_game_state().player.energy <= 0:
                     return False, "Not enough energy."
-            elif game_state.player.energy < cost:
+            elif get_game_state().player.energy < cost:
                 return False, "Not enough energy."
 
         return True, None
@@ -253,27 +247,22 @@ class Card(Localizable):
 
         # Update name with upgrade level
         if self.upgrade_level == 1:
-            self.display_name = f"{self.get_localized_value("name")}+"
+            self.display_name = self.local("name") + "+"
         else:
             # For cards that can be upgraded multiple times (like Searing Blow)
-            self.display_name = f"{self.get_localized_value("name")}+{self.upgrade_level}"
+            self.display_name = self.local("name") + f"+{self.upgrade_level}"
 
         # Apply upgrade effects
         self.apply_upgrade()
 
-        if self.has_localized_key("upgrade_description"):
-            self.description_template = self.get_localized_value("upgrade_description")
+        if self.has_local("upgrade_description"):
+            self.description_template = self.local("upgrade_description")
         else:
-            self.description_template = self.get_localized_value("description")
+            self.description_template = self.local("description")
         # Regenerate description with new values
         self.update_description()
 
-        print(self.translate(
-            "ui.card_upgraded",
-            default=f"Upgraded {self.display_name} (level {self.upgrade_level})",
-            card=self.display_name,
-            level=self.upgrade_level,
-        ))
+        # todo：打印信息
         return True
 
     def apply_upgrade(self):

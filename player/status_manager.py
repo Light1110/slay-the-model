@@ -1,42 +1,35 @@
 """Status management for the player."""
 
 from typing import Optional, TypeVar, Union
-
-Status = TypeVar('Status')
-StatusType = str
-
+from utils.types import StatusType
+# 延迟导入以避免循环导入
+def get_game_state():
+    from engine.game_state import game_state
+    return game_state
 
 class StatusManager:
     """Manages the player's status."""
 
-    def __init__(self, initial_status: str = "Calm") -> None:
+    def __init__(self, initial_status: StatusType = StatusType.NEUTRAL) -> None:
         self._status = initial_status
 
     @property
-    def status(self) -> str:
+    def status(self) -> StatusType:
         return self._status
 
     @status.setter
-    def status(self, value: str) -> None:
-        # Validate status is a non-empty string
-        if isinstance(value, str) and value.strip():
-            self._status = value.strip()
-        else:
-            self._status = "Calm"  # Default if invalid
+    def status(self, value: StatusType) -> None:
+        self._status = StatusType.NEUTRAL
 
-    def set_status(self, status: Union[Status, StatusType]) -> None:
-        """Set player's status."""
-        self.status = str(status)
-
-    def is_status(self, status: str) -> bool:
-        """Check if player has specific status."""
-        return self._status.lower() == status.lower()
-
-    def reset_to_calm(self) -> None:
-        """Reset status to calm."""
-        self.status = "Calm"
-
-    def get_status_effect(self) -> Optional[any]:
-        """Get effect associated with current status (placeholder)."""
-        # Status effects would typically be defined in a registry
-        return None
+    def change_to_status(self, new_status: StatusType) -> None:
+        """Change the player's status to a new status."""
+        if self._status == new_status:
+            return
+        if self._status == StatusType.CALM: # gain 2 energy when leaving Calm
+            player = get_game_state().player
+            player.energy += 2
+        if self._status == StatusType.DIVINITY: # gain 3 energy when entering Divinity
+            player = get_game_state().player
+            player.energy += 3
+        self._status = new_status
+        # todo: 重新更新一系列数据，比如玩家手牌的攻击力，怪物的攻击力

@@ -12,6 +12,8 @@ ui:
   potion_full_title: "Potion slots full"
   skip_potion: "Skip"
   replace_potion_option: "Replace {name}"
+  game_over: "Game Over! You have fallen in the Spire. =€"
+  game_won: "Congratulations! You have conquered the Spire! <‰"
 
 combat:
   deal_damage_enemy: "Deal {amount} damage to enemy"

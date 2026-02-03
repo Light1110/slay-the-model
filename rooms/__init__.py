@@ -1,2 +1,2 @@
-from .neo import NeoRewardRoom as NeoRoom
+from .neo import NeoRewardRoom
 from .combat import CombatRoom

@@ -60,3 +60,60 @@ def t(key: str, default: str | None = None, **kwargs) -> str:
     except (KeyError, ValueError):
         pass
     return trans
+
+class BaseLocalStr:
+    def resolve(self) -> str:
+        raise NotImplementedError
+
+    def __str__(self):
+        return self.resolve()
+
+    def __add__(self, other):
+        return ConcatLocalStr(self, other)
+
+    def __radd__(self, other):
+        return ConcatLocalStr(other, self)
+    
+class ConcatLocalStr(BaseLocalStr):
+    def __init__(self, left: Any, right: Any):
+        self.left = left
+        self.right = right
+
+    def resolve(self) -> str:
+        left_str = str(self.left) if not isinstance(self.left, BaseLocalStr) else self.left.resolve()
+        right_str = str(self.right) if not isinstance(self.right, BaseLocalStr) else self.right.resolve()
+        return left_str + right_str
+
+class LocalStr(BaseLocalStr):
+    def __init__(self, key: str, fmt_dict: dict[str, Any] = {}):
+        self.key = key
+        self.fmt_dict = fmt_dict
+
+    def resolve(self) -> str:
+        return t(self.key, **self.fmt_dict)
+    
+class Localizable:
+    """Provide localized fields via prefix + class name."""
+
+    localizable_fields: tuple[str, ...] = () # ("name", "description")
+    localization_prefix: str = ""
+    
+    @property
+    def idstr(self) -> str:
+        """返回类名作为 ID 字符串。"""
+        return self.__class__.__name__
+    
+    def _get_localized_key(self, field: str) -> str:
+        """构建字段对应的本地化 key。"""
+        return f"{self.localization_prefix}.{self.idstr}.{field}"
+
+    def local(self, field: str, fmt_dict: dict[str, Any] = {}) -> LocalStr:
+        """返回字段对应的本地化字符串对象。"""
+        return LocalStr(key=self._get_localized_key(field), fmt_dict=fmt_dict)
+    
+    def has_local(self, field: str) -> bool:
+        """检查是否存在字段对应的本地化 field。"""
+        # 简单检查是否存在翻译
+        key = self._get_localized_key(field)
+        translated = t(key, default=None)
+        return translated is not None and translated != key

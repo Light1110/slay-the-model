@@ -3,8 +3,12 @@
 Display-related actions
 """
 from actions.base import Action
+from utils.parser import parse
 from utils.registry import register
-from engine.game_state import game_state
+# 延迟导入以避免循环导入
+def get_game_state():
+    from engine.game_state import game_state
+    return game_state
 
 @register("action")
 class DisplayTextAction(Action):
@@ -31,8 +35,7 @@ class SelectAction(Action):
     """向用户展示选项并返回所选的动作列表。
 
     选项格式：
-        - dict: {"name": str, "actions": list}
-        - tuple/list: (description: str, action_list: list)
+        - dict: {"name_key": str, "actions": list}
 
     自动化行为：
         - 仅有一个选项时可自动选择（AI 或配置允许时）
@@ -41,21 +44,23 @@ class SelectAction(Action):
     """
 
     REQUIRED_PARAMS = {
-        "title": str,
+        "title_key": str,
         "options": list,
+        "format_dict": dict | None,
     }
     OPTIONAL_PARAMS = {}
-    def __init__(self, title, options, **kwargs):
+    def __init__(self, title_key, options, format_dict, **kwargs):
         super().__init__(**kwargs)
-        self.title = title
-        self.options = options  # List of dicts with 'name' and 'actions', or tuples (description, action_list)
+        self.title_key = title_key
+        self.options = options  # List of dicts with 'name_key' and 'actions'
+        self.format_dict = format_dict or {}
 
     def _normalize_options(self):
-        """将选项统一为 (name, actions) 元组列表。"""
+        """将选项统一为 (name_key, actions) 元组列表。"""
         normalized = []
         for option in self.options:
             if isinstance(option, dict):
-                normalized.append((option.get('name', ''), option.get('actions', [])))
+                normalized.append((option.get('name_key', ''), option.get('actions', [])))
             elif isinstance(option, (list, tuple)) and len(option) == 2:
                 normalized.append(option)
             else:
@@ -66,19 +71,19 @@ class SelectAction(Action):
     def execute(self):
         """执行选择流程，返回需要执行的动作列表。"""
 
-        # 1) 基础选项（不含“返回菜单”）
+        # 1) 基础选项（不含"返回菜单"）
         base_choices = self._normalize_options()
         if len(base_choices) == 1:
-            if game_state.config.get("mode") != "human":
+            if get_game_state().config.get("mode") != "human":
                 _, action_list = base_choices[0]
                 return action_list
-            if bool(game_state.config.get("auto_select_single_option", False)):
+            if bool(get_game_state().config.get("auto_select_single_option", False)):
                 _, action_list = base_choices[0]
                 return action_list
         if len(base_choices) == 0:
             return []
 
-        # 2) 若为人类玩家，追加“返回菜单”选项
+        # 2) 若为人类玩家，追加"返回菜单"选项
         # menu_action 内部可选择 return，将当前 SelectAction 插回队首
         # todo
         from actions.menu import add_menu_choice_if_human
@@ -87,16 +92,16 @@ class SelectAction(Action):
             self,
         )
 
-        # 3) 展示标题与选项
-        title = self.translate(self.title, default=self.title)
-        if bool(game_state.config.get("show_menu", True)):
+        # 3) 展示标题与选项（翻译 title_key）
+        title = parse()
+        if bool(get_game_state().config.get("show_menu", True)):
             print(f"\n=== {title} ===")
-            for i, (description, _) in enumerate(effective_choices):
-                label = description
+            for i, (title_key, _) in enumerate(effective_choices):
+                label = self.translate(title_key, default=title_key)
                 print(f"{i+1}. {label}")
 
         # 4) AI 调试模式可自动选择第一项
-        if effective_choices and bool(game_state.config.get("ai_debug", False)):
+        if effective_choices and bool(get_game_state().config.get("ai_debug", False)):
             _, action_list = effective_choices[0]
             return action_list
 

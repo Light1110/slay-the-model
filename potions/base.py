@@ -3,7 +3,7 @@ from typing import List
 from actions.base import Action
 from engine.game_state import game_state
 from entities.creature import Creature
-from utils.localizable import Localizable
+from localization import Localizable
 
 class Potion(Localizable):
     localization_prefix = "potions"

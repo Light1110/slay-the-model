@@ -2,7 +2,7 @@
 
 from typing import List, Optional, Callable, Any
 
-from utils.localizable import Localizable
+from localization import Localizable
 
 
 class Creature(Localizable):

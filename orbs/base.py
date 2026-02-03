@@ -1,7 +1,13 @@
-from engine.game_state import game_state
-from player.player import Player
+# ößüeåMª¯üe
+def get_game_state():
+    from engine.game_state import game_state
+    return game_state
+
+def get_player():
+    from player.player import Player
+    return Player
 from utils.types import TargetType
-from utils.localizable import Localizable
+from localization import Localizable
 
 class Orb(Localizable):
     localization_prefix = "orbs"

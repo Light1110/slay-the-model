@@ -39,16 +39,16 @@ class NeoBlessingStage(EventStage):
         max_hp_small_increase = game_stats.neow_max_hp_small_increases.get(game_state.player.character, 0)
         action_queue.add_action(
             SelectAction(
-                title = "ui.choose_blessings",
+                title_key = "ui.choose_blessings",
                 options = [
                     {
-                        "name": self.translate("blessing.max_hp_option", default=f"Max HP +{max_hp_small_increase}"),
+                        "name_key": "blessing.max_hp_option",
                         "actions": [
                             ModifyMaxHpAction(amount=max_hp_small_increase),
                         ]
                     },
                     {
-                        "name": self.translate("blessing.neow_option", default="Neow's Blessing (1HP enemies for 3 combats)"),
+                        "name_key": "blessing.neow_option",
                         "actions": [
                             AddRelicAction(relic="Neow's Blessing"),
                         ]
@@ -65,37 +65,37 @@ class NeoBlessingStage(EventStage):
         
         card_blessings = [
             {
-                "name": self.translate("blessing.remove_card_option", default="Remove a card"),
+                "name_key": "blessing.remove_card_option",
                 "actions": [
                     ChooseRemoveCardAction(pile="deck", amount=1),
                 ]
             },
             {
-                "name": self.translate("blessing.transform_card_option", default="Transform a card"),
+                "name_key": "blessing.transform_card_option",
                 "actions": [
                     ChooseTransformCardAction(pile="deck", amount=1),
                 ]
             },
             {
-                "name": self.translate("blessing.upgrade_card_option", default="Upgrade a card"),
+                "name_key": "blessing.upgrade_card_option",
                 "actions": [
                     ChooseUpgradeCardAction(pile="deck", amount=1),
                 ]
             },
             {
-                "name": self.translate("blessing.choose_card_option", default="Choose a card to obtain"),
+                "name_key": "blessing.choose_card_option",
                 "actions": [
                     ChooseCardAction(pile="deck", total=3, card_type=game_state.player.character, rarity=None),
                 ]
             },
             {
-                "name": self.translate("blessing.uncommon_colorless_option", default="Obtain an uncommon colorless card"),
+                "name_key": "blessing.uncommon_colorless_option",
                 "actions": [
                     ChooseCardAction(pile="deck", total=3, card_type="colorless", rarity="uncommon"),
                 ]
             },
             {
-                "name": self.translate("blessing.random_rare_card_option", default="Obtain a random rare card"),
+                "name_key": "blessing.random_rare_card_option",
                 "actions": [
                     ObtainRandomCardAction(pile="deck", card_type=game_state.player.character, rarity="rare"),
                 ]
@@ -104,31 +104,31 @@ class NeoBlessingStage(EventStage):
 
         non_card_blessings = [
             {
-                "name": self.translate("blessing.max_hp_option", default=f"Max HP +{max_hp_small_increase}"),
+                "name_key": "blessing.max_hp_option",
                 "actions": [
                     ModifyMaxHpAction(amount=max_hp_small_increase),
                 ]
             },
             {
-                "name": self.translate("blessing.neow_option", default="Neow's Blessing (1HP enemies for 3 combats)"),
+                "name_key": "blessing.neow_option",
                 "actions": [
                     AddRelicAction(relic="Neow's Blessing"),
                 ]
             },
             {
-                "name": self.translate("blessing.random_common_relic_option", default="Obtain a random common relic"),
+                "name_key": "blessing.random_common_relic_option",
                 "actions": [
                     AddRandomRelicAction(rarity="common"),
                 ]
             },
             {
-                "name": self.translate("blessing.receive_100_gold_option", default="Receive 100 gold"),
+                "name_key": "blessing.receive_100_gold_option",
                 "actions": [
                     AddGoldAction(amount=100),
                 ]
             },
             {
-                "name": self.translate("blessing.three_random_potions_option", default="Obtain 3 random potions"),
+                "name_key": "blessing.three_random_potions_option",
                 "actions": [
                     AddRandomPotionAction(),
                     AddRandomPotionAction(),
@@ -139,25 +139,25 @@ class NeoBlessingStage(EventStage):
         
         disadvantage_blessings = [
             {
-                "name": self.translate("blessing.lose_max_hp_option", default="Max HP -{max_hp_small_decrease}"),
+                "name_key": "blessing.lose_max_hp_option",
                 "actions": [
                     ModifyMaxHpAction(amount=-max_hp_small_decrease),
                 ]
             },
             {
-                "name": self.translate("blessing.take_damage_option", default="Take damage"),
+                "name_key": "blessing.take_damage_option",
                 "actions": [
                     LoseHpAction(amount=damage_taken),
                 ]
             },
             {
-                "name": self.translate("blessing.obtian_curse_option", default="Obtain a curse"),
+                "name_key": "blessing.obtian_curse_option",
                 "actions": [
                     ObtainRandomCardAction(pile="deck", card_type="curse", rarity=None),
                 ]
             },
             {
-                "name": self.translate("blessing.lose_all_gold_option", default="Lose all gold"),
+                "name_key": "blessing.lose_all_gold_option",
                 "actions": [
                     LoseGoldAction(amount=game_state.player.gold),
                 ]
@@ -166,43 +166,43 @@ class NeoBlessingStage(EventStage):
         
         advantage_blessings = [
             {
-                "name": self.translate("blessing.remove_two_cards_option", default="Remove two cards"),
+                "name_key": "blessing.remove_two_cards_option",
                 "actions": [
                     ChooseRemoveCardAction(pile="deck", amount=2),
                 ]
             },
             {
-                "name": self.translate("blessing.transform_two_cards_option", default="Transform two cards"),
+                "name_key": "blessing.transform_two_cards_option",
                 "actions": [
                     ChooseTransformCardAction(pile="deck", amount=2),
                 ]
             },
             {
-                "name": self.translate("blessing.gain_250_gold_option", default="Gain 250 gold"),
+                "name_key": "blessing.gain_250_gold_option",
                 "actions": [
                     AddGoldAction(amount=250),
                 ]
             },
             {
-                "name": self.translate("blessing.choose_rare_card_option", default="Choose a rare card to obtain"),
+                "name_key": "blessing.choose_rare_card_option",
                 "actions": [
                     ChooseCardAction(pile="deck", total=3, card_type=game_state.player.character, rarity="rare"),
                 ]
             },
             {
-                "name": self.translate("blessing.choose_rare_colorless_card_option", default="Choose a rare colorless card to obtain"),
+                "name_key": "blessing.choose_rare_colorless_card_option",
                 "actions": [
                     ChooseCardAction(pile="deck", total=3, card_type="colorless", rarity="rare"),
                 ]
             },
             {
-                "name": self.translate("blessing.random_rare_relic_option", default="Obtain a random rare relic"),
+                "name_key": "blessing.random_rare_relic_option",
                 "actions": [
                     AddRandomRelicAction(rarity="rare"),
                 ]
             },
             {
-                "name": self.translate("blessing.big_max_hp_option", default=f"Max HP +{max_hp_large_increase}"),
+                "name_key": "blessing.big_max_hp_option",
                 "actions": [
                     ModifyMaxHpAction(amount=max_hp_large_increase),
                 ]
@@ -222,12 +222,12 @@ class NeoBlessingStage(EventStage):
         disadvantage_blessing = disadvantage_blessings[disadvantage_blessing_idx]
         advantage_blessing = advantage_blessings[advantage_blessing_idx]
         mixed_blessing = {
-            "name": disadvantage_blessing["name"] + " + " + advantage_blessing["name"],
-            "actions": disadvantage_blessing["actions"] + advantage_blessing["actions"]
+            "name_key": disadvantage_blessing["name_key"] + " + " + advantage_blessing["name_key"],
+            "actions": disadvantage_blessing["name_key"] + advantage_blessing["name_key"]
         }
 
         relic_blessing = {
-            "name": self.translate("blessing.replace_starter_relic_option", default="Replace starter relic with random boss relic"),
+            "name_key": "blessing.replace_starter_relic_option",
             "actions": [
                 LoseRelicAction(name = game_state.player.relics[0].name),
                 AddRandomRelicAction(rarity="boss"),
@@ -236,7 +236,7 @@ class NeoBlessingStage(EventStage):
         
         action_queue.add_action(
             SelectAction(
-                title = "ui.choose_blessings",
+                title_key = "ui.choose_blessings",
                 options = [card_blessing, non_card_blessing, mixed_blessing, relic_blessing],
             )
         )

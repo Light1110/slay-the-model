@@ -1,8 +1,7 @@
 """
 Base action system
 """
-from engine.game_state import game_state
-from utils.localizable import Localizable
+from localization import Localizable
 
 from enum import Enum
 
@@ -16,6 +15,11 @@ class Action(Localizable):
         # Remaining kwargs stored for action use
         self.kwargs = kwargs
         self._validate_params()
+        
+    def translate(self, key: str, default: str | None = None, **kwargs) -> str:
+        """Translate a key using localization system."""
+        from localization import t
+        return t(key, default, **kwargs)
 
     def _validate_params(self):
         """Validate required params and inject optional defaults"""
@@ -64,8 +68,12 @@ class ActionQueue:
         """Execute next action in queue and return result"""
         if self.queue:
             action = self.queue.pop(0)
-            if game_state.config.debug:
-                print(f"Executing action: {action}")
+            try:
+                from engine.game_state import game_state
+                if game_state.config.debug:
+                    print(f"Executing action: {action}")
+            except ImportError:
+                pass  # Debug mode not available
             result = action.execute()
             return result
         return None

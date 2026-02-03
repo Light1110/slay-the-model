@@ -2,7 +2,7 @@
 Base event definitions for the new architecture.
 """
 from engine.game_state import game_state
-from utils.localizable import Localizable
+from localization import Localizable
 class Event(Localizable):
     """Base event class - contains multiple stages"""
 

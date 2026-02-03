@@ -1,5 +1,5 @@
 from actions.base import Action
-from utils.registry import register
+from utils.registry import register, get_registered, list_registered
 
 @register("action")
 class CreateRandomCardAction(Action):
