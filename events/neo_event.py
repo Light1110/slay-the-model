@@ -111,7 +111,7 @@ class NeoBlessingStage(EventStage):
             ),
             Option(name = LocalStr("blessing.random_common_relic_option"),
                 actions = [
-                    AddRandomRelicAction(rarity=RarityType.COMMON),
+                    AddRandomRelicAction(rarities=[RarityType.COMMON]),
                 ]
             ),
             Option(name = LocalStr("blessing.receive_100_gold_option"),
@@ -179,7 +179,7 @@ class NeoBlessingStage(EventStage):
             ),
             Option(name = LocalStr("blessing.random_rare_relic_option"),
                 actions = [
-                    AddRandomRelicAction(rarity=RarityType.RARE),
+                    AddRandomRelicAction(rarities=[RarityType.RARE]),
                 ]
             ),
             Option(name = LocalStr("blessing.big_max_hp_option"),
@@ -210,7 +210,7 @@ class NeoBlessingStage(EventStage):
             name = LocalStr("blessing.replace_starter_relic_option"),
             actions = [
                 LoseRelicAction(relic = game_state.player.relics[0]),
-                AddRandomRelicAction(rarity=RarityType.BOSS),
+                AddRandomRelicAction(rarities=[RarityType.BOSS]),
             ]
         )
         

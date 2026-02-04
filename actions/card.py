@@ -68,12 +68,11 @@ class TransformCardAction(Action):
         from actions import action_queue
         namespace = self.card.namespace # ??
         
-        action_queue.add_action(
-            RemoveCardAction(self.card, self.pile, reason=self.reason or 'Unknown'),
-            to_front=True
-        )
-        action_queue.add_action(
-            AddCardAction(card=get_random_card(namespaces=[namespace]), dest_pile=self.pile),
+        action_queue.add_actions(
+            [
+                RemoveCardAction(self.card, self.pile, reason=self.reason or 'Unknown'),
+                AddCardAction(card=get_random_card(namespaces=[namespace]), dest_pile=self.pile),
+            ],
             to_front=True
         )
 

@@ -306,7 +306,7 @@ class MapManager:
     
     def _create_room_instance(self, room_type: RoomType):
         """
-        Create a Room instance based on the room type.
+        Create a Room instance based on room type.
         
         The room content is determined by the game state, not stored in the map.
         
@@ -319,6 +319,9 @@ class MapManager:
         # Import here to avoid circular dependency
         from rooms.base import Room
         from rooms.combat import CombatRoom
+        from rooms.rest import RestRoom
+        from rooms.shop import ShopRoom
+        from rooms.treasure import TreasureRoom
         
         if room_type == RoomType.MONSTER:
             # TODO: Get monster encounter from game state
@@ -330,7 +333,16 @@ class MapManager:
         
         elif room_type == RoomType.BOSS:
             # TODO: Get boss encounter from game state
-            return CombatRoom(enemies=[], is_boss=True)
+            return TreasureRoom(is_boss=True)
+        
+        elif room_type == RoomType.REST:
+            return RestRoom()
+        
+        elif room_type == RoomType.MERCHANT:
+            return ShopRoom()
+        
+        elif room_type == RoomType.TREASURE:
+            return TreasureRoom()
         
         elif room_type == RoomType.UNKNOWN:
             # Resolve unknown room type
@@ -338,9 +350,7 @@ class MapManager:
             return self._create_room_instance(actual_type)
         
         else:
-            # Other room types (REST, MERCHANT, TREASURE)
-            # TODO: Implement these room types
-            # For now, return a basic Room
+            # Fallback to basic Room
             return Room()
     
     def display_map_for_human(self):

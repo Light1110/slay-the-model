@@ -18,6 +18,8 @@ from actions.misc import (
     StartEventAction,
 )
 from actions.card import RemoveCardAction
+from actions.shop import BuyItemAction, CardRemovalAction, LeaveShopAction
+from actions.treasure import OpenChestAction, SkipTreasureAction
 
 # Global action queue
 
@@ -28,8 +30,15 @@ __all__ = [
     # Display actions
     'DisplayTextAction', 'SelectAction',
 
-    # Misc actions'GenerateMapAction', 'StartEventAction',
+    # Misc actions
+    'GenerateMapAction', 'StartEventAction',
 
     # Card actions
     'RemoveCardAction',
+
+    # Shop actions
+    'BuyItemAction', 'CardRemovalAction', 'LeaveShopAction',
+
+    # Treasure actions
+    'OpenChestAction', 'SkipTreasureAction',
 ]

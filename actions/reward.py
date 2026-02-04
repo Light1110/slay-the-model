@@ -32,18 +32,18 @@ class AddRandomRelicAction(Action):
     """Add a random relic to player
     
     Required:
-        rarity (RarityType): Relic rarity
+        rarities (List[RarityType]): Relic rarity
         
     Optional:
         None
     """
-    def __init__(self, rarity: RarityType):
-        self.rarity = rarity
+    def __init__(self, rarities: List[RarityType]):
+        self.rarities = rarities
     
     def execute(self):
         from engine.game_state import game_state
-        if self.rarity and game_state.player:
-            relic = get_random_relic(rarities=[self.rarity])
+        if self.rarities and game_state.player:
+            relic = get_random_relic(rarities=self.rarities)
             if relic:
                 game_state.player.relics.append(relic)
                 print(t("ui.received_relic", default=f"Received relic: {relic.name}!", name=relic.name))
