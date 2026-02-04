@@ -2,7 +2,7 @@
 Localization module for multi-language support.
 """
 import os
-from typing import Dict, Any
+from typing import Dict, Any, Tuple
 import yaml
 
 # Default language
@@ -49,7 +49,7 @@ def set_language(lang: str):
     if lang in translations:
         current_language = lang
 
-def t(key: str, default: str | None = None, **kwargs) -> str:
+def t(key: str, default: Any = None, **kwargs) -> str:
     """Translate a key."""
     trans = translations.get(current_language, {}).get(key)
     if trans is None:
@@ -95,7 +95,7 @@ class LocalStr(BaseLocalStr):
 class Localizable:
     """Provide localized fields via prefix + class name."""
 
-    localizable_fields: tuple[str, ...] = () # ("name", "description")
+    localizable_fields: Tuple[str, ...] = () # ("name", "description")
     localization_prefix: str = ""
     
     @property

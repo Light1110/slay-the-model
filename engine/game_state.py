@@ -12,10 +12,9 @@ class GameState:
     """Global game state containing all persistent game data"""
 
     def __init__(self):
-        # Map data
-        self.map_data = []
-        self.map_connections = {}
-        self.current_position = [0, 0]
+        # Map system
+        self.map_manager = None
+        self.map_data = None
 
         # Game progress
         self.current_floor = 0
@@ -61,6 +60,16 @@ class GameState:
         """Handle creature death notifications."""
         if creature is self.player:
             self.game_phase = "game_over"
+    
+    def initialize_map(self):
+        """Initialize the map system and generate the first act."""
+        from map import MapManager
+        
+        self.map_manager = MapManager(self.config.seed, act_id=1)
+        self.map_data = self.map_manager.generate_map()
+        
+        # Set game phase to map
+        self.game_phase = "map"
 
     @property
     def current_event(self):

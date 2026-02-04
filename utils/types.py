@@ -37,3 +37,12 @@ class RarityType(str, Enum):
     EVENT = "Event"
     BLIGHT = "Blight" 
     CURSE = "Curse"
+
+class RoomType(str, Enum):
+    MONSTER = "Monster"
+    ELITE = "Elite"
+    REST = "Rest Site"
+    MERCHANT = "Merchant"
+    UNKNOWN = "Unknown"
+    TREASURE = "Treasure"
+    BOSS = "Boss"
