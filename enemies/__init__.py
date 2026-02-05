@@ -12,8 +12,6 @@ from .fungi_beast import FungiBeast
 # Boss Enemies
 from .the_guardian import TheGuardian
 from .slime_boss import SlimeBoss
-
-# Final Boss
 from .the_hexaghost import TheHexaghost
 
 # Export all enemies
