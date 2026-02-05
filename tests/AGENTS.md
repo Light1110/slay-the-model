@@ -1,43 +1,119 @@
-# TESTS
+# PROJECT KNOWLEDGE BASE - TESTS MODULE
 
-**Generated:** 2025-02-05 02:05:00
-**Commit:** 9106d4e
+**Generated:** 2026-02-05 03:05:00
+**Commit:** 8593596
 **Branch:** main
 
 ## OVERVIEW
-Mixed framework test suite covering event pool registration, map generation algorithms, room creation, and unknown room mechanics with relic modifiers.
+Mixed test framework with unittest and pytest patterns.
+
+## STRUCTURE
+```
+tests/
+├── test_event_pool.py       # Event pool registration and selection
+├── test_map_system.py         # Map generation and structure
+├── test_map_selection.py       # Room selection AI
+├── test_map_core.py            # MapNode/MapData structure
+├── test_no_crossing.py          # Path collision detection
+├── test_rooms.py              # Room implementations (Rest, Shop, Treasure)
+├── test_enemies.py             # Enemy implementations (5 enemies)
+├── test_rest_room.py          # RestRoom basic tests
+├── test_treasure_room.py       # TreasureRoom basic tests
+├── test_shop_room.py          # ShopRoom basic tests
+└── test_unknown_room.py         # UnknownRoom basic tests
+```
 
 ## WHERE TO LOOK
 
 | Task | Location | Notes |
 |-------|-----------|--------|
-| Event pool registration | test_event_pool.py | unittest, floor filtering, unique events, decorator |
-| Map generation/selection | test_map_system.py, test_map_selection.py | Custom main(), distribution testing, AI context |
-| Room instantiation | test_rooms.py | pytest, Rest/Shop/Treasure rooms, chest probabilities |
-| Unknown room mechanics | test_unknown_rooms.py | Relic modifiers (Tiny Chest, Juzu Bracelet) |
-| Core map data | test_map_core.py | MapNode, MapData without Room dependencies |
-| No-crossing logic | test_no_crossing.py | Branch path collision detection |
+| Event tests | test_event_pool.py | @register decorator, unique events |
+| Map tests | test_map_system.py | Map generation, node connections |
+| Room tests | test_rooms.py | Rest, Shop, Treasure room functionality |
+| Enemy tests | test_enemies.py | Weak/elite/boss, damage calculation |
+| Test framework | Mixed | unittest (setUp/tearDown) and pytest (class-based) |
+
+## TEST FRAMEWORKS
+
+### unittest Pattern
+
+```python
+# test_event_pool.py (lines 20-45)
+class TestEventPool(unittest.TestCase):
+    def setUp(self):
+        from events.event_pool import event_pool
+        self.event_pool = event_pool
+        self.original_events = len(event_pool._event_registry.copy())
+    
+    def tearDown(self):
+        from events.event_pool import event_pool
+        event_pool._event_registry = self.original_events.copy()
+```
+
+### pytest Pattern
+
+```python
+# test_enemies.py (lines 16-47)
+class TestEnemies(unittest.TestCase):
+    def test_cultist_weak(self):
+        enemy = Cultist()
+        assert enemy.weak
+        assert enemy.max_hp == 24
+    
+    # Pytest class-based tests
+class TestRestRoomBasic:
+    def test_rest_room_creation(self):
+        rest_room = RestRoom()
+        assert rest_room.room_type.value == "Rest Site"
+```
+
+### Custom Test Patterns
+
+```python
+# test_map_system.py (main() function)
+def test_generate_small_map():
+    map_manager = MapManager(seed=12345)
+    map_manager.generate_map()
+    # Check map structure
+```
+
+**MockAIDecisionEngine** (ai/ai_interface.py: 45 lines)
+- Used in map selection tests
+- Provides: first(), last(), random(), least_risk(), highest_reward() strategies
 
 ## CONVENTIONS
 
-**Framework Mix:**
-- test_event_pool.py: unittest.TestCase setUp/tearDown pattern
-- test_rooms.py: pytest with class-based TestX groups
-- Map tests (test_map_*.py): Custom main() with sys.exit() and print debugging
+**Test Organization:**
+- test_rooms.py: Multiple room tests in one file (Rest, Shop, Treasure)
+- Separate test files for each complex component (test_enemies.py, test_rest_room.py, etc.)
+- test_unknown_rooms.py contains tests for Tiny Chest and Juzu Bracelet relics (not working due to missing methods)
 
-**Mock Patterns:**
-- MockEvent: Event with trigger() returning None
-- MockAIDecisionEngine: Simulates AI strategies (first/last/random/least_risk/highest_reward)
+**Test Coverage:**
+- Event pool: Registration, unique events, floor filtering
+- Map system: Generation, path existence, room selection
+- Rooms: Basic functionality without special relics
+- Enemies: 5 implementations with modifiers
 
-**Running Tests:**
+## ANTI-PATTERNS (THIS PROJECT)
+- NEVER: Direct player state access in tests - create test instances
+- NEVER: Mock game_state.player - use dependency injection
+- NEVER: Test implementations in production modules (tests/ only)
+- NEVER: Skip setUp/tearDown in unittest - proper setup/teardown
+
+## COMMANDS
 ```bash
-pytest tests/test_rooms.py -v        # pytest files
-python tests/test_event_pool.py      # unittest files
-python tests/test_map_system.py      # custom main() scripts
+# Run all tests
+pytest tests/ -v                             # All tests
+pytest tests/test_event_pool.py -v          # Specific module tests
+pytest tests/test_enemies.py -v              # Enemy tests
+pytest tests/test_rooms.py -v                # Room tests
+pytest tests/test_rest_room.py -v          # RestRoom tests
+pytest tests/test_treasure_room.py -v       # TreasureRoom tests
+pytest tests/test_shop_room.py -v          # ShopRoom tests
+pytest tests/test_unknown_room.py -v        # UnknownRoom tests
 ```
 
-## ANTI-PATTERNS
-
-- test_map_selection_simple.py, test_map_standalone.py: Empty/placeholder files without test cases
-- Property-based testing: Not using hypothesis despite complex map probabilities
-- MockAIDecisionEngine: Single file import path varies (ai.ai_interface vs from ai_tools)
+## NOTES
+- MockAIDecisionEngine provides test AI strategies for map selection
+- pytest cache directory (.pytest_cache/) may affect test behavior
+- Tests verify core functionality without complex scenarios
