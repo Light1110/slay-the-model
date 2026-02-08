@@ -2,7 +2,7 @@
 Event pool system for managing available events.
 
 This module provides a centralized registry and management system
-for all game events, allowing UnknownRooms to select events
+for all game events, allowing EventRooms to select events
 based on configurable rules and weights.
 """
 import random

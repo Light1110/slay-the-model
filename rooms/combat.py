@@ -4,6 +4,7 @@ Combat room implementation - manages Combat instance execution.
 from typing import TYPE_CHECKING
 
 from actions.display import DisplayTextAction
+from utils.result_types import NoneResult
 from actions.reward import AddGoldAction, AddRandomPotionAction
 from actions.card import AddCardAction, AddRandomCardAction
 from utils.result_types import GameStateResult
@@ -11,10 +12,6 @@ from engine.combat import Combat
 from rooms.base import Room, BaseResult
 from utils.registry import register
 from utils.types import RoomType, RarityType, CardType
-
-if TYPE_CHECKING:
-    from engine.game_state import game_state
-
 
 @register("room")
 class CombatRoom(Room):
@@ -32,16 +29,11 @@ class CombatRoom(Room):
         """Initialize the combat instance"""
         self.combat = Combat(
             enemies=self.enemies,
-            is_elite=self.is_elite,
-            is_boss=self.is_boss
         )
     
     def enter(self) -> BaseResult:
         """Enter combat room and execute combat"""
-        if TYPE_CHECKING:
-            from engine.game_state import game_state
-        else:
-            from engine.game_state import game_state
+        from engine.game_state import game_state
 
         # Display room entry message
         if self.is_boss:
@@ -58,20 +50,18 @@ class CombatRoom(Room):
             ))
 
         # Execute combat
+        assert self.combat is not None
         result = self.combat.start()
         
         # Handle combat result
-        if result == "WIN":
+        if result.result_type == "COMBAT_WIN":
             self._handle_victory()
-        elif result == "DEATH":
-            # Death is handled by game flow
-            pass
+        # ESCAPE：没有reward
         
-        # Convert string result to BaseResult
-        if result in ("DEATH", "WIN"):
-            return GameStateResult(result)
+        if result.result_type == "GAME_LOSE":
+            return result
         else:
-            return NoneResult()
+            return game_state.execute_all_actions()
     
     def leave(self):
         """Leave the combat room"""
@@ -82,10 +72,7 @@ class CombatRoom(Room):
     
     def _handle_victory(self):
         """Handle combat victory - add rewards"""
-        if TYPE_CHECKING:
-            from engine.game_state import game_state
-        else:
-            from engine.game_state import game_state
+        from engine.game_state import game_state
 
         # Calculate gold reward
         gold_amount = self._calculate_gold_reward()
@@ -118,6 +105,7 @@ class CombatRoom(Room):
         Returns:
             Gold amount to award
         """
+        # todo: 价格波动
         if self.is_boss:
             return 150  # Base boss gold
         elif self.is_elite:

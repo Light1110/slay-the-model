@@ -33,8 +33,6 @@ class CombatState:
 
         # enemies
         self.enemies: list = []
-        self.is_elite = False
-        self.is_boss = False
 
         # Blood for Blood tracking
         self.blood_for_blood_hits: int = 0

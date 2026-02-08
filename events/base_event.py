@@ -31,11 +31,6 @@ class Event(Localizable):
 
         Returns:
             BaseResult: The result of this event.
-                NoneResult: Event completed with no follow-up
-                SingleActionResult: One action to queue next
-                MultipleActionsResult: Multiple actions to queue next
-                SelectActionResult: UI selection needed
-                GameStateResult: Game state transition (DEATH/WIN)
         """
         from utils.result_types import NoneResult
         raise NotImplementedError(f"{self.__class__.__name__} must implement trigger()")
@@ -46,51 +41,3 @@ class Event(Localizable):
     
     def __str__(self):
         return f"{self.__class__.__name__}()"
-
-
-class CombatEvent(Event):
-    """
-    Base class for events that trigger combat.
-    
-    These events lead to combat encounters and then
-    return to normal gameplay.
-    """
-    
-    def __init__(self, enemies=None, is_elite=False, **kwargs):
-        super().__init__(**kwargs)
-        self.enemies = enemies or []
-        self.is_elite = is_elite
-    
-    def trigger(self) -> 'BaseResult':
-        """Trigger combat event"""
-        from engine.combat import Combat
-        from actions.display import DisplayTextAction
-        from utils.result_types import GameStateResult
-
-        # Display event description
-        game_state.action_queue.add_action(DisplayTextAction(
-            text_key=f"events.{self.__class__.__name__}.description"
-        ))
-
-        # Create and start combat
-        combat = Combat(
-            enemies=self.enemies,
-            is_elite=self.is_elite
-        )
-
-        result = combat.start()
-
-        # Handle combat result
-        if result == "WIN":
-            self._handle_victory()
-        elif result == "DEATH":
-            # Death is handled by game flow
-            pass
-
-        # Convert string result to GameStateResult
-        return GameStateResult(result)
-    
-    def _handle_victory(self):
-        """Handle combat victory - add event-specific rewards"""
-        # Subclasses can override to add custom rewards
-        pass

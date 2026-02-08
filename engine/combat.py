@@ -4,31 +4,28 @@ Can be triggered by CombatRoom or Events.
 Uses global action queue for action management.
 """
 from actions.display import DisplayTextAction
+from utils.result_types import GameStateResult
 from localization import Localizable
 
 
 class Combat(Localizable):
     """
     Combat logic class - handles combat independently from room system.
-    
+
     Can be triggered by:
     - CombatRoom (normal battles)
     - Events (event-based combat)
-    Uses the global action queue from game_state for action management.
+    Uses global action queue from game_state for action management.
     """
-    
-    def __init__(self, enemies: list, is_elite: bool = False, is_boss: bool = False):
+
+    def __init__(self, enemies: list):
         """
         Initialize combat.
-        
+
         Args:
             enemies: List of enemy instances
-            is_elite: Whether this is an elite battle
-            is_boss: Whether this is a boss battle
         """
         self.enemies = enemies or []
-        self.is_elite = is_elite
-        self.is_boss = is_boss
         
         # Combat control flags
         self.combat_ended = False
@@ -36,29 +33,24 @@ class Combat(Localizable):
         
         # Localization
         self.localization_prefix = "combat"
-    
-    def start(self) -> str:
+
+    def start(self) -> GameStateResult:
         """
         Start combat execution.
-        
+
         Returns:
-            Execution result: None/"DEATH"/"WIN"
+            Execution result: WIN / LOSE / ESCAPE
         """
         from engine.game_state import game_state
-        
+
         # Initialize combat state
         self._init_combat()
-        
+
         # Display combat start message
-        if self.is_boss:
-            text_key = "combat.boss_enter"
-        elif self.is_elite:
-            text_key = "combat.elite_enter"
-        else:
-            text_key = "combat.enter"
-        
-        game_state.action_queue.add_action(DisplayTextAction(text_key=text_key))
-        
+        game_state.action_queue.add_action(DisplayTextAction(
+            text_key="combat.enter"
+        ))
+
         # Combat main loop
         while not self.combat_ended:
             # Build turn actions
@@ -71,8 +63,13 @@ class Combat(Localizable):
             if result in ("DEATH", "WIN"):
                 # Result is already GameStateResult from combat loop
                 if isinstance(result, str):
-                    from utils.result_types import GameStateResult
-                    return GameStateResult(result)
+                    if result == "WIN":
+                        return GameStateResult("COMBAT_WIN")
+                    elif result == "DEATH":
+                        return GameStateResult("GAME_LOSE")
+                    else:
+                        from utils.result_types import GameStateResult
+                        return GameStateResult(result)
                 else:
                     return result
         
@@ -84,8 +81,6 @@ class Combat(Localizable):
         # Reset and setup combat state
         game_state.combat_state.reset_combat_info()
         game_state.combat_state.enemies = self.enemies
-        game_state.combat_state.is_elite = self.is_elite
-        game_state.combat_state.is_boss = self.is_boss
 
         # Reset combat flags
         self.combat_ended = False
@@ -250,9 +245,9 @@ class Combat(Localizable):
         
         # Check win/lose conditions
         if game_state.player.is_dead():
-            return "DEATH"
+            return GameStateResult("GAME_LOSE")
         if all(enemy.is_dead() for enemy in self.enemies):
-            return "WIN"
+            return GameStateResult("COMBAT_WIN")
         
         # Start new player turn
         self._start_player_turn()
@@ -271,7 +266,12 @@ class Combat(Localizable):
             # Check for special return values
             if result in ("DEATH", "WIN"):
                 self.combat_ended = True
-                return result
+                if result == "WIN":
+                    return GameStateResult("COMBAT_WIN")
+                elif result == "DEATH":
+                    return GameStateResult("GAME_LOSE")
+                else:
+                    return result
             
             # Handle phase transitions
             combat_state = game_state.combat_state
@@ -284,9 +284,9 @@ class Combat(Localizable):
             elif combat_state.current_phase == "player_end":
                 # After end phase actions execute, check win/lose
                 if game_state.player.is_dead():
-                    return "DEATH"
+                    return GameStateResult("GAME_LOSE")
                 if all(enemy.is_dead() for enemy in self.enemies):
-                    return "WIN"
+                    return GameStateResult("COMBAT_WIN")
                 
                 # Build actions for next phase
                 self._build_turn_actions()
@@ -294,9 +294,9 @@ class Combat(Localizable):
         # If queue is empty but combat not ended, check win/lose conditions
         if not self.combat_ended:
             if game_state.player.is_dead():
-                return "DEATH"
+                return GameStateResult("GAME_LOSE")
             if all(enemy.is_dead() for enemy in self.enemies):
-                return "WIN"
+                return GameStateResult("COMBAT_WIN")
             
             # Build actions for next phase
             self._build_turn_actions()
@@ -317,14 +317,4 @@ class Combat(Localizable):
         """Handle enemy turn actions"""
         # Placeholder: enemy AI logic
         # Add enemy intent actions to queue
-        pass
-    
-    def handle_victory(self):
-        """Handle combat victory"""
-        # Placeholder: victory rewards
-        pass
-    
-    def handle_defeat(self):
-        """Handle combat defeat"""
-        # Placeholder: defeat logic
         pass

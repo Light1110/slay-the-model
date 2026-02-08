@@ -2,7 +2,8 @@
 Map manager for generating and navigating game maps.
 """
 import random
-from typing import List, Dict, TYPE_CHECKING
+from typing import List, Dict, TYPE_CHECKING, Optional
+from localization import t
 from utils.types import RoomType
 from .map_node import MapNode
 from .map_data import MapData
@@ -550,7 +551,7 @@ class MapManager:
         }
         return rewards.get(room_type, "UNKNOWN")
     
-    def _format_map_ascii(self, available_positions: set = None) -> str:
+    def _format_map_ascii(self, available_positions: Optional[set] = None) -> str:
         """
         Generate ASCII map representation.
         
@@ -683,7 +684,7 @@ class MapManager:
         elif roll <= monster_chance + treasure_chance + shop_chance + elite_chance:
             chosen_type = RoomType.ELITE
         else:
-            chosen_type = RoomType.UNKNOWN  # Event
+            chosen_type = RoomType.EVENT  # Event
         
         # Reset visit counter for the chosen type
         self.unknown_room_visits[chosen_type] = 0

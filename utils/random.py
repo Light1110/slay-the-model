@@ -102,14 +102,14 @@ def get_random_relic(characters: Optional[List[str]] = None,
 def get_random_potion(characters: Optional[List[str]] = None,
                       rarities: Optional[List[RarityType]] = None) -> Optional[Potion]:
     """
-    Get a random potion from the registry based on criteria.
+    Get a random potion from registry based on criteria.
     
     args:
         characters (Optional[List[str]]): List of character namespaces to filter potions.
         rarities (Optional[List[RarityType]]): List of rarities to filter potions.
         
     returns:
-        Optional[Any]: A random potion matching the criteria, or None if none found.
+        Optional[Any]: A random potion matching criteria, or None if none found.
     """
     # Ensure "any" namespace is included
     if characters and "any" not in characters:
@@ -136,3 +136,56 @@ def get_random_potion(characters: Optional[List[str]] = None,
     selected_potion_idstr = random.choice(filtered_potion_idstrs)
     selected_potion_cls = get_registered("potion", selected_potion_idstr)
     return selected_potion_cls() if selected_potion_cls else None
+
+
+def get_random_events(floor: int = 0, count: int = 1, floors: Optional[str] = None) -> List[Any]:
+    """
+    Get random events from the event pool based on criteria.
+    
+    args:
+        floor (int): Current floor number for filtering.
+        count (int): Number of events to return (default: 1).
+        floors (Optional[str]): Floor range filter ('early', 'mid', 'late', 'boss', 'all').
+        
+    returns:
+        List[Any]: List of event instances matching criteria.
+    """
+    from events.event_pool import event_pool
+    
+    # Get available events based on floor
+    available_metadata = event_pool.get_available_events(floor)
+    
+    # Filter by floor range if specified
+    if floors and floors != 'all':
+        floor_range = event_pool._get_floor_range(floor)
+        available_metadata = [
+            m for m in available_metadata
+            if m.floors == floors or m.floors == 'all' or m.floors == floor_range
+        ]
+    
+    if not available_metadata:
+        return []
+    
+    # Get specified count of events
+    if count >= len(available_metadata):
+        # Return all available if count exceeds available
+        selected_metadata = available_metadata
+    else:
+        # Random weighted selection
+        selected_metadata = random.choices(
+            available_metadata,
+            weights=[m.weight for m in available_metadata],
+            k=count
+        )
+    
+    # Create event instances
+    events = []
+    for metadata in selected_metadata:
+        event = metadata.event_class()
+        events.append(event)
+        
+        # Mark unique events as used
+        if metadata.is_unique:
+            event_pool.mark_event_used(metadata.event_id)
+    
+    return events

@@ -3,11 +3,11 @@ Base action system
 """
 from typing import TYPE_CHECKING, List
 from localization import Localizable
-from utils.result_types import NoneResult
 
 if TYPE_CHECKING:
     from utils.result_types import (
         BaseResult,
+        NoneResult,
     )
 
 

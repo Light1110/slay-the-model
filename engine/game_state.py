@@ -8,7 +8,7 @@ Global action queue architecture:
 """
 import random as rd
 from typing import Optional
-from utils.result_types import BaseResult
+from utils.result_types import BaseResult, CombatStateResult
 from config.game_config import GameConfig
 import os
 import time
@@ -120,7 +120,7 @@ class GameState:
                     self.action_queue.add_action(result.action, to_front=True)
                 elif isinstance(result, MultipleActionsResult):
                     self.action_queue.add_actions(result.actions, to_front=True)
-                elif isinstance(result, GameStateResult):
+                elif isinstance(result, GameStateResult) or isinstance(result, CombatStateResult):
                     return result
                 # NoneResult: nothing to queue, continue loop
                 elif isinstance(result, NoneResult):

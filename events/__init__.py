@@ -1,7 +1,8 @@
 """
 Events package initialization.
 """
-from events.base_event import Event, CombatEvent
+from events.base_event import Event
+from events.combat_event import CombatEvent
 from events.neo_event import NeoEvent
 from events.event_pool import event_pool, register_event
 

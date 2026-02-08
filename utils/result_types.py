@@ -7,6 +7,9 @@ providing type safety and consistent behavior across codebase.
 from typing import TYPE_CHECKING, Optional, List, Union
 from enum import Enum
 
+if TYPE_CHECKING:
+    from actions.base import Action
+
 # Note: Action is imported within TYPE_CHECKING blocks to avoid circular import
 # with actions.base which imports from utils.result_types
 
@@ -112,25 +115,28 @@ class MultipleActionsResult(BaseResult):
         return f"{self.__class__.__name__}([{count} actions])"
 
 
+
 class GameStateResult(BaseResult):
     """Result for special game state transitions.
 
-    Used for critical game-ending states like death or victory.
-    These results immediately halt action execution and transition
-    to appropriate game state.
+    Used for critical game-ending states like combat victory, game victory, 
+    combat escape, or game loss. These results immediately halt action execution 
+    and transition to appropriate game state.
 
     Attributes:
-        state (str): Either "DEATH" or "WIN"
+        state (str): Either "COMBAT_WIN", "GAME_WIN", "COMBAT_ESCAPE", or "GAME_LOSE"
 
     Example:
         Combat actions that reduce player HP to 0
         Victory conditions in boss rooms
+        Escape mechanics in combat
+        Game over conditions
     """
 
     def __init__(self, state: str):
         super().__init__()
-        if state not in ("DEATH", "WIN"):
-            raise ValueError(f"GameStateResult must be 'DEATH' or 'WIN', got: {state}")
+        if state not in ("COMBAT_WIN", "GAME_WIN", "COMBAT_ESCAPE", "GAME_LOSE"):
+            raise ValueError(f"GameStateResult must be 'COMBAT_WIN', 'GAME_WIN', 'COMBAT_ESCAPE', or 'GAME_LOSE', got: {state}")
         self.state = state
         self.result_type = ResultType.GAME_STATE
 

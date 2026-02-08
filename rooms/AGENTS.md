@@ -1,14 +1,14 @@
 # ROOMS DIRECTORY - DOMAINS
 
-**Generated:** 2026-02-07
-**Files:** 7 (base.py, combat.py, rest.py, shop.py, treasure.py, neo.py, __init__.py)
+**Generated:** 2026-02-08
+**Files:** 8 (base.py, combat.py, rest.py, shop.py, treasure.py, neo.py, event.py, __init__.py)
 
 ## ROOM TYPES
 
 | Room Type | File | Purpose | Key Features |
 |-----------|------|---------|--------------|
 | `Room` | base.py | Base class for all rooms | init(), enter(), leave() lifecycle |
-| `UnknownRoom` | base.py | Placeholder that resolves on enter | Becomes event or actual room |
+| `EventRoom` | event.py | Event room - triggers random events | Selects and triggers random event based on floor |
 | `CombatRoom` | combat.py | Manage combat execution | Normal/Elite/Boss variants, rewards |
 | `RestRoom` | rest.py | Rest site with services | Heal, upgrade cards, remove cards, relic interactions |
 | `ShopRoom` | shop.py | Merchant room | 5 colored, 2 colorless cards, 3 potions, 3 relics, card removal |
@@ -80,7 +80,6 @@
 **NEVER do these:**
 - Return string results ("WIN"/"DEATH") from `enter()` → use `GameStateResult(ResultType.VICTORY/DEATH)`
 - Skip `init()` method when room needs setup (enemy generation, item creation)
-- Hardcode room creation logic → use `map_manager._create_room_instance()` and `_resolve_unknown_type()`
 - Block inside `enter()` without clearing action queue
 - Create rooms without `@register("room")` decorator (prevents registry lookup)
 
@@ -93,10 +92,11 @@
 
 ## SPECIAL CASES
 
-**UnknownRoom (base.py):**
-- Resolves to `RoomType.EVENT` (via `event_pool.get_random_event()`) or actual room
-- Marks unique events as used via `event_pool.mark_event_used()`
-- Fallback to `RoomType.MONSTER` if map manager unavailable
+**EventRoom (event.py):**
+- Generates random events based on current floor using `get_random_events()`
+- Selects one event randomly and triggers it automatically in `enter()`
+- Events filtered by floor range (early/mid/late/boss) and unique status
+- Fallback to simple gold gain event if no events available
 
 **NeoRewardRoom (neo.py):**
 - Special starting room (no standard RoomType)
