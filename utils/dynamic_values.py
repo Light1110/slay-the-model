@@ -96,12 +96,24 @@ def resolve_card_damage(card: 'Card') -> int:
         damage = int(damage * 0.5)
     
     # 4. Stance multiplier (Rage/Divine)
-    # Rage stance: player attacks enemy, damage * 2
     status = player.status_manager.status
     if status == StatusType.WRATH:
         damage *= 2
     elif status == StatusType.DIVINITY:
         damage = int(damage * 3)
+    
+    # 5. Akabeko relic bonus: first attack deals 8 additional damage
+    if hasattr(card, 'card_type') and card.card_type == "Attack":
+        # Check for Akabeko relic and first attack tracking
+        first_attack_played = game_state.combat_state.turn_attack_cards_played == 0
+        
+        # Check if player has Akabeko relic
+        has_akabeko = any(r.__class__.__name__ == 'Akabeko' for r in player.relics)
+        
+        if has_akabeko and first_attack_played:
+            damage += 8
+            # Mark that first attack has been played
+            game_state.combat_state.turn_attack_cards_played += 1
     
     return max(0, damage)
 

@@ -20,9 +20,9 @@ class CombatState:
 
         # Turn tracking
         self.discarded_cards_this_turn: int = 0
-
-        # Combat turn tracking
         self.combat_turn: int = 0
+
+        # Turn tracking
         self.turn_cards_played: int = 0
         self.turn_attack_cards_played: int = 0
 
