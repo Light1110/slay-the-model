@@ -4,20 +4,6 @@
 
 ---
 
-## P0 - 紧急修复（影响核心游戏机制）
-
-### 1. 敌人攻击力动态计算
-- **位置**: `enemies/act1/cultist_intentions.py:48`
-- **TODO**: 这个攻击力应该是动态计算的，考虑能力和玩家状态
-- **当前问题**: CultistAttackIntention 使用固定的 `base_damage = 6`，没有考虑敌人的 Strength 和玩家的 Vulnerable 状态
-- **改动方案**:
-  1. 在 `AttackAction` 中已经处理了 Weak/Vulnerable 的影响
-  2. 修改所有敌人 intention 使用动态计算而非固定值
-- **影响范围**: 所有敌人意图系统
-- **预计工作量**: 2-3小时
-
----
-
 ## P1 - 高优先级（核心功能缺失）
 
 ### 2. 创建 ConfusedPower 并应用到 SneckoEye 遗物

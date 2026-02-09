@@ -1,0 +1,55 @@
+"""
+Simple unit test for ConfusedPower without full GameState.
+"""
+import sys
+sys.path.insert(0, 'D:/game/slay-the-model')
+
+from powers.definitions.confused import ConfusedPower
+
+# Create minimal mock objects
+class MockCard:
+    def __init__(self):
+        self._cost = 1
+
+class MockPlayer:
+    def __init__(self):
+        self.card_manager = MockCardManager()
+
+class MockCardManager:
+    def __init__(self):
+        self.piles = {'hand': []}
+
+    def get_pile(self, pile_name):
+        return self.piles.get(pile_name, [])
+
+def test_confused_power():
+    """Test ConfusedPower initialization and hooks."""
+    player = MockPlayer()
+    power = ConfusedPower(owner=player)
+
+    # Test initialization
+    assert power.name == "Confused"
+    assert power.stackable is False
+    assert power.is_buff is False
+    assert power.duration == 0
+
+    # Add card to hand
+    card = MockCard()
+    player.card_manager.piles['hand'].append(card)
+
+    # Test on_turn_start returns LambdaAction
+    actions = power.on_turn_start()
+    assert len(actions) == 1, "Should return one LambdaAction"
+
+    # Execute LambdaAction to randomize
+    actions[0].execute()
+
+    # Check cost was randomized (0-3)
+    assert 0 <= card._cost <= 3, "Cost should be between 0-3"
+
+    print("✓ ConfusedPower unit tests passed!")
+    return True
+
+if __name__ == "__main__":
+    success = test_confused_power()
+    sys.exit(0 if success else 1)

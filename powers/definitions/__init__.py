@@ -6,12 +6,12 @@ from powers.definitions.strength import StrengthPower
 from powers.definitions.vulnerable import VulnerablePower
 from powers.definitions.weak import WeakPower
 from powers.definitions.flex import FlexPower
-from powers.definitions.heavy_blade import HeavyBladePower
+from powers.definitions.confused import ConfusedPower
 
 __all__ = [
     "StrengthPower",
     "VulnerablePower",
     "WeakPower",
     "FlexPower",
-    "HeavyBladePower",
+    "ConfusedPower",
 ]

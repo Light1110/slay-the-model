@@ -1,5 +1,5 @@
-"""
-Power system for temporary and permanent combat effects.
+
+"""Power system for temporary and permanent combat effects.
 Powers modify creature stats, damage, and combat flow.
 """
 from powers.definitions import (
@@ -7,7 +7,7 @@ from powers.definitions import (
     VulnerablePower,
     WeakPower,
     FlexPower,
-    HeavyBladePower,
+    ConfusedPower,
 )
 
 __all__ = [
@@ -15,5 +15,5 @@ __all__ = [
     "VulnerablePower",
     "WeakPower",
     "FlexPower",
-    "HeavyBladePower",
+    "ConfusedPower",
 ]

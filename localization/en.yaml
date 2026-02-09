@@ -191,20 +191,23 @@ cards:
       description: "Lose 6 HP. Gain {energy_gain} Energy. Gain 2 Strength. Draw {draw} cards."
       upgrade_description: "Gain {energy_gain} Energy. Gain 2 Strength. Draw {draw} cards."
 
-powers:
-  ironclad:
-    StrengthPower:
-      name: "Strength"
-      description: "Increases attack damage by {amount}."
-    VulnerablePower:
-      name: "Vulnerable"
-      description: "Increases damage taken by 50% per stack."
-    FlexPower:
-      name: "Flex"
-      description: "Gain {amount} Strength. Lose equal amount at end of turn."
-    HeavyBladePower:
-      name: "Heavy Blade"
-      description: "Gain {amount} Strength. Lose equal amount at end of turn."
+  powers:
+    ironclad:
+      StrengthPower:
+        name: "Strength"
+        description: "Increases attack damage by {amount}."
+      VulnerablePower:
+        name: "Vulnerable"
+        description: "Increases damage taken by 50% per stack."
+      FlexPower:
+        name: "Flex"
+        description: "Gain {amount} Strength. Lose equal amount at end of turn."
+      HeavyBladePower:
+        name: "Heavy Blade"
+        description: "Gain {amount} Strength. Lose equal amount at end of turn."
+      ConfusedPower:
+        name: "Confused"
+        description: "Randomize card costs at start of turn."
 
 relics:
   BurningBlood:
