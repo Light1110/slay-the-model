@@ -25,3 +25,13 @@ class Potion(Localizable):
     def on_use(self, target: Creature) -> List[Action]:
         """Base use method to be overridden by specific potions"""
         return []
+    
+    def info(self):
+        """
+        获取药水的完整信息显示
+        
+        返回格式：
+        PotionName
+        Description text
+        """
+        return self.local("name") + "\n" + self.local("description")

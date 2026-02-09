@@ -158,3 +158,13 @@ class Relic(Localizable):
             List of actions to execute
         """
         return []
+    
+    def info(self):
+        """
+        获取遗物的完整信息显示
+        
+        返回格式：
+        RelicName (Rarity: Common)
+        Description text
+        """
+        return self.local("name") + f" (Rarity: {self.rarity.value})\n" + self.local("description")

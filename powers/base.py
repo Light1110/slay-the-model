@@ -142,3 +142,20 @@ class Power(Localizable):
             List of actions to execute at combat end
         """
         return []
+    
+    def info(self):
+        """
+        获取力量的完整信息显示
+        
+        返回格式：
+        PowerName (Duration: Y, Type: Buff/Debuff)
+        Description text
+        或
+        PowerName (Type: Buff/Debuff)
+        Description text
+        """
+        power_type = "Buff" if self.is_buff else "Debuff"
+        if self.duration != 0:
+            return self.local("name") + f" (Duration: {self.duration}, Type: {power_type})\n" + self.local("description")
+        else:
+            return self.local("name") + f" (Type: {power_type})\n" + self.local("description")

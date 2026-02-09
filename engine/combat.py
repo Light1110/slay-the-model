@@ -120,7 +120,7 @@ class Combat(Localizable):
         # 3. Build SelectAction for potions (if implemented)
         for potion in game_state.player.potions:
             options.append(Option(
-                name=LocalStr(potion.idstr), # todo: 详细说明
+                name=LocalStr(potion.info()),
                 actions=potion.on_use()
             ))
             

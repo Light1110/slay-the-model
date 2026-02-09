@@ -332,7 +332,6 @@ class MapManager:
             # Get monster encounter from encounter pool
             enemies = self.encounter_pool.get_normal_encounter(
                 floor=self.map_data.current_floor,
-                count=1
             )
             return CombatRoom(enemies=enemies)
         
