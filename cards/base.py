@@ -183,7 +183,7 @@ class Card(Localizable):
             动态计算后的值
         """
         from utils.dynamic_values import resolve_card_value
-        return resolve_card_value(self, value_type, source)
+        return resolve_card_value(self, value_type)
     
     def get_magic_value(self, magic_key: str, default: Any = 0) -> Any:
         """获取magic字典中的值"""
@@ -262,19 +262,7 @@ class Card(Localizable):
             desc = self.description
         
         # 使用ConcatLocalStr拼接各个部分
-        return ConcatLocalStr(
-            ConcatLocalStr(
-                ConcatLocalStr(
-                    ConcatLocalStr(
-                        ConcatLocalStr(
-                            self.display_name,
-                            RawLocalStr(f" (Cost: {cost}, Type: {self.card_type}, Rarity: {self.rarity.value})")
-                        ),
-                        RawLocalStr("\n")
-                    ),
-                    desc
-                )
-            )
+        return self.local("name") + f" (Cost: {cost}, Type: {self.card_type}, Rarity: {self.rarity.value})\n" + desc
     
 
     def _resolve_target(self):
@@ -311,13 +299,13 @@ class Card(Localizable):
             
             # 格挡
             if self.block > 0:
-                block_value = resolve_card_value(self, 'block', source)
+                block_value = resolve_card_value(self, 'block')
                 actions.append(GainBlockAction(block=lambda: block_value))
             
             # 伤害
             if self.damage > 0:
-                damage_value = resolve_card_value(self, 'damage', source)
-                hits = max(1, resolve_card_value(self, 'attack_times', source))
+                damage_value = resolve_card_value(self, 'damage')
+                hits = max(1, resolve_card_value(self, 'attack_times'))
                 for _ in range(hits):
                     action = DealDamageAction(
                         damage=lambda: damage_value,
@@ -329,17 +317,17 @@ class Card(Localizable):
             
             # 治疗
             if self.heal > 0:
-                heal_value = resolve_card_value(self, 'heal', source)
+                heal_value = resolve_card_value(self, 'heal')
                 actions.append(HealAction(heal=lambda: heal_value))
             
             # 抽牌
             if self.draw > 0:
-                draw_value = resolve_card_value(self, 'draw', source)
+                draw_value = resolve_card_value(self, 'draw')
                 actions.append(DrawCardsAction(count=lambda: draw_value))
             
             # 能量
             if self.energy_gain > 0:
-                energy_value = resolve_card_value(self, 'energy', source)
+                energy_value = resolve_card_value(self, 'energy')
                 actions.append(GainEnergyAction(energy=lambda: energy_value))
             
             # 消耗
