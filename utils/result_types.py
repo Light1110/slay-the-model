@@ -120,23 +120,25 @@ class GameStateResult(BaseResult):
     """Result for special game state transitions.
 
     Used for critical game-ending states like combat victory, game victory, 
-    combat escape, or game loss. These results immediately halt action execution 
-    and transition to appropriate game state.
+    combat escape, game loss, or game exit. These results immediately halt 
+    action execution and transition to appropriate game state.
 
     Attributes:
-        state (str): Either "COMBAT_WIN", "GAME_WIN", "COMBAT_ESCAPE", or "GAME_LOSE"
+        state (str): Either "COMBAT_WIN", "GAME_WIN", "COMBAT_ESCAPE", 
+                     "GAME_LOSE", or "GAME_EXIT"
 
     Example:
         Combat actions that reduce player HP to 0
         Victory conditions in boss rooms
         Escape mechanics in combat
         Game over conditions
+        Game exit (from menu)
     """
 
     def __init__(self, state: str):
         super().__init__()
-        if state not in ("COMBAT_WIN", "GAME_WIN", "COMBAT_ESCAPE", "GAME_LOSE"):
-            raise ValueError(f"GameStateResult must be 'COMBAT_WIN', 'GAME_WIN', 'COMBAT_ESCAPE', or 'GAME_LOSE', got: {state}")
+        if state not in ("COMBAT_WIN", "GAME_WIN", "COMBAT_ESCAPE", "GAME_LOSE", "GAME_EXIT"):
+            raise ValueError(f"GameStateResult must be 'COMBAT_WIN', 'GAME_WIN', 'COMBAT_ESCAPE', 'GAME_LOSE', or 'GAME_EXIT', got: {state}")
         self.state = state
         self.result_type = ResultType.GAME_STATE
 

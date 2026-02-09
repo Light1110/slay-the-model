@@ -215,5 +215,8 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
+# Game saves
+saves/
+
 # docs
 docs/

@@ -2,10 +2,12 @@
 Game flow controller - manages to main game loop by iterating over rooms.
 Rooms use global action queue for action management.
 """
+from rooms.base import Room
 from utils.registry import get_registered_instance
 from localization import t, LocalStr
 from utils.types import RoomType
 from engine.game_state import game_state
+from utils.result_types import BaseResult, GameStateResult
 
 
 class GameFlow:
@@ -45,7 +47,14 @@ class GameFlow:
             # Enter room (room uses global action queue)
             result = cur_room.enter()
             # Check for game end conditions
-            if result == "DEATH":
+            if isinstance(result, GameStateResult):
+                if result.state == "GAME_EXIT":
+                    self._handle_game_exit()
+                    break
+                elif result.state == "GAME_LOSE":
+                    self._handle_game_over()
+                    break
+            elif result == "DEATH":
                 self._handle_game_over()
                 break
             elif result == "WIN":
@@ -71,11 +80,15 @@ class GameFlow:
         game_state.current_room = neo_room
         game_state.current_floor = 0
         # Initialize and enter Neo room
+        assert isinstance(neo_room, Room)
         neo_room.init()
         result = neo_room.enter()
         # Handle Neo room result
         if result == "DEATH":
             self._handle_game_over()
+            return
+        elif isinstance(result, GameStateResult) and result.state == "GAME_EXIT":
+            self._handle_game_exit()
             return
         # Leave Neo room
         neo_room.leave()
@@ -124,14 +137,14 @@ class GameFlow:
             while True:
                 try:
                     from localization import LocalStr
-                    prompt = LocalStr(key="ui.select_prompt", default=f"Choose (0-{len(available_nodes)-1}): ")
-                    option = int(input(str(prompt)))
+                    prompt = f"Choose (0-{len(available_nodes)-1}): "
+                    option = int(input(prompt))
                     if 0 <= option < len(available_nodes):
                         node = available_nodes[option]
                         break
-                    print(LocalStr(key="ui.invalid_option", default="Invalid option!"))
+                    print("Invalid option!")
                 except (ValueError, EOFError):
-                    print(LocalStr(key="ui.invalid_number", default="Please enter a valid number"))
+                    print("Please enter a valid number")
         else:
             # Default mode: select first available
             node = available_nodes[0]
@@ -151,3 +164,8 @@ class GameFlow:
         """Handle player victory"""
         print(f"\n🎉 {t('ui.game_won', default='Congratulations! You have conquered the Spire! 🎉')}")
         game_state.game_phase = "game_won"
+    
+    def _handle_game_exit(self):
+        """Handle game exit from menu"""
+        print(f"\n👋 {t('ui.game_exit', default='Thanks for playing! Goodbye! 👋')}")
+        game_state.game_phase = "game_exit"

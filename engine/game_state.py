@@ -116,7 +116,7 @@ class GameState:
                 # for backward compatibility with actions that haven't been updated
                 from actions.base import Action
 
-                assert result is BaseResult
+                assert isinstance(result, BaseResult), f"Expected BaseResult, got {type(result)}"
                 
                 # BaseResult types - handle appropriately
                 if isinstance(result, SingleActionResult):
