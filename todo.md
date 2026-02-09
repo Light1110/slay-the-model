@@ -39,7 +39,7 @@
 | 12 | `potions/global_potions.py:113` | Implement potion slot filling logic (Note: This needs to use channel_orb action) | 功能未完整 | 高 | 药水槽填充逻辑缺失 |
 | 13 | `potions/defect.py:41-42` | Implement proper channel orb action (Note: This needs orb slot modification action) | 功能未完整 | 高 | Defect的法球投放动作未实现 |
 | 14 | `potions/defect.py:52` | Implement orb slot gain action | 功能未完整 | 高 | 法球槽增加动作未实现 |
-| 15 | `cards/ironclad/cards.py:41` | ApplyPowerAction, apply vulnerable to target | 功能未完整 | 高 | 脆弱效果应用未实现 |
+| 15 | `cards/ironclad/cards.py:41` | ApplyPowerAction, apply vulnerable to target | 功能未完整 | 高 | 易伤效果应用未实现 |
 | 16 | `actions/card.py:7` | 参数 card_type | 功能未完整 | 高 | 卡牌动作需要card_type参数支持 |
 
 ### 功能未完整（中优先级）
@@ -152,7 +152,7 @@
 2. 战斗开始效果（TODO #8）
 
 ### 第二阶段：核心卡牌机制
-4. 脆弱效果应用（TODO #15）
+4. 易伤效果应用（TODO #15）
 5. Body Slam攻击力等于防御力（TODO #18）
 6. 卡牌临时值更新（TODO #19）
 7. 支持从抽牌堆打出/无视费用（TODO #20, #21）

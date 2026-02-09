@@ -113,8 +113,8 @@ cards:
       upgrade_description: "Gain {block} Block."
     Bash:
       name: "Bash"
-      description: "Deal {damage} damage. Apply {magic[vulnerable]} Vulnerable."
-      upgrade_description: "Deal {damage} damage. Apply {magic[vulnerable]} Vulnerable."
+      description: "Deal {damage} damage. Apply {magic.vulnerable} Vulnerable."
+      upgrade_description: "Deal {damage} damage. Apply {magic.vulnerable} Vulnerable."
     Anger:
       name: "Anger"
       description: "Deal {damage} damage. Add a copy of this card to your discard pile."
@@ -124,47 +124,54 @@ cards:
     IronWave:
       name: "Iron Wave"
       description: "Gain {block} Block. Deal {damage} damage."
+      combat_description: "Gain {block} Block. Deal {damage} damage. (Gain {block} Block, Deal {damage} damage)"
       upgrade_description: "Gain {block} Block. Deal {damage} damage."
+      upgrade_combat_description: "Gain {block} Block. Deal {damage} damage. (Gain {block} Block, Deal {damage} damage)"
     PommelStrike:
       name: "Pommel Strike"
       description: "Deal {damage} damage. Draw {draw} card."
       upgrade_description: "Deal {damage} damage. Draw {draw} cards."
     HeavyBlade:
       name: "Heavy Blade"
-      description: "Deal {damage} damage. Strength affects this {magic[strength_mult]} times."
-      upgrade_description: "Deal {damage} damage. Strength affects this {magic[strength_mult]} times."
+      description: "Deal {damage} damage. Strength affects this {magic.strength_mult} times."
+      upgrade_description: "Deal {damage} damage. Strength affects this {magic.strength_mult} times."
     Armaments:
       name: "Armaments"
       description: "Gain {block} Block. Upgrade a card in your hand this combat."
       upgrade_description: "Gain {block} Block. Upgrade a card in your hand this combat."
     Flex:
       name: "Flex"
-      description: "Gain {magic[temp_strength]} Strength. Lose {magic[temp_strength]} Strength at the end of your turn."
-      upgrade_description: "Gain {magic[temp_strength]} Strength. Lose {magic[temp_strength]} Strength at the end of your turn."
+      description: "Gain {magic.temp_strength} Strength. Lose {magic.temp_strength} Strength at the end of your turn."
+      upgrade_description: "Gain {magic.temp_strength} Strength. Lose {magic.temp_strength} Strength at the end of your turn."
     
     # Uncommon Cards
     Clothesline:
       name: "Clothesline"
-      description: "Deal {damage} damage. Apply {magic[weak]} Weak."
-      upgrade_description: "Deal {damage} damage. Apply {magic[weak]} Weak."
+      description: "Deal {damage} damage. Apply {magic.weak} Weak."
+      upgrade_description: "Deal {damage} damage. Apply {magic.weak} Weak."
     Inflame:
       name: "Inflame"
-      description: "Gain {magic[strength]} Strength."
-      upgrade_description: "Gain {magic[strength]} Strength."
+      description: "Gain {magic.strength} Strength."
+      upgrade_description: "Gain {magic.strength} Strength."
     BodySlam:
       name: "Body Slam"
       description: "Deal damage equal to your Block."
+      combat_description: "Deal damage equal to your Block. (Deal {damage} damage)"
       upgrade_description: "Deal damage equal to your Block. Costs 0."
     Carnage:
       name: "Carnage"
       description: "Deal {damage} damage to ALL enemies."
+      combat_description: "Deal {damage} damage to ALL enemies. (Deal {damage} damage)"
       upgrade_description: "Deal {damage} damage to ALL enemies."
+      upgrade_combat_description: "Deal {damage} damage to ALL enemies. (Deal {damage} damage)"
     
     # Rare Cards
     Bludgeon:
       name: "Bludgeon"
-      description: "Deal {damage} damage. Gain {block} Block. Gain {magic[block_if_no_block]} Block if you had no Block."
-      upgrade_description: "Deal {damage} damage. Gain {block} Block. Gain {magic[block_if_no_block]} Block if you had no Block."
+      description: "Deal {damage} damage."
+      combat_description: "Deal {damage} damage. (Deal {damage} damage)"
+      upgrade_description: "Deal {damage} damage."
+      upgrade_combat_description: "Deal {damage} damage. (Deal {damage} damage)"
     LimitBreak:
       name: "Limit Break"
       description: "Double your Strength."
@@ -172,15 +179,17 @@ cards:
     Pummel:
       name: "Pummel"
       description: "Deal {damage} damage {attack_times} times."
+      combat_description: "Deal {damage} damage {attack_times} times. (Deal {damage} damage x {attack_times} times)"
       upgrade_description: "Deal {damage} damage {attack_times} times."
+      upgrade_combat_description: "Deal {damage} damage {attack_times} times. (Deal {damage} damage x {attack_times} times)"
     Uppercut:
       name: "Uppercut"
-      description: "Deal {damage} damage. Apply {magic[vulnerable]} Vulnerable and {magic[weak]} Weak."
-      upgrade_description: "Deal {damage} damage. Apply {magic[vulnerable]} Vulnerable and {magic[weak]} Weak."
+      description: "Deal {damage} damage. Apply {magic.vulnerable} Vulnerable and {magic.weak} Weak."
+      upgrade_description: "Deal {damage} damage. Apply {magic.vulnerable} Vulnerable and {magic.weak} Weak."
     Offering:
       name: "Offering"
-      description: "Lose {magic[lose_hp]} HP. Gain {energy_gain} Energy. Gain {magic[strength]} Strength. Draw {draw} cards."
-      upgrade_description: "Gain {energy_gain} Energy. Gain {magic[strength]} Strength. Draw {draw} cards."
+      description: "Lose 6 HP. Gain {energy_gain} Energy. Gain 2 Strength. Draw {draw} cards."
+      upgrade_description: "Gain {energy_gain} Energy. Gain 2 Strength. Draw {draw} cards."
 
 powers:
   ironclad:

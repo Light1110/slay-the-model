@@ -15,6 +15,8 @@ class CultistRitualIntention(Intention):
     
     def __init__(self, enemy: 'Enemy'):
         super().__init__("ritual", enemy)
+        # 在__init__中设置基础数值
+        self.base_strength_gain = 3
     
     def execute(self) -> List['Action']:
         """Execute Ritual: gains 3 Strength."""
@@ -22,9 +24,9 @@ class CultistRitualIntention(Intention):
         
         return [
             ApplyPowerAction(
-                power="Strength",
+                power="strength",
                 target=self.enemy,
-                amount=3,
+                amount=self.base_strength_gain,
                 duration=0  # Permanent
             )
         ]
@@ -35,6 +37,8 @@ class CultistAttackIntention(Intention):
     
     def __init__(self, enemy: 'Enemy'):
         super().__init__("attack", enemy)
+        # 在__init__中设置基础数值
+        self.base_damage = 6
     
     def execute(self) -> List['Action']:
         """Execute Attack: deals 6 damage to player."""
@@ -45,9 +49,9 @@ class CultistAttackIntention(Intention):
             return []
         
         return [
-            DealDamageAction(
+            DealDamageAction( # todo: 这个攻击力应该是动态计算的，考虑能力和玩家状态
                 name="Cultist Attack",
-                damage=6,
+                damage=self.base_damage,
                 target=game_state.player,
                 damage_type="attack",
                 source=self.enemy

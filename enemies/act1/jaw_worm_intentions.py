@@ -16,6 +16,7 @@ class ChompIntention(Intention):
     
     def __init__(self, enemy: 'Enemy'):
         super().__init__("chomp", enemy)
+        self.base_damage = 11
     
     def execute(self) -> List['Action']:
         """Execute Chomp: deals 11 damage to player."""
@@ -28,7 +29,7 @@ class ChompIntention(Intention):
         return [
             DealDamageAction(
                 name="Chomp",
-                damage=11,
+                damage=self.base_damage,
                 target=game_state.player,
                 damage_type="attack",
                 source=self.enemy
@@ -41,6 +42,8 @@ class BellowIntention(Intention):
     
     def __init__(self, enemy: 'Enemy'):
         super().__init__("bellow", enemy)
+        self.base_strength_gain = 3
+        self.base_block = 6
     
     def execute(self) -> List['Action']:
         """Execute Bellow: gains 3 Strength and 6 Block."""
@@ -48,13 +51,13 @@ class BellowIntention(Intention):
         
         return [
             ApplyPowerAction(
-                power="Strength",
+                power="strength",
                 target=self.enemy,
-                amount=3,
-                duration=0  # Permanent
+                amount=self.base_strength_gain,
+                duration=0
             ),
             GainBlockAction(
-                block=6,
+                block=self.base_block,
                 target=self.enemy
             )
         ]
@@ -65,6 +68,8 @@ class ThrashIntention(Intention):
     
     def __init__(self, enemy: 'Enemy'):
         super().__init__("thrash", enemy)
+        self.base_damage = 7
+        self.base_block = 5
     
     def execute(self) -> List['Action']:
         """Execute Thrash: deals 7 damage and gains 5 Block."""
@@ -74,16 +79,18 @@ class ThrashIntention(Intention):
         if not game_state or not game_state.player:
             return []
         
+        base_damage = self.base_damage
+        
         return [
             DealDamageAction(
                 name="Thrash",
-                damage=7,
+                damage=lambda: base_damage,
                 target=game_state.player,
                 damage_type="attack",
                 source=self.enemy
             ),
             GainBlockAction(
-                block=5,
+                block=self.base_block,
                 target=self.enemy
             )
         ]

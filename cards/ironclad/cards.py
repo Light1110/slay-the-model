@@ -65,7 +65,7 @@ class Bash(Card):
     
     def on_play(self, target: Creature | None = None) -> List[Action]:
         # todo: ApplyPowerAction, apply vulnerable to target
-        return super().on_play(target) + ApplyPowerAction(target=target, power="vulnerable", amount=self.get_temp_value("magic_vulnerable"))
+        return super().on_play(target) + ApplyPowerAction(target=target, power="vulnerable", amount=self.get_magic_value("vulnerable"))
 
 
 @register("card")
@@ -164,7 +164,7 @@ class Armaments(Card):
     upgrade_magic = {"upgrade_hand": -1}
     
     def on_play(self, target: Creature | None = None) -> List[Action]:
-        return super().on_play(target) + ChooseUpgradeCardAction(pile="hand", amount=self.get_temp_value("magic_upgrade_hand"))
+        return super().on_play(target) + ChooseUpgradeCardAction(pile="hand", amount=self.get_magic_value("upgrade_hand"))
 
 
 @register("card")
@@ -183,7 +183,7 @@ class Flex(Card):
     upgrade_magic = {"temp_strength": 4}
     
     def on_play(self, target: Creature | None = None) -> List[Action]:
-        return super().on_play(target) + [ApplyPowerAction(target=target, power="flex", amount=self.get_temp_value("magic_temp_strength"))]
+        return super().on_play(target) + [ApplyPowerAction(target=target, power="flex", amount=self.get_magic_value("temp_strength"))]
 
 
 # ==================== Uncommon Cards ====================
@@ -206,7 +206,7 @@ class Clothesline(Card):
     upgrade_magic = {"weak": 3}
     
     def on_play(self, target: Creature | None = None) -> List[Action]:
-        return super().on_play(target) + ApplyPowerAction(target=target, power="weak", amount=self.get_temp_value("magic_weak"))
+        return super().on_play(target) + ApplyPowerAction(target=target, power="weak", amount=self.get_magic_value("weak"))
 
 
 @register("card")
@@ -225,7 +225,7 @@ class Inflame(Card):
     upgrade_magic = {"strength": 3}
     
     def on_play(self, target: Creature | None = None) -> List[Action]:
-        return super().on_play(target) + [ApplyPowerAction(target=target, power="strength", amount=self.get_temp_value("magic_strength"))]
+        return super().on_play(target) + [ApplyPowerAction(target=target, power="strength", amount=self.get_magic_value("strength"))]
 
 
 @register("card")
@@ -238,11 +238,16 @@ class BodySlam(Card):
     
     # Card values
     base_cost = 1
+    base_damage = 0  # 基础伤害为0
     
     # Upgrade values
     upgrade_cost = 0
     
-    # todo: 攻击力等于防御力的逻辑在哪里实现？
+    @property
+    def damage(self) -> int:
+        """伤害等于当前格挡"""
+        from engine.game_state import game_state
+        return game_state.player.block
 
 
 @register("card")
@@ -338,8 +343,8 @@ class Uppercut(Card):
     
     def on_play(self, target: Creature | None = None) -> List[Action]:
         return super().on_play(target) + [
-            ApplyPowerAction(target=target, power="vulnerable", amount=self.get_temp_value("magic_vulnerable")),
-            ApplyPowerAction(target=target, power="weak", amount=self.get_temp_value("magic_weak"))
+            ApplyPowerAction(target=target, power="vulnerable", amount=self.get_magic_value("vulnerable")),
+            ApplyPowerAction(target=target, power="weak", amount=self.get_magic_value("weak"))
         ]
 
 
@@ -360,8 +365,11 @@ class Offering(Card):
     upgrade_draw = 5
 
     def on_play(self, target: Creature | None = None) -> List[Action]:
+        from engine.game_state import game_state
+        from utils.dynamic_values import resolve_card_value
+        
         return super().on_play(target) + [
             LoseHPAction(amount=6),
-            GainEnergyAction(energy=self.get_temp_value("energy_gain")),
-            AddCardAction(card=self, dest_pile="hand", amount=self.get_temp_value("draw"))
+            GainEnergyAction(energy=resolve_card_value(self, 'energy', game_state.player)),
+            AddCardAction(card=self, dest_pile="hand", amount=resolve_card_value(self, 'draw', game_state.player))
         ]

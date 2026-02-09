@@ -11,10 +11,18 @@ def get_game_state():
 from utils.types import TargetType, RarityType
 from cards.namespaces import get_color_for_namespace, namespace_from_module
 from localization import Localizable
-from localization import BaseLocalStr, LocalStr
+from localization import BaseLocalStr, LocalStr, ConcatLocalStr
 
 COST_X = -1
 COST_UNPLAYABLE = -2
+
+class RawLocalStr(BaseLocalStr):
+    """包装静态字符串的LocalStr基类实现"""
+    def __init__(self, text: str):
+        self.text = text
+    
+    def resolve(self) -> str:
+        return self.text
 
 
 class Card(Localizable):
@@ -61,7 +69,7 @@ class Card(Localizable):
     target_type = None
     
     localization_prefix = "cards"
-    localizable_fields = ("name", "description", "upgrade_description")
+    localizable_fields = ("name", "description", "upgrade_description", "combat_description", "upgrade_combat_description")
 
     def __init__(self):
         # ***** Basic card attributes with namespace support
@@ -82,52 +90,192 @@ class Card(Localizable):
         self.upgrade_limit = int(getattr(self, "upgrade_limit", 1))
         self.upgrade_level = 0  # Current upgrade level
 
-        # Value system - base, combat, and temporary values
-        self.base_values = self._extract_base_values() # 基础设定值
-        self.combat_values = self.base_values.copy()  # 战斗中的基准值。例子：爪击
-        self.temp_values = self.base_values.copy()    # 临时的值，受遗物和能力影响
-        
-        # ! 对于cost的special字段
-        self.cost_for_trun = None
+        # 私有化数值字段（战斗数值）
+        self._cost = self.base_cost
+        self._damage = self.base_damage
+        self._block = self.base_block
+        self._heal = self.base_heal
+        self._draw = self.base_draw
+        self._energy_gain = self.base_energy_gain
+        self._attack_times = self.base_attack_times
+        self._magic = dict(self.base_magic or {})
+        self._exhaust = self.base_exhaust
+        self._ethereal = self.base_ethereal
+        self._retain = self.base_retain
+        self._innate = self.base_innate
 
         # Computed properties
         self.target_type = self._resolve_target()
-        self.update_description()
         
     @property
     def idstr(self) -> str:
         """Card ID with namespace, e.g. 'Base.Strike'"""
         return f"{self.namespace}.{self.__class__.__name__}"
  
+    # ============ 数值属性访问器 ============
+    
+    @property
+    def cost(self) -> int:
+        """获取消耗能量"""
+        return self._cost
+    
+    @property
+    def damage(self) -> int:
+        """获取基础伤害"""
+        return self._damage
+    
+    @property
+    def block(self) -> int:
+        """获取基础格挡"""
+        return self._block
+    
+    @property
+    def heal(self) -> int:
+        """获取基础治疗"""
+        return self._heal
+    
+    @property
+    def draw(self) -> int:
+        """获取抽牌数"""
+        return self._draw
+    
+    @property
+    def energy_gain(self) -> int:
+        """获取能量获得"""
+        return self._energy_gain
+    
+    @property
+    def attack_times(self) -> int:
+        """获取攻击次数"""
+        return self._attack_times
+    
+    @property
+    def exhaust(self) -> bool:
+        """是否消耗"""
+        return self._exhaust
+    
+    @property
+    def ethereal(self) -> bool:
+        """是否虚幻"""
+        return self._ethereal
+    
+    @property
+    def retain(self) -> bool:
+        """是否保留"""
+        return self._retain
+    
+    @property
+    def innate(self) -> bool:
+        """是否固有"""
+        return self._innate
+    
+    # ============ 动态值获取 ============
+    
+    def get_value(self, value_type: str, source: Optional[Creature] = None) -> int:
+        """
+        获取动态计算的值
+        
+        Args:
+            value_type: 值类型 ('damage', 'block', 'heal', 'draw', 'energy', 'attack_times')
+            source: 来源生物
+        
+        Returns:
+            动态计算后的值
+        """
+        from utils.dynamic_values import resolve_card_value
+        return resolve_card_value(self, value_type, source)
+    
+    def get_magic_value(self, magic_key: str, default: Any = 0) -> Any:
+        """获取magic字典中的值"""
+        from utils.dynamic_values import get_magic_value
+        return get_magic_value(self, magic_key, default)
+    
+    # ============ 描述生成 ============
+    
+    @property
+    def description(self) -> BaseLocalStr:
+        """获取基础描述（卡牌列表/商店显示）"""
+        return self._get_description("description")
+    
+    @property
+    def combat_description(self) -> BaseLocalStr:
+        """获取战斗描述（战斗中显示，包含动态值）"""
+        return self._get_description("combat_description", fallback="description")
+    
+    def _get_description(self, desc_key: str, fallback: Optional[str] = None) -> BaseLocalStr:
+        """
+        获取描述模板并动态替换变量
+        
+        Args:
+            desc_key: 描述键名
+            fallback: 如果没有该描述，使用的回退键名
+        
+        Returns:
+            替换变量后的描述文本
+        """
+        # 特殊处理：如果是战斗描述且已升级，检查是否有升级后的战斗描述
+        if desc_key == "combat_description" and self.upgrade_level > 0:
+            if self.has_local("upgrade_combat_description"):
+                desc_key = "upgrade_combat_description"
+        
+        # 检查是否有该描述
+        if not self.has_local(desc_key):
+            if fallback:
+                desc_key = fallback
+            else:
+                return BaseLocalStr()
+        
+        # 构建变量字典
+        from utils.dynamic_values import resolve_card_value, get_magic_value
+        variables = {}
+        
+        # 基础变量
+        value_types = ['damage', 'block', 'heal', 'draw', 'energy', 'attack_times']
+        for vt in value_types:
+            variables[vt] = resolve_card_value(self, vt)
+        
+        # magic变量
+        if hasattr(self, '_magic'):
+            for key, value in self._magic.items():
+                variables[f'magic.{key}'] = value
+        
+        # 返回带有格式化变量的 LocalStr 对象
+        return self.local(desc_key, **variables)
+        
+    
     def info(self) -> BaseLocalStr:
         """
-        Display name for in-game use (without namespace)
-        Includes: card name, cost, type, rarity, and description.
+        获取战斗中的完整信息显示
+        
+        返回格式：
+        CardName (Cost: X, Type: Attack, Rarity: Common)
+        Description text {damage} {block}
         """
-        return self.display_name + f" (Cost: {self.get_temp_value('cost')}, Type: {self.card_type}, Rarity: {self.rarity.value})\n{self.description}"
+        from utils.dynamic_values import resolve_card_value
+        
+        cost = resolve_card_value(self, 'cost')
+        
+        # 获取战斗描述（如果有的话）
+        if self.has_local("combat_description"):
+            desc = self._get_description("combat_description")
+        else:
+            desc = self.description
+        
+        # 使用ConcatLocalStr拼接各个部分
+        return ConcatLocalStr(
+            ConcatLocalStr(
+                ConcatLocalStr(
+                    ConcatLocalStr(
+                        ConcatLocalStr(
+                            self.display_name,
+                            RawLocalStr(f" (Cost: {cost}, Type: {self.card_type}, Rarity: {self.rarity.value})")
+                        ),
+                        RawLocalStr("\n")
+                    ),
+                    desc
+                )
+            )
     
-    def _extract_base_values(self):
-        """Extract base values from class attributes"""
-        base_values = {
-            'cost': self.base_cost,
-            'damage': self.base_damage,
-            'block': self.base_block,
-            'heal': self.base_heal,
-            'draw': self.base_draw,
-            'energy_gain': self.base_energy_gain,
-            'attack_times': int(getattr(self, "base_attack_times", 1)),
-            'retain': bool(getattr(self, "retain", False)),
-            'exhaust': bool(getattr(self, "exhaust", False)),
-            'ethereal': bool(getattr(self, "ethereal", False)),
-            'innate': bool(getattr(self, "innate", False)),
-        }
-        
-        # 展开魔法字段：magic.xxx -> magic_xxx
-        magic_dict = dict(getattr(self, "base_magic", {}) or {})
-        for key, value in magic_dict.items():
-            base_values[f'magic_{key}'] = value
-        
-        return base_values
 
     def _resolve_target(self):
         target_type = getattr(self, "target_type", None)
@@ -141,35 +289,11 @@ class Card(Localizable):
             return TargetType.ENEMY_SELECT
         return None
 
-    def get_temp_value(self, key):
-        """Get current value considering all modifiers"""
-        return self.temp_values[key]
-    
-    def modify_combat_value(self, key, value):
-        """Modify a card value (for buffs/debuffs)"""
-        self.combat_values[key] = value
-        self.recalculate_temp_value(key, value)
-        
-    def recalculate_temp_value(self, key, value):
-        """Modify a card value (for buffs/debuffs)"""
-        # todo: 调用util里的函数，更新self.temp_values
-        # Regenerate description with new values
-        self.update_description()
-    
-    def recalculate_all_temp_values(self):
-        """Modify a card value (for buffs/debuffs)"""
-        for key, value in self.base_values.items():
-            self.recalculate_temp_value(key, value)
-
-    def update_description(self):
-        """Regenerate description based on current temp values"""
-        self.description = self.local("description", **self.temp_values)
 
     # * * * actions 相关
 
-    def on_play(self, target:Optional[Creature]=None) -> List[Action]:
-        """卡牌被打出时触发，默认返回 Action 列表。"""
-        # Import actions here to avoid circular imports
+    def on_play(self, target: Optional[Creature] = None) -> List[Action]:
+        """卡牌被打出时触发，返回 Action 列表"""
         try:
             from actions.combat import (
                 DealDamageAction,
@@ -179,31 +303,51 @@ class Card(Localizable):
             )
             from actions.card import ExhaustCardAction, DrawCardsAction
             
+            from utils.dynamic_values import resolve_card_value
+            from engine.game_state import game_state
+            source = game_state.player
+            
             actions = []
-            if self.base_values.get('block', 0) > 0:
-                actions.append(GainBlockAction(block=lambda: self.get_temp_value('block')))
-            if self.base_values.get('damage', 0) > 0:
-                hits = max(1, int(self.get_temp_value('attack_times')))
+            
+            # 格挡
+            if self.block > 0:
+                block_value = resolve_card_value(self, 'block', source)
+                actions.append(GainBlockAction(block=lambda: block_value))
+            
+            # 伤害
+            if self.damage > 0:
+                damage_value = resolve_card_value(self, 'damage', source)
+                hits = max(1, resolve_card_value(self, 'attack_times', source))
                 for _ in range(hits):
                     action = DealDamageAction(
-                        "deal_damage_action",
-                        damage=lambda: self.get_temp_value('damage'),
+                        damage=lambda: damage_value,
                         target=target,
                         damage_type="direct",
                     )
                     action.card = self
                     actions.append(action)
-            if self.base_values.get('heal', 0) > 0:
-                actions.append(HealAction(heal=lambda: self.get_temp_value('heal')))
-            if self.base_values.get('draw', 0) > 0:
-                actions.append(DrawCardsAction(count=lambda: self.get_temp_value('draw')))
-            if self.base_values.get('energy_gain', 0) > 0:
-                actions.append(GainEnergyAction(energy=lambda: self.get_temp_value('energy_gain')))
-            if self.base_values.get('exhaust', False):
+            
+            # 治疗
+            if self.heal > 0:
+                heal_value = resolve_card_value(self, 'heal', source)
+                actions.append(HealAction(heal=lambda: heal_value))
+            
+            # 抽牌
+            if self.draw > 0:
+                draw_value = resolve_card_value(self, 'draw', source)
+                actions.append(DrawCardsAction(count=lambda: draw_value))
+            
+            # 能量
+            if self.energy_gain > 0:
+                energy_value = resolve_card_value(self, 'energy', source)
+                actions.append(GainEnergyAction(energy=lambda: energy_value))
+            
+            # 消耗
+            if self.exhaust:
                 actions.append(ExhaustCardAction(card=self, source_pile="hand"))
+            
             return actions
         except ImportError:
-            # Return empty list if actions are not available
             return []
 
     def on_discard(self):
@@ -222,17 +366,20 @@ class Card(Localizable):
         """卡牌在回合结束时触发，默认返回 Action 列表。"""
         return []
 
-    def can_play(self, ignore_energy=False):
+    def can_play(self, ignore_energy=False) -> tuple[bool, Optional[str]]:
         """Check if this card can be played."""
-        if self.get_temp_value('cost') == COST_UNPLAYABLE:
+        from utils.dynamic_values import resolve_card_value
+        from engine.game_state import game_state
+        
+        cost = resolve_card_value(self, 'cost')
+        
+        if cost == COST_UNPLAYABLE:
             return False, "Unplayable card."
 
-        if not ignore_energy and get_game_state().player and hasattr(get_game_state().player, 'energy'):
-            cost = self.get_temp_value('cost')
+        if not ignore_energy and game_state.player:
             if cost == COST_X:
-                if get_game_state().player.energy <= 0:
-                    return False, "Not enough energy."
-            elif get_game_state().player.energy < cost:
+                return True, None
+            elif game_state.player.energy < cost:
                 return False, "Not enough energy."
 
         return True, None
@@ -259,55 +406,38 @@ class Card(Localizable):
 
         # Apply upgrade effects
         self.apply_upgrade()
-
-        if self.has_local("upgrade_description"):
-            self.description_template = self.local("upgrade_description")
-        else:
-            self.description_template = self.local("description")
-        # Regenerate description with new values
-        self.update_description()
-
+        
+        # Check if there's an upgraded combat description
+        if self.has_local("upgrade_combat_description"):
+            # Store that we have upgraded combat description
+            self._has_upgrade_combat_desc = True
+        
         return True
 
     def apply_upgrade(self):
         """Apply upgrade effects to card values."""
         if self.upgrade_damage is not None:
-            self.combat_values['damage'] += self.upgrade_damage - self.base_damage
-            self.base_values['damage'] = self.upgrade_damage
+            self._damage = self.upgrade_damage
         if self.upgrade_block is not None:
-            self.combat_values['block'] += self.upgrade_block - self.base_block
-            self.base_values['block'] = self.upgrade_block
+            self._block = self.upgrade_block
         if self.upgrade_heal is not None:
-            self.combat_values['heal'] += self.upgrade_heal - self.base_heal
-            self.base_values['heal'] = self.upgrade_heal
+            self._heal = self.upgrade_heal
         if self.upgrade_draw is not None:
-            self.combat_values['draw'] += self.upgrade_draw - self.base_draw
-            self.base_values['draw'] = self.upgrade_draw
+            self._draw = self.upgrade_draw
         if self.upgrade_energy_gain is not None:
-            self.combat_values['energy_gain'] += self.upgrade_energy_gain - self.base_energy_gain
-            self.base_values['energy_gain'] = self.upgrade_energy_gain
+            self._energy_gain = self.upgrade_energy_gain
         if self.upgrade_cost is not None:
-            self.combat_values['cost'] += self.upgrade_cost - self.base_cost
-            self.base_values['cost'] = self.upgrade_cost
+            self._cost = self.upgrade_cost
         if self.upgrade_magic:
-            # 展开魔法字段：magic.xxx -> magic_xxx
             for key, value in self.upgrade_magic.items():
-                self.combat_values[f'magic_{key}'] = value
-                self.base_values[f'magic_{key}'] = value
+                self._magic[key] = value
         if self.upgrade_attack_times is not None:
-            self.combat_values['attack_times'] += self.upgrade_attack_times - self.base_attack_times
-            self.base_values['attack_times'] = self.upgrade_attack_times
+            self._attack_times = self.upgrade_attack_times
         if self.upgrade_retain is not None:
-            self.combat_values['retain'] = self.upgrade_retain
-            self.base_values['retain'] = self.upgrade_retain
+            self._retain = self.upgrade_retain
         if self.upgrade_exhaust is not None:
-            self.combat_values['exhaust'] = self.upgrade_exhaust
-            self.base_values['exhaust'] = self.upgrade_exhaust
+            self._exhaust = self.upgrade_exhaust
         if self.upgrade_ethereal is not None:
-            self.combat_values['ethereal'] = self.upgrade_ethereal
-            self.base_values['ethereal'] = self.upgrade_ethereal
+            self._ethereal = self.upgrade_ethereal
         if self.upgrade_innate is not None:
-            self.combat_values['innate'] = self.upgrade_innate
-            self.base_values['innate'] = self.upgrade_innate
-            
-        self.recalculate_all_temp_values()
+            self._innate = self.upgrade_innate
