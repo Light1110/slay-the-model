@@ -30,9 +30,9 @@ class AttackPotion(Potion):
             actions.append(ChooseAddRandomCardAction(
                 pile='hand',
                 total=1,
-                card_type=CardType.ATTACK
+                card_type=CardType.ATTACK,
+                temp_cost=0  # Set temporary cost to 0 for this turn
             ))
-        # todo: 当前回合费用为0
         return actions
 
 @register("potion")
@@ -68,8 +68,9 @@ class ColorlessPotion(Potion):
             actions.append(ChooseAddRandomCardAction(
                 pile='hand',
                 total=1,
-                namespace="colorless"
-            )) # todo: 当前回合费用为0
+                namespace="colorless",
+                temp_cost=0  # Set temporary cost to 0 for this turn
+            ))
         return actions
 
 @register("potion")
@@ -186,8 +187,9 @@ class PowerPotion(Potion):
             actions.append(ChooseAddRandomCardAction(
                 pile='hand',
                 total=1,
-                card_type=CardType.POWER
-            )) # todo: 当前回合费用为0
+                card_type=CardType.POWER,
+                temp_cost=0  # Set temporary cost to 0 for this turn
+            ))
         return actions
 
 @register("potion")
@@ -208,8 +210,10 @@ class SkillPotion(Potion):
             actions.append(ChooseAddRandomCardAction(
                 pile='hand',
                 total=1,
-                card_type=CardType.SKILL))
-        return actions # todo: 当前回合费用为0
+                card_type=CardType.SKILL,
+                temp_cost=0  # Set temporary cost to 0 for this turn
+            ))
+        return actions
 
 @register("potion")
 class SpeedPotion(Potion):

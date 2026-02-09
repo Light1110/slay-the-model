@@ -18,7 +18,7 @@ def resolve_card_value(card, value_type: str) -> int:
     
     Args:
         card: Card instance
-        value_type: Value type ('damage', 'block', 'heal', 'draw', 'energy', 'attack_times')
+        value_type: Value type ('damage', 'block')
     
     Returns:
         Dynamically calculated value
@@ -39,14 +39,6 @@ def resolve_card_value(card, value_type: str) -> int:
         return resolve_card_damage(card)
     elif value_type == 'block':
         return resolve_card_block(card)
-    elif value_type == 'heal':
-        return resolve_card_heal(card)
-    elif value_type == 'draw':
-        return resolve_card_draw(card)
-    elif value_type == 'energy':
-        return resolve_card_energy(card)
-    elif value_type == 'attack_times':
-        return resolve_card_attack_times(card)
     else:
         # Handle type conversion safely - check if value is numeric or already int
         if isinstance(base_value, (int, float)):
@@ -157,37 +149,14 @@ def resolve_potential_damage(base_damage: int, attacker: Creature,
 
 def resolve_card_block(card: Card) -> int:
     """Resolve block value"""
-    base_block = card.block
-    # todo: 脆弱效果
-    return int(base_block)
-
-
-def resolve_card_heal(card: Card) -> int:
-    """Resolve heal value"""
-    base_heal = card.heal
-    # 应该没有影响回血的效果，目前先不考虑
-    return int(base_heal)
-
-
-def resolve_card_draw(card: Card) -> int:
-    """Resolve draw count"""
-    base_draw = card.draw
-    # 应该没有影响抽牌的效果，目前先不考虑
-    return int(base_draw)
-
-
-def resolve_card_energy(card: Card) -> int:
-    """Resolve energy gain"""
-    base_energy = card.energy_gain
-    # 应该没有影响能量的效果，目前先不考虑
-    return int(base_energy)
-
-
-def resolve_card_attack_times(card) -> int:
-    """Resolve attack times"""
-    base_times = card.attack_times
-    # 应该没有影响攻击次数的效果，目前先不考虑
-    return max(1, int(base_times))
+    block = card.block
+    from engine.game_state import game_state
+    player = game_state.player
+    # player有Frail会减少25%格挡
+    frail_power = player.get_power('frail')
+    if frail_power:
+        block = int(block * 0.75)
+    return int(block)
 
 
 def get_magic_value(card, magic_key: str, default: Any = 0) -> Any:

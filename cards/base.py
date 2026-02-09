@@ -2,7 +2,7 @@
 Card base class - class-driven card system with namespace support
 """
 from typing import Any, Dict, List, Optional
-from actions.base import Action
+from actions.base import Action, LambdaAction
 from entities.creature import Creature
 # 延迟导入以避免循环导入
 def get_game_state():
@@ -107,6 +107,9 @@ class Card(Localizable):
         # Computed properties
         self.target_type = self._resolve_target()
         
+        # temporary cost for this turn (e.g. from Corruption)
+        self.temp_cost: Optional[int] = None
+        
     @property
     def idstr(self) -> str:
         """Card ID with namespace, e.g. 'Base.Strike'"""
@@ -117,6 +120,8 @@ class Card(Localizable):
     @property
     def cost(self) -> int:
         """获取消耗能量"""
+        if self.temp_cost is not None:
+            return self.temp_cost
         return self._cost
     
     @property
@@ -349,6 +354,13 @@ class Card(Localizable):
     def on_exhaust(self):
         """卡牌被消耗（放逐）时触发，默认返回 Action 列表。"""
         return []
+    
+    def on_start_of_turn(self):
+        """
+        卡牌在回合开始时触发。
+        默认：如果temp_cost不为None，重置为None（只影响当前回合）
+        """
+        return [LambdaAction(lambda: setattr(self, 'temp_cost', None))]
     
     def on_end_of_turn(self):
         """卡牌在回合结束时触发，默认返回 Action 列表。"""

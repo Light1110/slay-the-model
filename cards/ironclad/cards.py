@@ -64,7 +64,6 @@ class Bash(Card):
     upgrade_magic = {"vulnerable": 3}
     
     def on_play(self, target: Creature | None = None) -> List[Action]:
-        # todo: ApplyPowerAction, apply vulnerable to target
         return super().on_play(target) + ApplyPowerAction(target=target, power="vulnerable", amount=self.get_magic_value("vulnerable"))
 
 
@@ -127,7 +126,6 @@ class PommelStrike(Card):
     upgrade_draw = 2
 
 
-# todo: 重刃独特的力量加成
 @register("card")
 class HeavyBlade(Card):
     """Deal damage, Strength affects this multiple times"""
@@ -370,6 +368,6 @@ class Offering(Card):
         
         return super().on_play(target) + [
             LoseHPAction(amount=6),
-            GainEnergyAction(energy=resolve_card_value(self, 'energy', game_state.player)),
-            AddCardAction(card=self, dest_pile="hand", amount=resolve_card_value(self, 'draw', game_state.player))
+            GainEnergyAction(energy=resolve_card_value(self, 'energy')),
+            AddCardAction(card=self, dest_pile="hand", amount=resolve_card_value(self, 'draw'))
         ]

@@ -331,7 +331,6 @@ class ChooseUpgradeCardAction(Action):
 
         return NoneResult()
         
-# todo: 参数 card_type
 @register("action")      
 class ChooseAddRandomCardAction(Action):
     """Choose a random card to add to pile
@@ -341,15 +340,20 @@ class ChooseAddRandomCardAction(Action):
         total (int): Total amount of cards to choose from
         namespace (str): Card namespace
         rarity (str): Card rarity
+        card_type (CardType): Card type (Attack, Skill, Power)
+        temp_cost (int): Temporary cost for the added card (only for current turn)
         
     Optional:
         None
     """
-    def __init__(self, pile: str = 'hand', total: int = 3, namespace: Optional[str] = None, rarity: Optional[RarityType] = None):
+    def __init__(self, pile: str = 'hand', total: int = 3, namespace: Optional[str] = None, rarity: Optional[RarityType] = None,
+                 card_type: Optional[CardType] = None, temp_cost: Optional[int] = None):
         self.pile = pile
         self.total = total
         self.namespace = namespace
         self.rarity = rarity
+        self.card_type = card_type
+        self.temp_cost = temp_cost
     
     def execute(self) -> 'BaseResult':
         from engine.game_state import game_state
@@ -363,10 +367,14 @@ class ChooseAddRandomCardAction(Action):
         for _ in range(self.total):
             random_card = get_random_card(
                 namespaces=[self.namespace] if self.namespace else None,
-                rarities=[self.rarity] if self.rarity else None
+                rarities=[self.rarity] if self.rarity else None,
+                card_types=[self.card_type] if self.card_type else None
             )
             if not random_card:
                 continue
+            # * 设置临时能量
+            if self.temp_cost is not None:
+                random_card.temp_cost = self.temp_cost
             option = random_card.display_name
             options.append(
                 Option(
