@@ -166,6 +166,7 @@ class LoseHPAction(Action):
             return MultipleActionsResult(actions_to_return)
         return NoneResult()
 
+# todo: 和block进行交互
 @register("action")
 class DealDamageAction(Action):
     """Deal damage to a target (basic damage action)
@@ -182,15 +183,14 @@ class DealDamageAction(Action):
     Required:
         damage (int or callable): Damage amount to deal
         target (Creature): Target creature
+        damage_type (str): Type of damage ("direct", "attack", etc.)
 
     Optional:
-        damage_type (str): Type of damage ("direct", "attack", etc.)
         card (Card): Card that caused the damage (for power triggers)
-        source (Creature): Source of the damage
+        source (Any): Source of the damage. It may be even relic or power.
     """
-    def __init__(self, name: str, damage: int, target: Creature,
+    def __init__(self, damage: int, target: Creature,
                  damage_type: str = "direct", card=None, source=None):
-        self.name = name
         self.damage = damage
         self.target = target
         self.damage_type = damage_type
@@ -206,22 +206,29 @@ class DealDamageAction(Action):
 
         # Calculate damage value
         damage_amount = self.damage
+        
+        # Actually deal damage (Creature.take_damage only handles numerical changes)
+        damage_dealt = self.target.take_damage(
+            damage_amount,
+            source=self.source,
+            card=self.card,
+            damage_type=self.damage_type
+        )
 
-        # Trigger target's on_damage_taken hook before applying damage
-        if self.target:
-            target_actions = self.target.on_damage_taken(
-                damage_amount,
-                source=self.source,
-                card=self.card,
-                damage_type=self.damage_type
-            )
-            if target_actions:
-                actions_to_return.extend(target_actions)
+        # Trigger target's on_damage_taken hook
+        target_actions = self.target.on_damage_taken(
+            damage_dealt,
+            source=self.source,
+            card=self.card,
+            damage_type=self.damage_type
+        )
+        if target_actions:
+            actions_to_return.extend(target_actions)
 
         # Trigger source's on_damage_dealt hook before dealing damage
         if self.source:
             source_actions = self.source.on_damage_dealt(
-                damage_amount,
+                damage_dealt,
                 target=self.target,
                 card=self.card,
                 damage_type=self.damage_type
@@ -233,21 +240,13 @@ class DealDamageAction(Action):
         for relic in game_state.player.relics:
             if hasattr(relic, "on_damage_dealt"):
                 actions = relic.on_damage_dealt(
-                    damage=damage_amount,
+                    damage=damage_dealt,
                     target=self.target,
                     player=game_state.player,
                     entities=game_state.combat_state.enemies if game_state.combat_state else [],
                 )
                 if actions:
                     actions_to_return.extend(actions)
-
-        # Actually deal damage (Creature.take_damage only handles numerical changes)
-        damage_dealt = self.target.take_damage(
-            damage_amount,
-            source=self.source,
-            card=self.card,
-            damage_type=self.damage_type
-        )
 
         # Check if target died from this damage and return death actions
         if self.target.is_dead():
@@ -258,6 +257,40 @@ class DealDamageAction(Action):
         if actions_to_return:
             return MultipleActionsResult(actions_to_return)
         return NoneResult()
+    
+@register("action")
+class AttackAction(Action):
+    """Attack the enemy.
+    
+    和DealDamageAction不同，AttackAction封装了动态计算攻击力的逻辑。
+    
+    Required:
+        damage (int or callable): Damage amount to deal
+        target (Creature): Target creature
+        source (Creature): Source of the damage
+        damage_type (str): Type of damage ("direct", "attack", etc.)
+
+    Optional:
+        card (Card): Card that caused the damage (for power triggers)  
+    """
+    
+    def __init__(self, damage: int, 
+                 target: Creature, source: Creature,
+                 damage_type: str = "direct", card=None):
+        self.damage = damage
+        self.target = target
+        self.damage_type = damage_type
+        self.card = card
+        self.source = source
+        
+    def execute(self) -> 'BaseResult':
+        from utils.dynamic_values import resolve_potential_damage
+        damage = resolve_potential_damage(self.damage, self.source, self.target)
+        return SingleActionResult(DealDamageAction(damage, 
+                                    target=self.target, 
+                                    damage_type=self.damage_type,
+                                    card=self.card,
+                                    source=self.source))
 
 @register("action")
 class GainBlockAction(Action):

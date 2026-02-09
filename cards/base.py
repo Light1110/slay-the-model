@@ -297,7 +297,7 @@ class Card(Localizable):
         """卡牌被打出时触发，返回 Action 列表"""
         try:
             from actions.combat import (
-                DealDamageAction,
+                AttackAction,
                 GainBlockAction,
                 HealAction,
                 GainEnergyAction,
@@ -317,12 +317,12 @@ class Card(Localizable):
             
             # 伤害
             if self.damage > 0:
-                damage_value = resolve_card_value(self, 'damage')
                 hits = max(1, resolve_card_value(self, 'attack_times'))
                 for _ in range(hits):
-                    action = DealDamageAction(
-                        damage=lambda: damage_value,
+                    action = AttackAction(
+                        damage=self.damage,
                         target=target,
+                        source=source,
                         damage_type="direct",
                     )
                     action.card = self

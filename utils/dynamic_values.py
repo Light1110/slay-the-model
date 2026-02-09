@@ -172,6 +172,14 @@ def resolve_orb_value(value: int) -> int:
         value += focus_power.amount
     return max(0, value)
 
+def resolve_orb_damage(base_damage: int, target: Creature) -> int:
+    from engine.game_state import game_state
+    player = game_state.player
+    damage = resolve_orb_value(base_damage)
+    if target.get_power('Lock-On') != None:
+        damage *= 1.5
+    return int(damage)
+
 
 def get_magic_value(card, magic_key: str, default: Any = 0) -> Any:
     """Get value from magic dictionary"""

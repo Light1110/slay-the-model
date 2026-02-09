@@ -42,7 +42,7 @@ class FlameTackleIntention(Intention):
     
     def execute(self) -> List['Action']:
         """Execute Flame Tackle: deals 16 damage and adds Slimed cards."""
-        from actions.combat import DealDamageAction
+        from actions.combat import AttackAction
         from actions.card import AddCardAction
         from engine.game_state import game_state
         
@@ -50,12 +50,11 @@ class FlameTackleIntention(Intention):
             return []
         
         actions = [
-            DealDamageAction(
-                name="Flame Tackle",
+            AttackAction(
                 damage=16,
                 target=game_state.player,
+                source=self.enemy,
                 damage_type="attack",
-                source=self.enemy
             )
         ]
         

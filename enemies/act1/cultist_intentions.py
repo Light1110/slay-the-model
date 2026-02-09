@@ -42,18 +42,17 @@ class CultistAttackIntention(Intention):
     
     def execute(self) -> List['Action']:
         """Execute Attack: deals 6 damage to player."""
-        from actions.combat import DealDamageAction
+        from actions.combat import AttackAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
             return []
         
         return [
-            DealDamageAction( # todo: 这个攻击力应该是动态计算的，考虑能力和玩家状态
-                name="Cultist Attack",
+            AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
+                source=self.enemy,
                 damage_type="attack",
-                source=self.enemy
             )
         ]

@@ -4,7 +4,7 @@ from actions.base import Action, LambdaAction
 from orbs.base import Orb
 from utils.combat import resolve_target
 from utils.types import TargetType
-from utils.dynamic_values import resolve_orb_value
+from utils.dynamic_values import resolve_orb_value, resolve_orb_damage
 
 class DarkOrb(Orb):
     passive_timing = "turn_end"
@@ -31,9 +31,10 @@ class DarkOrb(Orb):
         """
         from actions.combat import DealDamageAction
 
+        target = resolve_target(self.target_type)
+        assert target is not None
         return [DealDamageAction(
-            name="Dark Orb",
-            damage=self.charge,
-            target=resolve_target(self.target_type),
+            damage=resolve_orb_damage(self.charge, target),
+            target=target,
             damage_type="magic"
         )]

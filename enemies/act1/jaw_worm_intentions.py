@@ -20,19 +20,18 @@ class ChompIntention(Intention):
     
     def execute(self) -> List['Action']:
         """Execute Chomp: deals 11 damage to player."""
-        from actions.combat import DealDamageAction
+        from actions.combat import AttackAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
             return []
         
         return [
-            DealDamageAction(
-                name="Chomp",
+            AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
+                source=self.enemy,
                 damage_type="attack",
-                source=self.enemy
             )
         ]
 
@@ -73,7 +72,7 @@ class ThrashIntention(Intention):
     
     def execute(self) -> List['Action']:
         """Execute Thrash: deals 7 damage and gains 5 Block."""
-        from actions.combat import DealDamageAction, GainBlockAction
+        from actions.combat import AttackAction, GainBlockAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
@@ -82,12 +81,11 @@ class ThrashIntention(Intention):
         base_damage = self.base_damage
         
         return [
-            DealDamageAction(
-                name="Thrash",
+            AttackAction(
                 damage=lambda: base_damage,
                 target=game_state.player,
+                source=self.enemy,
                 damage_type="attack",
-                source=self.enemy
             ),
             GainBlockAction(
                 block=self.base_block,

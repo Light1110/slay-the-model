@@ -119,7 +119,7 @@ class ExplosivePotion(Potion):
         from engine.game_state import game_state
         actions = []
         for enemy in game_state.combat_state.enemies: # todo: game_state里面存curr_combat, combat_state是combat的属性
-            actions.append(DealDamageAction(name=self.name, damage=self.amount, target=enemy))
+            actions.append(DealDamageAction(damage=self.amount, target=enemy))
         return actions
 
 @register("potion")
@@ -149,7 +149,7 @@ class FirePotion(Potion):
         self._amount = 20  # Sacred Bark doubles to 40
 
     def on_use(self, target) -> List[Action]:
-        return [DealDamageAction(name=self.name, damage=self.amount, target=target)]
+        return [DealDamageAction(damage=self.amount, target=target)]
 
 @register("potion")
 class FlexPotion(Potion):
