@@ -81,7 +81,7 @@ class Power(Localizable):
         """
         return []
     
-     def on_turn_end(self) -> List[Action]:
+    def on_turn_end(self) -> List[Action]:
         """Called at end of turn."""
         # tick_down should be called by on_turn_end - decrease duration
         self.tick()
@@ -131,6 +131,17 @@ class Power(Localizable):
         
         Returns:
             List of actions to execute when block is gained
+        """
+        return []
+    
+    def on_card_draw(self, card: Any) -> List[Action]:
+        """Called when a card is drawn.
+        
+        Args:
+            card: The card that was just drawn
+            
+        Returns:
+            List of actions to execute when card is drawn
         """
         return []
     

@@ -433,7 +433,25 @@ class DrawCardsAction(Action):
             # Draw cards from draw pile to hand
             cards: List[Card] = game_state.player.card_manager.draw_many(self.count)
             
-            # The draw operation itself doesn't queue additional actions
+            # Trigger on_card_draw powers for each drawn card
+            power_actions = []
+            for card in cards:
+                if hasattr(game_state.player, 'powers'):
+                    for power in list(game_state.player.powers):
+                        if hasattr(power, "on_card_draw"):
+                            result = power.on_card_draw(card)
+                            if result:
+                                power_actions.extend(result if isinstance(result, list) else [result])
+                
+                # Also trigger card's on_draw method
+                card_actions = card.on_draw() if hasattr(card, 'on_draw') else []
+                power_actions.extend(card_actions)
+            
+            # If there are any actions from powers/card callbacks, queue them
+            if power_actions:
+                from utils.result_types import MultipleActionsResult
+                return MultipleActionsResult(power_actions)
+            
             return NoneResult()
 
         return NoneResult()

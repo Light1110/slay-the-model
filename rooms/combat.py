@@ -119,11 +119,4 @@ class CombatRoom(Room):
         elif self.room_type == RoomType.ELITE:
             return rd.randint(25, 35)
         else:
-            # Normal enemy - base gold from enemy with random fluctuation
-            total_gold = 0
-            for enemy in self.enemies:
-                total_gold += getattr(enemy, 'gold_reward', 15)
-            
-            # Apply random fluctuation to each enemy's gold
-            gold_reward = total_gold + rd.randint(-5, 5)
-            return max(10, gold_reward)  # Ensure minimum of 10
+            return rd.randint(10, 20)

@@ -16,7 +16,6 @@ else:
 
 # todo: 对于没有指定稀有度的情况，考虑根据权重选择稀有度
 def get_random_card(namespaces: Optional[List[str]] = None, 
-                     encounter_type: str = "any", 
                      rarities: Optional[List[RarityType]] = None, 
                      card_types: Optional[List[CardType]] = None, 
                      target_set: Optional[List[str]] = None, 
@@ -76,8 +75,6 @@ CARD_RARITY_PROBABILITIES = {
 
 def get_random_card_reward(namespaces: Optional[List[str]] = None,
                          encounter_type: str = "normal",
-                         card_types: Optional[List[CardType]] = None,
-                         exclude_set: Optional[List[str]] = None,
                          use_rolling_offset: bool = False) -> Optional[Card]:
     """
     Get a random card from registry with rarity weights based on encounter type.
@@ -85,8 +82,6 @@ def get_random_card_reward(namespaces: Optional[List[str]] = None,
     args:
         namespaces (Optional[List[str]]): List of namespaces to filter cards.
         encounter_type (str): Type of encounter for rarity weights ("normal", "elite", "shop").
-        card_types (Optional[List[CardType]]): List of card types to filter cards.
-        exclude_set (Optional[List[str]]): List of card names to exclude.
         use_rolling_offset (bool): If True, adjust rare chance based on common cards gained.
 
     returns:
@@ -120,14 +115,6 @@ def get_random_card_reward(namespaces: Optional[List[str]] = None,
 
         # Filter by namespace
         if namespaces and card_instance.namespace not in namespaces:
-            continue
-
-        # Filter by card type
-        if card_types and card_instance.card_type not in card_types:
-            continue
-
-        # Filter by exclude set
-        if exclude_set and card_instance.set in exclude_set:
             continue
 
         # Group cards by rarity
