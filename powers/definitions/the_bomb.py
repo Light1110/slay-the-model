@@ -1,0 +1,47 @@
+"""
+The Bomb power for combat effects.
+Deal damage to all enemies after N turns.
+"""
+from typing import List
+from actions.base import Action
+from actions.combat import DealDamageAction
+from powers.base import Power
+from utils.registry import register
+
+
+@register("power")
+class TheBombPower(Power):
+    """Deal damage to all enemies after N turns."""
+
+    name = "The Bomb"
+    description = "Deal damage to all enemies after N turns."
+    stackable = False
+    amount_equals_duration = True  # Duration tracks turns until explosion
+    is_buff = True
+
+    def __init__(self, amount: int = 40, duration: int = 3, owner=None):
+        """
+        Args:
+            amount: Damage amount (default 40, upgraded 50)
+            duration: Turns until explosion (default 3)
+        """
+        super().__init__(amount=amount, duration=duration, owner=owner)
+
+    def on_turn_end(self) -> List[Action]:
+        """Deal damage to all enemies when duration reaches 0."""
+        actions = super().on_turn_end()
+
+        # Trigger explosion when duration reaches 0 (after tick)
+        if self.duration == 0:
+            from engine.game_state import game_state
+            if game_state.current_combat:
+                explosion_actions = []
+                for enemy in game_state.current_combat.enemies:
+                    explosion_actions.append(DealDamageAction(
+                        damage=self.amount,
+                        target=enemy,
+                        direct=True
+                    ))
+                return explosion_actions
+
+        return actions

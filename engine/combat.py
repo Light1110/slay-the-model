@@ -241,6 +241,8 @@ class Combat(Localizable):
         # Reset combat flags
         self.combat_ended = False
         self.player_turn_ended = False
+        
+        # todo: prepare innate cards to top of draw_pile
 
     def _start_player_turn(self):
         """Start player turn - draw cards, reset energy, trigger start-of-turn effects"""

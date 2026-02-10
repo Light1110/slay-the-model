@@ -435,18 +435,26 @@ class AddRandomCardAction(Action):
 
     Required:
         pile (str): Card location ('deck' or 'hand')
+        upgrade (bool)
         namespace (str): Card namespace
         card_type (CardType): Card type
         rarity (str): Card rarity
+        permanent_cost (int)
+        temp_cost (int)
 
     Optional:
         None
     """
-    def __init__(self, pile: str = 'hand', card_type: Optional[CardType] = None, rarity: Optional[RarityType] = None, namespace: Optional[str] = None):
+    def __init__(self, pile: str = 'hand', upgrade: bool = False,
+                 card_type: Optional[CardType] = None, rarity: Optional[RarityType] = None, namespace: Optional[str] = None,
+                 permanent_cost: Optional[int] = None, temp_cost: Optional[int] = None):
         self.pile = pile
+        self.upgrade = upgrade
         self.card_type = card_type
         self.rarity = rarity
         self.namespace = namespace
+        self.permanent_cost = permanent_cost
+        self.temp_cost = temp_cost
     
     def execute(self) -> 'BaseResult':
         from engine.game_state import game_state
@@ -458,6 +466,15 @@ class AddRandomCardAction(Action):
             card_types=[self.card_type] if self.card_type else None,
             rarities=[self.rarity] if self.rarity else None
         )
+        
+        assert random_card is not None
+        
+        if self.upgrade:
+            random_card.upgrade()
+        if self.permanent_cost:
+            random_card.cost = self.permanent_cost
+        if self.temp_cost:
+            random_card.temp_cost = self.temp_cost
 
         # Return AddCardAction to be added to caller's action_queue
         return SingleActionResult(AddCardAction(card=random_card, dest_pile=self.pile))
@@ -573,14 +590,16 @@ class ChooseMoveCardAction(Action):
         src (str): Source pile name
         dst (str): Destination pile name
         amount (int): Amount of cards to move
+        filter_card_type (CardType)
 
     Optional:
         None
     """
-    def __init__(self, src: str, dst: str, amount: int = 1):
+    def __init__(self, src: str, dst: str, amount: int = 1, filter_card_type: Optional[CardType] = None):
         self.src = src
         self.dst = dst
         self.amount = amount
+        self.filter_card_type = filter_card_type
 
     def execute(self) -> 'BaseResult':
         from engine.game_state import game_state
@@ -596,6 +615,13 @@ class ChooseMoveCardAction(Action):
 
         options = []
         cards_in_pile = card_manager.get_pile(src_pile)
+        
+        if self.filter_card_type is not None:
+            final_pile = []
+            for card in cards_in_pile:
+                if card.card_type == self.filter_card_type:
+                    final_pile.append(card)
+            cards_in_pile = final_pile
 
         for card in cards_in_pile:
             option = card.display_name
@@ -662,7 +688,7 @@ class ChooseCopyCardAction(Action):
             max_select = copies,
             must_select = True
         )
-        return SingleActionResult(select_action)
+        return SingleActionResult(select_action)  
 
 @register("action")
 class MoveCardAction(Action):
@@ -748,3 +774,33 @@ class ExhaustRandomCardAction(Action):
         if actions:
             return MultipleActionsResult(actions)
         return NoneResult()   
+
+@register("action")
+class ShuffleAction(Action):
+    """Shuffle all cards from hand and discard piles into draw pile."""
+
+    def execute(self):
+        """Execute shuffle: move all cards from hand/discard to draw pile and shuffle."""
+        from engine.game_state import game_state
+        import random
+
+        if not game_state.player or not hasattr(game_state.player, "card_manager"):
+            return NoneResult()
+
+        card_manager = game_state.player.card_manager
+
+        # Collect all cards from hand and discard
+        hand_cards = list(card_manager.get_pile("hand"))
+        discard_cards = list(card_manager.get_pile("discard_pile"))
+
+        # Add them to draw pile
+        for card in hand_cards:
+            card_manager.move_to(card=card, dst="draw_pile")
+        for card in discard_cards:
+            card_manager.move_to(card, "draw_pile")
+
+        # Combine and shuffle
+        draw_cards = card_manager.get_pile("draw_pile")
+        random.shuffle(draw_cards)
+
+        return NoneResult()

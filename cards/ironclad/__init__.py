@@ -3,8 +3,8 @@ Ironclad card package - warrior class cards
 All Ironclad cards are imported here for registration
 """
 
-# All Ironclad cards in one file
-from cards.ironclad.cards import (
+# All Ironclad cards (import individual card files)
+from cards.ironclad import (
     Strike, Defend, Bash, Anger,
     IronWave, PommelStrike, HeavyBlade, Armaments, Flex,
     Clothesline, Inflame, BodySlam, Carnage,

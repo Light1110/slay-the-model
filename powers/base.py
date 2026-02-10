@@ -86,7 +86,7 @@ class Power(Localizable):
         # tick_down should be called by on_turn_end - decrease duration
         self.tick()
         
-        return []
+        return [] # todo: Whether to remove power that duration == 0?
     
     def on_card_play(self, card, player, entities) -> List[Action]:
         """Called when a card is played.

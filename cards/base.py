@@ -64,6 +64,9 @@ class Card(Localizable):
     # * card behavior
     upgradeable = True
     upgrade_limit = 1
+    
+    # * whether the card can be removed from deck
+    removable = True
 
     # * card triggers
     target_type = None
@@ -126,6 +129,12 @@ class Card(Localizable):
         if self.temp_cost is not None:
             return self.temp_cost
         return self._cost
+    
+    @cost.setter
+    def cost(self, value: int):
+        """设置消耗能量"""
+        if self._cost != COST_UNPLAYABLE or self._cost != COST_X:
+            self._cost = value
     
     @property
     def damage(self) -> int:
@@ -380,6 +389,10 @@ class Card(Localizable):
     def can_play(self, ignore_energy=False) -> tuple[bool, Optional[str]]:
         """Check if this card can be played."""
         from engine.game_state import game_state
+        assert game_state.current_combat is not None
+        combat_state = game_state.current_combat.combat_state
+        if not combat_state.turn_enable_card_play:
+            return False, "Normality restriction"
         
         cost = self.cost
         

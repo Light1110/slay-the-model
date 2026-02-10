@@ -9,111 +9,76 @@ from utils.types import RoomType
 class TestTinyChestRelic:
     """Test Tiny Chest relic."""
 
-    @patch('utils.registry.list_registered')
-    def test_relic_registered(self, mock_list):
-        """Test that Tiny Chest relic is registered."""
-        mock_list.return_value = ["tiny_chest"]
+    @patch('map.map_manager.MapManager._player_has_relic')
+    def test_tiny_chest_forces_treasure_every_4th_room(self, mock_has_relic):
+        """Test that Tiny Chest forces Treasure room every 4th ? room."""
+        # Mock that player has Tiny Chest relic
+        mock_has_relic.side_effect = lambda relic_name: relic_name in ["tiny_chest", "tinychest"]
 
-        from utils.registry import list_registered, get_registered
-        assert "tiny_chest" in list_registered("relic")
-
-    @patch('engine.game_state.game_state')
-    @patch('utils.result_types.NoneResult')
-    @patch('utils.registry.get_registered')
-    def test_on_map_enter_increments_counter(self, mock_gs, mock_none, mock_list):
-        """Test that on_map_enter increments counter."""
-        # Setup mock game state
-        mock_gs.unknown_room_visits = {}
-        mock_gs.unknown_room_visits[RoomType.TREASURE] = 0
-
-        mock_list.return_value = ["tiny_chest"]
-
-        # Create relic class mock
-        mock_relic_cls = MagicMock()
-        mock_relic_instance = MagicMock()
-        mock_relic_instance.unknown_room_count = 0
-        mock_relic_cls.return_value = mock_relic_instance
-        mock_none.return_value = NoneResult()
-
-        from utils.registry import get_registered
-        mock_get = MagicMock(return_value=mock_relic_cls)
-
-        # Import and create relic
-        from utils.types import CardType, RarityType
-        from relics.base import Relic
-        from utils.registry import register
-
-        # Re-register to inject mock
-        register("relic", lambda: mock_relic_instance)(relic_class="tiny_chest")
-
-        # Import map manager and test
         from map.map_manager import MapManager
+
+        # Create map manager with player having Tiny Chest
         map_manager = MapManager(seed=42, act_id=1)
 
-        # Call on_map_enter
-        mock_map_data = MagicMock()
-        mock_map_data.current_floor = 5
-        actions = mock_relic_instance.on_map_enter(mock_map_data)
+        # Track what types we get for unknown rooms
+        results = []
+        for i in range(10):
+            room_type = map_manager._resolve_unknown_type(floor=5)
+            results.append(room_type)
 
-        # Counter should be incremented
-        assert mock_relic_instance.unknown_room_count == 1
+        # Verify every 4th room (indices 3, 7) is Treasure
+        for i, room_type in enumerate(results):
+            if (i + 1) % 4 == 0:
+                assert room_type == RoomType.TREASURE, f"Visit {i+1} should be Treasure but got {room_type.value}"
 
-        # Only one action (NoneResult)
-        assert len(actions) == 1
-        assert actions[0] == mock_none.return_value
+    @patch('map.map_manager.MapManager._player_has_relic')
+    def test_tiny_chest_resets_treasure_counter(self, mock_has_relic):
+        """Test that Tiny Chest resets the treasure visit counter."""
+        # Mock that player has Tiny Chest relic
+        mock_has_relic.side_effect = lambda relic_name: relic_name in ["tiny_chest", "tinychest"]
 
-    @patch('engine.game_state.game_state')
-    @patch('utils.result_types.NoneResult')
-    @patch('utils.registry.get_registered')
-    def test_forces_treasure_every_4th_room(self, mock_gs, mock_none, mock_list):
-        """Test that treasure room is forced every 3rd ? visit."""
-        # Setup mock game state
-        mock_gs.unknown_room_visits = {}
-        mock_gs.unknown_room_visits[RoomType.TREASURE] = 0
-
-        mock_list.return_value = ["tiny_chest"]
-
-        # Create relic instance
-        mock_relic_cls = MagicMock()
-        mock_relic_instance = MagicMock()
-        mock_relic_instance.unknown_room_count = 0
-        mock_relic_cls.return_value = mock_relic_instance
-        mock_none.return_value = NoneResult()
-
-        from utils.registry import get_registered
-        mock_get = MagicMock(return_value=mock_relic_cls)
-        from utils.registry import register
-
-        # Re-register to inject mock
-        register("relic", lambda: mock_relic_instance)(relic_class="tiny_chest")
-
-        # Import and create map manager
         from map.map_manager import MapManager
+
+        # Create map manager with player having Tiny Chest
         map_manager = MapManager(seed=42, act_id=1)
 
-        mock_map_data = MagicMock()
+        # Get treasure counter before any visits
+        initial_counter = map_manager.unknown_room_visits[RoomType.TREASURE]
+        assert initial_counter == 0, "Initial treasure counter should be 0"
 
-        # Call on_map_enter 3 times (should not force treasure)
+        # Visit unknown rooms 3 times (not forcing treasure yet)
         for i in range(3):
-            mock_relic_instance.unknown_room_count = i
-            actions = mock_relic_instance.on_map_enter(mock_map_data)
+            map_manager._resolve_unknown_type(floor=5)
 
-        # Should not force treasure yet (counter not divisible by 3)
-        assert len(actions) == 1  # Just NoneResult
+        # Treasure counter should have been incremented 3 times
+        assert map_manager.unknown_room_visits[RoomType.TREASURE] == 3, "Treasure counter should be 3 after 3 non-treasure visits"
 
-        # Verify treasure counter was not reset
-        assert mock_gs.unknown_room_visits[RoomType.TREASURE] == 0
+        # 4th visit should force treasure and reset counter
+        room_type = map_manager._resolve_unknown_type(floor=5)
+        assert room_type == RoomType.TREASURE, "4th visit should force Treasure"
+        assert map_manager.unknown_room_visits[RoomType.TREASURE] == 0, "Treasure counter should be reset to 0 after forcing treasure"
 
-        # Call 4th time (should force treasure)
-        mock_relic_instance.unknown_room_count = 3
-        actions = mock_relic_instance.on_map_enter(mock_map_data)
+    @patch('map.map_manager.MapManager._player_has_relic')
+    def test_no_tiny_chest_normal_behavior(self, mock_has_relic):
+        """Test normal behavior when player doesn't have Tiny Chest."""
+        # Mock that player doesn't have Tiny Chest relic
+        mock_has_relic.return_value = False
 
-        # Should force treasure room (NoneResult resets treasure counter)
-        assert len(actions) == 1
-        assert actions[0] == mock_none.return_value
+        from map.map_manager import MapManager
 
-        # Verify treasure counter was reset to 0
-        assert mock_gs.unknown_room_visits[RoomType.TREASURE] == 0
+        # Create map manager without Tiny Chest
+        map_manager = MapManager(seed=42, act_id=1)
 
-        # Verify counter was reset after forcing treasure
-        assert mock_relic_instance.unknown_room_count == 0
+        # Track what types we get for unknown rooms
+        results = []
+        for i in range(20):
+            room_type = map_manager._resolve_unknown_type(floor=5)
+            results.append(room_type)
+
+        # Without Tiny Chest, we shouldn't get Treasure at regular intervals
+        treasure_count = sum(1 for r in results if r == RoomType.TREASURE)
+        print(f"Treasure rooms: {treasure_count}/20 (random, not forced)")
+
+        # Should have some random treasure rooms due to bad luck protection
+        # but not at fixed intervals
+        assert 0 <= treasure_count <= 5, f"Expected 0-5 treasure rooms, got {treasure_count}"

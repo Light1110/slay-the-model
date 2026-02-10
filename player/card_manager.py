@@ -84,7 +84,7 @@ class CardManager:
             return True
         return False
 
-    def move_to(self, card: Card, dst: str, src: Optional[str], pos: PilePosType) -> bool:
+    def move_to(self, card: Card, dst: str, src: Optional[str] = None, pos: Optional[PilePosType] = None) -> bool:
         """Move a card to a specified pile.
         
         Args:
@@ -101,7 +101,9 @@ class CardManager:
             
         source_pile = src if src in self.piles else self.get_card_location(card)
         if not source_pile:
-            return False  # Card not found in any pile
+            return False  # Card not found in any 
+        if not pos:
+            pos = PilePosType.TOP
         
         self.remove_from_pile(card, source_pile)
         return self.add_to_pile(card, dst, pos)

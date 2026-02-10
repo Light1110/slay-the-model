@@ -26,7 +26,7 @@ from utils.result_types import (
 
 # Import commonly used actions
 from actions.display import DisplayTextAction, SelectAction
-from actions.card import RemoveCardAction
+from actions.card import RemoveCardAction, ShuffleAction
 from actions.misc import BuyItemAction, OpenChestAction, LeaveRoomAction
 from actions.combat import TriggerRelicAction
 from actions.game_over import GameOverAction
@@ -50,16 +50,20 @@ __all__ = [
 
     # Card actions
     'RemoveCardAction',
-
-    # Shop actions
-    'BuyItemAction',
-
-    # Treasure actions
-    'OpenChestAction',
-
-    # Room actions
-    'TriggerRelicAction', 'LeaveRoomAction',
-
-    # Game state actions
-    'GameOverAction',
+    'TransformCardAction',
+    'ExhaustCardAction',
+    'UpgradeCardAction',
+    'ChooseExhaustCardAction',
+    'ChooseRemoveCardAction',
+    'ChooseTransformCardAction',
+    'ChooseUpgradeCardAction',
+    'DrawCardsAction',
+    'ReplaceCardAction',
+    'ChooseReplaceCardAction',
+    'MoveCardAction',
+    'CopyCardAction',
+    'AddRandomCardAction',
+    'ExhaustRandomCardAction',
+    'ChooseMoveCardAction',
+    'ShuffleAction',
 ]
