@@ -235,6 +235,22 @@ class DealDamageAction(Action):
             )
             if source_actions:
                 actions_to_return.extend(source_actions)
+        
+        # Trigger card's on_damage_dealt
+        if self.card:
+            card_actions = self.card.on_damage_dealt(
+                damage_dealt,
+                target=self.target,
+                card=self.card,
+                damage_type=self.damage_type
+            )
+            if card_actions:
+                actions_to_return.extend(card_actions)
+                
+        # Trigger on_fatal
+        if isinstance(self.target, Enemy) and self.target.is_dead():
+            if self.card is not None:
+                actions_to_return.extend(self.card.on_fatal())
 
         # Trigger relic hooks (on_damage_dealt)
         for relic in game_state.player.relics:

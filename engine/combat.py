@@ -181,7 +181,7 @@ class Combat(Localizable):
         
         hand = game_state.player.card_manager.get_pile("hand")
         for card in hand:
-            game_state.action_queue.add_actions(card.on_end_of_turn())
+            game_state.action_queue.add_actions(card.on_player_turn_end())
 
         # Discard hand (cards in hand are shuffled into discard pile)
         from actions.card import ExhaustCardAction

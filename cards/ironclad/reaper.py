@@ -24,4 +24,17 @@ class Reaper(Card):
 
     upgrade_damage = 5
 
-    # todo: 吸血逻辑写在 on_damage_dealt 里面
+    def on_damage_dealt(self, damage: int, target: Creature, card: Card, damage_type: str) -> List[Action]:
+        """Vampirism: heal player for damage dealt"""
+        from engine.game_state import game_state
+        from actions.combat import HealAction
+
+        actions = []
+        # Heal for damage dealt (vampirism effect)
+        heal_amount = damage
+        actions.append(HealAction(
+            target=game_state.player,
+            amount=heal_amount,
+            source=self
+        ))
+        return actions

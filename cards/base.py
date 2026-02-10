@@ -366,14 +366,14 @@ class Card(Localizable):
         """卡牌被消耗（放逐）时触发，默认返回 Action 列表。"""
         return []
     
-    def on_start_of_turn(self):
+    def on_player_turn_start(self):
         """
         卡牌在回合开始时触发。
         默认：如果temp_cost不为None，重置为None（只影响当前回合）
         """
         return [LambdaAction(lambda: setattr(self, 'temp_cost', None))]
     
-    def on_end_of_turn(self):
+    def on_player_turn_end(self):
         """卡牌在回合结束时触发，默认返回 Action 列表。"""
         return []
 
