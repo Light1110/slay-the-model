@@ -11,9 +11,6 @@ class CombatState:
     """Combat state containing all combat-related data"""
 
     def __init__(self):
-        # Enemy tracking
-        self.enemies: List['Enemy'] = []
-        
         # Orb tracking
         self.orb_history: Dict[str, int] = {}
         self.power_cards_played: int = 0
@@ -36,28 +33,8 @@ class CombatState:
         # Blood for Blood tracking
         self.blood_for_blood_hits: int = 0
 
-    def add_enemy(self, enemy: 'Enemy') -> None:
-        """Add an enemy to combat.
-        
-        Args:
-            enemy: Enemy instance to add
-        """
-        if enemy not in self.enemies:
-            self.enemies.append(enemy)
-    
-    def remove_enemy(self, enemy: 'Enemy') -> None:
-        """Remove an enemy from combat.
-        
-        Args:
-            enemy: Enemy instance to remove
-        """
-        if enemy in self.enemies:
-            self.enemies.remove(enemy)
-    
     def reset_combat_info(self):
         """Reset per-combat counters such as power card tracking and Echo Form flags."""
-        self.enemies.clear()
-        
         self.orb_history = {}
         self.power_cards_played = 0
         self.discarded_cards_this_turn = 0

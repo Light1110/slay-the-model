@@ -34,7 +34,8 @@ class Anchor(Relic):
     def on_player_turn_start(self, player, entities) -> List[Action]:
         # 第一回合，获得10点格挡
         from engine.game_state import game_state
-        if game_state.combat_state.combat_turn == 1:
+        if (game_state.current_combat is not None and 
+            game_state.current_combat.combat_state.combat_turn == 1):
             from actions.combat import GainBlockAction
             return [GainBlockAction(block=10)]
         return []

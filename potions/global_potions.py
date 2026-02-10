@@ -118,9 +118,10 @@ class ExplosivePotion(Potion):
     def on_use(self, target) -> List[Action]:
         from engine.game_state import game_state
         actions = []
-        # Access enemies through combat_state (correct architecture)
-        for enemy in game_state.combat_state.enemies:
-            actions.append(DealDamageAction(damage=self.amount, target=enemy))
+        # Access enemies through current combat
+        if game_state.current_combat is not None:
+            for enemy in game_state.current_combat.enemies:
+                actions.append(DealDamageAction(damage=self.amount, target=enemy))
         return actions
 
 @register("potion")

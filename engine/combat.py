@@ -35,6 +35,10 @@ class Combat(Localizable):
         self.enemies = enemies or []
         self.combat_type = combat_type
         
+        # Combat state
+        from .combat_state import CombatState
+        self.combat_state = CombatState()
+        
         # Combat control flags
         self.combat_ended = False
         self.player_turn_ended = False
@@ -86,9 +90,9 @@ class Combat(Localizable):
         self._start_player_turn()
 
         # Player action phase - wait for player to play cards, use potions, or end turn
-        game_state.combat_state.current_phase = "player_action"
+        self.combat_state.current_phase = "player_action"
 
-        while game_state.combat_state.current_phase == "player_action":
+        while self.combat_state.current_phase == "player_action":
             self._build_player_action()
 
             result = game_state.execute_all_actions()
@@ -110,7 +114,7 @@ class Combat(Localizable):
 
         # Get player info
         player = game_state.player
-        enemies = game_state.combat_state.enemies
+        enemies = self.enemies
 
         # Build status string
         status_parts = []
@@ -199,7 +203,7 @@ class Combat(Localizable):
         """
         from engine.game_state import game_state
 
-        game_state.combat_state.current_phase = "enemy_action"
+        self.combat_state.current_phase = "enemy_action"
 
         # For each alive enemy, execute actions
         for enemy in self.enemies:
@@ -216,7 +220,7 @@ class Combat(Localizable):
         """Initialize combat state"""
         from engine.game_state import game_state
         # Reset and setup combat state
-        game_state.combat_state.reset_combat_info()
+        self.combat_state.reset_combat_info()
         
         # Reset combat flags
         self.combat_ended = False
@@ -250,8 +254,8 @@ class Combat(Localizable):
         game_state.player.energy = game_state.player.max_energy
 
         # Increment turn counter
-        game_state.combat_state.combat_turn += 1
-        game_state.combat_state.current_phase = "player_action"
+        self.combat_state.combat_turn += 1
+        self.combat_state.current_phase = "player_action"
         
         # relics - powers
         for relic in game_state.player.relics:
@@ -259,5 +263,5 @@ class Combat(Localizable):
         for power in game_state.player.powers:
             game_state.action_queue.add_actions(power.on_turn_start())
         # enemies
-        for enemy in game_state.combat_state.enemies:
+        for enemy in self.enemies:
             enemy.on_player_turn_start()

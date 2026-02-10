@@ -18,7 +18,8 @@ class HornCleat(Relic):
     def on_player_turn_start(self, player, entities):
         """At the start of your 2nd turn, gain 14 Block."""
         from engine.game_state import game_state
-        if game_state.combat_state.combat_turn == 2:
-            from actions.combat import GainBlockAction
-            return [GainBlockAction(block=14)]
+        if game_state.current_combat is not None:
+            if game_state.current_combat.combat_state.combat_turn == 2:
+                from actions.combat import GainBlockAction
+                return [GainBlockAction(block=14)]
         return []

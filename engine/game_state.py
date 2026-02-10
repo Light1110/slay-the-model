@@ -15,6 +15,7 @@ import time
 
 from rooms.base import Room
 from .combat_state import CombatState
+from .combat import Combat
 from player.player_factory import create_player
 
 class GameState:
@@ -53,19 +54,15 @@ class GameState:
         # Card chance rolling offset (each common card gained increases rare chance)
         self.card_chance_common_counter = 0
 
-        # Current room and event tracking
+        # Current room tracking
         self.current_room: Optional[Room] = None
-        self.event_stack = []
         
         # Global action queue - shared across all rooms and events
         from actions.base import ActionQueue
         self.action_queue = ActionQueue()
         
-        # Game phase
-        self.game_phase: str = "room"  # "map", "room", "menu", "gameover"
-        
-        # Combat state
-        self.combat_state = CombatState()
+        # Current combat (None when not in combat)
+        self.current_combat: Optional[Combat] = None
         
         # game setup
         if self.config.seed == -1:
@@ -73,21 +70,13 @@ class GameState:
         rd.seed(self.config.seed)
         # character
         self.player = create_player(self.config.character)
-
-    def handle_creature_death(self, creature):
-        """Handle creature death notifications."""
-        if creature is self.player:
-            self.game_phase = "game_over"
     
     def initialize_map(self):
-        """Initialize the map system and generate the first act."""
+        """Initialize map system and generate the first act."""
         from map import MapManager
         
         self.map_manager = MapManager(self.config.seed, act_id=1)
         self.map_data = self.map_manager.generate_map()
-        
-        # Set game phase to map
-        self.game_phase = "map"
 
     def execute_all_actions(self) -> BaseResult:
         """
@@ -131,12 +120,6 @@ class GameState:
                     pass
 
         return NoneResult()
-
-    @property
-    def current_event(self):
-        """Get current event (top of stack)"""
-        return self.event_stack[-1] if self.event_stack else None
-
 
 # Global game state instance
 game_state = GameState()
