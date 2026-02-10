@@ -9,7 +9,7 @@ from actions.combat import LoseHPAction, GainEnergyAction, ApplyPowerAction
 from cards.base import Card
 from entities.creature import Creature
 from utils.registry import register
-from utils.types import RarityType
+from utils.types import CardType, RarityType
 
 # ==================== Starter Deck Cards ====================
 
@@ -18,7 +18,7 @@ class Strike(Card):
     """Deal damage"""
     
     # Card attributes
-    card_type = "Attack"
+    card_type = CardType.ATTACK
     rarity = RarityType.STARTER
     
     # Card values
@@ -35,7 +35,7 @@ class Defend(Card):
     """Gain block"""
     
     # Card attributes
-    card_type = "Skill"
+    card_type = CardType.SKILL
     rarity = RarityType.STARTER
     
     # Card values
@@ -51,7 +51,7 @@ class Bash(Card):
     """Deal damage and apply Vulnerable"""
     
     # Card attributes
-    card_type = "Attack"
+    card_type = CardType.ATTACK
     rarity = RarityType.STARTER
     
     # Card values
@@ -72,7 +72,7 @@ class Anger(Card):
     """Deal damage and add a copy to discard pile"""
     
     # Card attributes
-    card_type = "Attack"
+    card_type = CardType.ATTACK
     rarity = RarityType.STARTER
     
     # Card values
@@ -95,7 +95,7 @@ class IronWave(Card):
     """Gain block and deal damage"""
     
     # Card attributes
-    card_type = "Attack"
+    card_type = CardType.ATTACK
     rarity = RarityType.COMMON
     
     # Card values
@@ -113,7 +113,7 @@ class PommelStrike(Card):
     """Deal damage and draw cards"""
     
     # Card attributes
-    card_type = "Attack"
+    card_type = CardType.ATTACK
     rarity = RarityType.COMMON
     
     # Card values
@@ -131,7 +131,7 @@ class HeavyBlade(Card):
     """Deal damage, Strength affects this multiple times"""
     
     # Card attributes
-    card_type = "Attack"
+    card_type = CardType.ATTACK
     rarity = RarityType.COMMON
     
     # Card values
@@ -149,7 +149,7 @@ class Armaments(Card):
     """Gain block and upgrade a card in hand"""
     
     # Card attributes
-    card_type = "Skill"
+    card_type = CardType.SKILL
     rarity = RarityType.COMMON
     
     # Card values
@@ -170,7 +170,7 @@ class Flex(Card):
     """Gain Strength, lose it at end of turn"""
     
     # Card attributes
-    card_type = "Power"
+    card_type = CardType.POWER
     rarity = RarityType.COMMON
     
     # Card values
@@ -191,7 +191,7 @@ class Clothesline(Card):
     """Deal damage and apply Weak"""
     
     # Card attributes
-    card_type = "Attack"
+    card_type = CardType.ATTACK
     rarity = RarityType.UNCOMMON
     
     # Card values
@@ -212,7 +212,7 @@ class Inflame(Card):
     """Gain Strength for this combat"""
     
     # Card attributes
-    card_type = "Power"
+    card_type = CardType.POWER
     rarity = RarityType.UNCOMMON
     
     # Card values
@@ -231,7 +231,7 @@ class BodySlam(Card):
     """Deal damage equal to your block"""
     
     # Card attributes
-    card_type = "Attack"
+    card_type = CardType.ATTACK
     rarity = RarityType.UNCOMMON
     
     # Card values
@@ -253,7 +253,7 @@ class Carnage(Card):
     """Deal massive damage to all enemies"""
     
     # Card attributes
-    card_type = "Attack"
+    card_type = CardType.ATTACK
     rarity = RarityType.UNCOMMON
     
     # Card values
@@ -272,7 +272,7 @@ class Bludgeon(Card):
     """Deal massive damage"""
     
     # Card attributes
-    card_type = "Attack"
+    card_type = CardType.ATTACK
     rarity = RarityType.RARE
     
     # Card values
@@ -288,7 +288,7 @@ class LimitBreak(Card):
     """Double your Strength"""
     
     # Card attributes
-    card_type = "Skill"
+    card_type = CardType.SKILL
     rarity = RarityType.RARE
     
     # Card values
@@ -310,7 +310,7 @@ class Pummel(Card):
     """Deal damage multiple times"""
     
     # Card attributes
-    card_type = "Attack"
+    card_type = CardType.ATTACK
     rarity = RarityType.RARE
     
     # Card values
@@ -327,7 +327,7 @@ class Uppercut(Card):
     """Deal damage and apply Vulnerable and Weak"""
     
     # Card attributes
-    card_type = "Attack"
+    card_type = CardType.ATTACK
     rarity = RarityType.RARE
     
     # Card values
@@ -351,7 +351,7 @@ class Offering(Card):
     """Lose HP, gain Energy, Strength, and draw cards"""
     
     # Card attributes
-    card_type = "Attack"
+    card_type = CardType.ATTACK
     rarity = RarityType.RARE
     
     # Card values

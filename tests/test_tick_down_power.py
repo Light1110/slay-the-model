@@ -8,7 +8,7 @@ sys.path.insert(0, 'D:/game/slay-the-model')
 class MockCard:
     def __init__(self):
         self._cost = 1
-        self.card_type = "Attack"
+        self.card_type = CardType.ATTACK
 
 class TestPower:
     def __init__(self, duration=2):

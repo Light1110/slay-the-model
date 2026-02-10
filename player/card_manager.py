@@ -9,6 +9,8 @@ class CardManager:
 
     This class is intentionally generic; higher-level logic should live in actions.
     """
+    
+    # todo: hand capacity is 10; if add card to hand when hand has 10 cards, move this card to discard_pile
 
     def __init__(self, deck: Optional[List[Card]] = None) -> None:
         # Store all piles in a single dictionary for unified management

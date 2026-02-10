@@ -61,8 +61,8 @@ class RemoveEnemyAction(Action):
         """Remove enemy from combat state"""
         from engine.game_state import game_state
         
-        if game_state.combat_state:
-            game_state.combat_state.remove_enemy(self.enemy)
+        if game_state.current_combat:
+            game_state.current_combat.remove_enemy(self.enemy)
         
         return NoneResult()
 
@@ -84,8 +84,8 @@ class AddEnemyAction(Action):
         """Add enemy to combat state"""
         from engine.game_state import game_state
         
-        if game_state.combat_state:
-            game_state.combat_state.add_enemy(self.enemy)
+        if game_state.current_combat:
+            game_state.current_combat.add_enemy(self.enemy)
         
         return NoneResult()
 
@@ -118,7 +118,7 @@ class HealAction(Action):
                     relic_actions = relic.on_heal(
                         heal_amount=self.amount,
                         player=game_state.player,
-                        entities=game_state.combat_state.enemies if game_state.combat_state else [],
+                        entities=game_state.current_combat.enemies if game_state.current_combat else [],
                     )
                     if relic_actions:
                         actions_to_return.extend(relic_actions)
@@ -243,7 +243,7 @@ class DealDamageAction(Action):
                     damage=damage_dealt,
                     target=self.target,
                     player=game_state.player,
-                    entities=game_state.combat_state.enemies if game_state.combat_state else [],
+                    entities=game_state.current_combat.enemies if game_state.current_combat else [],
                 )
                 if actions:
                     actions_to_return.extend(actions)
@@ -382,7 +382,7 @@ class PlayCardAction(Action):
     def execute(self) -> 'BaseResult':
         from engine.game_state import game_state
         player = game_state.player
-        enemies = game_state.combat_state.enemies
+        enemies = game_state.current_combat.enemies
 
         if not self.card:
             return NoneResult()
@@ -444,13 +444,13 @@ class PlayCardBHAction(Action):
     def execute(self) -> 'BaseResult':
         from engine.game_state import game_state
         player = game_state.player
-        enemies = game_state.combat_state.enemies
+        enemies = game_state.current_combat.enemies
         
         # Spend energy
         cost = self.card.cost
         if cost > 0 and not self.ignore_energy:
             game_state.player.gain_energy(-cost)
-            game_state.combat_state.player_energy_spent_this_turn += cost
+            game_state.current_combat.combat_state.player_energy_spent_this_turn += cost
         
         actions = []
         # 1. Trigger card's on_play
@@ -470,8 +470,8 @@ class PlayCardBHAction(Action):
                 actions.extend(relic.on_play_card())
 
         # Update turn tracking
-        game_state.combat_state.turn_cards_played += 1
-        game_state.combat_state.player_actions_this_turn += 1
+        game_state.current_combat.combat_state.turn_cards_played += 1
+        game_state.current_combat.combat_state.player_actions_this_turn += 1
 
         # Remove card from hand
         from actions.card import ExhaustCardAction
@@ -500,7 +500,7 @@ class EndTurnAction(Action):
         from engine.game_state import game_state
 
         # Transition to enemy action phase
-        game_state.combat_state.current_phase = "enemy_action"
+        game_state.current_combat.combat_state.current_phase = "enemy_action"
 
         # This will be handled by Combat._build_turn_actions()
         return NoneResult()

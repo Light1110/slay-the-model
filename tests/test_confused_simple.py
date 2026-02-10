@@ -17,7 +17,7 @@ print("-"*40)
 class TestCard(Card):
     base_cost = 2
     name = "Test Card"
-    card_type = "Attack"
+    card_type = CardType.ATTACK
 
 confused = ConfusedPower()
 card = TestCard()

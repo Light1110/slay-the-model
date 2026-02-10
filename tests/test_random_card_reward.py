@@ -100,7 +100,7 @@ class TestGetRandomCardRewardIntegration:
         mock_card_cls = MagicMock()
         mock_card_instance = MagicMock()
         mock_card_instance.namespace = "test"
-        mock_card_instance.card_type = "Attack"
+        mock_card_instance.card_type = CardType.ATTACK
         mock_card_instance.set = None
         mock_card_instance.rarity = RarityType.COMMON
         mock_card_instance.__class__ = type('Card', (), {})
@@ -153,7 +153,7 @@ class TestGetRandomCardRewardIntegration:
         mock_card_cls = MagicMock()
         mock_card_instance = MagicMock()
         mock_card_instance.namespace = "test"
-        mock_card_instance.card_type = "Attack"
+        mock_card_instance.card_type = CardType.ATTACK
         mock_card_instance.set = None
         mock_card_instance.rarity = RarityType.COMMON
         mock_card_instance.__class__ = type('Card', (), {})

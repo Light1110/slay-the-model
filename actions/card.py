@@ -44,6 +44,7 @@ class AddCardAction(Action):
     def __init__(self, card, dest_pile: str):
         self.card = card
         self.dest_pile = dest_pile
+        # todo: position argument, default to PilePosType.TOP
     
     def execute(self) -> 'BaseResult':
         from engine.game_state import game_state
@@ -314,6 +315,54 @@ class ChooseUpgradeCardAction(Action):
             )
         select_action = SelectAction(
             title = LocalStr("ui.choose_cards_to_upgrade"),
+            options = options,
+            max_select = amount,
+            must_select = True
+        )
+        return SingleActionResult(select_action)
+    
+@register("action")     
+class ChooseExhaustCardAction(Action):
+    """Choose a card to upgrade
+    
+    Required:
+        pile (str): Card location ('deck' or 'hand')
+        amount (int): Amount of cards to upgrade (-1 to upgrade all)
+        
+    Optional:
+        None
+    """
+    def __init__(self, pile: str = 'hand', amount: int = 1):
+        self.pile = pile
+        self.amount = amount
+    
+    def execute(self) -> 'BaseResult':
+        from engine.game_state import game_state
+        if not game_state.player:
+            return NoneResult()
+        pile = self.pile
+        amount = self.amount
+        
+        card_manager = game_state.player.card_manager
+        from actions.display import SelectAction
+
+        options = []
+        cards_in_pile = card_manager.get_pile(pile)
+
+        for card in cards_in_pile:
+            if not card.can_upgrade():
+                continue
+            option = card.display_name
+            options.append(
+                Option(
+                    name = option,
+                    actions = [
+                        ExhaustCardAction(card)
+                    ]
+                )
+            )
+        select_action = SelectAction(
+            title = LocalStr("ui.choose_cards_to_exhaust"),
             options = options,
             max_select = amount,
             must_select = True

@@ -1,0 +1,37 @@
+"""
+Ironclad Uncommon Skill card - Rage
+"""
+
+from typing import List
+from actions.base import Action
+from actions.combat import ApplyPowerAction
+from cards.base import Card
+from entities.creature import Creature
+from utils.registry import register
+from utils.types import CardType, RarityType
+
+
+@register("card")
+class Rage(Card):
+    """Whenever you play a ATTACK card this turn, gain 3/5 Block"""
+
+    card_type = CardType.SKILL
+    rarity = RarityType.UNCOMMON
+
+    base_cost = 0
+    
+    base_magic = {"block_per_attack": 3}
+    upgrade_magic = {"block_per_attack": 5}
+    
+    def on_play(self, target: Creature | None = None) -> List[Action]:
+        from engine.game_state import game_state
+
+        actions = super().on_play(target)
+
+        # Apply weak debuff to all enemies
+        amount = self.get_magic_value("block_per_attack")
+        actions.append(ApplyPowerAction(target=game_state.player, power="RagePower", amount=amount)) # todo： RagePower
+
+        return actions
+
+    

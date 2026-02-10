@@ -8,7 +8,7 @@ from entities.creature import Creature
 def get_game_state():
     from engine.game_state import game_state
     return game_state
-from utils.types import TargetType, RarityType
+from utils.types import CardType, TargetType, RarityType
 from cards.namespaces import get_color_for_namespace, namespace_from_module
 from localization import Localizable
 from localization import BaseLocalStr, LocalStr, ConcatLocalStr
@@ -29,7 +29,7 @@ class Card(Localizable):
     """Advanced card class with dynamic values and multiple triggers"""
 
     # * card attributes
-    card_type = "Attack"  # Attack, Skill, Power, Status, Curse
+    card_type = CardType.ATTACK
     rarity = RarityType.COMMON
 
     # * card values
@@ -332,6 +332,9 @@ class Card(Localizable):
             if self.heal > 0:
                 heal_value = resolve_card_value(self, 'heal')
                 actions.append(HealAction(heal=lambda: heal_value))
+            elif self.heal < 0:
+                # todo: LoseHPAction
+                pass
             
             # 抽牌
             if self.draw > 0:

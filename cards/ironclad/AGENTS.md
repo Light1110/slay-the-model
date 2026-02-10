@@ -8,7 +8,7 @@ Ironclad character-specific cards (22 total) - warrior deck cards with attack, s
 ```python
 @register("card")
 class CardName(Card):
-    card_type = "Attack" | "Skill" | "Power"
+    card_type = CardType.ATTACK | "Skill" | "Power"
     rarity = RarityType.STARTER | COMMON | UNCOMMON | RARE
     base_cost = int               # Energy cost (0-3)
     base_damage = int             # For attacks
