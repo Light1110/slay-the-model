@@ -99,6 +99,8 @@ class HealAction(Action):
     Optional:
         None
     """
+    # todo: new parameter: target
+    # reason: enemky can also heal
     def __init__(self, amount: int):
         self.amount = amount
 

@@ -152,8 +152,7 @@ from .shop import (
     SlingOfCourage,
     StrangeSpoonShop,
     TheAbacus,
-    TwistedFunnel,
-    Toolbox
+    TwistedFunnel
 )
 
 from .event import (
@@ -308,7 +307,7 @@ __all__ = [
     'VelvetChoker',
     'WristBlade',
 
-    # Shop (14)
+    # Shop (13)
     'Cauldron',
     'ChemicalX',
     'ClockworkSouvenir',
@@ -325,7 +324,6 @@ __all__ = [
     'StrangeSpoonShop',
     'TheAbacus',
     'TwistedFunnel',
-    'Toolbox',
 
     # Event (14)
     'CultistHeadpiece',

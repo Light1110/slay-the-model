@@ -16,6 +16,9 @@ class Relic(Localizable):
     def __init__(self):
         pass
     
+    def on_obtain(self) -> List[Action]:
+        return []
+    
     # ==================== Phase Hooks ====================
     
     def on_combat_start(self, player, entities) -> List[Action]:

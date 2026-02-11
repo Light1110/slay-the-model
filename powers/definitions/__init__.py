@@ -17,6 +17,13 @@ from powers.definitions.panache import PanachePower
 from powers.definitions.sadistic_nature import SadisticNaturePower
 from powers.definitions.the_bomb import TheBombPower
 from powers.definitions.shackled import ShackledPower
+from powers.definitions.thorns import ThornsPower
+from powers.definitions.poison import PoisonPower
+from powers.definitions.plated_armor import PlatedArmorPower
+from powers.definitions.dexterity import DexterityPower
+from powers.definitions.ritual import RitualPower
+from powers.definitions.duplication import DuplicationPower
+from powers.definitions.regeneration import RegenerationPower
 
 __all__ = [
     "StrengthPower",
@@ -34,4 +41,11 @@ __all__ = [
     "SadisticNaturePower",
     "TheBombPower",
     "ShackledPower",
+    "ThornsPower",
+    "PoisonPower",
+    "PlatedArmorPower",
+    "DexterityPower",
+    "RitualPower",
+    "DuplicationPower",
+    "RegenerationPower",
 ]

@@ -1,0 +1,25 @@
+"""
+Dexterity power for combat effects.
+Increases Block gained from cards.
+"""
+from typing import List
+from powers.base import Power
+from utils.registry import register
+
+@register("power")
+class DexterityPower(Power):
+    """Increases Block gained from cards."""
+    
+    name = "Dexterity"
+    description = "Increases Block gained from cards."
+    stackable = True
+    amount_equals_duration = False
+    is_buff = True  # Beneficial effect - increases block
+    
+    def __init__(self, amount: int = 1, duration: int = 0, owner=None):
+        """
+        Args:
+            amount: Dexterity amount (default 1)
+            duration: 0 for permanent, positive for temporary turns
+        """
+        super().__init__(amount=amount, duration=duration, owner=owner)
