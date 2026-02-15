@@ -58,9 +58,10 @@ class SelectAction(Action):
           * 可提前停止选择
     """
 
-    def __init__(self, title : BaseLocalStr, options : List[Option], max_select: int = 1, must_select: bool = True):
-        self.title = title
-        self.options = options
+    def __init__(self, title : BaseLocalStr = None, options : List[Option] = None, max_select: int = 1, must_select: bool = True, prompt: BaseLocalStr = None):
+        # Support both 'title' and 'prompt' for backward compatibility
+        self.title = title if title is not None else prompt
+        self.options = options if options is not None else []
         self.max_select = max_select
         self.must_select = must_select
 
@@ -69,6 +70,19 @@ class SelectAction(Action):
         
         # [0] 无选项时报错
         assert len(self.options) > 0, "SelectAction requires at least one option"
+        
+        # DEBUG: Print all available options
+        debug = get_game_state().config.get("debug", {})
+        if bool(debug.get("enable", False)):
+            print(f"\n{'='*60}")
+            print(f"[SELECT] {self.title}")
+            print(f"{'='*60}")
+            for i, option in enumerate(self.options):
+                action_names = [a.__class__.__name__ for a in option.actions[:3]]
+                if len(option.actions) > 3:
+                    action_names.append(f"...+{len(option.actions)-3} more")
+                print(f"  [{i}] {option.name} -> {action_names}")
+            print(f"  max_select={self.max_select}, must_select={self.must_select}")
         
         # [1] 自动选择情况 
         # [1-1] must_select=True && max_select=-1 （全选，自动）
@@ -114,6 +128,12 @@ class SelectAction(Action):
                     select_idxs = list(range(len(self.options) - num_to_select, len(self.options)))
                 else:
                     raise ValueError(f"Invalid debug select_type: {select_type}")
+            
+            # DEBUG: Print selected indices
+            if bool(debug.get("enable", False)):
+                selected_names = [str(self.options[i].name) for i in select_idxs]
+                print(f"  [SELECTED] indices={select_idxs}: {selected_names}")
+                print(f"{'='*60}\n")
             
             # 收集前num_to_select个选项的动作
             all_actions = []

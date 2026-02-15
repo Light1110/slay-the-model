@@ -37,6 +37,9 @@ class GameState:
 
         # Track obtained relics (global, even if removed later)
         self.obtained_relics: set = set()
+        
+        # Event stack for nested event contexts
+        self.event_stack = []
 
         # Neo blessing effects
         self.neow_blessing_active = False

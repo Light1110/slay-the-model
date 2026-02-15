@@ -6,11 +6,12 @@ from typing import List
 from actions.base import Action, LambdaAction
 from actions.card import ChooseAddRandomCardAction, ChooseCopyCardAction, DrawCardsAction
 from actions.combat import GainBlockAction, GainEnergyAction, HealAction, DealDamageAction, ApplyPowerAction, ModifyMaxHpAction
-# GainGoldAction imported lazily when needed to avoid circular import
-from actions.reward import AddRandomPotionAction
 from relics.base import Relic
 from utils.types import RarityType, CardType
 from utils.registry import register
+
+# NOTE: AddRandomPotionAction must be imported lazily inside methods
+# to avoid circular import between actions.reward -> relics.base -> relics.global_relics.shop
 
 @register("relic")
 class Cauldron(Relic):
@@ -21,6 +22,8 @@ class Cauldron(Relic):
         self.rarity = RarityType.SHOP
     
     def on_obtain(self) -> List[Action]:
+        # Lazy import to avoid circular dependency
+        from actions.reward import AddRandomPotionAction
         from engine.game_state import game_state
         actions = []
         for _ in range(5):

@@ -51,18 +51,19 @@ class LeaveRoomAction(Action):
         None
 
     Optional:
-        None
+        room: The room to leave (optional, uses current_room if not specified)
     """
-    def __init__(self):
-        pass
+    def __init__(self, room=None):
+        self.room = room
 
     def execute(self) -> 'BaseResult':
         """Leave a room and return to map state"""
         from engine.game_state import game_state
 
         # Mark room should leave flag
-        if game_state.current_room:
-            game_state.current_room.should_leave = True
+        target_room = self.room if self.room else game_state.current_room
+        if target_room:
+            target_room.should_leave = True
 
         return NoneResult()
     

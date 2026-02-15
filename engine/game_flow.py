@@ -84,7 +84,7 @@ class GameFlow:
         neo_room.init()
         result = neo_room.enter()
         # Handle Neo room result
-        if result == "DEATH":
+        if isinstance(result, GameStateResult) and result.state == "GAME_LOSE":
             self._handle_game_over()
             return
         elif isinstance(result, GameStateResult) and result.state == "GAME_EXIT":
@@ -104,6 +104,17 @@ class GameFlow:
         if not available_nodes:
             # No more moves available
             return None
+        
+        # DEBUG: Print available map nodes
+        debug = game_state.config.get("debug", {})
+        if bool(debug.get("enable", False)):
+            print(f"\n{'~'*60}")
+            print(f"[MAP] Current Floor: {game_state.current_floor}, Position: {game_state.map_manager.map_data.current_position}")
+            print(f"[MAP] Available Nodes:")
+            for idx, n in enumerate(available_nodes):
+                print(f"  [{idx}] Floor {n.floor}, Pos {n.position} | Type: {n.room_type}")
+            print(f"{'~'*60}")
+        
         # Select node based on game mode
         from utils.types import RoomType
         node = None
@@ -158,14 +169,11 @@ class GameFlow:
     def _handle_game_over(self):
         """Handle player death"""
         print(f"\n💀 {t('ui.game_over', default='Game Over! You have fallen in the Spire. 💀')}")
-        game_state.game_phase = "game_over"
     
     def _handle_game_won(self):
         """Handle player victory"""
         print(f"\n🎉 {t('ui.game_won', default='Congratulations! You have conquered the Spire! 🎉')}")
-        game_state.game_phase = "game_won"
     
     def _handle_game_exit(self):
         """Handle game exit from menu"""
         print(f"\n👋 {t('ui.game_exit', default='Thanks for playing! Goodbye! 👋')}")
-        game_state.game_phase = "game_exit"

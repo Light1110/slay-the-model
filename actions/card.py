@@ -1,13 +1,16 @@
 from actions.base import Action
-from typing import Optional, Union, List
+from typing import Optional, Union, List, TYPE_CHECKING
 from actions.display import SelectAction
-from cards.base import Card
 from localization import LocalStr, t
 from utils.option import Option
 from utils.registry import register, get_registered, list_registered
 from utils.types import CardType, PilePosType, RarityType
 from utils.random import get_random_card
 from utils.result_types import BaseResult, NoneResult, MultipleActionsResult, SingleActionResult
+
+# Type hints only (avoid circular imports)
+if TYPE_CHECKING:
+    from cards.base import Card
             
 @register("action")
 class RemoveCardAction(Action):
@@ -96,7 +99,7 @@ class ExhaustCardAction(Action):
     Optional:
         source_pile (str): Source pile name
     """
-    def __init__(self, card: Card, source_pile: Optional[str] = None):
+    def __init__(self, card: "Card", source_pile: Optional[str] = None):
         self.card = card
         self.source_pile = source_pile
 
@@ -138,13 +141,17 @@ class DiscardCardAction(Action):
     Optional:
         source_pile (str): Source pile name
     """
-    def __init__(self, card: Card, source_pile: Optional[str] = None):
+    def __init__(self, card: "Card", source_pile: Optional[str] = None):
         self.card = card
         self.source_pile = source_pile
 
     def execute(self) -> 'BaseResult':
         from engine.game_state import game_state
         if self.card and game_state.player and hasattr(game_state.player, "card_manager"):
+            # Find source pile if not specified
+            if self.source_pile is None:
+                self.source_pile = game_state.player.card_manager.get_card_location(self.card)
+            
             # Actually discard card
             discarded = game_state.player.card_manager.discard(self.card, src=self.source_pile)
             
@@ -156,7 +163,7 @@ class DiscardCardAction(Action):
                         result = power.on_discard(self.card)
                         if result:
                             power_actions.extend(result if isinstance(result, list) else [result])
-                        
+                    
             # Trigger card's on_discard method
             card_actions = self.card.on_discard() if hasattr(self.card, 'on_discard') else []
             
@@ -533,7 +540,7 @@ class ReplaceCardAction(Action):
     Optional:
         None
     """
-    def __init__(self, card: Card):
+    def __init__(self, card: "Card"):
         self.card = card
         
     def execute(self) -> 'BaseResult':

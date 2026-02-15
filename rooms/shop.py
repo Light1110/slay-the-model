@@ -109,15 +109,16 @@ class ShopRoom(Room):
     def _generate_items(self):
         """Generate shop items"""
         items = []
-        character = game_state.player.character if game_state.player else "ironclad"
+        character = game_state.player.character if game_state.player else "Ironclad"
+        namespace = game_state.player.namespace if game_state.player else "ironclad"
         ascension = getattr(game_state, 'ascension_level', 0)
         
         # Generate 5 colored cards (2 attacks, 2 skills, 1 power)
         for _ in range(2):
             card = get_random_card(
                 rarities=[RarityType.COMMON, RarityType.UNCOMMON, RarityType.RARE],
-                card_types=[CardType.ATTACK],
-                namespaces=[character]
+                card_types=[CardType.SKILL],
+                namespaces=[namespace]
             )
             if card is None:
                 raise ValueError("unable to get card")
@@ -187,7 +188,7 @@ Having both this and MembershipCard.png Membership Card will reduce prices by a 
             card = get_random_card(
                 rarities=[RarityType.COMMON, RarityType.UNCOMMON, RarityType.RARE],
                 card_types=[CardType.SKILL],
-                namespaces=[character]
+                namespaces=[namespace]
             )
             if card is None:
                 raise ValueError("unable to get card")
@@ -203,7 +204,7 @@ Having both this and MembershipCard.png Membership Card will reduce prices by a 
         card = get_random_card(
             rarities=[RarityType.COMMON, RarityType.UNCOMMON, RarityType.RARE],
             card_types=[CardType.POWER],
-            namespaces=[character]
+            namespaces=[namespace]
         )
         if card is None:
             raise ValueError("unable to get card")
@@ -220,7 +221,7 @@ Having both this and MembershipCard.png Membership Card will reduce prices by a 
             card = get_random_card(
                 rarities=[RarityType.COMMON, RarityType.UNCOMMON, RarityType.RARE],
                 card_types=[CardType.SKILL],
-                namespaces=[character]
+                namespaces=[namespace]
             )
             if card is None:
                 raise ValueError("unable to get card")
@@ -236,7 +237,7 @@ Having both this and MembershipCard.png Membership Card will reduce prices by a 
         card = get_random_card(
             rarities=[RarityType.COMMON, RarityType.UNCOMMON, RarityType.RARE],
             card_types=[CardType.POWER],
-            namespaces=[character]
+            namespaces=[namespace]
         )
         if card is None:
             raise ValueError("unable to get card")
@@ -325,11 +326,11 @@ Having both this and MembershipCard.png Membership Card will reduce prices by a 
                 # Only show item if player has enough gold
                 if not game_state.player or game_state.player.gold >= final_price:
                     if shop_item.item_type == "card":
-                        name = self.local("ShopRoom.buy_card", card=shop_item.item.name, price=final_price)
+                        name = self.local("ShopRoom.buy_card", card=shop_item.item.info(), price=final_price)
                     elif shop_item.item_type == "relic":
-                        name = self.local("ShopRoom.buy_relic", relic=shop_item.item.name, price=final_price)
+                        name = self.local("ShopRoom.buy_relic", relic=shop_item.item.info(), price=final_price)
                     elif shop_item.item_type == "potion":
-                        name = self.local("ShopRoom.buy_potion", potion=shop_item.item.name, price=final_price)
+                        name = self.local("ShopRoom.buy_potion", potion=shop_item.item.info(), price=final_price)
                     else:
                         name = LocalStr(key="Buy for {final_price}")
                     options.append(Option(name=name, actions=[BuyItemAction(shop_item, idx)]))

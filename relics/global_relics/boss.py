@@ -6,13 +6,14 @@ from typing import List
 from actions.base import Action, LambdaAction
 from actions.card import AddCardAction, ChooseRemoveCardAction, DrawCardsAction, TransformCardAction
 from actions.combat import GainBlockAction, GainEnergyAction, HealAction, DealDamageAction, ApplyPowerAction
-# GainGoldAction imported lazily when needed to avoid circular import
-from actions.reward import AddRandomRelicAction
 from cards.colorless.curse_of_the_bell import CurseOfTheBell
 from cards.colorless.wound import Wound
 from relics.base import Relic
 from utils.types import CombatType, PilePosType, RarityType, CardType
 from utils.registry import register
+
+# NOTE: AddRandomRelicAction must be imported lazily inside methods
+# to avoid circular import between actions.reward -> relics.base -> relics.global_relics.boss
 
 @register("relic")
 class SneckoEye(Relic):
@@ -88,6 +89,8 @@ class CallingBell(Relic):
         self.rarity = RarityType.BOSS
         
     def on_obtain(self) -> List[Action]:
+        # Lazy import to avoid circular dependency
+        from actions.reward import AddRandomRelicAction
         return [
             AddCardAction(CurseOfTheBell(), "deck"),
             AddRandomRelicAction([RarityType.COMMON]),

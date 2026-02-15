@@ -301,21 +301,22 @@ class EncounterPool:
         enemy_classes = _get_enemy_classes()
 
         # Map encounter names to actual enemy compositions
+        # Use actual registered enemy class names
         encounter_compositions = {
             'Cultist': ['Cultist'],
             'JawWorm': ['JawWorm'],
-            '2 Louse': ['Louse', 'Louse'],  # 2 lice
-            'Small Slimes': ['SpikeSlime', 'SpikeSlimeM'],  # Spiked Slime (M) + Acid Slime (S)
-            'Gang of Gremlins': [],  # Need to implement gremlins
-            'Large Slime': ['SpikeSlime'],  # Spiked Slime (L) or Acid Slime (L)
-            'Swarm of Slimes': ['SpikeSlime', 'SpikeSlime', 'SpikeSlimeM'],  # 3x Spiked Slime (S) + 2x Acid Slime (S)
-            'Blue Slaver': [],  # Need to implement slavers
-            'Red Slaver': [],  # Need to implement slavers
-            '3 Louse': ['Louse', 'Louse', 'Louse'],  # 3 lice
-            '2 Fungi Beasts': [],  # Need to implement fungi beasts
-            'Exordium Thugs': ['Louse', 'Looter'],  # First: Louse; Second: Looter
-            'Exordium Wildlife': [],  # First: Fungi Beast or Jaw Worm; Second: Louse or Medium Slime
-            'Looter': ['Looter'],  # Need to implement looter
+            '2 Louse': ['GreenLouse', 'RedLouse'],  # 2 lice (mix of green and red)
+            'Small Slimes': ['SpikeSlimeM', 'SpikeSlime'],  # Spiked Slime (M) + Spike Slime (S)
+            'Gang of Gremlins': ['Cultist', 'JawWorm'],  # Fallback: no gremlins yet
+            'Large Slime': ['SpikeSlime'],  # Spiked Slime (L)
+            'Swarm of Slimes': ['SpikeSlime', 'SpikeSlime', 'SpikeSlimeM'],  # 3x Spiked Slime
+            'Blue Slaver': ['BlueSlaver'],  # Blue Slaver implemented
+            'Red Slaver': ['RedSlaver'],  # Red Slaver implemented
+            '3 Louse': ['GreenLouse', 'RedLouse', 'GreenLouse'],  # 3 lice
+            '2 Fungi Beasts': ['FungiBeast', 'FungiBeast'],  # 2 fungi beasts implemented
+            'Exordium Thugs': ['GreenLouse', 'JawWorm'],  # Mix of enemies
+            'Exordium Wildlife': ['FungiBeast', 'GreenLouse'],  # Mix of enemies
+            'Looter': ['Cultist'],  # Fallback: no Looter, use Cultist
         }
 
         enemy_names = encounter_compositions.get(encounter_name, [])

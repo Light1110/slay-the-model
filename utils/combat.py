@@ -13,7 +13,9 @@ def resolve_target(target_type: TargetType) -> Optional[Creature]:
     """
     from engine.game_state import game_state
     player = game_state.player
-    enemies = game_state.combat_state.enemies
+    # Access enemies through current_combat, not combat_state
+    combat = game_state.current_combat
+    enemies = combat.enemies if combat else []
 
     if target_type == TargetType.SELF:
         return player
@@ -25,8 +27,9 @@ def resolve_target(target_type: TargetType) -> Optional[Creature]:
     elif target_type == TargetType.ENEMY_ALL:
         return enemies
     elif target_type == TargetType.ENEMY_SELECT:
-        # 这个应该提前让玩家选择目标。这里报错
-        raise NotImplementedError("TargetType.ENEMY_SELECT requires player selection, which is not implemented in this function.")
+        # For auto mode, select the first alive enemy
+        alive_enemies = [e for e in enemies if not e.is_dead()]
+        return alive_enemies[0] if alive_enemies else None
     else:
         raise ValueError(f"Unsupported TargetType: {target_type}")
     

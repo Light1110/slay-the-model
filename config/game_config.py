@@ -9,9 +9,11 @@ class GameConfig:
             "language": "en",
             "seed": None,
             "character": "Ironclad",
-            "debug": True,
-            "debug": False,
-            "debug_log_path": "logs/debug.log",
+            "debug": {
+                "enable": False,
+                "log_path": "logs/debug.log",
+                "select_type": "random",
+            },
         }
 
         # Update defaults with provided kwargs
@@ -23,7 +25,6 @@ class GameConfig:
         self.seed = defaults["seed"]
         self.character = defaults["character"]
         self.debug = defaults["debug"]
-        self.debug_log_path = defaults["debug_log_path"]
 
     def get(self, key, default=None):
         """Dict-like access for compatibility with config.get usage."""

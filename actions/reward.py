@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 
 from actions.base import Action
 from utils.result_types import BaseResult, NoneResult, SingleActionResult, MultipleActionsResult
@@ -7,7 +7,10 @@ from utils.option import Option
 from utils.registry import register, get_registered_instance
 from utils.random import get_random_relic, get_random_potion
 from utils.types import RarityType
-from relics.base import Relic
+
+# Use TYPE_CHECKING to avoid circular import
+if TYPE_CHECKING:
+    from relics.base import Relic
 
 # Reward actions
 @register("action")
@@ -66,7 +69,7 @@ class LoseRelicAction(Action):
     Optional:
         None
     """
-    def __init__(self, relic: Relic):
+    def __init__(self, relic: "Relic"):
         self.relic = relic
     
     def execute(self) -> 'BaseResult':

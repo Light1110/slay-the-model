@@ -1,11 +1,13 @@
 from actions.base import Action
 from typing import Optional, Callable, Any, List, TYPE_CHECKING
 from actions.card import DiscardCardAction
-from cards.base import COST_X
 from utils.result_types import BaseResult, BaseResult, NoneResult, SingleActionResult, MultipleActionsResult
 from localization import t
 from utils.registry import register
 from entities.creature import Creature
+
+# Lazy import COST_X to avoid circular import
+COST_X = -1  # Default value, will be overwritten when cards.base is loaded
 
 if TYPE_CHECKING:
     from enemies.base import Enemy
@@ -183,7 +185,7 @@ class DealDamageAction(Action):
     should be handled by AttackAction or similar higher-level actions.
 
     Required:
-        damage (int or callable): Damage amount to deal
+        damage (int): Damage amount to deal
         target (Creature): Target creature
         damage_type (str): Type of damage ("direct", "attack", etc.)
 
@@ -206,9 +208,9 @@ class DealDamageAction(Action):
         if not self.target or self.target.is_dead():
             return NoneResult()
 
-        # Calculate damage value
+        # ! damage must be int! If error occurs, search other implementation
         damage_amount = self.damage
-        
+
         # Actually deal damage (Creature.take_damage only handles numerical changes)
         damage_dealt = self.target.take_damage(
             damage_amount,
@@ -239,7 +241,7 @@ class DealDamageAction(Action):
                 actions_to_return.extend(source_actions)
         
         # Trigger card's on_damage_dealt
-        if self.card:
+        if self.card and hasattr(self.card, 'on_damage_dealt'):
             card_actions = self.card.on_damage_dealt(
                 damage_dealt,
                 target=self.target,
@@ -249,8 +251,8 @@ class DealDamageAction(Action):
             if card_actions:
                 actions_to_return.extend(card_actions)
                 
-        # Trigger on_fatal
-        if isinstance(self.target, Enemy) and self.target.is_dead():
+        # Trigger on_fatal - check if target is an enemy by checking for is_intention attribute
+        if hasattr(self.target, 'is_intention') and self.target.is_dead():
             if self.card is not None:
                 actions_to_return.extend(self.card.on_fatal())
 
@@ -328,21 +330,24 @@ class GainBlockAction(Action):
         from engine.game_state import game_state
         actions_to_return = []
 
+        # Resolve callable block values first
+        block_amount = self.block() if callable(self.block) else self.block
+
         # Trigger target's on_gain_block hook
         if self.target:
             actions = self.target.on_gain_block(
-                self.block,
+                block_amount,
                 source=self.source,
                 card=self.card
             )
             if actions:
                 actions_to_return.extend(actions)
 
-        # Trigger power hooks for on_gain_block
+        # Trigger power hooks for on_gain_block (pass resolved int amount)
         for power in list(self.target.powers):
             if hasattr(power, "on_gain_block"):
                 power_actions = power.on_gain_block(
-                    self.block,
+                    block_amount,
                     player=self.target,
                     source=self.source,
                     card=self.card
@@ -351,7 +356,7 @@ class GainBlockAction(Action):
                     actions_to_return.extend(power_actions)
 
         # Actually gain block (Creature.gain_block only handles numerical changes)
-        self.target.gain_block(self.block, source=self.source, card=self.card)
+        self.target.gain_block(block_amount, source=self.source, card=self.card)
 
         if actions_to_return:
             return MultipleActionsResult(actions_to_return)
@@ -472,15 +477,16 @@ class PlayCardBHAction(Action):
         
         actions = []
         # 1. Trigger card's on_play
-        actions.extend(self.card.on_play())
+        actions.extend(self.card.on_play(target=self.target))
         
         # 2. Trigger powers
         for power in player.powers:
             if hasattr(power, 'on_play_card'):
                 actions.extend(power.on_play_card())
-        for power in enemies.powers:
-            if hasattr(power, 'on_play_card'):
-                actions.extend(power.on_play_card())
+        for enemy in enemies:
+            for power in enemy.powers:
+                if hasattr(power, 'on_play_card'):
+                    actions.extend(power.on_play_card())
         
         # 3. Trigger relics
         for relic in player.relics:
@@ -551,7 +557,16 @@ class ApplyPowerAction(Action):
 
         # If power is a string, get the registered power class
         if isinstance(self.power, str):
+            # Try exact name first, then with "Power" suffix
             power_class = get_registered("power", self.power)
+            if not power_class:
+                # Try with "Power" suffix (e.g., "Vulnerable" -> "VulnerablePower")
+                power_class = get_registered("power", f"{self.power}Power")
+            if not power_class:
+                # Try capitalizing first letter
+                power_class = get_registered("power", self.power.capitalize())
+                if not power_class:
+                    power_class = get_registered("power", f"{self.power.capitalize()}Power")
             if not power_class:
                 print(f"Power {self.power} not found")
                 return NoneResult()

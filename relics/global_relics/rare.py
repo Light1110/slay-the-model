@@ -6,11 +6,12 @@ from typing import List
 from actions.base import Action, LambdaAction
 from actions.card import DrawCardsAction, AddCardAction, RemoveCardAction
 from actions.combat import GainBlockAction, GainEnergyAction, HealAction, DealDamageAction, ApplyPowerAction, ModifyMaxHpAction
-# GainGoldAction imported lazily when needed to avoid circular import
-from actions.reward import AddGoldAction
 from relics.base import Relic
 from utils.types import RarityType, CardType
 from utils.registry import register
+
+# NOTE: AddGoldAction and other reward actions must be imported lazily inside methods
+# to avoid circular import between actions.reward -> relics.base -> relics.global_relics.rare
 
 @register("relic")
 class BirdFacedUrn(Relic):
@@ -181,6 +182,8 @@ class OldCoin(Relic):
         self.rarity = RarityType.RARE
 
     def on_obtain(self) -> List[Action]:
+        # Lazy import to avoid circular dependency
+        from actions.reward import AddGoldAction
         return [AddGoldAction(amount=300)]
 
 @register("relic")

@@ -125,19 +125,27 @@ def resolve_potential_damage(base_damage: int, attacker: Creature,
     Resolve final damage value
     
     Calculation order:
-    1. attacker's Strength
-    2. attacker's stance multiplier (Rage/Divine)
-    3. attacker's Weak
-    4. target's Vulnerable
-    5. target's other power (e.g. Slow)
-    6. target's stance multiplier (Rage)
+    1. Resolve callable damage if needed
+    2. attacker's Strength
+    3. attacker's stance multiplier (Rage/Divine)
+    4. attacker's Weak
+    5. target's Vulnerable
+    6. target's other power (e.g. Slow)
+    7. target's stance multiplier (Rage)
     """
-    damage = base_damage
+    # 0. Resolve callable damage first
+    damage = base_damage() if callable(base_damage) else base_damage
+    
+    # Debug: Check if damage is a list
+    if isinstance(damage, list):
+        print(f"[ERROR] resolve_potential_damage received list: {damage}, base_damage={base_damage}")
+        damage = damage[0] if damage else 0  # Take first element or 0
     # 1. Attacker's Strength
     strength_power = attacker.get_power('strength')
     if strength_power:
         damage += strength_power.amount
     # 2. Attacker's stance multiplier
+    from player.player import Player
     if isinstance(attacker, Player):
         attacker_status = attacker.status_manager.status
         if attacker_status == StatusType.WRATH:
@@ -149,16 +157,18 @@ def resolve_potential_damage(base_damage: int, attacker: Creature,
     if weak_power:
         damage = int(damage * 0.5)
     # 4. Target's Vulnerable
-    vulnerable_power = target.get_power('vulnerable')
-    if vulnerable_power:
-        damage = int(damage * 1.5)
-    # 5. Target's other powers (e.g. Slow)
-    # feature: SLowPower
-    # 6. Target's stance multiplier
-    if isinstance(target, Player):
-        target_status = target.status_manager.status
-        if target_status == StatusType.WRATH:
-            damage *= 2
+    if target is not None:
+        vulnerable_power = target.get_power('vulnerable')
+        if vulnerable_power:
+            damage = int(damage * 1.5)
+        # 5. Target's other powers (e.g. Slow)
+        # feature: SLowPower
+        # 6. Target's stance multiplier
+        from player.player import Player
+        if isinstance(target, Player):
+            target_status = target.status_manager.status
+            if target_status == StatusType.WRATH:
+                damage *= 2
             
     return max(0, damage)
 

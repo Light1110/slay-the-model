@@ -15,6 +15,51 @@ from utils.types import CombatType
 from localization import LocalStr, Localizable
 
 
+def _debug_print_combat_state(phase: str, enemies: List[Enemy] = None):
+    """Print combat state for debugging."""
+    from engine.game_state import game_state
+    debug = game_state.config.get("debug", {})
+    if not bool(debug.get("enable", False)):
+        return
+    
+    player = game_state.player
+    print(f"\n{'#'*60}")
+    print(f"[COMBAT] Phase: {phase}")
+    print(f"{'#'*60}")
+    
+    # Player state
+    hand = player.card_manager.get_pile("hand") if player.card_manager else []
+    hand_names = [c.__class__.__name__ for c in hand]
+    print(f"[PLAYER] HP: {player.hp}/{player.max_hp}, Block: {player.block}, Energy: {player.energy}")
+    print(f"[PLAYER] Hand ({len(hand)}): {hand_names}")
+    if player.powers:
+        power_names = [f"{p.__class__.__name__}({p.stacks})" for p in player.powers if hasattr(p, 'stacks')]
+        print(f"[PLAYER] Powers: {power_names}")
+    
+    # Enemy state
+    if enemies is None:
+        enemies = game_state.current_combat.enemies if game_state.current_combat else []
+    
+    for i, enemy in enumerate(enemies):
+        if hasattr(enemy, 'is_dead') and enemy.is_dead():
+            print(f"[ENEMY {i}] {enemy.__class__.__name__}: DEAD")
+        else:
+            hp = getattr(enemy, 'hp', '?')
+            max_hp = getattr(enemy, 'max_hp', '?')
+            block = getattr(enemy, 'block', 0)
+            print(f"[ENEMY {i}] {enemy.__class__.__name__}: HP {hp}/{max_hp}, Block: {block}")
+            if hasattr(enemy, 'intention') and enemy.intention:
+                intent = enemy.intention
+                intent_type = getattr(intent, 'intent_type', '?')
+                intent_damage = getattr(intent, 'damage', '?')
+                print(f"[ENEMY {i}]   Intent: {intent_type}, Damage: {intent_damage}")
+            if hasattr(enemy, 'powers') and enemy.powers:
+                power_names = [f"{p.__class__.__name__}({getattr(p, 'stacks', '?')})" for p in enemy.powers]
+                print(f"[ENEMY {i}]   Powers: {power_names}")
+    
+    print(f"{'#'*60}\n")
+
+
 class Combat(Localizable):
     """
     Combat logic class - handles combat independently from room system.
@@ -43,6 +88,11 @@ class Combat(Localizable):
         # Combat control flags
         self.combat_ended = False
         self.player_turn_ended = False
+
+    def remove_enemy(self, enemy: Enemy):
+        """Remove an enemy from combat (e.g., when killed)."""
+        if enemy in self.enemies:
+            self.enemies.remove(enemy)
         
         # Localization
         self.localization_prefix = "combat"
@@ -68,12 +118,12 @@ class Combat(Localizable):
         while True:
             # Execute player phase
             result = self.execute_player_phase()
-            if isinstance(result, GameStateResult) and result.state in ("COMBAT_WIN", "COMBAT_LOSE", "COMBAT_ESCAPE"):
+            if isinstance(result, GameStateResult) and result.state in ("COMBAT_WIN", "GAME_LOSE", "COMBAT_ESCAPE"):
                 break
 
             # Execute enemy phase
             result = self.execute_enemy_phase()
-            if isinstance(result, GameStateResult) and result.state in ("COMBAT_WIN", "COMBAT_LOSE", "COMBAT_ESCAPE"):
+            if isinstance(result, GameStateResult) and result.state in ("COMBAT_WIN", "GAME_LOSE", "COMBAT_ESCAPE"):
                 break
 
         return result
@@ -89,6 +139,20 @@ class Combat(Localizable):
 
         # Start player phase: gain energy, draw cards, trigger start-of-turn effects
         self._start_player_turn()
+        
+        # Execute draw cards and start-of-turn effects immediately
+        # This ensures hand is populated before building player actions
+        result = game_state.execute_all_actions()
+        if isinstance(result, GameStateResult) and result.state in ("COMBAT_WIN", "GAME_LOSE", "COMBAT_ESCAPE"):
+            return result
+        
+        # DEBUG: Print combat state at start of player phase
+        _debug_print_combat_state("PLAYER_TURN_START", self.enemies)
+        
+        # Check for combat end (e.g., all enemies dead from start-of-turn effects)
+        result = self._check_combat_end()
+        if isinstance(result, GameStateResult):
+            return result
 
         # Player action phase - wait for player to play cards, use potions, or end turn
         self.combat_state.current_phase = "player_action"
@@ -98,7 +162,12 @@ class Combat(Localizable):
 
             result = game_state.execute_all_actions()
             
-            if isinstance(result, GameStateResult) and result.state in ("COMBAT_WIN", "COMBAT_LOSE", "COMBAT_ESCAPE"):
+            if isinstance(result, GameStateResult) and result.state in ("COMBAT_WIN", "GAME_LOSE", "COMBAT_ESCAPE"):
+                return result
+            
+            # Check for combat end (e.g., all enemies dead from card damage)
+            result = self._check_combat_end()
+            if isinstance(result, GameStateResult):
                 return result
 
         # End player phase: trigger end-of-turn effects, discard hand
@@ -136,11 +205,14 @@ class Combat(Localizable):
         hand = game_state.player.card_manager.get_pile("hand")
         options: List[Option] = []
         for card in hand:
-            # can play
-            if card.can_play():
+            # can_play returns tuple (bool, Optional[str])
+            can_play_result, reason = card.can_play()
+            if can_play_result:
+                # Use PlayCardAction to properly handle energy cost and card removal
+                from actions.combat import PlayCardAction
                 options.append(Option(
                     name=card.info(),
-                    actions=card.on_play()
+                    actions=[PlayCardAction(card=card, is_auto=True)]
                 ))
         
         # 3. Build SelectAction for potions (if implemented)
@@ -204,12 +276,15 @@ class Combat(Localizable):
         """
         from engine.game_state import game_state
 
+        # DEBUG: Print combat state at start of enemy phase
+        _debug_print_combat_state("ENEMY_PHASE_START", self.enemies)
+
         self.combat_state.current_phase = "enemy_action"
 
         # For each alive enemy, execute actions
         for enemy in self.enemies:
             if not enemy.is_dead():
-                game_state.action_queue.add_actions(enemy.execute_intentions())
+                game_state.action_queue.add_actions(enemy.execute_intention())
 
         return game_state.execute_all_actions()
     
@@ -217,11 +292,44 @@ class Combat(Localizable):
         """Remove dead enemies from the list"""
         self.enemies = [e for e in self.enemies if not e.is_dead()]
     
+    def _check_combat_end(self) -> BaseResult:
+        """Check if combat should end.
+        
+        Returns:
+            GameStateResult("COMBAT_WIN") if all enemies are dead,
+            GameStateResult("COMBAT_LOSE") if player is dead,
+            NoneResult otherwise
+        """
+        from engine.game_state import game_state
+        
+        # Remove dead enemies first
+        self._remove_dead_enemies()
+        
+        # Check if all enemies are dead
+        if not self.enemies or all(e.is_dead() for e in self.enemies):
+            print(f"\n[COMBAT END] COMBAT_WIN - All enemies defeated!")
+            return GameStateResult("COMBAT_WIN")
+        
+        # Check if player is dead
+        if game_state.player.is_dead():
+            print(f"\n[COMBAT END] GAME_LOSE - Player defeated!")
+            return GameStateResult("GAME_LOSE")
+        
+        return NoneResult()
+    
     def _init_combat(self):
         """Initialize combat state"""
         from engine.game_state import game_state
+        
+        # Set current combat reference
+        game_state.current_combat = self
+        
         # Reset and setup combat state
         self.combat_state.reset_combat_info()
+        
+        # Reset card manager for combat (initialize draw pile from deck)
+        if hasattr(game_state.player, 'card_manager'):
+            game_state.player.card_manager.reset_for_combat()
         
         # Reset combat flags
         self.combat_ended = False

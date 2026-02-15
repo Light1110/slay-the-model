@@ -1,7 +1,7 @@
 """Game over action."""
 
 from actions.base import Action
-from utils.result_types import GameStateResult, ResultType
+from utils.result_types import GameStateResult
 
 
 class GameOverAction(Action):
@@ -11,6 +11,6 @@ class GameOverAction(Action):
         """End the game.
         
         Returns:
-            GameStateResult with DEATH result type
+            GameStateResult with GAME_LOSE state
         """
-        return GameStateResult(ResultType.DEATH)
+        return GameStateResult("GAME_LOSE")

@@ -291,7 +291,16 @@ class Card(Localizable):
         target_type = getattr(self, "target_type", None)
         if target_type and isinstance(target_type, TargetType):
             return target_type
-        card_type = str(getattr(self, "type", "") or "").lower()
+        # Get card_type - handle both enum and string
+        card_type_attr = getattr(self, "card_type", None)
+        if card_type_attr is None:
+            return None
+        # If it's an enum, get its value; otherwise convert to string
+        if hasattr(card_type_attr, 'value'):
+            card_type = card_type_attr.value.lower()
+        else:
+            card_type = str(card_type_attr).lower()
+        
         if card_type in ("skill", "power"):
             return TargetType.SELF
         if card_type == "attack":
@@ -319,10 +328,10 @@ class Card(Localizable):
             
             actions = []
             
-            # 格挡
+            # 格挡 (block always goes to player)
             if self.block > 0:
                 block_value = resolve_card_value(self, 'block')
-                actions.append(GainBlockAction(block=lambda: block_value))
+                actions.append(GainBlockAction(block=lambda: block_value, target=source))
             
             # 伤害
             if self.damage > 0:

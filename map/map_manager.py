@@ -275,13 +275,14 @@ class MapManager:
         current_node = self.map_data.get_current_node()
         available_nodes = []
         
+        next_floor = self.map_data.current_floor + 1
+        is_boss_floor = next_floor >= len(self.map_data.nodes) - 1
+        
         for pos in current_node.connections_up:
-            if self.map_data.current_floor + 1 < len(self.map_data.nodes):
+            if next_floor < len(self.map_data.nodes):
                 try:
-                    node = self.map_data.get_node(
-                        self.map_data.current_floor + 1,
-                        pos
-                    )
+                    node = self.map_data.get_node(next_floor, pos)
+                    # Include all connected nodes - dead ends will be handled by game flow
                     available_nodes.append(node)
                 except IndexError:
                     pass
@@ -327,6 +328,7 @@ class MapManager:
         from rooms.rest import RestRoom
         from rooms.shop import ShopRoom
         from rooms.treasure import TreasureRoom
+        from rooms.event import EventRoom
         
         if room_type == RoomType.MONSTER:
             # Get monster encounter from encounter pool
@@ -358,14 +360,17 @@ class MapManager:
         elif room_type == RoomType.TREASURE:
             return TreasureRoom()
         
+        elif room_type == RoomType.EVENT:
+            return EventRoom()
+        
         elif room_type == RoomType.UNKNOWN:
             # Resolve unknown room type
             actual_type = self._resolve_unknown_type(self.map_data.current_floor)
             return self._create_room_instance(actual_type)
         
         else:
-            # Fallback to basic Room
-            return Room()
+            # Fallback to EventRoom for unknown types
+            return EventRoom()
     
     def display_map_for_human(self):
         """
