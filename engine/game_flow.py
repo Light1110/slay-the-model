@@ -7,7 +7,7 @@ from utils.registry import get_registered_instance
 from localization import t, LocalStr
 from utils.types import RoomType
 from engine.game_state import game_state
-from utils.result_types import BaseResult, GameStateResult
+from utils.result_types import BaseResult, GameStateResult, SingleActionResult
 
 
 class GameFlow:
@@ -96,8 +96,9 @@ class GameFlow:
     def _select_next_room(self, game_state):
         """
         Select and move to the next room from the map.
+        Uses SelectMapNodeAction which is pushed to action_queue and executed.
         Returns:
-            Room instance for the next room, or None if no moves available
+            Room instance for the next room (from game_state.current_room), or None if no moves available.
         """
         # Get available moves from current position
         available_nodes = game_state.map_manager.get_available_moves()
@@ -105,66 +106,16 @@ class GameFlow:
             # No more moves available
             return None
         
-        # DEBUG: Print available map nodes
-        debug = game_state.config.get("debug", {})
-        if bool(debug.get("enable", False)):
-            print(f"\n{'~'*60}")
-            print(f"[MAP] Current Floor: {game_state.current_floor}, Position: {game_state.map_manager.map_data.current_position}")
-            print(f"[MAP] Available Nodes:")
-            for idx, n in enumerate(available_nodes):
-                print(f"  [{idx}] Floor {n.floor}, Pos {n.position} | Type: {n.room_type}")
-            print(f"{'~'*60}")
+        # Create and push SelectMapNodeAction to action_queue
+        from actions.map_selection import SelectMapNodeAction
+        select_action = SelectMapNodeAction()
+        game_state.action_queue.add_action(select_action)
         
-        # Select node based on game mode
-        from utils.types import RoomType
-        node = None
-        if game_state.config.mode == "ai":
-            # AI mode: select node with lowest risk (simple heuristic)
-            # Priority: REST > SHOP > TREASURE > MONSTER > ELITE
-            priority_map = {
-                RoomType.REST: 1,
-                RoomType.MERCHANT: 2,
-                RoomType.TREASURE: 3,
-                RoomType.MONSTER: 4,
-                RoomType.ELITE: 5,
-                RoomType.BOSS: 6,
-                RoomType.UNKNOWN: 7,
-            }
-            # Sort available nodes by room type priority, then by position
-            available_nodes.sort(key=lambda n: (
-                priority_map.get(n.room_type, 99),
-                n.position
-            ))
-            node = available_nodes[0]
-        elif game_state.config.mode == "human":
-            # Human mode: prompt user to select
-            print(f"\nAvailable moves ({len(available_nodes)}):")
-            for idx, move_node in enumerate(available_nodes):
-                room_symbol = game_state.map_manager._get_room_symbol(move_node.room_type)
-                risk_level = game_state.map_manager._get_risk_level(move_node.room_type)
-                reward_level = game_state.map_manager._get_reward_level(move_node.room_type)
-                print(f"  [{idx}] Floor {move_node.floor}, Pos {move_node.position} | {room_symbol} | Risk: {risk_level} | Reward: {reward_level}")
-            # Prompt for selection
-            while True:
-                try:
-                    from localization import LocalStr
-                    prompt = f"Choose (0-{len(available_nodes)-1}): "
-                    option = int(input(prompt))
-                    if 0 <= option < len(available_nodes):
-                        node = available_nodes[option]
-                        break
-                    print("Invalid option!")
-                except (ValueError, EOFError):
-                    print("Please enter a valid number")
-        else:
-            # Default mode: select first available
-            node = available_nodes[0]
-        # Move to the node and create room
-        room = game_state.map_manager.move_to_node(node.floor, node.position)
-        # Update game state
-        game_state.current_room = room
-        game_state.current_floor = node.floor
-        return room
+        # Execute all actions in queue (including SelectMapNodeAction)
+        game_state.execute_all_actions()
+        
+        # Return the room from game_state (updated by SelectMapNodeAction.execute())
+        return game_state.current_room
     
     def _handle_game_over(self):
         """Handle player death"""

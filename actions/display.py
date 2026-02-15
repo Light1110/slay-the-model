@@ -5,6 +5,7 @@ Display-related actions
 from typing import List, Optional
 import pickle
 import os
+import random
 from actions.base import Action
 from utils.result_types import BaseResult, NoneResult, MultipleActionsResult, SingleActionResult, GameStateResult
 from localization import BaseLocalStr, LocalStr, t
@@ -71,18 +72,9 @@ class SelectAction(Action):
         # [0] 无选项时报错
         assert len(self.options) > 0, "SelectAction requires at least one option"
         
-        # DEBUG: Print all available options
-        debug = get_game_state().config.get("debug", {})
-        if bool(debug.get("enable", False)):
-            print(f"\n{'='*60}")
-            print(f"[SELECT] {self.title}")
-            print(f"{'='*60}")
-            for i, option in enumerate(self.options):
-                action_names = [a.__class__.__name__ for a in option.actions[:3]]
-                if len(option.actions) > 3:
-                    action_names.append(f"...+{len(option.actions)-3} more")
-                print(f"  [{i}] {option.name} -> {action_names}")
-            print(f"  max_select={self.max_select}, must_select={self.must_select}")
+        mode = get_game_state().config.get("mode", "debug")
+        human_module = get_game_state().config.get("human")
+        debug_module = get_game_state().config.get("debug")
         
         # [1] 自动选择情况 
         # [1-1] must_select=True && max_select=-1 （全选，自动）
@@ -95,11 +87,10 @@ class SelectAction(Action):
         
         # [1-2] must_select=True && max_select<=len(options) （自动选择所有选项）
         if self.must_select:
-            auto_select = bool(get_game_state().config.get("auto_select", False))
-            is_human = get_game_state().config.get("mode") == "human"
+            auto_select = human_module.get("auto_select", False)
             
             # 非人类模式或auto_select=True时自动选择
-            if not is_human or auto_select:
+            if mode != "human" or auto_select:
                 if self.max_select > 0 and self.max_select >= len(self.options):
                     all_actions = []
                     for option in self.options[:self.max_select]:
@@ -107,8 +98,7 @@ class SelectAction(Action):
                     return MultipleActionsResult(all_actions)
         
         # [1-3] debug模式开启时自动选择前max_select项
-        debug = get_game_state().config.get("debug", {})
-        if bool(debug.get("enable", False)):
+        if mode == "debug":
             select_idxs = []
             # 确定要选择的数量
             if self.max_select == -1:
@@ -118,7 +108,7 @@ class SelectAction(Action):
             else:
                 num_to_select = min(self.max_select, len(self.options))
                 
-                select_type = debug.get("select_type", "random")
+                select_type = debug_module.get("select_type", "random")
                 if select_type == "random":
                     import random
                     select_idxs = random.sample(range(len(self.options)), num_to_select)
@@ -128,12 +118,6 @@ class SelectAction(Action):
                     select_idxs = list(range(len(self.options) - num_to_select, len(self.options)))
                 else:
                     raise ValueError(f"Invalid debug select_type: {select_type}")
-            
-            # DEBUG: Print selected indices
-            if bool(debug.get("enable", False)):
-                selected_names = [str(self.options[i].name) for i in select_idxs]
-                print(f"  [SELECTED] indices={select_idxs}: {selected_names}")
-                print(f"{'='*60}\n")
             
             # 收集前num_to_select个选项的动作
             all_actions = []
@@ -146,9 +130,7 @@ class SelectAction(Action):
 
         # - 若为人类玩家，追加"打开菜单"选项（仅在must_select=True时）
         effective_options = self.options.copy()
-        if get_game_state().config.get("mode") == "human" \
-                and get_game_state().config.get("show_menu_option", True) \
-                and self.must_select:
+        if mode == "human" and human_module.get("show_menu_option", True):
             menu_option = Option(
                 name=LocalStr("ui.open_menu"),
                 actions=[MenuAction(self)]
@@ -203,7 +185,7 @@ class SelectAction(Action):
                     print(f"{i+1}. {option.name}")
                 
                 option = int(input(prompt_text)) - 1
-                
+                                
                 # 处理"停止选择"选项（仅当must_select=False时）
                 if not self.must_select and option == 0:
                     if selected_indices:

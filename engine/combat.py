@@ -14,52 +14,6 @@ from utils.result_types import BaseResult, GameStateResult, NoneResult
 from utils.types import CombatType
 from localization import LocalStr, Localizable
 
-
-def _debug_print_combat_state(phase: str, enemies: List[Enemy] = None):
-    """Print combat state for debugging."""
-    from engine.game_state import game_state
-    debug = game_state.config.get("debug", {})
-    if not bool(debug.get("enable", False)):
-        return
-    
-    player = game_state.player
-    print(f"\n{'#'*60}")
-    print(f"[COMBAT] Phase: {phase}")
-    print(f"{'#'*60}")
-    
-    # Player state
-    hand = player.card_manager.get_pile("hand") if player.card_manager else []
-    hand_names = [c.__class__.__name__ for c in hand]
-    print(f"[PLAYER] HP: {player.hp}/{player.max_hp}, Block: {player.block}, Energy: {player.energy}")
-    print(f"[PLAYER] Hand ({len(hand)}): {hand_names}")
-    if player.powers:
-        power_names = [f"{p.__class__.__name__}({p.stacks})" for p in player.powers if hasattr(p, 'stacks')]
-        print(f"[PLAYER] Powers: {power_names}")
-    
-    # Enemy state
-    if enemies is None:
-        enemies = game_state.current_combat.enemies if game_state.current_combat else []
-    
-    for i, enemy in enumerate(enemies):
-        if hasattr(enemy, 'is_dead') and enemy.is_dead():
-            print(f"[ENEMY {i}] {enemy.__class__.__name__}: DEAD")
-        else:
-            hp = getattr(enemy, 'hp', '?')
-            max_hp = getattr(enemy, 'max_hp', '?')
-            block = getattr(enemy, 'block', 0)
-            print(f"[ENEMY {i}] {enemy.__class__.__name__}: HP {hp}/{max_hp}, Block: {block}")
-            if hasattr(enemy, 'intention') and enemy.intention:
-                intent = enemy.intention
-                intent_type = getattr(intent, 'intent_type', '?')
-                intent_damage = getattr(intent, 'damage', '?')
-                print(f"[ENEMY {i}]   Intent: {intent_type}, Damage: {intent_damage}")
-            if hasattr(enemy, 'powers') and enemy.powers:
-                power_names = [f"{p.__class__.__name__}({getattr(p, 'stacks', '?')})" for p in enemy.powers]
-                print(f"[ENEMY {i}]   Powers: {power_names}")
-    
-    print(f"{'#'*60}\n")
-
-
 class Combat(Localizable):
     """
     Combat logic class - handles combat independently from room system.
@@ -145,10 +99,7 @@ class Combat(Localizable):
         result = game_state.execute_all_actions()
         if isinstance(result, GameStateResult) and result.state in ("COMBAT_WIN", "GAME_LOSE", "COMBAT_ESCAPE"):
             return result
-        
-        # DEBUG: Print combat state at start of player phase
-        _debug_print_combat_state("PLAYER_TURN_START", self.enemies)
-        
+                
         # Check for combat end (e.g., all enemies dead from start-of-turn effects)
         result = self._check_combat_end()
         if isinstance(result, GameStateResult):

@@ -36,32 +36,7 @@ class TeeStream:
         for stream in self.streams:
             stream.flush()
 
-
-def _setup_debug_logging():
-    debug_config = game_state.config.get("debug", {})
-    if isinstance(debug_config, bool):
-        debug_enabled = debug_config
-        log_path = "logs/debug.log"
-    else:
-        debug_enabled = debug_config.get("enable", False)
-        log_path = debug_config.get("log_path", "logs/debug.log")
-    
-    if not debug_enabled:
-        return None, None, None
-
-    log_dir = os.path.dirname(log_path)
-    if log_dir:
-        os.makedirs(log_dir, exist_ok=True)
-    log_file = open(log_path, "a", encoding="utf-8")
-
-    original_stdout = sys.stdout
-    original_stderr = sys.stderr
-    sys.stdout = TeeStream(sys.stdout, log_file)
-    sys.stderr = TeeStream(sys.stderr, log_file)
-    return log_file, original_stdout, original_stderr
-
 if __name__ == "__main__":
-    log_file, original_stdout, original_stderr = _setup_debug_logging()
     try:
         # Import character cards before starting game
         _import_character_cards(game_state.config.character)
@@ -80,10 +55,4 @@ if __name__ == "__main__":
         import traceback
         traceback.print_exc()
     finally:
-        # Restore original streams before closing log file
-        if original_stdout:
-            sys.stdout = original_stdout
-        if original_stderr:
-            sys.stderr = original_stderr
-        if log_file:
-            log_file.close()
+        pass
