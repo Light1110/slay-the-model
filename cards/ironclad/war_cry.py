@@ -4,7 +4,7 @@ Ironclad Common Skill card - War Cry
 
 from typing import List
 from actions.base import Action
-from actions.card import DrawCardsAction, ChooseMoveCardAction # todo: ChooseMoveCardAction 
+from actions.card import DrawCardsAction, ChooseMoveCardAction 
 from cards.base import Card
 from entities.creature import Creature
 from utils.registry import register

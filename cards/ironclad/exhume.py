@@ -4,7 +4,7 @@ Ironclad Rare Skill card - Exhume
 
 from typing import List
 from actions.base import Action
-from actions.card import ChooseMoveCardAction # todo: 实现 MoveCardAction && ChooseMoveCardAction
+from actions.card import ChooseMoveCardAction
 from cards.base import Card
 from entities.creature import Creature
 from utils.registry import register
