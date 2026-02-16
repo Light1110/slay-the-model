@@ -7,6 +7,7 @@ from player.card_manager import CardManager
 from player.player import Player
 from utils.types import PilePosType
 
+from utils.types import CardType
 print("="*60)
 print("Testing ConfusedPower Fix")
 print("="*60)

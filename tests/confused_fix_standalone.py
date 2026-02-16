@@ -7,6 +7,7 @@ from player.card_manager import CardManager
 from player.player import Player
 from actions.card import DrawCardsAction
 from utils.types import PilePosType
+from utils.types import CardType
 
 # Simple mock game state
 class MockGameState:

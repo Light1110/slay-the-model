@@ -6,6 +6,13 @@ from actions.card import UpgradeRandomCardAction
 from actions.combat import GainBlockAction, GainEnergyAction, ApplyPowerAction, RemovePowerAction
 
 class TestNewRelicFeatures:
+    
+    def test_champion_belt_applies_weak_on_vulnerable(self):
+        """ChampionBelt should apply Weak to player when Vulnerable is applied to enemy"""
+        from relics.character.ironclad import ChampionBelt
+        from player.player import Player
+        from powers.definitions import VulnerablePower
+        from engine.game_state import GameState
         
         # Mock game state
         game_state = GameState()
@@ -44,7 +51,7 @@ class TestNewRelicFeatures:
     def test_orange_pellets_removes_debuffs(self):
         """OrangePellets should remove all debuffs when Power/Attack/Skill played in same turn"""
         from relics.character.ironclad import OrangePellets
-        from entities.player import Player
+        from player.player import Player
         from actions.combat import RemovePowerAction
         from utils.types import CardType
         from powers.definitions import WeakPower
@@ -85,7 +92,7 @@ class TestNewRelicFeatures:
     def test_pantograph_heals_on_boss_combat_start(self):
         """Pantograph should heal 25 HP at start of boss combat"""
         from relics.global_relics.uncommon import Pantograph
-        from entities.player import Player
+        from player.player import Player
         from actions.combat import HealAction, ApplyPowerAction
         from utils.types import CombatType
         from engine.game_state import GameState
@@ -118,7 +125,7 @@ class TestNewRelicFeatures:
     def test_sundial_gains_energy_on_shuffle(self):
         """Sundial should gain 2 energy every 3 shuffles"""
         from relics.global_relics.uncommon import Sundial
-        from entities.player import Player
+        from player.player import Player
         from actions.combat import GainEnergyAction
         from engine.game_state import GameState
         

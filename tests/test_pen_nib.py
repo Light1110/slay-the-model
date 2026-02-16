@@ -3,7 +3,7 @@ import pytest
 from relics.global_relics.common import PenNib
 from powers.definitions import PenNibPower
 from actions.combat import ApplyPowerAction
-from entities.player import Player
+from player.player import Player
 from cards.base import Card
 from utils.types import CardType
 from engine.game_state import GameState
