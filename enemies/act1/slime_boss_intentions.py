@@ -28,7 +28,7 @@ class GoopSprayIntention(Intention):
             if SlimedCard:
                 for _ in range(self._slimed_count):
                     actions.append(AddCardAction(card=SlimedCard(), dest_pile="discard"))
-        except:
+        except Exception:
             pass
         
         return actions
@@ -101,7 +101,7 @@ class SplitIntention(Intention):
             
             actions.append(AddEnemyAction(enemy=acid_slime))
             actions.append(AddEnemyAction(enemy=spike_slime))
-        except:
+        except Exception:
             pass
         
         return actions

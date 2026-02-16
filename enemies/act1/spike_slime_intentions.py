@@ -68,7 +68,7 @@ class FlameTackleIntention(Intention):
             if SlimedCard:
                 actions.append(AddCardAction(card=SlimedCard(), dest_pile="discard", source="enemy"))
                 actions.append(AddCardAction(card=SlimedCard(), dest_pile="discard", source="enemy"))
-        except:
+        except Exception:
             # If Slimed card doesn't exist, just deal damage
             pass
         
@@ -103,7 +103,7 @@ class SplitIntention(Intention):
             
             actions.append(AddEnemyAction(enemy=slime_m1))
             actions.append(AddEnemyAction(enemy=slime_m2))
-        except:
+        except Exception:
             # If SpikeSlimeM doesn't exist yet, just remove the original
             pass
         

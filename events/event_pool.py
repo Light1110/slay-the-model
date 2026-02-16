@@ -206,7 +206,7 @@ class EventPool:
         if metadata.requires_condition:
             try:
                 return metadata.requires_condition()
-            except:
+            except Exception:
                 return False
         
         return True

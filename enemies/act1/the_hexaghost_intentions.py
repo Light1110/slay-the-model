@@ -95,7 +95,7 @@ class SearIntention(Intention):
             if BurnCard:
                 for _ in range(self._burn_count):
                     actions.append(AddCardAction(card=BurnCard(), dest_pile="discard"))
-        except:
+        except Exception:
             pass
         
         return actions
@@ -192,7 +192,7 @@ class InfernoIntention(Intention):
                     if hasattr(burn, 'upgrade'):
                         burn.upgrade()
                     actions.append(AddCardAction(card=burn, dest_pile="discard"))
-        except:
+        except Exception:
             pass
         
         return actions
