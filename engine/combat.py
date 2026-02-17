@@ -303,7 +303,7 @@ class Combat(Localizable):
         from localization import t
 
         # Print enemy turn header
-        print(f"\n=== {t('ui.enemy_turn', default='Enemy Turn')} ===")
+        print(f"\n{t('ui.enemy_turn', default='=== Enemy Turn ===')}")
 
         # DEBUG: Print combat state at start of enemy phase
         # _debug_print_combat_state("ENEMY_PHASE_START", self.enemies)
