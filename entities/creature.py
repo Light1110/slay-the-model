@@ -117,6 +117,34 @@ class Creature(Localizable):
             return None
         self.block += amount
 
+    def on_damage_taken(self, damage: int, source=None, card=None, damage_type=None):
+        """Called when creature takes damage.
+        
+        Triggers power on_damage_taken hooks and removes powers that should be removed.
+        
+        Args:
+            damage: Amount of damage taken
+            source: Source of the damage (optional)
+            card: Card that caused damage (optional)
+            damage_type: Type of damage (optional)
+            
+        Returns:
+            List of actions to queue (may be empty)
+        """
+        actions = []
+        
+        # Call on_damage_taken on all powers
+        for power in self.powers[:]:  # Copy list to allow modification during iteration
+            if hasattr(power, 'on_damage_taken') and callable(power.on_damage_taken):
+                result = power.on_damage_taken(damage, source=source, card=card, damage_type=damage_type)
+                if result:
+                    actions.extend(result)
+        
+        # Remove powers that should be removed
+        self.powers = [p for p in self.powers if not (hasattr(p, 'should_remove') and p.should_remove())]
+        
+        return actions
+
     def add_power(self, power) -> None:
         if not power:
             return

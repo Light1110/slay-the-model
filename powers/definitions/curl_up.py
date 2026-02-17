@@ -26,22 +26,25 @@ class CurlUpPower(Power):
         self.localization_key = "powers.curl_up"
         self.triggered = False
         
-    def on_damage_taken(self, damage: int) -> int:
+    def on_damage_taken(self, damage: int, source=None, card=None, damage_type=None):
         """
         Called when owner takes damage.
         Gains block equal to amount, then marks itself for removal.
         
         Args:
             damage: Amount of damage taken
+            source: Source of the damage (optional)
+            card: Card that caused damage (optional)
+            damage_type: Type of damage (optional)
             
         Returns:
-            The damage (unchanged)
+            Empty list (no actions to queue)
         """
         if not self.triggered and damage > 0:
             self.triggered = True
             if self.owner:
                 self.owner.gain_block(self.amount)
-        return damage
+        return []
     
     def should_remove(self) -> bool:
         """Return True if this power should be removed after triggering."""
