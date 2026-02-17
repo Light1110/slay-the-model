@@ -96,22 +96,18 @@ class Combat(Localizable):
         """
         from engine.game_state import game_state
 
+        # Print combat state BEFORE drawing cards
+        self._print_combat_state()
+
         # Start player phase: gain energy, draw cards, trigger start-of-turn effects
         self._start_player_turn()
-        
-        # Track cards drawn for display
-        hand_size_before = len(game_state.player.card_manager.get_pile("hand"))
-        
+
         # Execute draw cards and start-of-turn effects immediately
         # This ensures hand is populated before building player actions
         result = game_state.execute_all_actions()
         if isinstance(result, GameStateResult) and result.state in ("COMBAT_WIN", "GAME_LOSE", "COMBAT_ESCAPE"):
             return result
-        
-        # Calculate cards drawn
-        hand_size_after = len(game_state.player.card_manager.get_pile("hand"))
-        cards_drawn = max(0, hand_size_after - hand_size_before)
-                
+
         # Check for combat end (e.g., all enemies dead from start-of-turn effects)
         result = self._check_combat_end()
         if isinstance(result, GameStateResult):
@@ -121,10 +117,6 @@ class Combat(Localizable):
         self.combat_state.current_phase = "player_action"
 
         while self.combat_state.current_phase == "player_action":
-            # Print detailed combat state for player feedback
-            self._print_combat_state(cards_drawn)
-            cards_drawn = 0  # Reset after first print to avoid repeating "Draw X cards"
-
             self._build_player_action()
 
             result = game_state.execute_all_actions()
@@ -202,25 +194,17 @@ class Combat(Localizable):
             
         game_state.action_queue.add_actions(actions)
 
-    def _print_combat_state(self, cards_drawn: int = 0):
-        """Print detailed combat state for player feedback
-        
-        Args:
-            cards_drawn: Number of cards drawn this turn (to display after Player Turn)
-        """
+    def _print_combat_state(self):
+        """Print detailed combat state for player feedback"""
         from engine.game_state import game_state
         from localization import t
-        
+
         player = game_state.player
         hand = game_state.player.card_manager.get_pile("hand")
-        
+
         # Print player turn header
         print(f"\n{t('ui.player_turn', default='=== Player Turn ===')}")
-        
-        # Print draw cards message after Player Turn header
-        if cards_drawn > 0:
-            print(t('combat.draw_cards').format(count=cards_drawn))
-        
+
         # Print combat status
         print(f"\n{t('combat.display', default='--- Combat Status ---')}")
         print(f"{t('ui.player_hp', default='HP')}: {player.hp}/{player.max_hp}")
@@ -423,9 +407,12 @@ class Combat(Localizable):
     def _start_player_turn(self):
         """Start player turn - draw cards, reset energy, trigger start-of-turn effects"""
         from engine.game_state import game_state
+        from localization import t
+
         # Draw cards
         draw_count = game_state.player.draw_count  # todo: modified by relics/powers
         if draw_count > 0:
+            print(f"\n{t('combat.draw_cards', count=draw_count, default=f'Draw {draw_count} cards')}")
             from actions.card import DrawCardsAction
             game_state.action_queue.add_action(DrawCardsAction(count=draw_count))
 
