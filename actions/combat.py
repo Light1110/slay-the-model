@@ -417,10 +417,12 @@ class GainEnergyAction(Action):
         from engine.game_state import game_state
 
         if game_state.player:
-            game_state.player.gain_energy(self.energy)
+            # Handle callable energy amount
+            energy_amount = self.energy() if callable(self.energy) else self.energy
+            game_state.player.gain_energy(energy_amount)
             # Print energy change for player feedback
-            if self.energy != 0:
-                print(t('combat.gain_energy').format(amount=self.energy))
+            if energy_amount != 0:
+                print(t('combat.gain_energy').format(amount=energy_amount))
             
         return NoneResult()
 
