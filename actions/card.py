@@ -513,8 +513,10 @@ class DrawCardsAction(Action):
         from engine.game_state import game_state
 
         if game_state.player and hasattr(game_state.player, "card_manager"):
+            # Handle callable count (dynamic card draw amounts)
+            count = self.count() if callable(self.count) else self.count
             # Draw cards from draw pile to hand
-            cards: List[Card] = game_state.player.card_manager.draw_many(self.count)
+            cards: List[Card] = game_state.player.card_manager.draw_many(count)
             
             # Print cards drawn for player feedback
             if cards:

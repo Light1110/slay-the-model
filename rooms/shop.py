@@ -321,7 +321,7 @@ Having both this and MembershipCard.png Membership Card will reduce prices by a 
 
         # Purchase options for each item
         for idx, shop_item in enumerate(self.items):
-            if not shop_item.purchased:
+            if not shop_item.purchased and shop_item.item is not None:
                 final_price = shop_item.get_final_price_with_modifiers(ascension, game_state)
                 # Only show item if player has enough gold
                 if not game_state.player or game_state.player.gold >= final_price:
