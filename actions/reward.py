@@ -203,5 +203,5 @@ class ReplacePotionAction(Action):
         if 0 <= self.index < len(potions):
             potions[self.index] = self.new_potion
             print(t("ui.received_potion", default=f"Received potion: {self.new_potion.idstr}!", name=self.new_potion.idstr))
-            return SingleActionResult(self.new_potion)
+            return NoneResult()
         return NoneResult()
