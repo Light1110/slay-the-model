@@ -25,6 +25,7 @@ class MapData:
         self.nodes: List[List[MapNode]] = []  # [floor][position]
         self.current_floor: int = 0
         self.current_position: int = 0
+        self.visited_path: List[tuple] = []  # [(floor, position), ...] - historical path
     
     def add_floor(self, nodes: List[MapNode]):
         """
@@ -78,6 +79,21 @@ class MapData:
         self.current_floor = floor
         self.current_position = position
         self.get_current_node().visited = True
+        # Record this position in the visited path
+        self.visited_path.append((floor, position))
+    
+    def is_on_visited_path(self, floor: int, position: int) -> bool:
+        """
+        Check if a node is on the historical visited path.
+        
+        Args:
+            floor: The floor number
+            position: The position index on that floor
+            
+        Returns:
+            True if the node is on the visited path
+        """
+        return (floor, position) in self.visited_path
     
     @property
     def floor_count(self) -> int:

@@ -44,12 +44,8 @@ class EncounterPool:
     - Encounter combinations with weights
     """
 
-    # Floor ranges for encounter selection
-    FLOOR_RANGES = {
-        'early': (0, 6),      # Floors 0-5
-        'mid': (6, 12),        # Floors 6-11
-        'late': (12, 17)       # Floors 12-16
-    }
+    # Number of easy encounters before switching to hard pool
+    EASY_ENCOUNTER_COUNT = 3
 
     def __init__(self, seed: int):
         """
@@ -172,20 +168,19 @@ class EncounterPool:
 
         return boss_pools
 
-    def get_floor_range(self, floor: int) -> str:
+    def get_pool_name(self, encounter_count: int) -> str:
         """
-        Get floor range category for given floor.
+        Get pool name based on encounter count.
 
         Args:
-            floor: Floor number
+            encounter_count: Number of normal encounters already fought
 
         Returns:
-            'early', 'mid', or 'late'
+            'easy' or 'hard'
         """
-        for range_name, (min_floor, max_floor) in self.FLOOR_RANGES.items():
-            if min_floor <= floor < max_floor:
-                return range_name
-        return 'late'  # Fallback
+        if encounter_count < self.EASY_ENCOUNTER_COUNT:
+            return 'easy'
+        return 'hard'
 
     def _select_encounter(self, pool: List[Tuple[str, int]]) -> Optional[str]:
         """
@@ -207,19 +202,20 @@ class EncounterPool:
         # Weighted random selection
         return self.rng.choices(names, weights=weights, k=1)[0]
 
-    def get_normal_encounter(self, floor: int) -> List:
+    def get_normal_encounter(self, floor: int, encounter_count: int = 0) -> List:
         """
         Get normal enemies for given floor.
 
         Args:
             floor: Current floor number
+            encounter_count: Number of normal encounters already fought
 
         Returns:
             List of instantiated enemy objects
         """
         enemy_classes = _get_enemy_classes()
-        range_name = self.get_floor_range(floor)
-        pool = self.normal_pools.get(range_name, [])
+        pool_name = self.get_pool_name(encounter_count)
+        pool = self.normal_pools.get(pool_name, [])
 
         if not pool:
             return []

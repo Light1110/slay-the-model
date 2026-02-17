@@ -331,8 +331,10 @@ class MapManager:
         
         if room_type == RoomType.MONSTER:
             # Get monster encounter from encounter pool
+            from engine.game_state import game_state
             enemies = self.encounter_pool.get_normal_encounter(
                 floor=self.map_data.current_floor,
+                encounter_count=game_state.normal_encounters_fought,
             )
             return CombatRoom(enemies=enemies)
         
@@ -392,11 +394,8 @@ class MapManager:
         current_floor = self.map_data.current_floor
         current_position = self.map_data.current_position
         
-        # Get visited nodes
-        visited_positions = set()
-        for floor in range(current_floor):
-            for pos in range(len(self.map_data.nodes[floor])):
-                visited_positions.add((floor, pos))
+        # Get visited nodes (historical path taken)
+        visited_positions = set(self.map_data.visited_path)
         
         # Legend
         print("\nLegend:")
@@ -522,11 +521,8 @@ class MapManager:
         current_floor = self.map_data.current_floor
         current_position = self.map_data.current_position
         
-        # Get visited nodes
-        visited_positions = set()
-        for floor in range(current_floor):
-            for pos in range(len(self.map_data.nodes[floor])):
-                visited_positions.add((floor, pos))
+        # Get visited nodes (historical path taken)
+        visited_positions = set(self.map_data.visited_path)
         
         # Generate available moves data
         available_moves_data = []

@@ -77,6 +77,10 @@ class CombatRoom(Room):
         from engine.game_state import game_state
         actions = []
 
+        # Increment normal encounter counter (only for normal monsters, not elites/bosses)
+        if self.room_type == RoomType.MONSTER:
+            game_state.normal_encounters_fought += 1
+
         # Calculate gold reward
         gold_amount = self._calculate_gold_reward()
         if gold_amount > 0:

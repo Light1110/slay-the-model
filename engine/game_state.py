@@ -57,6 +57,10 @@ class GameState:
         # Card chance rolling offset (each common card gained increases rare chance)
         self.card_chance_common_counter = 0
 
+        # Normal encounter counter for encounter pool selection
+        # First 3 encounters use weak pool, rest use strong pool
+        self.normal_encounters_fought = 0
+
         # Current room tracking
         self.current_room: Optional[Room] = None
         
