@@ -17,7 +17,7 @@ class GameFlow:
     action queue internally. This provides better separation of concerns
     and makes room logic more self-contained.
     """
-    MAX_FLOOR = 16  # Maximum floor number (0-16)
+    MAX_FLOOR = 17  # Maximum floor number (0-16)
     def __init__(self):
         self.current_room = None
     def start_game(self, game_state):
@@ -54,12 +54,12 @@ class GameFlow:
                 elif result.state == "GAME_LOSE":
                     self._handle_game_over()
                     break
-            elif result == "DEATH":
-                self._handle_game_over()
-                break
-            elif result == "WIN":
-                self._handle_game_won()
-                break
+                elif result.state == "DEATH":
+                    self._handle_game_over()
+                    break
+                elif result.state == "WIN":
+                    self._handle_game_won()
+                    break
             
             # Handle MultipleActionsResult from rooms (e.g., combat rewards)
             from utils.result_types import MultipleActionsResult
@@ -72,7 +72,7 @@ class GameFlow:
             cur_room.leave()
 
         # If we exited the loop normally, player won by reaching max floor
-        if game_state.current_floor >= self.MAX_FLOOR and result != "DEATH":
+        if game_state.current_floor >= self.MAX_FLOOR:
             self._handle_game_won()
                 
     def _display_welcome(self):

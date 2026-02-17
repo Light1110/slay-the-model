@@ -123,7 +123,13 @@ class BuyItemAction(Action):
             # TheCourier restock: when relic items are bought, restock at 80% price
             self.shop_item.price_multiplier = 0.8
 
-        print(t("ui.shop_bought_item", default=f"Bought {self.shop_item.item.name} for {final_price} gold!"))
+        # Get item name - cards use display_name, relics use name
+        item_name = getattr(self.shop_item.item, 'display_name', None)
+        if item_name is not None:
+            item_name = str(item_name)  # BaseLocalStr to string
+        else:
+            item_name = getattr(self.shop_item.item, 'name', 'Unknown Item')
+        print(t("ui.shop_bought_item", default=f"Bought {item_name} for {final_price} gold!"))
 
         # feature: MawBank的逻辑
         # MawBank effect: track gold spent

@@ -66,9 +66,9 @@ class TreasureRoom(Room):
         # Open chest option
         if not self.chest_opened:
             if self.is_boss:
-                name = self.local("TreasureRoom.open_boss_chest")
+                name = self.local("treasure.open_boss_chest")
             else:
-                name = self.local("TreasureRoom.open_chest", chest_type=self.chest_type)
+                name = self.local("treasure.open_chest", chest_type=self.chest_type)
             options.append(Option(
                 name=name,
                 actions=[OpenChestAction(self)]
@@ -76,12 +76,12 @@ class TreasureRoom(Room):
         else:
             # Chest already opened, just leave
             options.append(Option(
-                name=self.local("TreasureRoom.leave"),
+                name=self.local("treasure.leave"),
                 actions=[]
             ))
 
         # Return SelectAction instead of adding to queue
         return SelectAction(
-            title=self.local("TreasureRoom.boss_title") if self.is_boss else self.local("TreasureRoom.title"),
+            title=self.local("treasure.boss_title") if self.is_boss else self.local("treasure.title"),
             options=options
         )

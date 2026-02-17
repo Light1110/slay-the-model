@@ -932,3 +932,15 @@ rooms:
       recall: "Recall (Ruby Key)"
       leave: "Leave"
 
+  treasure:
+    enter: "You discovered a treasure room!"
+    title: "Treasure Room"
+    boss_title: "Boss Treasure"
+    open_chest: "Open {chest_type} chest"
+    open_small_chest: "Open small chest"
+    open_boss_chest: "Open boss chest"
+    leave: "Leave"
+
+  shop:
+    enter: "You enter a mysterious shop."
+
