@@ -108,12 +108,10 @@ class EncounterPool:
             ('Looter', 2),
         ]
 
-        # For now: use same pools for all floor ranges
-        # In full implementation, early/mid/late would have different pools
+        # 'easy' pool for first 3 encounters, 'hard' pool for remaining
         return {
-            'early': easy_encounters + hard_encounters,
-            'mid': easy_encounters + hard_encounters,
-            'late': easy_encounters + hard_encounters,
+            'easy': easy_encounters,
+            'hard': hard_encounters,
         }
 
     def _build_elite_pools(self) -> Dict[str, List[Tuple[str, int]]]:
