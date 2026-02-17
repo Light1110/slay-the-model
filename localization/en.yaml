@@ -916,7 +916,19 @@ enemies:
 rooms:
   combat:
     victory: "Victory! All enemies defeated!"
+    boss_enter: "=== BOSS BATTLE ==="
     rewards:
       gold: "Gained {amount} gold"
       card: "Added {card_name} to deck"
+  
+  rest:
+    enter: "You enter a peaceful rest site."
+    rest: "You rest and recover {amount} HP."
+    smith: "You upgrade a card."
+    recall: "You recall the Ruby Key."
+    options:
+      rest: "Rest ({amount} HP)"
+      smith: "Smith (Upgrade a card)"
+      recall: "Recall (Ruby Key)"
+      leave: "Leave"
 

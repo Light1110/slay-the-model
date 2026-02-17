@@ -655,30 +655,34 @@ class MapManager:
             
             # Display connection lines to next floor
             if floor < len(self.map_data.nodes) - 1:
-                connection_line = "        "
-                for pos, node in enumerate(floor_nodes):
-                    if not node.connections_up:
-                        connection_line += "    "
-                    else:
-                        # Sort connections for proper display
-                        sorted_connections = sorted(node.connections_up)
-                        next_floor_nodes = self.map_data.nodes[floor + 1]
-                        if len(next_floor_nodes) == 0:
+                next_floor_nodes = self.map_data.nodes[floor + 1]
+                if len(next_floor_nodes) > 0:
+                    connection_line = "        "
+                    
+                    # For each position on current floor, determine connection display
+                    for pos in range(len(floor_nodes)):
+                        node = floor_nodes[pos]
+                        if not node.connections_up:
                             connection_line += "    "
                         else:
-                            min_conn = sorted_connections[0]
-                            max_conn = sorted_connections[-1]
+                            # Determine which directions this node connects to
+                            has_left = any(c < pos for c in node.connections_up)
+                            has_center = any(c == pos for c in node.connections_up)
+                            has_right = any(c > pos for c in node.connections_up)
                             
-                            if min_conn == max_conn:
-                                connection_line += " |  "
-                            elif min_conn == pos:
-                                connection_line += " /  "
-                            elif max_conn == pos:
-                                connection_line += " \\  "
-                            else:
-                                connection_line += " |  "
-                
-                lines.append(connection_line)
+                            # Build connection string (max 3 chars)
+                            conn_str = ""
+                            if has_left:
+                                conn_str += "\\"
+                            if has_center:
+                                conn_str += "|"
+                            if has_right:
+                                conn_str += "/"
+                            
+                            # Pad to 4 chars for alignment with node display
+                            connection_line += conn_str.ljust(4)
+                    
+                    lines.append(connection_line)
         
         return "\n".join(lines)
 
