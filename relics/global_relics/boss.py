@@ -236,11 +236,12 @@ class PhilosophersStone(Relic):
         from engine.game_state import game_state
         assert game_state.current_combat is not None
         for enemy in game_state.current_combat.enemies:
-            actions.append(ApplyPowerAction(
-                power="Strength",
-                target=enemy,
-                amount=1
-            ))
+            if enemy.hp > 0:
+                actions.append(ApplyPowerAction(
+                    power="Strength",
+                    target=enemy,
+                    amount=1
+                ))
         return actions
 
 @register("relic")

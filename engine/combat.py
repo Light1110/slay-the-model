@@ -275,7 +275,7 @@ class Combat(Localizable):
         for relic in game_state.player.relics:
             game_state.action_queue.add_actions(relic.on_player_turn_end(
                 player=game_state.player,
-                entities=self.enemies
+                entities=[e for e in self.enemies if e.hp > 0]
             ))
         # Process player powers: call on_turn_end and remove expired ones
         # print(f"[DEBUG] End of player turn - current powers: {[p.name for p in game_state.player.powers]}")
@@ -428,7 +428,7 @@ class Combat(Localizable):
         for relic in game_state.player.relics:
             game_state.action_queue.add_actions(relic.on_combat_start(
                 player=game_state.player,
-                entities=self.enemies
+                entities=[e for e in self.enemies if e.hp > 0]
             ))
         
         # Trigger combat start effects for enemies
@@ -489,7 +489,7 @@ class Combat(Localizable):
         
         # relics - powers
         for relic in game_state.player.relics:
-            game_state.action_queue.add_actions(relic.on_player_turn_start(game_state.player, self.enemies))
+            game_state.action_queue.add_actions(relic.on_player_turn_start(game_state.player, [e for e in self.enemies if e.hp > 0]))
         for power in game_state.player.powers:
             game_state.action_queue.add_actions(power.on_turn_start())
         # enemies

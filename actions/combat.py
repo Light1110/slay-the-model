@@ -879,7 +879,7 @@ class UsePotionAction(Action):
         if (hasattr(game_state, 'current_combat') and 
             game_state.current_combat is not None):
             
-            alive_enemies = [e for e in game_state.current_combat.enemies if e.is_alive]
+            alive_enemies = [e for e in game_state.current_combat.enemies if e.hp > 0]
             
             if len(alive_enemies) > 1:
                 # Create options for each enemy + player

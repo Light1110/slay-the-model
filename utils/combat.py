@@ -32,14 +32,16 @@ def resolve_target(target_type: TargetType) -> List[Optional[Creature]]:
     if target_type == TargetType.SELF:
         return [player]
     elif target_type == TargetType.ENEMY_LOWEST_HP:
-        return [min(enemies, key=lambda e: e.hp) if enemies else None]
+        alive_enemies = [e for e in enemies if e.hp > 0]
+        return [min(alive_enemies, key=lambda e: e.hp) if alive_enemies else None]
     elif target_type == TargetType.ENEMY_RANDOM:
         import random
-        return [random.choice(enemies) if enemies else None]
+        alive_enemies = [e for e in enemies if e.hp > 0]
+        return [random.choice(alive_enemies) if alive_enemies else None]
     elif target_type == TargetType.ENEMY_ALL:
-        return enemies
+        return [e for e in enemies if e.hp > 0]
     elif target_type == TargetType.ENEMY_SELECT:
-        alive_enemies = [e for e in enemies]
+        alive_enemies = [e for e in enemies if e.hp > 0]
         
         # If only one enemy or not showing selection, auto-select
         if len(alive_enemies) <= 1:
