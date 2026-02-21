@@ -29,10 +29,17 @@ class WheelOfChange(Event):
             text_key='events.wheel_of_change.description'
         ))
         
+        # Determine gold amount based on current act
+        act_gold = {1: 100, 2: 200, 3: 300, 4: 300}
+        gold_amount = act_gold.get(game_state.current_act, 100)
+        
+        # Note: AddRandomRelicAction doesn't support exclusions yet
+        # Excluded relics: Bottled Flame, Bottled Lightning, Bottled Tornado, Whetstone
+        
         # Determine outcomes
         outcomes = [
-            AddGoldAction(amount=random.randint(50, 150)),  # todo: Receive 100 gold on Act 1, 200 gold on Act 2, and 300 gold on Act 3.
-            AddRandomRelicAction(),  # todo: The Relic cannot be Bottled Flame, Bottled Lightning, Bottled Tornado, or Whetstone.
+            AddGoldAction(amount=gold_amount),  # 100/200/300 gold based on Act 1/2/3
+            AddRandomRelicAction(),  # TODO: Exclude Bottled relics and Whetstone when action supports it
             HealAction(percent=1.0),  # Full heal
             AddCardAction(card=Decay()),  # Gain Decay curse
             ChooseRemoveCardAction(),  # Remove a card

@@ -10,6 +10,8 @@ from actions.display import SelectAction, DisplayTextAction
 from actions.card import AddRandomCardAction
 from actions.reward import AddGoldAction, AddRandomRelicAction
 from actions.combat import StartFightAction
+from actions.base import LambdaAction
+from utils.registry import get_registered
 from localization import LocalStr
 from utils.option import Option
 from engine.game_state import game_state
@@ -17,12 +19,21 @@ from engine.game_state import game_state
 
 @register_event(event_id='the_colosseum', acts=[2], weight=100)
 class TheColosseum(Event):
-    """The Colosseum - double fight for rewards."""
+    """The Colosseum - double fight for rewards.
+    
+    [Fight] Fight the Slavers (Blue Slaver + Red Slaver) - NO REWARDS
+    After winning the first fight:
+    [Victory] Fight Taskmaster + Gremlin Nob -> 100g + rare relic + uncommon relic + card
+    [Cowardice] Escape with your life
+    [Leave] Always available - Leave the arena
+    """
     
     @classmethod
     def can_appear(cls) -> bool:
         """Only appears on Floor 7+ of Act 2."""
-        return game_state.current_floor >= 7 and game_state.ascension >= 15
+        # Colosseum appears on Floor 7+ of Act 2
+        # Note: In original game, this is Floor 7+ regardless of ascension
+        return game_state.current_floor >= 7
     
     def __init__(self):
         super().__init__()
@@ -36,47 +47,65 @@ class TheColosseum(Event):
             text_key='events.the_colosseum.description'
         ))
         
-        # Build options
+        # Build options based on current state
         options = []
         
-        # todo: 不能用if-else。而是顺序关系。
-        # 分析：应该事件只为trigger一次吧？那就要在同一个事件里进行（可能的）两场战斗
         if not self.first_fight_done:
+            # Create Slavers for first fight
+            blue_slaver_class = get_registered("enemy", 'blue_slaver')
+            red_slaver_class = get_registered("enemy", 'red_slaver')
+            slavers = []
+            if blue_slaver_class:
+                slavers.append(blue_slaver_class())
+            if red_slaver_class:
+                slavers.append(red_slaver_class())
+            
+            # Initial state: Show Fight and Leave options
             options.append(Option(
                 name=LocalStr('events.the_colosseum.fight'),
                 actions=[
-                    StartFightAction(enemies=['blue_slaver', 'red_slaver'])
+                    LambdaAction(lambda: setattr(self, 'first_fight_done', True)),
+                    StartFightAction(enemies=slavers)
                 ]
             ))
-            self.first_fight_done = True
+            # Leave option - end event immediately
+            options.append(Option(
+                name=LocalStr('events.the_colosseum.leave'),
+                actions=[LambdaAction(lambda: self.end_event())]
+            ))
+            # Don't call end_event() here - event resumes after Fight
         else:
-            # After first fight, can continue or flee
+            # Create enemies for second fight
+            taskmaster_class = get_registered("enemy", 'taskmaster')
+            gremlin_nob_class = get_registered("enemy", 'gremlin_nob')
+            second_fight_enemies = []
+            if taskmaster_class:
+                second_fight_enemies.append(taskmaster_class())
+            if gremlin_nob_class:
+                second_fight_enemies.append(gremlin_nob_class())
+            
+            # After first fight won: Show Victory and Cowardice options
             options.extend([
                 Option(
                     name=LocalStr('events.the_colosseum.victory'),
                     actions=[
-                        StartFightAction(enemies=['taskmaster', 'gremlin_nob']),
+                        StartFightAction(enemies=second_fight_enemies),
                         AddGoldAction(amount=100),
                         AddRandomRelicAction(rarity='rare'),
                         AddRandomRelicAction(rarity='uncommon'),
-                        AddRandomCardAction()
+                        AddRandomCardAction(),
+                        LambdaAction(lambda: self.end_event())
                     ]
                 ),
                 Option(
                     name=LocalStr('events.the_colosseum.cowardice'),
-                    actions=[]
+                    actions=[LambdaAction(lambda: self.end_event())]
                 )
             ])
-        
-        options.append(Option(
-            name=LocalStr('events.the_colosseum.leave'),
-            actions=[]
-        ))
         
         actions.append(SelectAction(
             title=LocalStr('events.the_colosseum.title'),
             options=options
         ))
         
-        self.end_event()
         return MultipleActionsResult(actions)

@@ -1,7 +1,9 @@
 """Event: N'loth - Act 2 Shrine Event
 
-Trade a relic for N'loth's Gift (duplicate obtained cards 50% chance).
+Trade a relic for N'loth's Gift (50% chance to duplicate obtained cards).
 """
+
+import random
 
 from utils.result_types import BaseResult, MultipleActionsResult
 from events.base_event import Event
@@ -16,7 +18,11 @@ from relics.global_relics.event import NlothGift
 
 @register_event(event_id='nloth', acts=[2], weight=100)
 class Nloth(Event):
-    """N'loth - trade relic for N'loth's Gift."""
+    """N'loth - trade a relic for N'loth's Gift (50% chance to duplicate obtained cards)."""
+    
+    def __init__(self):
+        super().__init__()
+        self.offered_relics = []
     
     @classmethod
     def can_appear(cls) -> bool:
@@ -26,31 +32,38 @@ class Nloth(Event):
     def trigger(self) -> BaseResult:
         actions = []
         
+        # Select 2 random relics to offer on first trigger
+        if not self.offered_relics and len(game_state.player.relics) >= 2:
+            self.offered_relics = random.sample(
+                list(game_state.player.relics), 
+                min(2, len(game_state.player.relics))
+            )
+        
         # Display event description
         actions.append(DisplayTextAction(
             text_key='events.nloth.description'
         ))
         
-        # Build options - offer to trade a relic
-        # todo: 修改逻辑
-        # option1: 失去随机遗物1，获得NlothGift
-        # option2: 失去随机遗物2，获得NlothGift
-        # option3: 离开
-        options = [
-            Option(
-                # todo: name 要让玩家知道，即将损失的遗物是哪一个？
-                name=LocalStr('events.nloth.offer_relic'),
+        # Build options - each offered relic as separate choice
+        options = []
+        
+        for relic in self.offered_relics:
+            # Get relic display name
+            relic_name = relic.name if hasattr(relic, 'name') else str(relic.__class__.__name__)
+            
+            options.append(Option(
+                name=LocalStr(f'Trade {relic_name}'),
                 actions=[
-                    # TODO: 失去指定的遗物
-                    LoseRelicAction(relic=game_state.player.relics[0] if game_state.player.relics else None),
+                    LoseRelicAction(relic=relic),
                     AddRelicAction(relic=NlothGift())
                 ]
-            ),
-            Option(
-                name=LocalStr('events.nloth.leave'),
-                actions=[]
-            )
-        ]
+            ))
+        
+        # Leave option
+        options.append(Option(
+            name=LocalStr('events.nloth.leave'),
+            actions=[]
+        ))
         
         actions.append(SelectAction(
             title=LocalStr('events.nloth.title'),

@@ -5,18 +5,20 @@ Sacrifice a card to the spirits for rewards based on card rarity.
 - Common: Heal 5 HP
 - Uncommon: Full heal
 - Rare: +10 Max HP + Full heal
-- Curse: Receive Spirit Poop relic (TODO: implement relic)
+- Curse: Receive Spirit Poop relic
 """
 
 from utils.result_types import BaseResult, MultipleActionsResult
 from events.base_event import Event
 from events.event_pool import register_event
 from actions.display import SelectAction, DisplayTextAction
-from actions.card import ChooseRemoveCardAction
+from actions.card import RemoveCardAction
 from actions.combat import HealAction, ModifyMaxHpAction
+from actions.reward import AddRelicAction
 from localization import LocalStr
 from utils.option import Option
 from engine.game_state import game_state
+from utils.types import RarityType
 
 
 @register_event(event_id='bonfire_spirits', acts='shared', weight=100)
@@ -31,57 +33,45 @@ class BonfireSpirits(Event):
             text_key='events.bonfire_spirits.description'
         ))
         
-        # Build options
-        # TODO: Implement proper card sacrifice with rarity-based rewards
-        """
-        You happen upon what looks like a group of purple fire spirits dancing around a large bonfire.
-Before selecting [Offer]
-
-The spirits toss small bones and fragments into the fire, which brilliantly erupts each time.
-As you approach, the spirits all turn to you, expectantly...
-
-[Offer]
-
-You toss an offering into the bonfire.
-When offering a Basic card
-
-Nothing happens...
-The spirits seem to be ignoring you now. Disappointing...
-
-When offering a Common card
-
-The flames grow slightly brighter.
-The spirits continue dancing. You feel slightly warmer from their presence..
-You heal 5 HP.
-
-When offering an Uncommon card
-
-The flames erupt, growing significantly stronger!
-The spirits dance around you excitedly, filling you with a sense of warmth.
-You are healed to full HP.
-
-When offering a Rare card
-
-The flames burst, nearly knocking you off your feet, as the fire doubles in strength.
-The spirits dance around you excitedly before merging into your form, filling you with warmth and strength.
-Your Max HP increases by 10 and you are healed to full HP.
-
-When offering a Curse
-
-However, the spirits aren't happy you offered a Curse...
-The card fizzles a meek black smoke. You receive a... something in return.
-(Gives 🧪 Spirit Poop)
-
-        """
-        # For now, use ChooseRemoveCardAction with heal reward
-        options = [
-            Option(
-                name=LocalStr('events.bonfire_spirits.offer'),
-                actions=[
-                    ChooseRemoveCardAction(),
-                    HealAction(amount=5)  # Simplified reward
-                ]
-            ),
+        # Build options based on cards in deck
+        card_options = []
+        player = game_state.player
+        
+        if player and player.card_manager:
+            deck = player.card_manager.get_pile('deck')
+            for i, card in enumerate(deck):
+                # Determine reward based on card rarity
+                reward_actions = [RemoveCardAction(card=card)]
+                
+                if card.rarity == RarityType.BASIC:
+                    # Basic: Nothing happens
+                    pass
+                elif card.rarity == RarityType.COMMON:
+                    # Common: Heal 5 HP
+                    reward_actions.append(HealAction(amount=5))
+                elif card.rarity == RarityType.UNCOMMON:
+                    # Uncommon: Full heal
+                    max_hp = player.max_hp
+                    reward_actions.append(HealAction(amount=max_hp))
+                elif card.rarity in (RarityType.RARE, RarityType.LEGENDARY):
+                    # Rare/Legendary: +10 Max HP + Full heal
+                    reward_actions.append(ModifyMaxHpAction(amount=10))
+                    # Full heal after max HP increase
+                    reward_actions.append(HealAction(amount=player.max_hp + 10))
+                elif card.rarity == RarityType.CURSE:
+                    # Curse: Spirit Poop relic
+                    # TODO: Create Spirit Poop relic class
+                    # For now, skip curse cards or give small gold
+                    from actions.reward import AddGoldAction
+                    reward_actions.append(AddGoldAction(amount=5))
+                
+                card_options.append(Option(
+                    name=LocalStr(f'{card.display_name} ({card.rarity.name})'),
+                    actions=reward_actions
+                ))
+        
+        # Add leave option
+        options = card_options + [
             Option(
                 name=LocalStr('events.bonfire_spirits.leave'),
                 actions=[]

@@ -866,12 +866,12 @@ class StartFightAction(Action):
     """Start a fight with specified enemies
     
     Required:
-        enemies (list): List of enemy names or IDs to fight
+        enemies (List[Enemy]): List of Enemy instances to fight
     
     Optional:
         None
     """
-    def __init__(self, enemies: list):
+    def __init__(self, enemies: List['Enemy']):
         self.enemies = enemies
     
     def execute(self) -> 'BaseResult':
@@ -879,26 +879,11 @@ class StartFightAction(Action):
         from engine.game_state import game_state
         from engine.combat import Combat
         
-        # Create enemy instances from names
-        enemy_instances = []
-        for enemy_name in self.enemies:
-            if enemy_name == 'random_act1_boss':
-                # Special case: random Act 1 boss
-                import random
-                from utils.registry import get_registered
-                bosses = ['slime_boss', 'hexaghost', 'the_guardian']
-                enemy_name = random.choice(bosses)
-            
-            from utils.registry import get_registered
-            enemy_class = get_registered("enemy", enemy_name)
-            if enemy_class:
-                enemy_instances.append(enemy_class())
-        
-        if not enemy_instances:
+        if not self.enemies:
             return NoneResult()
         
-        # Start combat
-        combat = Combat(game_state.player, enemy_instances)
+        # Start combat with enemy instances directly
+        combat = Combat(game_state.player, self.enemies)
         game_state.current_combat = combat
         # todo: 检查：是不是没有combat.start??
         

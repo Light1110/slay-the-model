@@ -7,9 +7,8 @@ from utils.result_types import BaseResult, MultipleActionsResult
 from events.base_event import Event
 from events.event_pool import register_event
 from actions.display import SelectAction, DisplayTextAction
-from actions.card import ChooseRemoveCardAction, UpgradeRandomCardAction
-# TODO: Create UpgradeAllStrikesAndDefendsAction in actions.card
-# ! No need to create new action. can use LambdaAction
+from actions.card import ChooseRemoveCardAction
+from actions.base import LambdaAction
 from localization import LocalStr
 from utils.option import Option
 
@@ -19,6 +18,21 @@ class AncientWriting(Event):
     """Ancient Writing - remove card or upgrade Strikes/Defends."""
     
     def trigger(self) -> BaseResult:
+        from engine.game_state import game_state
+        from cards.ironclad.strike import Strike
+        from cards.ironclad.defend import Defend
+        
+        def upgrade_all_strikes_and_defends():
+            """Upgrade all Strike and Defend cards in the player's deck."""
+            player = game_state.player
+            upgraded_count = 0
+            for card in player.deck:
+                # Check if card is a Strike or Defend (by class name or instance check)
+                if isinstance(card, (Strike, Defend)) or 'Strike' in card.__class__.__name__ or 'Defend' in card.__class__.__name__:
+                    if card.can_upgrade():
+                        card.upgrade()
+                        upgraded_count += 1
+        
         actions = []
         
         # Display event description
@@ -34,9 +48,8 @@ class AncientWriting(Event):
             ),
             Option(
                 name=LocalStr('events.ancient_writing.simplicity'),
-                # TODO: Create UpgradeAllStrikesAndDefendsAction
-                # For now, upgrade 2 random cards as placeholder
-                actions=[UpgradeRandomCardAction(), UpgradeRandomCardAction()]
+                # Upgrade ALL Strike and Defend cards in deck
+                actions=[LambdaAction(upgrade_all_strikes_and_defends)]
             )
         ]
         

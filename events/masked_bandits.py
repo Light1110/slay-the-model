@@ -10,6 +10,7 @@ from actions.display import SelectAction, DisplayTextAction
 from actions.card import AddRandomCardAction
 from actions.reward import LoseGoldAction, AddRelicAction, AddGoldAction
 from actions.combat import StartFightAction
+from utils.registry import get_registered
 from localization import LocalStr
 from utils.option import Option
 from engine.game_state import game_state
@@ -28,6 +29,18 @@ class MaskedBandits(Event):
             text_key='events.masked_bandits.description'
         ))
         
+        # Create enemy instances for combat
+        pointy_class = get_registered("enemy", 'pointy')
+        romeo_class = get_registered("enemy", 'romeo')
+        bear_class = get_registered("enemy", 'bear')
+        bandits = []
+        if pointy_class:
+            bandits.append(pointy_class())
+        if romeo_class:
+            bandits.append(romeo_class())
+        if bear_class:
+            bandits.append(bear_class())
+        
         # Build options
         options = [
             Option(
@@ -37,7 +50,7 @@ class MaskedBandits(Event):
             Option(
                 name=LocalStr('events.masked_bandits.fight'),
                 actions=[
-                    StartFightAction(enemies=['pointy', 'romeo', 'bear']), # todo: 检查 StartFightAction 是否功能正确
+                    StartFightAction(enemies=bandits),
                     AddRelicAction(relic=RedMask()),
                 ]
             )

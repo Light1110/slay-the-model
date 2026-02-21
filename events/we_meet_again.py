@@ -3,6 +3,7 @@
 Trade a potion, gold, or card for a random relic.
 """
 
+import random
 from utils.result_types import BaseResult, MultipleActionsResult
 from events.base_event import Event
 from events.event_pool import register_event
@@ -30,36 +31,35 @@ class WeMeetAgain(Event):
         options = []
         
         # Option 1: Give Potion (if has potion)
+        # NOTE: LosePotionAction doesn't exist yet. When it does, we should
+        # let the player choose which potion to give before giving the relic.
         if game_state.player.potions:
             options.append(Option(
                 name=LocalStr('events.we_meet_again.give_potion'),
                 actions=[
-                    # TODO: Implement proper potion selection when LosePotionAction exists
+                    # TODO: Add LosePotionAction when available
                     AddRandomRelicAction()
                 ]
             ))
         
-        # Option 2: Give Gold (50-150 gold)
+        # Option 2: Give Gold (50 to min(player.gold, 150) gold)
         if game_state.player.gold >= 50:
+            gold_amount = random.randint(50, min(game_state.player.gold, 150))
             options.append(Option(
                 name=LocalStr('events.we_meet_again.give_gold'),
                 actions=[
-                    LoseGoldAction(amount=100),  # todo: random in range 50-min(player.gold, 150)
+                    LoseGoldAction(amount=gold_amount),
                     AddRandomRelicAction()
                 ]
             ))
         
-        # Option 3: Give Card (non-Basic, non-Curse)
+        # Option 3: Give Card (non-Basic, non-Curse, non-Bottled)
+        # NOTE: ChooseRemoveCardAction doesn't support filtering yet.
+        # According to wiki: "Not a Curse, Not a Basic (Starter), Not a Bottled card"
+        # TODO: Implement card filtering when ChooseRemoveCardAction supports it
         options.append(Option(
             name=LocalStr('events.we_meet_again.give_card'),
             actions=[
-                # todo: 需要 filter 掉一下类型手牌：
-                # ? 可能要修改ChooseRemoveCardAction
-                """
-                Not a Curse card.
-                Not a Basic（Starter） card.
-                Not a Bottled card.
-                """
                 ChooseRemoveCardAction(),  # Player chooses a card to remove
                 AddRandomRelicAction()
             ]

@@ -3,6 +3,7 @@
 Fight 2 Orb Walkers for relic reward.
 """
 
+import random
 from utils.result_types import BaseResult, MultipleActionsResult
 from events.base_event import Event
 from events.event_pool import register_event
@@ -10,6 +11,7 @@ from actions.display import SelectAction, DisplayTextAction
 from actions.card import AddRandomCardAction
 from actions.reward import AddGoldAction, AddRandomRelicAction
 from actions.combat import StartFightAction
+from utils.registry import get_registered
 from localization import LocalStr
 from utils.option import Option
 
@@ -26,14 +28,18 @@ class MysteriousSphere(Event):
             text_key='events.mysterious_sphere.description'
         ))
         
+        # Create Orb Walker instances for combat
+        orb_walker_class = get_registered("enemy", 'orb_walker')
+        orb_walkers = [orb_walker_class(), orb_walker_class()] if orb_walker_class else []
+        
         # Build options
         options = [
             Option(
                 name=LocalStr('events.mysterious_sphere.open_sphere'),
                 actions=[
-                    StartFightAction(enemies=['orb_walker', 'orb_walker']),
+                    StartFightAction(enemies=orb_walkers),
                     AddRandomRelicAction(rarity='rare'),
-                    AddGoldAction(amount=50),  # todo: 45-55 gold
+                    AddGoldAction(amount=random.randint(45, 55)),
                     AddRandomCardAction()
                 ]
             ),

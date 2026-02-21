@@ -29,9 +29,11 @@ class GoldenIdolEvent(Event):
             text_key='events.golden_idol.description'
         ))
         
-        # Calculate HP percentages
+        # Calculate HP amounts (ModifyMaxHpAction uses amount, not percent)
         smash_percent = 0.35 if game_state.ascension >= 15 else 0.25
         hide_percent = 0.10 if game_state.ascension >= 15 else 0.08
+        # Calculate negative amount for losing MaxHP
+        hide_hp_loss = -int(game_state.player.max_hp * hide_percent)
         
         # Build options
         options = [
@@ -53,7 +55,7 @@ class GoldenIdolEvent(Event):
                             ),
                             Option(
                                 name=LocalStr('events.golden_idol.hide'),
-                                actions=[ModifyMaxHpAction(percent=hide_percent)] # todo: ModifyMaxHpAction 只有 amount 参数。提前计算好。注意是negative
+                                actions=[ModifyMaxHpAction(amount=hide_hp_loss)]
                             )
                         ]
                     )

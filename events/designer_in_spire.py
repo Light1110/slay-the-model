@@ -7,12 +7,14 @@ from utils.result_types import BaseResult, MultipleActionsResult
 from events.base_event import Event
 from events.event_pool import register_event
 from actions.display import SelectAction, DisplayTextAction
-from actions.card import ChooseRemoveCardAction, ChooseUpgradeCardAction, ChooseTransformCardAction, UpgradeRandomCardAction
+from actions.card import ChooseRemoveCardAction, ChooseUpgradeCardAction, ChooseTransformCardAction, UpgradeRandomCardAction, TransformRandomCardAction
 from actions.reward import LoseGoldAction
 from actions.combat import LoseHPAction
+from actions.base import LambdaAction
 from localization import LocalStr
 from utils.option import Option
 from engine.game_state import game_state
+import random
 
 
 @register_event(event_id='designer_in_spire', acts=[2, 3], weight=100)
@@ -39,13 +41,17 @@ class DesignerInSpire(Event):
         punch_hp = 5 if game_state.ascension >= 15 else 3
         
         # Build options
-        # todo: 前两个选项是二选一，应该通过random决定
+        # First two options randomly choose between two outcomes
         options = [
             Option(
                 name=LocalStr('events.designer_in_spire.adjustments'),
                 actions=[
                     LoseGoldAction(amount=adjust_cost),
-                    ChooseUpgradeCardAction()  # or 2 random upgrades
+                    LambdaAction(lambda: (
+                        ChooseUpgradeCardAction().execute()
+                        if random.random() < 0.5
+                        else [UpgradeRandomCardAction().execute(), UpgradeRandomCardAction().execute()]
+                    ))
                 ],
                 enabled=game_state.player.gold >= adjust_cost
             ),
@@ -53,7 +59,11 @@ class DesignerInSpire(Event):
                 name=LocalStr('events.designer_in_spire.clean_up'),
                 actions=[
                     LoseGoldAction(amount=clean_cost),
-                    ChooseRemoveCardAction()  # or transform 2 cards
+                    LambdaAction(lambda: (
+                        ChooseRemoveCardAction().execute()
+                        if random.random() < 0.5
+                        else [TransformRandomCardAction().execute(), TransformRandomCardAction().execute()]
+                    ))
                 ],
                 enabled=game_state.player.gold >= clean_cost
             ),

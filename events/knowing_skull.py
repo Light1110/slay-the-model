@@ -3,6 +3,7 @@
 Repeatable HP for potion/gold/card trade.
 """
 
+from actions.base import LambdaAction
 from actions.combat import LoseHPAction
 from utils.result_types import BaseResult, MultipleActionsResult
 from events.base_event import Event
@@ -18,7 +19,14 @@ from engine.game_state import game_state
 
 @register_event(event_id='knowing_skull', acts=[2], weight=100)
 class KnowingSkull(Event):
-    """Knowing Skull - repeatable HP for rewards."""
+    """
+    Knowing Skull - repeatable HP for rewards.
+    
+    [Potion] Lose 6% (A15+: 8%) of Max HP (+1 per use). Obtain a random potion.
+    [Riches] Lose 6% (A15+: 8%) of Max HP (+1 per use). Gain 90 Gold.
+    [Success] Lose 6% (A15+: 8%) of Max HP (+1 per use). Obtain a random Uncommon Colorless card.
+    [Leave] Nothing happens.
+    """
     
     @classmethod
     def can_appear(cls) -> bool:
@@ -30,46 +38,51 @@ class KnowingSkull(Event):
         self.use_count = 0
     
     def trigger(self) -> BaseResult:
+        from actions.reward import AddRandomCardAction as AddRandomCardActionReward
+        from cards.colorless.uncommon import uncommon_cards
+        
         actions = []
         
-        # Display event description
-        actions.append(DisplayTextAction(
-            text_key='events.knowing_skull.description'
-        ))
+        # Display event description only on first entry
+        if self.use_count == 0:
+            actions.append(DisplayTextAction(
+                text_key='events.knowing_skull.description'
+            ))
         
-        # HP cost: 10% Max HP, minimum 6, +1 per use
-        base_hp = max(int(game_state.player.max_hp * 0.10), 6)
+        # HP cost: 6% (8% A15+) of Max HP, minimum 6, +1 per use
+        hp_percent = 0.08 if game_state.ascension >= 15 else 0.06
+        base_hp = max(int(game_state.player.max_hp * hp_percent), 6)
         hp_cost = base_hp + self.use_count
         
-        # todo: 这里应该有一个循环，可以反复选择。只有选择leave才会离开
-        # Build options
+        # Build options - loop until player chooses Leave
         options = [
             Option(
                 name=LocalStr('events.knowing_skull.potion'),
                 actions=[
                     LoseHPAction(amount=hp_cost),
-                    AddRandomPotionAction(character=game_state.player.character)
+                    AddRandomPotionAction(character=game_state.player.character),
+                    LambdaAction(lambda: self._increment_use())
                 ]
             ),
             Option(
                 name=LocalStr('events.knowing_skull.riches'),
                 actions=[
                     LoseHPAction(amount=hp_cost),
-                    AddGoldAction(amount=90)
+                    AddGoldAction(amount=90),
+                    LambdaAction(lambda: self._increment_use())
                 ]
             ),
             Option(
                 name=LocalStr('events.knowing_skull.success'),
                 actions=[
                     LoseHPAction(amount=hp_cost),
-                    AddRandomCardAction(namespace='colorless', rarity=RarityType.UNCOMMON)
+                    AddRandomCardAction(namespace='colorless', rarity=RarityType.UNCOMMON),
+                    LambdaAction(lambda: self._increment_use())
                 ]
             ),
             Option(
                 name=LocalStr('events.knowing_skull.leave'),
-                actions=[
-                    LoseHPAction(amount=hp_cost)
-                ]
+                actions=[]  # Leave costs nothing and ends the event
             )
         ]
         
@@ -78,6 +91,10 @@ class KnowingSkull(Event):
             options=options
         ))
         
-        self.use_count += 1
-        self.end_event()
+        # Don't end event here - it will be ended by the SelectAction result
+        # Only end when player chooses Leave (which doesn't have end_event in its actions)
         return MultipleActionsResult(actions)
+    
+    def _increment_use(self):
+        """Increment use count when a reward is chosen."""
+        self.use_count += 1

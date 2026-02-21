@@ -10,6 +10,7 @@ from actions.display import SelectAction, DisplayTextAction
 from actions.card import AddRandomCardAction, UpgradeCardAction, UpgradeAllCardsAction, AddCardAction
 from actions.reward import AddGoldAction, AddRandomRelicAction, AddRelicAction
 from actions.combat import HealAction, StartFightAction
+from utils.registry import get_registered
 from localization import LocalStr
 from utils.option import Option
 from engine.game_state import game_state
@@ -23,8 +24,8 @@ class MindBloom(Event):
     
     @classmethod
     def can_appear(cls) -> bool:
-        """Only appears on Ascension 15."""
-        return game_state.ascension >= 15
+        """Appears on all ascensions in Act 3."""
+        return True
     
     def trigger(self) -> BaseResult:
         actions = []
@@ -34,17 +35,24 @@ class MindBloom(Event):
             text_key='events.mind_bloom.description'
         ))
         
-        # Gold for "I am Rich" option (Floors 35-40)
-        gold_amount = 25 if game_state.ascension >= 15 else 50
+        # Gold for "I am War" option (reduced on A15+)
+        war_gold = 25 if game_state.ascension >= 15 else 50
+        
+        # Create random Act 1 boss for "I am War" option
+        import random
+        act1_bosses = ['hexaghost', 'slaver', 'the_guardian']  # Act 1 bosses
+        boss_name = random.choice(act1_bosses)
+        boss_class = get_registered("enemy", boss_name)
+        boss_enemies = [boss_class()] if boss_class else []
         
         # Build options
         options = [
             Option(
                 name=LocalStr('events.mind_bloom.i_am_war'),
                 actions=[
-                    StartFightAction(enemies=['random_act1_boss']),
+                    StartFightAction(enemies=boss_enemies),
                     AddRandomRelicAction(rarity='rare'),
-                    AddGoldAction(amount=gold_amount),
+                    AddGoldAction(amount=war_gold),
                     AddRandomCardAction()
                 ]
             ),
@@ -55,7 +63,7 @@ class MindBloom(Event):
                     AddRelicAction(relic=MarkOfBloom())
                 ]
             ),
-            # todo: change logic. The third option will either be [I am Rich] on floors 35 - 40 or [I am Healthy] on floor 41 and above.
+            # Third option: "I am Rich" (floors 35-40) or "I am Healthy" (floor 41+)
             Option(
                 name=LocalStr('events.mind_bloom.i_am_rich'),
                 actions=[

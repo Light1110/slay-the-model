@@ -9,7 +9,8 @@ from events.event_pool import register_event
 from actions.display import SelectAction, DisplayTextAction
 from actions.card import AddCardAction
 from actions.reward import AddRelicAction
-from actions.combat import HealAction
+from actions.combat import HealAction, StartFightAction
+from utils.registry import get_registered
 from localization import LocalStr
 from utils.option import Option
 from engine.game_state import game_state
@@ -34,14 +35,17 @@ class HypnotizingColoredMushrooms(Event):
             text_key='events.hypnotizing_mushrooms.description'
         ))
         
+        # Create fungi beast instances for combat
+        fungi_beast_class = get_registered("enemy", 'fungi_beast')
+        fungi_beasts = [fungi_beast_class(), fungi_beast_class(), fungi_beast_class()] if fungi_beast_class else []
+        
         # Build options
-        # TODO: Add StartFightAction when available
-        # Current implementation provides the relic directly without fight
         options = [
             Option(
                 name=LocalStr('events.hypnotizing_mushrooms.stomp'),
                 actions=[
-                    AddRelicAction(relic=OddMushroom()) # todo: 改为触发一场战斗，战斗奖励是这个遗物。敌人是 3 * Fungi Beast
+                    StartFightAction(enemies=fungi_beasts),
+                    AddRelicAction(relic=OddMushroom())
                 ]
             ),
             Option(

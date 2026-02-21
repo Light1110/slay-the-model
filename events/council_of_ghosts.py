@@ -8,7 +8,7 @@ from events.base_event import Event
 from events.event_pool import register_event
 from actions.display import SelectAction, DisplayTextAction
 from actions.card import AddCardAction
-# TODO: use ModifyMaxHPAction
+from actions.combat import LoseMaxHPAction
 from localization import LocalStr
 from utils.option import Option
 from engine.game_state import game_state
@@ -35,7 +35,8 @@ class CouncilOfGhosts(Event):
             Option(
                 name=LocalStr('events.council_of_ghosts.accept'),
                 actions=[
-                    # TODO: Lose 50% Max HP - create LoseMaxHPAction
+                    # Lose 50% of Max HP
+                    LoseMaxHPAction(amount=game_state.player.max_hp // 2),
                     *[AddCardAction(card=Apparition()) for _ in range(apparition_count)]
                 ]
             ),
