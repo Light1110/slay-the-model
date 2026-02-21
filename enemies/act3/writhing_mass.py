@@ -1,13 +1,16 @@
 """Writhing Mass enemy for Slay the Model."""
 
 import random
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 
 from enemies.act3.writhing_mass_intentions import (
     MultiHit, DebuffAttackMass, BigHit, BlockAttackMass, ParasiteIntention
 )
 from enemies.base import Enemy
 from utils.types import EnemyType
+
+if TYPE_CHECKING:
+    from actions.base import Action
 
 
 class WrithingMass(Enemy):
@@ -71,3 +74,54 @@ class WrithingMass(Enemy):
         choice = random.choice(available)
         self._last_intention = choice
         return choice
+    
+    def on_combat_start(self, floor: int = 1) -> None:
+        """Called when combat starts.
+        
+        Apply Malleable and Reactive powers at the start of combat.
+        
+        Args:
+            floor: Current floor number
+        """
+        super().on_combat_start(floor)
+        
+        # Apply Malleable 4
+        from powers.definitions.malleable import MalleablePower
+        self.add_power(MalleablePower(amount=4, owner=self))
+        
+        # Apply Reactive
+        from powers.definitions.reactive import ReactivePower
+        self.add_power(ReactivePower(owner=self))
+    
+    def on_damage_taken(self, damage: int, source=None, card=None, 
+                        damage_type=None) -> List['Action']:
+        """Called when enemy takes damage.
+        
+        Due to Reactive power, changes its intention when hit by attack damage.
+        
+        Args:
+            damage: Amount of damage being taken
+            source: Source of damage
+            card: Card that caused damage
+            damage_type: Type of damage
+            
+        Returns:
+            List of actions to queue after taking damage
+        """
+        # Check for Reactive power - if hit by attack, change intention
+        if damage > 0 and damage_type == "attack":
+            # Check if we have Reactive power
+            if self.get_power("Reactive"):
+                # Change to a random different intention
+                available = ["Multi Hit", "Debuff Attack", "Big Hit", 
+                            "Block Attack", "Parasite"]
+                if self._last_intention in available:
+                    available.remove(self._last_intention)
+                if available:
+                    new_intention = random.choice(available)
+                    self._last_intention = new_intention
+                    # Update current_intention
+                    if new_intention in self.intentions:
+                        self.current_intention = self.intentions[new_intention]
+        
+        return []

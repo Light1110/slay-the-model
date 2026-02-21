@@ -25,21 +25,20 @@ class PenNibPower(Power):
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
         self.damage_multiplier = 2  # Double damage
+        self.active = True  # Whether the multiplier is active for this attack
     
-    def on_card_play(self, card, player, entities) -> List[Action]:
+    def modify_damage_dealt(self, base_damage: int, card=None, target=None) -> int:
         """
-        Double damage when an attack card is played, then remove self.
+        Double damage when an attack is dealt.
+        
+        This is the correct approach - modify damage through callback
+        instead of modifying the card directly.
         """
-        from utils.types import CardType
+        if self.active and card and hasattr(card, 'card_type'):
+            from utils.types import CardType
+            if card.card_type == CardType.ATTACK:
+                self.active = False  # Only apply once
+                self.duration = 0  # Will be removed after this attack
+                return base_damage * self.damage_multiplier
         
-        # Only apply to attack cards
-        if card.card_type == CardType.ATTACK:
-            # Set card damage to double
-            # We modify the card's base damage temporarily
-            if hasattr(card, 'base_damage'):
-                card.base_damage *= self.damage_multiplier
-            
-            # After this attack, remove the power (duration decreases)
-            self.duration = 0
-        
-        return []
+        return base_damage

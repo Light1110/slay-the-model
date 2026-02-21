@@ -15,9 +15,9 @@ class Laser(Intention):
     def execute(self):
         """Execute Laser: Deals damage and adds Burns to draw and discard pile."""
         from engine.game_state import game_state
-        from cards.status_cards import Burn
+        from cards.colorless import Burn
 
-        damage = self.get_damage()
+        damage = self.enemy.calculate_damage(self.base_damage)
         actions = [
             AttackAction(
                 damage=damage,
@@ -29,11 +29,11 @@ class Laser(Intention):
 
         # Add Burn to draw pile
         burn1 = Burn()
-        game_state.player.draw_pile.append(burn1)
+        game_state.player.card_manager.get_pile("draw_pile").append(burn1)
 
         # Add Burn to discard pile
         burn2 = Burn()
-        game_state.player.discard_pile.append(burn2)
+        game_state.player.card_manager.get_pile("discard_pile").append(burn2)
 
         return actions
 
@@ -50,7 +50,7 @@ class Claw(Intention):
         """Execute Claw: Deals damage."""
         from engine.game_state import game_state
 
-        damage = self.get_damage()
+        damage = self.enemy.calculate_damage(self.base_damage)
         return [
             AttackAction(
                 damage=damage,

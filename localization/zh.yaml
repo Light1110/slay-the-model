@@ -215,7 +215,14 @@ powers:
   FrailPower:
     name: 易伤
     description: 获得格挡时减少25%格挡值。
+  SlowPower:
+    name: 缓慢
+    description: 玩家的卡牌费用增加 {amount} 点（每打出一张牌叠加）。
+  DrawReductionPower:
+    name: 抽牌减少
+    description: 回合开始时少抽1张牌，持续 {amount} 回合。
   # Character-specific powers
+
   ironclad:
     FlexPower:
       description: 获得 {amount} 点力量。在你的回合结束时，失去等量的力量。
@@ -441,6 +448,26 @@ enemies:
       execute:
         name: "处决"
         description: "造成{damage}点伤害两次。"
+
+  Donu:
+    name: "多努"
+    intentions:
+      Circle of Power:
+        name: "力量光环"
+        description: "所有敌人获得{strength_gain}点力量。"
+      Beam:
+        name: "光束"
+        description: "造成{damage}点伤害两次。"
+
+  Deca:
+    name: "德卡"
+    intentions:
+      Beam:
+        name: "光束"
+        description: "造成{damage}点伤害两次。将2张眩晕牌加入你的弃牌堆。"
+      Square of Protection:
+        name: "防护方阵"
+        description: "所有敌人获得{block}点格挡。"
   
   # Intention descriptions
   intentions:

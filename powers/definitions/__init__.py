@@ -5,7 +5,7 @@ Powers are temporary or permanent combat effects.
 from powers.definitions.strength import StrengthPower
 from powers.definitions.vulnerable import VulnerablePower
 from powers.definitions.weak import WeakPower
-from powers.definitions.flex import FlexPower
+from powers.definitions.strength_down import StrengthDownPower
 from powers.definitions.confused import ConfusedPower
 from powers.definitions.no_block import NoBlockPower
 from powers.definitions.artifact import ArtifactPower
@@ -46,12 +46,14 @@ from powers.definitions.buffer import BufferPower
 from powers.definitions.rupture import RupturePower
 from powers.definitions.enrage import EnragePower
 from powers.definitions.entangled import EntangledPower
+from powers.definitions.curiosity import CuriosityPower
+from powers.definitions.draw_reduction import DrawReductionPower
  
 __all__ = [
     "StrengthPower",
     "VulnerablePower",
     "WeakPower",
-    "FlexPower",
+    "StrengthDownPower",
     "ConfusedPower",
     "NoBlockPower",
     "ArtifactPower",
@@ -92,4 +94,18 @@ __all__ = [
     "RupturePower",
     "EnragePower",
     "EntangledPower",
+    "CuriosityPower",
+    "DrawReductionPower",
+    "StrengthUpPower",
+    "FadingPower",
+    "ShiftingPower",
+    "BeatOfDeathPower",
+    "PainfulStabsPower",
 ]
+from powers.definitions.strength_up import StrengthUpPower
+from powers.definitions.fading import FadingPower
+from powers.definitions.shifting import ShiftingPower
+from powers.definitions.beat_of_death import BeatOfDeathPower
+from powers.definitions.painful_stabs import PainfulStabsPower
+
+

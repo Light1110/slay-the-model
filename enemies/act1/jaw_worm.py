@@ -1,6 +1,11 @@
 """
 Jaw Worm - Common enemy
 Quick attacks with moderate damage.
+
+Act 3 Hard Mode (Jaw Worm Horde):
+- Gains Strength and Block at combat start
+- Strength: 3 (A2+: 4, A17+: 5)
+- Block: 6 (A17+: 9)
 """
 import random
 from enemies.base import Enemy
@@ -9,19 +14,46 @@ from enemies.act1.jaw_worm_intentions import ChompIntention, BellowIntention, Th
 
 
 class JawWorm(Enemy):
-    """Jaw Worm - Quick attacks with moderate damage"""
+    """Jaw Worm - Quick attacks with moderate damage
+    
+    Args:
+        is_hard: If True, gains Strength and Block at combat start (Act 3 version)
+    """
     
     enemy_type = EnemyType.NORMAL
     
-    def __init__(self):
+    def __init__(self, is_hard: bool = False):
         super().__init__(
             hp_range=(44, 48)
         )
+        self.is_hard = is_hard
         
         # Register intentions
         self.add_intention(ChompIntention(self))
         self.add_intention(BellowIntention(self))
         self.add_intention(ThrashIntention(self))
+
+    def on_combat_start(self, floor: int = 1) -> None:
+        """Apply hard mode buffs if applicable."""
+        super().on_combat_start(floor)
+        
+        if self.is_hard:
+            from engine.game_state import game_state
+            from powers.definitions.strength import StrengthPower
+            
+            # Apply Strength based on ascension
+            if game_state.ascension >= 17:
+                strength = 5
+                block = 9
+            elif game_state.ascension >= 2:
+                strength = 4
+                block = 6
+            else:
+                strength = 3
+                block = 6
+            
+            self.add_power(StrengthPower(stacks=strength, owner=self))
+            self.gain_block(block)
     
     def determine_next_intention(self, floor: int = 1):
         """Determine next intention based on history and floor."""

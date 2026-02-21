@@ -16,7 +16,6 @@ class Constrict(Intention):
         """Execute Constrict intention."""
         amount = self.base_amount
         from engine.game_state import game_state
-        from engine.game_state import game_state
         if game_state.ascension >= 17:
             amount = 12
         return [ApplyPowerAction(
@@ -34,7 +33,6 @@ class QuickTackle(Intention):
     def execute(self) -> List:
         """Execute Quick Tackle intention."""
         damage = self.base_damage
-        from engine.game_state import game_state
         from engine.game_state import game_state
         if game_state.ascension >= 17:
             damage = 18
@@ -56,7 +54,6 @@ class Smash(Intention):
     def execute(self) -> List:
         """Execute Smash intention."""
         damage = self.base_damage
-        from engine.game_state import game_state
         from engine.game_state import game_state
         if game_state.ascension >= 17:
             damage = 25

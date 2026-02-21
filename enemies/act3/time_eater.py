@@ -16,6 +16,8 @@ class TimeEater(Enemy):
     """Time Eater is a Boss found at the end of Act 3.
     
     Pattern:
+    - Starts with Time Warp power (whenever player plays 12 cards, 
+      ends their turn and Time Eater gains 1 Strength)
     - Use Haste when reduced to below half HP (only once per combat)
     - Reverberate (45%), HeadSlam (35%), Ripple (20%)
     - No Reverberate 3x in a row, no HeadSlam/Ripple 2x in a row
@@ -31,30 +33,37 @@ class TimeEater(Enemy):
         self.add_intention(Haste(self))
         
         self._haste_used = False
+        self._haste_triggered = False  # Flag to trigger Haste next turn
     
     def on_combat_start(self, floor: int):
-        """Initialize combat state."""
+        """Initialize combat state and add Time Warp power."""
         super().on_combat_start(floor)
         self._haste_used = False
+        self._haste_triggered = False
+        
+        # Add Time Warp power at combat start
+        from powers.definitions.time_warp import TimeWarpPower
+        self.add_power(TimeWarpPower(amount=1, owner=self))
     
     def on_damage_taken(self):
-        """Check if Haste should be triggered."""
+        """Check if Haste should be triggered next turn."""
         super().on_damage_taken()
         if not self._haste_used and self.hp <= self.max_hp // 2:
-            # Trigger Haste immediately
-            self.current_intention = self.intentions["Haste"]
+            # Set flag to trigger Haste next turn instead of immediately
+            self._haste_triggered = True
             self._haste_used = True
     
     def determine_next_intention(self, floor: int) -> Optional[str]:
         """Determine the next intention based on AI pattern."""
-        # If Haste was triggered, don't change intention
-        if self.current_intention and self.current_intention.name == "Haste":
-            if not self._haste_used:
-                return "Haste"
+        # If Haste was triggered by damage, use Haste next turn
+        if self._haste_triggered:
+            self._haste_triggered = False  # Reset flag
+            return "Haste"
         
         # If HP below half and Haste not used, use Haste
         if not self._haste_used and self.hp <= self.max_hp // 2:
             self._haste_used = True
+            self._haste_triggered = False
             return "Haste"
         
         # Get last move for constraint checking

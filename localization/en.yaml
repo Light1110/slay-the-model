@@ -318,6 +318,17 @@ powers:
   ThieveryPower:
     name: "Thievery"
     description: "Steals {amount} gold when attacking. Gold returned on death."
+  SlowPower:
+    name: "Slow"
+    description: "Player's cards cost +{amount} this combat (stacks with each card played)."
+  DrawReductionPower:
+    name: "Draw Reduction"
+    description: "Draw 1 less card at the start of each turn for {amount} turn(s)."
+  TimeWarpPower:
+    name: "Time Warp"
+    description: "Whenever you play 12 cards, end your turn and gain 1 Strength."
+    counter: "Time Warp: {counter}/{threshold}"
+    trigger: "Time Warp triggers! Turn ended and Time Eater gains Strength!"
 
 potions:
   HeartOfIron:
@@ -1121,6 +1132,26 @@ enemies:
       execute:
         name: "Execute"
         description: "Deal {damage} damage twice."
+
+  Donu:
+    name: "Donu"
+    intentions:
+      Circle of Power:
+        name: "Circle of Power"
+        description: "All enemies gain {strength_gain} Strength."
+      Beam:
+        name: "Beam"
+        description: "Deal {damage} damage twice."
+
+  Deca:
+    name: "Deca"
+    intentions:
+      Beam:
+        name: "Beam"
+        description: "Deal {damage} damage twice. Add 2 Dazed to your discard pile."
+      Square of Protection:
+        name: "Square of Protection"
+        description: "All enemies gain {block} Block."
 
 
 rooms:

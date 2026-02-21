@@ -27,4 +27,37 @@ class SadisticNaturePower(Power):
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
 
-    # todo hook: 当这个能力的持有者 *被施加了能力*
+    def on_power_added(self, power, source=None) -> List[Action]:
+        """Deal damage when a debuff is applied to an enemy by the player."""
+        from engine.game_state import game_state
+        
+        actions = []
+        
+        if self.owner != game_state.player:
+            return actions
+        
+        if not hasattr(power, 'is_buff') or power.is_buff:
+            return actions
+        
+        if not hasattr(power, 'owner') or not power.owner:
+            return actions
+        
+        target = power.owner
+        if target == self.owner:
+            return actions
+        
+        from entities.creature import Creature
+        if not isinstance(target, Creature):
+            return actions
+        
+        if target == game_state.player:
+            return actions
+        
+        actions.append(DealDamageAction(
+            damage=self.amount,
+            target=target,
+            source=self.owner,
+            damage_type="hp_loss"
+        ))
+        
+        return actions

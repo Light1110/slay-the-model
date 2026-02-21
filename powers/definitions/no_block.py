@@ -2,6 +2,7 @@
 No Block power for combat effects.
 Prevents gaining block for duration.
 """
+from __future__ import annotations
 from typing import List
 from powers.base import Power
 from utils.registry import register
@@ -24,5 +25,9 @@ class NoBlockPower(Power):
             duration: Duration in turns (default 2)
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
-        
-        # todo: Implement in GainBlockAction
+    
+    def on_gain_block(self, amount: int, player=None, source=None, card=None) -> List['Action']:
+        """Prevent all block gain."""
+        if player == self.owner:
+            return []
+        return super().on_gain_block(amount, player, source, card)

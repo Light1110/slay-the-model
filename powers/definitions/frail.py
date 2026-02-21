@@ -24,3 +24,7 @@ class FrailPower(Power):
             duration: Duration in turns (default 1)
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
+    
+    def modify_block_gained(self, base_block: int) -> int:
+        """Reduce block gained by 25%."""
+        return int(base_block * 0.75)

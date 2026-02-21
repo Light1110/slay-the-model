@@ -1,11 +1,19 @@
 """Test Act 4 monsters - Spire Shield, Spire Spear, Corrupt Heart"""
 import unittest
+from unittest.mock import patch
+
 from enemies.act4.spire_shield import SpireShield
 from enemies.act4.spire_spear import SpireSpear
 from enemies.act4.corrupt_heart import CorruptHeart
-from enemies.act4.spire_shield_intentions import Bash, Fortify, Smite
-from enemies.act4.spire_spear_intentions import Skewer, SearingBurn, Pierce
-from enemies.act4.corrupt_heart_intentions import Debilitate, AttackHeart, BloodShots, Echo, BuffHeart
+from enemies.act4.spire_shield_intentions import Bash, Fortify, Smash
+from enemies.act4.spire_spear_intentions import BurnStrike, Piercer, Skewer
+from enemies.act4.corrupt_heart_intentions import (
+    BeatOfDeathPower,
+    BloodShots,
+    BuffHeart,
+    Debilitate,
+    Echo,
+)
 from tests.test_combat_utils import CombatTestHelper
 from utils.types import EnemyType
 
@@ -35,28 +43,41 @@ class TestSpireShield(unittest.TestCase):
         shield = SpireShield()
         self.assertIn("Bash", shield.intentions)
         self.assertIn("Fortify", shield.intentions)
-        self.assertIn("Smite", shield.intentions)
+        self.assertIn("Smash", shield.intentions)
     
     def test_intention_types(self):
         """Test intention types are correct"""
         shield = SpireShield()
         self.assertIsInstance(shield.intentions["Bash"], Bash)
         self.assertIsInstance(shield.intentions["Fortify"], Fortify)
-        self.assertIsInstance(shield.intentions["Smite"], Smite)
+        self.assertIsInstance(shield.intentions["Smash"], Smash)
     
     def test_pattern_starts_with_bash(self):
         """Test Spire Shield starts with Bash"""
-        shield = SpireShield()
-        intention = shield.determine_next_intention(1)
-        self.assertEqual(intention, "Bash")
+        with patch(
+            "enemies.act4.spire_shield.random.choice",
+            return_value=["Bash", "Fortify"],
+        ):
+            shield = SpireShield()
+            intention = shield.determine_next_intention(1)
+            self.assertEqual(intention, "Bash")
     
     def test_pattern_sequence(self):
-        """Test Spire Shield follows pattern: Bash -> Fortify -> Smite"""
-        shield = SpireShield()
-        self.assertEqual(shield.determine_next_intention(1), "Bash")
-        self.assertEqual(shield.determine_next_intention(2), "Fortify")
-        self.assertEqual(shield.determine_next_intention(3), "Smite")
-        self.assertEqual(shield.determine_next_intention(4), "Bash")
+        """Test Spire Shield turn pattern with Smash every 3 turns."""
+        with patch(
+            "enemies.act4.spire_shield.random.choice",
+            side_effect=[
+                ["Bash", "Fortify"],
+                ["Fortify", "Bash"],
+            ],
+        ):
+            shield = SpireShield()
+            self.assertEqual(shield.determine_next_intention(1), "Bash")
+            self.assertEqual(shield.determine_next_intention(2), "Fortify")
+            self.assertEqual(shield.determine_next_intention(3), "Smash")
+            self.assertEqual(shield.determine_next_intention(4), "Fortify")
+            self.assertEqual(shield.determine_next_intention(5), "Bash")
+            self.assertEqual(shield.determine_next_intention(6), "Smash")
 
 
 class TestSpireSpear(unittest.TestCase):
@@ -82,30 +103,35 @@ class TestSpireSpear(unittest.TestCase):
     def test_has_intentions(self):
         """Test Spire Spear has all intentions"""
         spear = SpireSpear()
+        self.assertIn("Burn Strike", spear.intentions)
         self.assertIn("Skewer", spear.intentions)
-        self.assertIn("Searing Burn", spear.intentions)
-        self.assertIn("Pierce", spear.intentions)
+        self.assertIn("Piercer", spear.intentions)
     
     def test_intention_types(self):
         """Test intention types are correct"""
         spear = SpireSpear()
+        self.assertIsInstance(spear.intentions["Burn Strike"], BurnStrike)
         self.assertIsInstance(spear.intentions["Skewer"], Skewer)
-        self.assertIsInstance(spear.intentions["Searing Burn"], SearingBurn)
-        self.assertIsInstance(spear.intentions["Pierce"], Pierce)
+        self.assertIsInstance(spear.intentions["Piercer"], Piercer)
     
-    def test_pattern_starts_with_skewer(self):
-        """Test Spire Spear starts with Skewer"""
+    def test_pattern_starts_with_burn_strike(self):
+        """Test Spire Spear starts with Burn Strike"""
         spear = SpireSpear()
         intention = spear.determine_next_intention(1)
-        self.assertEqual(intention, "Skewer")
+        self.assertEqual(intention, "Burn Strike")
     
     def test_pattern_sequence(self):
-        """Test Spire Spear follows pattern: Skewer -> Searing Burn -> Pierce"""
-        spear = SpireSpear()
-        self.assertEqual(spear.determine_next_intention(1), "Skewer")
-        self.assertEqual(spear.determine_next_intention(2), "Searing Burn")
-        self.assertEqual(spear.determine_next_intention(3), "Pierce")
-        self.assertEqual(spear.determine_next_intention(4), "Skewer")
+        """Test Spear turn pattern with Skewer every 3 turns from turn 2."""
+        with patch(
+            "enemies.act4.spire_spear.random.choice",
+            return_value=["Burn Strike", "Piercer"],
+        ):
+            spear = SpireSpear()
+            self.assertEqual(spear.determine_next_intention(1), "Burn Strike")
+            self.assertEqual(spear.determine_next_intention(2), "Skewer")
+            self.assertEqual(spear.determine_next_intention(3), "Burn Strike")
+            self.assertEqual(spear.determine_next_intention(4), "Piercer")
+            self.assertEqual(spear.determine_next_intention(5), "Skewer")
 
 
 class TestCorruptHeart(unittest.TestCase):
@@ -132,35 +158,57 @@ class TestCorruptHeart(unittest.TestCase):
         """Test Corrupt Heart has all intentions"""
         heart = CorruptHeart()
         self.assertIn("Debilitate", heart.intentions)
-        self.assertIn("Invoke", heart.intentions)
-        self.assertIn("Attack", heart.intentions)
         self.assertIn("Blood Shots", heart.intentions)
         self.assertIn("Echo", heart.intentions)
         self.assertIn("Buff", heart.intentions)
     
-    def test_starts_in_phase_1(self):
-        """Test Corrupt Heart starts in Phase 1"""
+    def test_starts_with_beat_of_death_power(self):
+        """Test Corrupt Heart starts combat with Beat of Death."""
         heart = CorruptHeart()
-        self.assertEqual(heart._phase, 1)
+        self.helper.start_combat([heart])
+        power_names = [power.name for power in heart.powers]
+        self.assertIn("Beat of Death", power_names)
     
-    def test_phase_1_pattern(self):
-        """Test Phase 1 pattern: Debilitate -> Invoke -> Attack"""
-        heart = CorruptHeart()
-        self.assertEqual(heart.determine_next_intention(1), "Debilitate")
-        self.assertEqual(heart.determine_next_intention(2), "Invoke")
-        self.assertEqual(heart.determine_next_intention(3), "Attack")
-        self.assertEqual(heart.determine_next_intention(4), "Debilitate")
+    def test_pattern_rules(self):
+        """Test Corrupt Heart uses Debilitate first and Buff every 3 turns."""
+        with patch(
+            "enemies.act4.corrupt_heart.random.choice",
+            side_effect=[
+                ["Blood Shots", "Echo"],
+                ["Echo", "Blood Shots"],
+            ],
+        ):
+            heart = CorruptHeart()
+            self.assertEqual(heart.determine_next_intention(1), "Debilitate")
+            self.assertEqual(heart.determine_next_intention(2), "Blood Shots")
+            self.assertEqual(heart.determine_next_intention(3), "Echo")
+            self.assertEqual(heart.determine_next_intention(4), "Buff")
+            self.assertEqual(heart.determine_next_intention(5), "Echo")
+            self.assertEqual(heart.determine_next_intention(6), "Blood Shots")
+            self.assertEqual(heart.determine_next_intention(7), "Buff")
     
-    def test_invincible_hp_tracking(self):
-        """Test Corrupt Heart has invincibility mechanic"""
+    def test_debilitate_actions(self):
+        """Test Debilitate applies 3 debuffs and adds 5 status cards."""
         heart = CorruptHeart()
-        self.assertEqual(heart.invincible_hp, 500)
+        actions = heart.intentions["Debilitate"].execute()
+        self.assertEqual(len(actions), 8)
+
+    def test_buff_intention_type(self):
+        """Test Buff intention class remains correct."""
+        heart = CorruptHeart()
+        self.assertIsInstance(heart.intentions["Buff"], BuffHeart)
     
-    def test_cards_played_tracking(self):
-        """Test Corrupt Heart tracks cards played"""
+    def test_bloodshots_and_echo_intention_types(self):
+        """Test Heart attack intentions are correctly registered."""
         heart = CorruptHeart()
-        self.assertEqual(heart._cards_played, 0)
-        self.assertEqual(heart.unique_cards_played, 0)
+        self.assertIsInstance(heart.intentions["Blood Shots"], BloodShots)
+        self.assertIsInstance(heart.intentions["Echo"], Echo)
+
+    def test_beat_of_death_power_class(self):
+        """Test BeatOfDeathPower class is available."""
+        heart = CorruptHeart()
+        power = BeatOfDeathPower(amount=1, owner=heart)
+        self.assertEqual(power.name, "Beat of Death")
 
 
 if __name__ == '__main__':

@@ -279,6 +279,138 @@ def _create_boss_collector():
     from enemies.act2.the_collector import TheCollector
     return [TheCollector()]
 
+
+# Act 3 encounter factory functions
+def _create_spire_growth():
+    """Create Spire Growth encounter."""
+    from enemies.act3.spire_growth import SpireGrowth
+    return [SpireGrowth()]
+
+
+def _create_orb_walker():
+    """Create Orb Walker encounter."""
+    from enemies.act3.orb_walker import OrbWalker
+    return [OrbWalker()]
+
+
+def _create_darkling():
+    """Create 3 Darklings encounter."""
+    from enemies.act3.darkling import Darkling
+    return [Darkling(), Darkling(), Darkling()]
+
+
+def _create_three_shapes():
+    """Create 3 Shapes from pool (2x Repulsor, 2x Exploder, 2x Spiker)."""
+    from enemies.act3.repulsor import Repulsor
+    from enemies.act3.exploder import Exploder
+    from enemies.act3.spiker import Spiker
+    rng = random.Random()
+    pool = [Repulsor, Repulsor, Exploder, Exploder, Spiker, Spiker]
+    selected = rng.sample(pool, 3)
+    return [cls() for cls in selected]
+
+
+def _create_four_shapes():
+    """Create 4 Shapes from pool (2x Repulsor, 2x Exploder, 2x Spiker)."""
+    from enemies.act3.repulsor import Repulsor
+    from enemies.act3.exploder import Exploder
+    from enemies.act3.spiker import Spiker
+    rng = random.Random()
+    pool = [Repulsor, Repulsor, Exploder, Exploder, Spiker, Spiker]
+    selected = rng.sample(pool, 4)
+    return [cls() for cls in selected]
+
+
+def _create_spheric_guardian_two_shapes():
+    """Create Spheric Guardian and 2 Shapes from pool."""
+    from enemies.act2.spheric_guardian import SphericGuardian
+    from enemies.act3.repulsor import Repulsor
+    from enemies.act3.exploder import Exploder
+    from enemies.act3.spiker import Spiker
+    rng = random.Random()
+    pool = [Repulsor, Repulsor, Exploder, Exploder, Spiker, Spiker]
+    selected = rng.sample(pool, 2)
+    return [SphericGuardian()] + [cls() for cls in selected]
+
+
+def _create_jaw_worm_horde():
+    """Create 3 Jaw Worms with strength and block buffs (Act 3 hard version)."""
+    from enemies.act1.jaw_worm import JawWorm
+    return [JawWorm(is_hard=True), JawWorm(is_hard=True), JawWorm(is_hard=True)]
+
+
+def _create_the_maw():
+    """Create The Maw encounter."""
+    from enemies.act3.the_maw import TheMaw
+    return [TheMaw()]
+
+
+def _create_transient():
+    """Create Transient encounter."""
+    from enemies.act3.transient import Transient
+    return [Transient()]
+
+
+def _create_writhing_mass():
+    """Create Writhing Mass encounter."""
+    from enemies.act3.writhing_mass import WrithingMass
+    return [WrithingMass()]
+
+
+# Act 3 elite factory functions
+def _create_giant_head():
+    """Create Giant Head elite."""
+    from enemies.act3.giant_head import GiantHead
+    return [GiantHead()]
+
+
+def _create_nemesis():
+    """Create Nemesis elite."""
+    from enemies.act3.nemesis import Nemesis
+    return [Nemesis()]
+
+
+# Act 3 boss factory functions
+def _create_boss_time_eater():
+    """Create Time Eater boss."""
+    from enemies.act3.time_eater import TimeEater
+    return [TimeEater()]
+
+
+def _create_boss_awakened_one():
+    """Create Awakened One boss."""
+    from enemies.act3.awakened_one import AwakenedOne
+    return [AwakenedOne()]
+
+
+def _create_boss_donu_deca():
+    """Create Donu and Deca boss encounter.
+    
+    Order: Donu - Deca
+    """
+    from enemies.act3.donu import Donu
+    from enemies.act3.deca import Deca
+    return [Donu(), Deca()]
+
+
+# Act 4 encounter factory functions
+# Note: Act 4 has no normal enemies, only elites and boss
+
+def _create_spire_shield_spear():
+    """Create Spire Shield and Spire Spear elite encounter.
+    
+    Order: SpireShield - SpireSpear (player in middle)
+    """
+    from enemies.act4.spire_shield import SpireShield
+    from enemies.act4.spire_spear import SpireSpear
+    return [SpireShield(), SpireSpear()]
+
+
+def _create_boss_corrupt_heart():
+    """Create Corrupt Heart final boss."""
+    from enemies.act4.corrupt_heart import CorruptHeart
+    return [CorruptHeart()]
+
 class EncounterPool:
     """Manages enemy encounter selection based on game rules."""
     
@@ -335,6 +467,40 @@ class EncounterPool:
         "Taskmaster": (_create_taskmaster, 1),
     }
     
+    # Act 3 encounter pools
+    # Easy Pool (first 2 encounters)
+    ACT3_EASY_POOL = {
+        "3 Darklings": (_create_darkling, 2),
+        "Orb Walker": (_create_orb_walker, 2),
+        "3 Shapes": (_create_three_shapes, 2),
+    }
+    
+    # Hard Pool (remaining encounters)
+    ACT3_HARD_POOL = {
+        "4 Shapes": (_create_four_shapes, 1),
+        "The Maw": (_create_the_maw, 1),
+        "Spheric Guardian and 2 Shapes": (_create_spheric_guardian_two_shapes, 1),
+        "3 Darklings": (_create_darkling, 1),
+        "Spire Growth": (_create_spire_growth, 1),
+        "Transient": (_create_transient, 1),
+        "Jaw Worm Horde": (_create_jaw_worm_horde, 1),
+        "Writhing Mass": (_create_writhing_mass, 1),
+    }
+    
+    ACT3_ELITE_POOL = {
+        "Giant Head": (_create_giant_head, 1),
+        "Nemesis": (_create_nemesis, 1),
+    }
+    
+    # Act 4 encounter pools
+    # Note: Act 4 has no normal enemy encounters, only elites and boss
+    ACT4_EASY_POOL = {}
+    ACT4_HARD_POOL = {}
+    
+    ACT4_ELITE_POOL = {
+        "Spire Shield and Spire Spear": (_create_spire_shield_spear, 1),
+    }
+    
     # Act-specific boss pools
     # Each act has 3 possible bosses, one is randomly selected at start
     ACT1_BOSS_POOL = {
@@ -349,6 +515,16 @@ class EncounterPool:
         "The Champ": _create_boss_champ,
     }
     
+    ACT3_BOSS_POOL = {
+        "Time Eater": _create_boss_time_eater,
+        "Awakened One": _create_boss_awakened_one,
+        "Donu and Deca": _create_boss_donu_deca,
+    }
+    
+    ACT4_BOSS_POOL = {
+        "Corrupt Heart": _create_boss_corrupt_heart,
+    }
+    
     # Alias for backwards compatibility
     BOSS_POOL = ACT1_BOSS_POOL
 
@@ -360,10 +536,13 @@ class EncounterPool:
     def _load_act_pools(self, act_id: int):
         """Load encounter pools for specific act."""
         pools = {
-            1: (self.ACT1_EASY_POOL, self.ACT1_HARD_POOL, self.ACT1_ELITE_POOL),
-            2: (self.ACT2_EASY_POOL, self.ACT2_HARD_POOL, self.ACT2_ELITE_POOL),
+            1: (self.ACT1_EASY_POOL, self.ACT1_HARD_POOL, self.ACT1_ELITE_POOL, self.ACT1_BOSS_POOL),
+            2: (self.ACT2_EASY_POOL, self.ACT2_HARD_POOL, self.ACT2_ELITE_POOL, self.ACT2_BOSS_POOL),
+            3: (self.ACT3_EASY_POOL, self.ACT3_HARD_POOL, self.ACT3_ELITE_POOL, self.ACT3_BOSS_POOL),
+            4: (self.ACT4_EASY_POOL, self.ACT4_HARD_POOL, self.ACT4_ELITE_POOL, self.ACT4_BOSS_POOL),
         }
-        self.easy_pool, self.hard_pool, self.elite_pool = pools.get(act_id, pools[1])
+        (self.easy_pool, self.hard_pool, 
+         self.elite_pool, self.boss_pool) = pools.get(act_id, pools[1])
 
     def get_pool_name(self, encounter_count: int, act: int = 1) -> str:
         """Determine if current encounter should be from easy or hard pool."""
@@ -435,20 +614,9 @@ class EncounterPool:
         if floor != 15:
             return [], ""
         
-        # Get boss from act-specific pool
-        act_boss_pools = {
-            1: self.ACT1_BOSS_POOL,
-            2: self.ACT2_BOSS_POOL,
-            # TODO: Add Act 3 and Act 4 boss pools when implemented
-            # 3: self.ACT3_BOSS_POOL,
-            # 4: self.ACT4_BOSS_POOL,
-        }
-        
-        boss_pool = act_boss_pools.get(self.act_id, self.ACT1_BOSS_POOL)
-        
-        # Select random boss from pool
-        boss_name = self.rng.choice(list(boss_pool.keys()))
-        factory = boss_pool[boss_name]
+        # Select random boss from act-specific pool (loaded in _load_act_pools)
+        boss_name = self.rng.choice(list(self.boss_pool.keys()))
+        factory = self.boss_pool[boss_name]
         enemies = factory()
         return enemies, boss_name
 

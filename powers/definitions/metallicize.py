@@ -28,11 +28,7 @@ class MetallicizePower(Power):
         super().__init__(amount=amount, duration=-1, owner=owner)
 
     def on_turn_end(self) -> List[Action]:
-        """Gain block at end of turn."""
-        from engine.game_state import game_state
-        actions = []
-
-        if game_state.player:
-            actions.append(GainBlockAction(block=self.amount, target=game_state.player))
-
-        return actions
+        """Gain block at end of turn for the owner."""
+        if self.owner:
+            return [GainBlockAction(block=self.amount, target=self.owner)]
+        return []

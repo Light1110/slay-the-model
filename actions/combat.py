@@ -571,6 +571,16 @@ class PlayCardBHAction(Action):
             game_state.current_combat.combat_state.player_energy_spent_this_turn += cost
         
         actions = []
+        
+        # BackAttack transfer: if single-target enemy, trigger transfer
+        if self.targets and len(self.targets) == 1:
+            target = self.targets[0]
+            from enemies.base import Enemy
+            if isinstance(target, Enemy):
+                from engine.back_attack_manager import BackAttackManager
+                manager = BackAttackManager()
+                manager.maybe_transfer_on_target(target)
+        
         # 1. Trigger card's on_play
         actions.extend(self.card.on_play(targets=self.targets))
         
@@ -580,8 +590,11 @@ class PlayCardBHAction(Action):
                 actions.extend(power.on_play_card())
         for enemy in enemies:
             for power in enemy.powers:
+                # Check both on_play_card and on_card_play hooks
                 if hasattr(power, 'on_play_card'):
                     actions.extend(power.on_play_card())
+                if hasattr(power, 'on_card_play'):
+                    actions.extend(power.on_card_play(self.card, player, enemies))
         
         # 3. Trigger relics
         for relic in player.relics:
@@ -837,23 +850,62 @@ class LoseMaxHPAction(Action):
 
 @register("action")
 class UsePotionAction(Action):
-    """Use a potion on a target
+    """Action to use a potion on a target"""
     
-    Required:
-        potion (Potion): The potion to use
-        target (Creature): The target creature
-    
-    Optional:
-        None
-    """
-    def __init__(self, potion, target):
+    def __init__(self, potion, target=None):
         self.potion = potion
         self.target = target
     
     def execute(self) -> 'BaseResult':
-        """Execute potion effect and return resulting actions"""
+        """Execute potion effect with dynamic target selection and BackAttack transfer."""
         from engine.game_state import game_state
         from utils.result_types import MultipleActionsResult
+        from actions.display import SelectAction, Option
+        
+        # Dynamic target selection for combat situations
+        if self.target is None:
+            self.target = game_state.player
+        
+        # If in combat with multiple enemies, allow targeting selection
+        if (hasattr(game_state, 'current_combat') and 
+            game_state.current_combat is not None):
+            
+            alive_enemies = [e for e in game_state.current_combat.enemies if e.is_alive]
+            
+            if len(alive_enemies) > 1:
+                # Create options for each enemy + player
+                from localization import LocalStr
+                options = []
+                
+                # Add player option
+                player_name = getattr(game_state.player, 'name', 'Player')
+                options.append(Option(
+                    name=LocalStr(f"[{player_name}]"),
+                    actions=[UsePotionAction(potion=self.potion, target=game_state.player)]
+                ))
+                
+                # Add enemy options
+                for enemy in alive_enemies:
+                    enemy_name = getattr(enemy, 'name', 'Enemy')
+                    options.append(Option(
+                        name=LocalStr(f"[Enemy] {enemy_name}"),
+                        actions=[UsePotionAction(potion=self.potion, target=enemy)]
+                    ))
+                
+                return SelectAction(
+                    options=options,
+                    prompt=LocalStr("Select potion target")
+                )
+        
+        # Now self.target is determined - check BackAttack transfer
+        from engine.back_attack_manager import BackAttackManager
+        manager = BackAttackManager()
+        
+        # If targeting an enemy (not player), check for BackAttack transfer
+        if (self.target != game_state.player and 
+            hasattr(self.target, 'has_power') and 
+            self.target.has_power("Back Attack")):
+            manager.maybe_transfer_on_target(self.target)
         
         # Get actions from potion's on_use method
         actions = self.potion.on_use(self.target)
@@ -862,9 +914,8 @@ class UsePotionAction(Action):
         if self.potion in game_state.player.potions:
             game_state.player.potions.remove(self.potion)
         
-        print(f"Used {self.potion.local('name')}")
+        target_name = getattr(self.target, 'name', str(self.target))
+        print(f"Used potion: {self.potion.name} on {target_name}")
         
-        # Return the actions from the potion
-        if actions:
-            return MultipleActionsResult(actions)
+        return MultipleActionsResult(actions)
         return NoneResult()

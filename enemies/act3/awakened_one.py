@@ -11,6 +11,9 @@ from enemies.act3.awakened_one_intentions import (
     Tackle,
 )
 from enemies.base import Enemy
+from powers.definitions.regeneration import RegenerationPower
+from powers.definitions.curiosity import CuriosityPower
+from powers.definitions.strength import StrengthPower
 from utils.types import EnemyType
 
 
@@ -43,10 +46,41 @@ class AwakenedOne(Enemy):
         self._phase = 1
     
     def on_combat_start(self, floor: int):
-        """Initialize combat state."""
+        """Initialize combat state with starting powers.
+        
+        Phase 1 starting powers:
+        - Regeneration: 10 (15 on Ascension 19+)
+        - Curiosity: 1 (2 on Ascension 19+)
+        - Strength: 2 on Ascension 4+
+        """
         super().on_combat_start(floor)
         self._phase = 1
+        
+        # Get ascension level from game state
+        from engine.game_state import game_state
+        ascension = game_state.ascension
+        
+        # Regeneration: 10 normally, 15 on A19+
+        # Note: RegenerationPower uses duration to determine heal amount
+        # (amount_equals_duration=True), so we pass regen_amount as duration
+        regen_amount = 15 if ascension >= 19 else 10
+        self.add_power(RegenerationPower(duration=regen_amount, owner=self))
+        
+        # Curiosity: 1 normally, 2 on A19+
+        curiosity_amount = 2 if ascension >= 19 else 1
+        self.add_power(CuriosityPower(amount=curiosity_amount, owner=self))
+        
+        # Strength: 2 on A4+
+        if ascension >= 4:
+            self.add_power(StrengthPower(amount=2, owner=self))
     
+    def is_dead(self) -> bool:
+        """Only dead when HP <= 0 in phase 2.
+        
+        In phase 1, reaching 0 HP triggers rebirth instead of death.
+        """
+        return self._phase == 2 and self.hp <= 0
+
     def on_damage_taken(self):
         """Check for phase transition."""
         super().on_damage_taken()
@@ -116,5 +150,3 @@ class AwakenedOne(Enemy):
                 else:  # 50% Sludge
                     if sludge_count < 2:  # Not 3x in a row
                         return "Sludge"
-        
-        return "Slash"  # Fallback

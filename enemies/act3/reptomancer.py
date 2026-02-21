@@ -61,6 +61,7 @@ class Reptomancer(Enemy):
                     choices.remove("Spawn Dagger")
         
         # Check dagger count
+        from engine.game_state import game_state
         dagger_count = sum(1 for e in game_state.current_combat.enemies if isinstance(e, Dagger))
         if dagger_count >= 4 and "Spawn Dagger" in choices:
             choices.remove("Spawn Dagger")

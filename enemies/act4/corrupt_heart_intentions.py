@@ -1,95 +1,134 @@
-"""Corrupt Heart Boss intentions for Act 4."""
+"""Corrupt Heart boss intentions for Act 4."""
 
+import random
 from typing import List
-from actions.combat import AttackAction, GainBlockAction, ApplyPowerAction
+
+from actions.base import Action, LambdaAction
+from actions.card import AddCardAction
+from actions.combat import ApplyPowerAction, AttackAction
+from cards.colorless.burn import Burn
+from cards.colorless.dazed import Dazed
+from cards.colorless.slimed import Slimed
+from cards.colorless.void import Void
+from cards.colorless.wound import Wound
 from enemies.intention import Intention
+from powers.definitions.beat_of_death import BeatOfDeathPower
+from powers.definitions.painful_stabs import PainfulStabsPower
+from utils.types import PilePosType
 
 
 class Debilitate(Intention):
-    """Deals 2x damage (based on unique cards played)."""
-    
+    """Apply debuffs and shuffle status cards into draw pile."""
+
     def __init__(self, enemy):
         super().__init__("Debilitate", enemy)
-        self.multiplier = 2
-    
-    def execute(self) -> List:
-        from engine.game_state import game_state
-        # Base damage is number of unique cards played * multiplier
-        unique_cards = getattr(self.enemy, 'unique_cards_played', 0)
-        damage = unique_cards * self.multiplier
-        return [AttackAction(damage=max(damage, 5), target=game_state.player, source=self.enemy, damage_type="attack")]
 
-
-class AttackHeart(Intention):
-    """Deals 45 damage."""
-    
-    def __init__(self, enemy):
-        super().__init__("Attack", enemy)
-        self.base_damage = 45
-    
-    def execute(self) -> List:
+    def execute(self) -> List[Action]:
         from engine.game_state import game_state
-        damage = self.enemy.calculate_damage(self.base_damage)
-        return [AttackAction(damage=damage, target=game_state.player, source=self.enemy, damage_type="attack")]
+        player = game_state.player
+
+        actions: List[Action] = [
+            ApplyPowerAction(power="Vulnerable", target=player, amount=2),
+            ApplyPowerAction(power="Weak", target=player, amount=2),
+            ApplyPowerAction(power="Frail", target=player, amount=2),
+        ]
+
+        for status_cls in (Burn, Dazed, Slimed, Void, Wound):
+            actions.append(
+                AddCardAction(
+                    card=status_cls(),
+                    dest_pile="draw_pile",
+                    position=PilePosType.TOP,
+                )
+            )
+        return actions
 
 
 class BloodShots(Intention):
-    """Deals 2 damage 12 times."""
-    
+    """Deal 2x12 or 2x15 damage."""
+
     def __init__(self, enemy):
         super().__init__("Blood Shots", enemy)
-        self.base_damage = 2
-        self.hits = 12
-    
-    def execute(self) -> List:
+
+    def execute(self) -> List[Action]:
         from engine.game_state import game_state
-        actions = []
-        damage = self.enemy.calculate_damage(self.base_damage)
-        for _ in range(self.hits):
-            actions.append(AttackAction(damage=damage, target=game_state.player, source=self.enemy, damage_type="attack"))
+
+        base_damage, hits = random.choice([(2, 12), (2, 15)])
+        damage = self.enemy.calculate_damage(base_damage)
+        actions: List[Action] = []
+        for _ in range(hits):
+            actions.append(
+                AttackAction(
+                    damage=damage,
+                    target=game_state.player,
+                    source=self.enemy,
+                    damage_type="attack",
+                )
+            )
         return actions
 
 
 class Echo(Intention):
-    """Gains 2 Strength and 2 passive Block."""
-    
+    """Deal 40 or 45 damage."""
+
     def __init__(self, enemy):
         super().__init__("Echo", enemy)
-        self.strength_gain = 2
-        self.block_gain = 2
-    
-    def execute(self) -> List:
-        from actions.combat import AddPowerAction, GainBlockAction
-        actions = [
-            AddPowerAction(power="strength", target=self.enemy, amount=self.strength_gain),
-            GainBlockAction(block=self.block_gain, target=self.enemy)
+
+    def execute(self) -> List[Action]:
+        from engine.game_state import game_state
+
+        base_damage = random.choice([40, 45])
+        damage = self.enemy.calculate_damage(base_damage)
+        return [
+            AttackAction(
+                damage=damage,
+                target=game_state.player,
+                source=self.enemy,
+                damage_type="attack",
+            )
         ]
-        return actions
 
 
 class BuffHeart(Intention):
-    """Gains 5 Strength and 15 passive Block."""
-    
+    """Apply Corrupt Heart scaling buff sequence."""
+
     def __init__(self, enemy):
         super().__init__("Buff", enemy)
-        self.strength_gain = 5
-        self.block_gain = 15
-    
-    def execute(self) -> List:
-        from actions.combat import AddPowerAction, GainBlockAction
-        actions = [
-            AddPowerAction(power="strength", target=self.enemy, amount=self.strength_gain),
-            GainBlockAction(block=self.block_gain, target=self.enemy)
+
+    def execute(self) -> List[Action]:
+        self.enemy._buff_count += 1
+        buff_count = self.enemy._buff_count
+
+        actions: List[Action] = [
+            LambdaAction(func=self._remove_negative_strength),
+            ApplyPowerAction(power="Strength", target=self.enemy, amount=2),
         ]
+
+        if buff_count == 1:
+            actions.append(ApplyPowerAction(power="Artifact", target=self.enemy, amount=1))
+        elif buff_count == 2:
+            actions.append(LambdaAction(func=self._add_beat_of_death))
+        elif buff_count == 3:
+            actions.append(LambdaAction(func=self._add_painful_stabs))
+        elif buff_count == 4:
+            actions.append(ApplyPowerAction(power="Strength", target=self.enemy, amount=10))
+        elif buff_count == 5:
+            actions.append(ApplyPowerAction(power="Strength", target=self.enemy, amount=50))
+
         return actions
 
+    def _remove_negative_strength(self):
+        strength = self.enemy.get_power("Strength")
+        if strength is not None and strength.amount < 0:
+            self.enemy.remove_power("Strength")
 
-class Invoke(Intention):
-    """Summons Orbs (for Defect compatibility, simplified here)."""
-    
-    def __init__(self, enemy):
-        super().__init__("Invoke", enemy)
-    
-    def execute(self) -> List:
-        # Simplified: just gains block as placeholder
-        return [GainBlockAction(block=10, target=self.enemy)]
+    def _add_beat_of_death(self):
+        beat = self.enemy.get_power("Beat of Death")
+        if beat is None:
+            self.enemy.add_power(BeatOfDeathPower(amount=1, owner=self.enemy))
+        else:
+            beat.amount += 1
+
+    def _add_painful_stabs(self):
+        if not self.enemy.has_power("Painful Stabs"):
+            self.enemy.add_power(PainfulStabsPower(amount=1, owner=self.enemy))

@@ -29,3 +29,4 @@ class ThornsPower(Power):
     def on_damage_taken(self, damage: int, source: Any = None, card: Any = None, player: Any = None, damage_type: str = "direct") -> List[Action]:
         if damage_type == "attack" and source is not None:
             return [DealDamageAction(damage=self.amount, target=source, damage_type="direct")]
+        return []

@@ -27,4 +27,7 @@ class PoisonPower(Power):
         super().__init__(amount=amount, duration=duration, owner=owner)
         
     def on_turn_start(self) -> List[Action]:
-        return [LoseHPAction(amount=self.amount)]
+        actions = [LoseHPAction(amount=self.amount)]
+        # Reduce poison by 1 after dealing damage
+        self.amount = max(0, self.amount - 1)
+        return actions

@@ -55,12 +55,11 @@ class HeadSlam(Intention):
                 source=self.enemy,
                 damage_type="attack"
             ),
-            # ApplyPowerAction for draw reduction (using weak as placeholder)
             ApplyPowerAction(
-                power="weak",
+                power="draw_reduction",
                 target=game_state.player,
                 amount=self.base_draw_reduction,
-                duration=1
+                duration=self.base_draw_reduction
             )
         ]
         return actions
@@ -107,9 +106,17 @@ class Haste(Intention):
     
     def execute(self) -> List:
         """Execute the intention."""
-        # Remove all debuffs
-        self.enemy.weak = 0
-        self.enemy.vulnerable = 0
+        from powers.definitions.strength import StrengthPower
+        
+        # Remove all powers except StrengthPower
+        # (Awakened One retains strength through rebirth)
+        strength_powers = [
+            p for p in self.enemy.powers 
+            if isinstance(p, StrengthPower)
+        ]
+        self.enemy.powers.clear()
+        self.enemy.powers.extend(strength_powers)
+        
         # Heal to 50% HP
         heal_amount = self.enemy.max_hp // 2
         self.enemy.heal(heal_amount)

@@ -472,6 +472,10 @@ class SmokeBomb(Potion):
         super().__init__()
 
     def on_use(self, target) -> List[Action]:
+        from engine.game_state import game_state
+        # Cannot use Smoke Bomb while Surrounded (Spire Shield + Spear elite)
+        if game_state.player and game_state.player.has_power("Surrounded"):
+            return []  # Blocked by Surrounded
         return [EscapeAction()]
 
 # Rare Potions

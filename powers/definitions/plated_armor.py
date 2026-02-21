@@ -27,9 +27,10 @@ class PlatedArmorPower(Power):
         super().__init__(amount=amount, duration=duration, owner=owner)
         
     def on_turn_end(self) -> List[Action]:
-        from engine.game_state import game_state
-        return super().on_turn_end() + [GainBlockAction(block=self.amount, target=game_state.player)]
+        # Gain Block equal to stacks for the owner (enemy or player)
+        return super().on_turn_end() + [GainBlockAction(block=self.amount, target=self.owner)]
     
-    def on_damage_taken(self, damage: int, source: GainBlockAction = None, card: GainBlockAction = None, player: GainBlockAction = None, damage_type: str = "direct") -> List[Action]:
+    def on_damage_taken(self, damage: int, source=None, card=None, player=None, damage_type: str = "direct") -> List[Action]:
         if damage_type == "attack":
             self.amount -= 1
+        return []

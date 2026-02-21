@@ -23,3 +23,14 @@ class DexterityPower(Power):
             duration: 0 for permanent, positive for temporary turns
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
+
+    def modify_block_gained(self, base_block: int) -> int:
+        """Modify block gained from cards by Dexterity amount.
+        
+        Args:
+            base_block: Base block amount before modification
+            
+        Returns:
+            Modified block amount (base + dexterity)
+        """
+        return base_block + self.amount

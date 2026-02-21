@@ -9,6 +9,7 @@ from enemies.act3.nemesis_intentions import (
     Scythe,
 )
 from enemies.base import Enemy
+from powers.definitions.intangible import IntangiblePower
 from utils.types import EnemyType
 
 
@@ -42,6 +43,10 @@ class Nemesis(Enemy):
     def determine_next_intention(self, floor: int):
         """Determine next intention based on Nemesis pattern."""
         self._turn_count += 1
+        
+        # Every even turn, gain IntangiblePower (duration=1)
+        if self._turn_count % 2 == 0:
+            self.add_power(IntangiblePower(duration=1, owner=self))
         
         # First turn: 50% Tri Attack or 50% Tri Burn
         if self._turn_count == 1:

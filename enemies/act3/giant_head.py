@@ -69,3 +69,6 @@ class GiantHead(Enemy):
         super().on_combat_start(floor)
         self._turn_count = 0
         self._it_is_time_count = 0
+        # Giant Head starts with SlowPower
+        from powers.definitions.slow import SlowPower
+        self.add_power(SlowPower(owner=self))

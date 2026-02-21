@@ -128,3 +128,59 @@ Dagger is a Minion enemy summoned only by Reptomancer.
 | Wound   | 🗡️     | Deals 9 damage. Adds a 🤯 Wound into your discard pile.                     |
 | Explode | 🗡️     | Deals 25 damage. Dies.                                                  |
 Uses 🗡️ Wound and then 🗡️ Explode.
+
+
+# Donu
+## Pattern
+| Name           | Intent | Effect                                  |
+|----------------|--------|-----------------------------------------|
+| Circle of Power|        | All enemies gain 3 Strength.             |
+| Beam           |        | Deals 10x2 damage.                       |
+|                |        | Deals 12x2 damage.                       |
+Alternates between Circle of Power and Beam.
+## Powers
+- **Artifact 2 (1)**: [Description not provided in the image]
+- **Artifact**: Negates X debuffs.
+# Deca
+## Pattern
+| Name               | Intent | Effect                                                                 |
+|--------------------|--------|------------------------------------------------------------------------|
+| Beam               |        | Deals 10x2 damage. Adds 2 based into your discard pile.                   |
+|                    |        | Deals 12x2 damage. Adds 2 based into your discard pile.                   |
+| Square of Protection|        | All enemies gain 16 Block.                                              |
+|                    |        | All enemies gain 16 Block and 1 Plated Armor.                             |
+Alternates between Beam and Square of Protection.
+## Powers
+- **Artifact 2 (1)**: [Description not provided in the image]
+- **Artifact**: Negates X debuffs.
+
+# The Maw
+
+The Maw is a normal Enemy found exclusively in Act 3.
+
+## Contents
+- 1 Powers
+- 21 Act 3
+- 9 Traits
+
+## Pattern
+
+| Name   | Intent                          | Effect                                                                 |
+|--------|---------------------------------|-----------------------------------------------------------------------|
+| Roar   | Applies 3 ⚡ Weak and 3 🩸 Frail.  | Applies 3 ⚡ Weak and 3 🩸 Frail.                                        |
+| Slam   | Deals 25 damage.                 | Deals 25 damage.                                                       |
+| Nom Nom| Deals 5×N damage. N = Current turn, divided by two (rounded up). | Deals 5×N damage. N = Current turn, divided by two (rounded up). |
+| Drool  | Gains 3 ✦ Strength.              | Gains 3 ✦ Strength.                                                    |
+
+## Behavior
+- Always starts with 🐉 Roar. Afterwards it has a 50/50 chance of using either 🐉 Slam or 🐉 Nom Nom.
+- After using 🐉 Drool: 50/50 split between 🐉 Slam and 🐉 Nom Nom.
+- After using 🐉 Drool: 50/50 split between 🐉 Nom Nom and 🐉 Drool.
+- After using 🐉 Slam: 50/50 split between 🐉 Nom Nom and 🐉 Drool.
+
+## Stats
+- 300 Health
+- Debuts in Act 3
+
+## Powers
+- None

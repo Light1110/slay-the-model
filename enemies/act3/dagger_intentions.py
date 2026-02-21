@@ -15,11 +15,11 @@ class WoundIntention(Intention):
     
     def execute(self) -> List:
         """Execute Wound intention."""
-        from cards.status import Wound
+        from cards.colorless import Wound
         from engine.game_state import game_state
         
         # Add Wound to player's discard pile
-        game_state.player.discard_pile.append(Wound())
+        game_state.player.card_manager.get_pile("discard_pile").append(Wound())
         
         return [AttackAction(
             self.enemy.get_damage(self.base_damage),

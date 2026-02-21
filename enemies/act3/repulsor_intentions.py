@@ -14,13 +14,12 @@ class DazeIntention(Intention):
     
     def execute(self) -> List:
         """Execute Daze intention - adds 2 Dazed cards to draw pile."""
-        from cards.status import Dazed
+        from cards.colorless import Dazed
         
         # Add 2 Dazed cards to player's draw pile
         for _ in range(self.base_amount):
             from engine.game_state import game_state
-            from engine.game_state import game_state
-            game_state.player.draw_pile.append(Dazed())
+            game_state.player.card_manager.get_pile("draw_pile").append(Dazed())
         
         return []
 

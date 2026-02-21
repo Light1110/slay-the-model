@@ -127,7 +127,11 @@ class Darkling(Enemy):
         if self.hp <= 0:
             self._is_regrowing = True
             self.current_intention = self.intentions["Regrowing..."]
-            # Don't actually die yet
+            
+            # todo: Don't actually die yet
+            # todo: 不死逻辑应该通过  Life Link 这个 Power 来实现。 效果是，如果其它 Enemy 持有 Life Link 并且 hp > 0，则不算死亡
+            # todo: 在 is_combat_start 添加 Life Link
+            # todo: 也需要重写 is_dead
             self.hp = 1  # Keep alive for animation
     
     def execute_intention(self) -> List:

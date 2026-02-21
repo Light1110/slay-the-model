@@ -24,3 +24,7 @@ class WeakPower(Power):
             duration: Duration in turns (default 2)
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
+    
+    def modify_damage_dealt(self, base_damage: int) -> int:
+        """Reduce damage dealt by 25%."""
+        return int(base_damage * 0.75)

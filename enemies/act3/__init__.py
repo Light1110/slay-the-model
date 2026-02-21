@@ -14,6 +14,8 @@ from enemies.act3.giant_head import GiantHead
 from enemies.act3.nemesis import Nemesis
 from enemies.act3.time_eater import TimeEater
 from enemies.act3.awakened_one import AwakenedOne
+from enemies.act3.donu import Donu
+from enemies.act3.deca import Deca
 
 __all__ = [
     "Exploder",
@@ -30,4 +32,6 @@ __all__ = [
     "Nemesis",
     "TimeEater",
     "AwakenedOne",
+    "Donu",
+    "Deca",
 ]

@@ -8,6 +8,7 @@ from actions.combat import (
     GainBlockAction,
     ApplyPowerAction,
 )
+from actions.card import AddCardAction
 from enemies.intention import Intention
 
 
@@ -61,9 +62,17 @@ class Rebirth(Intention):
     
     def execute(self) -> List:
         """Execute the intention."""
-        # Remove all debuffs
-        self.enemy.weak = 0
-        self.enemy.vulnerable = 0
+        from powers.definitions.strength import StrengthPower
+        
+        # Remove all powers except StrengthPower
+        # (Awakened One retains strength through rebirth)
+        strength_powers = [
+            p for p in self.enemy.powers 
+            if isinstance(p, StrengthPower)
+        ]
+        self.enemy.powers.clear()
+        self.enemy.powers.extend(strength_powers)
+        
         # Heal to full HP
         self.enemy.heal(self.enemy.max_hp)
         # Switch to phase 2
@@ -100,14 +109,17 @@ class Sludge(Intention):
     def execute(self) -> List:
         """Execute the intention."""
         from engine.game_state import game_state
+        from cards.colorless.wound import Wound
         damage = self.enemy.calculate_damage(self.base_damage)
-        # TODO: Add Wound to draw pile when card system supports it
-        return [AttackAction(
-            damage=damage,
-            target=game_state.player,
-            source=self.enemy,
-            damage_type="attack"
-        )]
+        return [
+            AttackAction(
+                damage=damage,
+                target=game_state.player,
+                source=self.enemy,
+                damage_type="attack"
+            ),
+            AddCardAction(card=Wound(), dest_pile="draw_pile", source="enemy")
+        ]
 
 
 class Tackle(Intention):

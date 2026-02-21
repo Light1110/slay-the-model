@@ -456,11 +456,25 @@ class Combat(Localizable):
         # Clear block at start of turn (unless Barricade/Calipers)
         has_barricade = any(p.name == "Barricade" for p in game_state.player.powers)
         has_calipers = any(r.idstr == "Calipers" for r in game_state.player.relics)
-        if not has_barricade and not has_calipers:
+        
+        if has_barricade:
+            pass  # Block is not removed
+        elif has_calipers:
+            game_state.player.block = max(0, game_state.player.block - 15)
+        else:
             game_state.player.block = 0
 
         # Draw cards
         draw_count = game_state.player.draw_count  # todo: modified by relics/powers
+        
+        # Check for DrawReductionPower - reduce draw count
+        draw_reduction = 0
+        for power in game_state.player.powers:
+            if hasattr(power, 'get_draw_reduction'):
+                draw_reduction += power.get_draw_reduction()
+        
+        draw_count = max(0, draw_count - draw_reduction)
+        
         if draw_count > 0:
             print(f"\n{t('combat.draw_cards', count=draw_count, default=f'Draw {draw_count} cards')}")
             from actions.card import DrawCardsAction

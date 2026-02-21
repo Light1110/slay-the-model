@@ -110,7 +110,7 @@ class ParasiteIntention(Intention):
     
     def execute(self) -> List:
         """Execute Parasite intention - permanently adds Parasite to deck."""
-        # This would add a Parasite card to the player's deck
-        # For now, just return empty - the actual implementation
-        # would need to add the card to the deck
-        return []
+        from actions.card import AddCardAction
+        from cards.colorless.parasite import Parasite
+        
+        return [AddCardAction(card=Parasite(), dest_pile="master_deck", source="enemy")]

@@ -24,3 +24,9 @@ class IntangiblePower(Power):
             duration: Duration in turns (default 1)
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
+    
+    def modify_damage_taken(self, base_damage: int) -> int:
+        """Reduce all damage and HP loss to 1."""
+        if base_damage > 0:
+            return 1
+        return base_damage

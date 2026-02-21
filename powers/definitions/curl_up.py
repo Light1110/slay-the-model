@@ -40,17 +40,17 @@ class CurlUpPower(Power):
             damage_type: Type of damage (optional)
             
         Returns:
-            List of actions (RemovePowerAction to remove this power)
+            List of actions (GainBlockAction and RemovePowerAction)
         """
-        if not self.triggered and damage > 0:
+        # Only trigger on attack damage, not on HP loss or other damage
+        if not self.triggered and damage > 0 and damage_type == "attack":
             self.triggered = True
             if self.owner:
-                self.owner.gain_block(self.amount)
-            # Return RemovePowerAction to remove this power immediately
-            return [
-                GainBlockAction(self.amount, self.owner),
-                RemovePowerAction(power="Curl Up", target=self.owner)
-            ]
+                # Return GainBlockAction to gain block (do NOT call gain_block directly)
+                return [
+                    GainBlockAction(self.amount, self.owner),
+                    RemovePowerAction(power="Curl Up", target=self.owner)
+                ]
         return []
         
     def local(self, field: str, **kwargs) -> LocalStr:
