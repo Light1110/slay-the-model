@@ -150,7 +150,8 @@ class CombatTestHelper:
             
         # Check energy cost (handle X-cost cards where cost = "X")
         cost = card.cost
-        if cost == "X":
+        from cards.base import COST_X
+        if cost == "X" or getattr(card, "_cost", None) == COST_X:
             # X-cost cards use all available energy
             cost = player.energy
             # Store the X-cost value on the card for on_play() to use

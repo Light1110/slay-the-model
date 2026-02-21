@@ -2,7 +2,7 @@
 Back Attack power for Act 4 elite fight.
 Deals 50% more damage when attacking from behind.
 """
-from powers.base import Power
+from powers.base import Power, StackType
 from utils.registry import register
 
 
@@ -12,10 +12,10 @@ class BackAttackPower(Power):
     
     name = "Back Attack"
     description = "从背后攻击时，造成50%额外伤害"
-    stackable = False
+    stack_type = StackType.PRESENCE
     is_buff = True
     
-    def __init__(self, amount: int = 1, duration: int = 0, owner=None):
+    def __init__(self, amount: int = 1, duration: int = -1, owner=None):
         """
         Args:
             amount: Multiplier tier (not used, always 1.5x)

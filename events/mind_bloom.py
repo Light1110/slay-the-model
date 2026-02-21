@@ -17,7 +17,7 @@ from cards.colorless import Normality, Doubt
 from relics.global_relics.event import MarkOfBloom
 
 
-@register_event(event_id='mind_bloom', floors='late', weight=100)
+@register_event(event_id='mind_bloom', acts=[3], weight=100)
 class MindBloom(Event):
     """Mind Bloom - powerful choices with consequences."""
     
@@ -55,6 +55,7 @@ class MindBloom(Event):
                     AddRelicAction(relic=MarkOfBloom())
                 ]
             ),
+            # todo: change logic. The third option will either be [I am Rich] on floors 35 - 40 or [I am Healthy] on floor 41 and above.
             Option(
                 name=LocalStr('events.mind_bloom.i_am_rich'),
                 actions=[

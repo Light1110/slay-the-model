@@ -5,7 +5,7 @@ Deal damage to all enemies after N turns.
 from typing import List
 from actions.base import Action
 from actions.combat import DealDamageAction
-from powers.base import Power
+from powers.base import Power, StackType
 from utils.registry import register
 
 
@@ -15,7 +15,7 @@ class TheBombPower(Power):
 
     name = "The Bomb"
     description = "Deal damage to all enemies after N turns."
-    stackable = False
+    stack_type = StackType.MULTI_INSTANCE
     amount_equals_duration = True  # Duration tracks turns until explosion
     is_buff = True
 

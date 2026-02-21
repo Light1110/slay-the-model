@@ -15,14 +15,9 @@ from utils.option import Option
 from engine.game_state import game_state
 
 
-@register_event(event_id='scrap_ooze', floors='early', weight=100)
+@register_event(event_id='scrap_ooze', acts=[1], weight=100)
 class ScrapOoze(Event):
     """Scrap Ooze - HP for relic chance."""
-    
-    @classmethod
-    def can_appear(cls) -> bool:
-        """Only appears on Ascension 15+."""
-        return game_state.ascension >= 15
     
     def __init__(self):
         super().__init__()

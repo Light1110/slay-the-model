@@ -15,7 +15,7 @@ from utils.option import Option
 from engine.game_state import game_state
 
 
-@register_event(event_id='designer_in_spire', floors='mid', weight=100)
+@register_event(event_id='designer_in_spire', acts=[2, 3], weight=100)
 class DesignerInSpire(Event):
     """Designer In-Spire - gold for deck services."""
     
@@ -39,6 +39,7 @@ class DesignerInSpire(Event):
         punch_hp = 5 if game_state.ascension >= 15 else 3
         
         # Build options
+        # todo: 前两个选项是二选一，应该通过random决定
         options = [
             Option(
                 name=LocalStr('events.designer_in_spire.adjustments'),

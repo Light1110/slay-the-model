@@ -6,7 +6,7 @@ from typing import Any, List
 
 from actions.base import Action
 from actions.combat import ApplyPowerAction
-from powers.base import Power
+from powers.base import Power, StackType
 from powers.definitions.strength_up import StrengthUpPower  # noqa: F401
 from utils.registry import register
 
@@ -17,7 +17,7 @@ class ShiftingPower(Power):
 
     name = "Shifting"
     description = "Upon losing HP, loses that much Strength until the end of turn."
-    stackable = False
+    stack_type = StackType.INTENSITY
     is_buff = True
 
     def __init__(self, owner=None):

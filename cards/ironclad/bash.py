@@ -33,6 +33,8 @@ class Bash(Card):
         # Apply Vulnerable to target
         if targets:
             vulnerable_amount = self.get_magic_value("vulnerable")
-            actions.append(ApplyPowerAction(power="Vulnerable", target=target, amount=vulnerable_amount))
+            actions.append(ApplyPowerAction(power="Vulnerable", target=target,
+                                            amount=vulnerable_amount,
+                                            duration=vulnerable_amount))
 
         return actions

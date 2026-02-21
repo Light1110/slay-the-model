@@ -13,7 +13,7 @@ from utils.option import Option
 from engine.game_state import game_state
 
 
-@register_event(event_id='the_joust', floors='mid', weight=100)
+@register_event(event_id='the_joust', acts=[2], weight=100)
 class TheJoust(Event):
     """The Joust - bet gold for reward."""
     

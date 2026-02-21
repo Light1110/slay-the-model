@@ -12,9 +12,15 @@ from localization import LocalStr
 from utils.option import Option
 from utils.types import RarityType
 
+# todo: 原本逻辑完全错误
+"""
+[Heal] Lose 35 Gold. Heal 25% of your Max HP.
+[Purify] Lose 50 (75) Gold. Remove a card from your deck.
+[Leave] Nothing happens.
+"""
 @register_event(
     event_id="the_cleric",
-    floors='early',
+    acts=[1],
     weight=100
 )
 class TheClericEvent(Event):

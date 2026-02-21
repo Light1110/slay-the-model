@@ -5,7 +5,7 @@ Your next cards are played twice.
 from typing import List
 from actions.base import Action
 from cards.base import Card
-from powers.base import Power
+from powers.base import Power, StackType
 from utils.registry import register
 from utils.types import CardType
 
@@ -15,11 +15,10 @@ class DuplicationPower(Power):
     
     name = "Duplication"
     description = "Your next cards are played twice."
-    stackable = True
-    amount_equals_duration = False
+    stack_type = StackType.INTENSITY
     is_buff = True  # Beneficial effect - plays cards twice
     
-    def __init__(self, amount: int = 1, duration: int = 0, owner=None):
+    def __init__(self, amount: int = 1, duration: int = -1, owner=None):
         """
         Args:
             amount: Number of cards to duplicate (default 1)

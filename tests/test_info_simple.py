@@ -91,7 +91,7 @@ class TestInfoFunctions(unittest.TestCase):
         
         power_type = "Buff" if is_buff else "Debuff"
         
-        # For permanent power (duration=0), no duration is shown
+        # For permanent power (duration=-1), no duration is shown
         info = MockLocalStr(name) + f" (Type: {power_type})\n" + MockLocalStr(description)
         
         self.assertIn("TestPermanent", str(info))

@@ -3,7 +3,7 @@ Vulnerable power for combat effects.
 Increases damage taken by 50% per stack.
 """
 from typing import Any
-from powers.base import Power
+from powers.base import Power, StackType
 from utils.registry import register
 
 
@@ -13,11 +13,10 @@ class VulnerablePower(Power):
     
     name = "Vulnerable"
     description = "Increases damage taken by 50% per stack."
-    stackable = True
-    amount_equals_duration = False
+    stack_type = StackType.DURATION
     is_buff = False  # Debuff - increases damage taken
     
-    def __init__(self, amount: int = 2, duration: int = 2, owner=None):
+    def __init__(self, amount: int = 0, duration: int = 2, owner=None):
         """
         Args:
             amount: Vulnerable stacks (default 2)

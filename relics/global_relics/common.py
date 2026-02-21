@@ -12,6 +12,8 @@ from utils.types import RarityType, CardType
 from utils.registry import register
 
 # Already implemented relics
+from utils.damage_phase import DamagePhase
+
 @register("relic")
 class Akabeko(Relic):
     """Your first Attack each combat deals 8 additional damage"""
@@ -19,13 +21,27 @@ class Akabeko(Relic):
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.COMMON
+        self.damage_phase = DamagePhase.ADDITIVE  # +8 damage
         
         # Track if first attack has been played this combat
         self.first_attack_played = False
     
     def on_combat_start(self, player, entities) -> List[Action]:
         """Reset first attack tracker at start of combat"""
-        return [LambdaAction(func=lambda: setattr(self, 'first_attack_played', False))]
+        self.first_attack_played = False
+        return []
+    
+    def on_card_play(self, card, player, entities) -> List[Action]:
+        """Track when first attack is played"""
+        if not self.first_attack_played and card.card_type == CardType.ATTACK:
+            self.first_attack_played = True
+        return []
+    
+    def modify_damage_dealt(self, base_damage: int, card=None, target=None) -> int:
+        """Add 8 damage to first attack each combat"""
+        if not self.first_attack_played and card and card.card_type == CardType.ATTACK:
+            return base_damage + 8
+        return base_damage
 
 @register("relic")
 class Anchor(Relic):
@@ -36,7 +52,6 @@ class Anchor(Relic):
         self.rarity = RarityType.COMMON
     
     def on_player_turn_start(self, player, entities) -> List[Action]:
-        # 第一回合，获得10点格挡
         from engine.game_state import game_state
         if (game_state.current_combat is not None and 
             game_state.current_combat.combat_state.combat_turn == 1):
@@ -96,12 +111,12 @@ class ArtOfWar(Relic):
     
     def on_player_turn_start(self, player, entities) -> List[Action]:
         """Grant extra energy if no attacks were played last turn"""
-        self.attack_played_this_turn = False
         actions = []
         if self.extra_energy_next_turn:
             self.extra_energy_next_turn = False
             actions.append(GainEnergyAction(energy=1))
-        self._reset_trackers()
+        # Reset attack tracker for this turn
+        self.attack_played_this_turn = False
         return actions
     
     def on_card_play(self, card, player, entities) -> List[Action]:
@@ -116,11 +131,6 @@ class ArtOfWar(Relic):
         if not self.attack_played_this_turn:
             self.extra_energy_next_turn = True
         return []
-    
-    def _reset_trackers(self):
-        """Reset all trackers"""
-        self.attack_played_this_turn = False
-        self.extra_energy_next_turn = False
 
 @register("relic")
 class BagOfMarbles(Relic):
@@ -134,7 +144,10 @@ class BagOfMarbles(Relic):
         """Apply Vulnerable to all enemies at start of combat"""
         actions = []
         for enemy in entities:
-            actions.append(ApplyPowerAction(power="Vulnerable", target=enemy, amount=1))
+            actions.append(ApplyPowerAction(power="Vulnerable",
+                                            target=enemy,
+                                            amount=1,
+                                            duration=1))
         return actions
 
 @register("relic")
@@ -188,10 +201,6 @@ class CeramicFish(Relic):
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.COMMON
-    
-    # This would need to hook into card addition events
-    # For now, implemented as a passive effect description
-    # Implement in AddCardAction(pile="deck")
 
 @register("relic")
 class DreamCatcher(Relic):
@@ -200,10 +209,6 @@ class DreamCatcher(Relic):
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.COMMON
-    
-    # This would need to hook into rest events
-    # For now, implemented as a passive effect description
-    # Implement in RestRoom, If has this relic, append a ChooseAddCardAction(deck="hand") after HealAction
 
 @register("relic")
 class HappyFlower(Relic):
@@ -232,8 +237,7 @@ class JuzuBracelet(Relic):
         super().__init__()
         self.rarity = RarityType.COMMON
     
-    # This would need to hook into room generation
-    # For now, implemented as a passive effect description
+    # This hook into room generation
 
 @register("relic")
 class Lantern(Relic):
@@ -259,13 +263,22 @@ class MawBank(Relic):
         super().__init__()
         self.rarity = RarityType.COMMON
         self.still_working = True
+        self._shop_spend_baseline = None
     
     def on_combat_start(self, player, entities) -> List[Action]:
-        """Reset working flag at start of combat (new floor)"""
-        return [LambdaAction(func=lambda: setattr(self, 'still_working', False))]
-    
-    # This would need to hook into floor climbing events
-    # Also need to detect when gold is spent at shop to disable
+        """Gain 12 Gold while active and disable after shop spending."""
+        from engine.game_state import game_state
+        from actions.reward import AddGoldAction
+
+        current_spent = getattr(game_state, "gold_spent_in_shop", 0)
+        if self._shop_spend_baseline is None:
+            self._shop_spend_baseline = current_spent
+        elif current_spent > self._shop_spend_baseline:
+            self.still_working = False
+
+        if not self.still_working:
+            return []
+        return [AddGoldAction(amount=12)]
 
 @register("relic")
 class MealTicket(Relic):
@@ -274,9 +287,10 @@ class MealTicket(Relic):
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.COMMON
-    
-    # This would need to hook into room entry events
-    # For now, implemented as a passive effect description
+
+    def on_shop_enter(self, player, entities=None) -> List[Action]:
+        """Heal 15 HP when entering a shop room."""
+        return [HealAction(amount=15, target=player)]
 
 @register("relic")
 class Nunchaku(Relic):
@@ -317,9 +331,14 @@ class Omamori(Relic):
         super().__init__()
         self.rarity = RarityType.COMMON
         self.curses_to_negate = 2
-    
-    # This would need to hook into curse acquisition events
-    # For now, implemented as a passive effect description
+
+    def try_negate_curse(self) -> bool:
+        """Consume one charge to negate a curse gain."""
+        if self.curses_to_negate <= 0:
+            return False
+        self.curses_to_negate -= 1
+        return True
+
 
 @register("relic")
 class Orichalcum(Relic):
@@ -344,12 +363,11 @@ class PenNib(Relic):
         super().__init__()
         self.rarity = RarityType.COMMON
         self.attacks_played = 0
-        self.double_damage_next_attack = False
     
     def on_combat_start(self, player, entities) -> List[Action]:
         """Reset tracker at start of combat"""
         self.attacks_played = 0
-        return [LambdaAction(func=lambda: setattr(self, 'attacks_played', 0))]
+        return []
     
     def on_card_play(self, card, player, entities):
         """Track attacks and apply double damage on 10th"""
@@ -357,8 +375,8 @@ class PenNib(Relic):
         if card.card_type == CardType.ATTACK:
             self.attacks_played += 1
             # Check if this is the 10th attack (10, 20, 30, etc.)
+            # The 10th attack itself deals double damage
             if self.attacks_played % 10 == 0:
-                # Apply PenNibPower to player for the next attack
                 return [ApplyPowerAction(power="PenNibPower", target=player, amount=1, duration=1)]
         return []
 
@@ -383,10 +401,14 @@ class PreservedInsect(Relic):
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.COMMON
-    
-    # This would need to hook into enemy generation for elite rooms
-    # For now, implemented as a passive effect description
 
+    def apply_elite_hp_reduction(self, enemies) -> None:
+        """Reduce elite enemies' max HP by 25% at combat setup."""
+        for enemy in enemies:
+            reduced_max_hp = max(1, int(enemy.max_hp * 0.75))
+            enemy.max_hp = reduced_max_hp
+            enemy.hp = min(enemy.hp, reduced_max_hp)
+    
 @register("relic")
 class RegalPillow(Relic):
     """Heal an additional 15 HP when you rest."""
@@ -394,9 +416,11 @@ class RegalPillow(Relic):
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.COMMON
-    
-    # This would need to hook into rest events
-    # For now, implemented as a passive effect description
+
+    def modify_rest_heal(self, base_heal: int) -> int:
+        """Increase heal amount while resting."""
+        return base_heal + 15
+
 
 @register("relic")
 class SmilingMask(Relic):
@@ -406,8 +430,7 @@ class SmilingMask(Relic):
         super().__init__()
         self.rarity = RarityType.COMMON
     
-    # This would need to hook into shop/card removal events
-    # For now, implemented as a passive effect description
+    # This hook into shop/card removal events
 
 @register("relic")
 class Strawberry(Relic):
@@ -422,15 +445,19 @@ class Strawberry(Relic):
 
 @register("relic")
 class TheBoot(Relic):
-    """Whenever you would deal 4 or less unblocked Attack damage, increase it to 5."""
+    """Whenever you deal 4 or less damage with an Attack, deal 5 instead."""
     
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.COMMON
+        self.damage_phase = DamagePhase.CLAMP  # Minimum damage clamping
     
-    # This would need to hook into damage calculation
-    # For now, implemented as a passive effect description
-    # Implement in resolve_potential_damage
+    def modify_damage_dealt(self, base_damage: int, card=None, target=None) -> int:
+        """Increase damage to 5 if it's 4 or less from Attack cards."""
+        if card and hasattr(card, 'card_type') and card.card_type == CardType.ATTACK:
+            if base_damage <= 4:
+                return 5
+        return base_damage
 
 @register("relic")
 class TinyChest(Relic):
@@ -441,8 +468,7 @@ class TinyChest(Relic):
         self.rarity = RarityType.COMMON
         self.event_count = 0
     
-    # This would need to hook into room generation
-    # For now, implemented as a passive effect description
+    # This hook into room generation
 
 @register("relic")
 class ToyOrnithopter(Relic):
@@ -451,8 +477,10 @@ class ToyOrnithopter(Relic):
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.COMMON
-    
-    # todo: on_use_potion
+
+    def on_use_potion(self, potion, player, entities) -> List[Action]:
+        """Heal 5 HP whenever a potion is consumed."""
+        return [HealAction(amount=5, target=player)]
 
 @register("relic")
 class WarPaint(Relic):
@@ -477,3 +505,4 @@ class Whetstone(Relic):
     def on_obtain(self) -> List[Action]:
         from actions.card import UpgradeRandomCardAction
         return [UpgradeRandomCardAction(card_type="Attack", count=2)]
+

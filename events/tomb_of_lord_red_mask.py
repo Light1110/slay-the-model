@@ -14,7 +14,7 @@ from engine.game_state import game_state
 from relics.global_relics.event import RedMask
 
 
-@register_event(event_id='tomb_of_lord_red_mask', floors='late', weight=100)
+@register_event(event_id='tomb_of_lord_red_mask', acts=[3], weight=100)
 class TombOfLordRedMask(Event):
     """Tomb of Lord Red Mask - Red Mask interaction."""
     

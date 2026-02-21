@@ -37,9 +37,11 @@ class ChemicalX(Relic):
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.SHOP
-    
-    # This would need to hook into card cost calculations
-    # For now, implemented as a passive effect description
+
+    def modify_x_cost_card_effect(self, base_x: int) -> int:
+        """Increase X value for card effects by 2."""
+        return base_x + 2
+
 
 @register("relic")
 class ClockworkSouvenir(Relic):
@@ -73,8 +75,10 @@ class FrozenEye(Relic):
         super().__init__()
         self.rarity = RarityType.SHOP
 
-    # This would need to hook into draw pile viewing
-    # For now, implemented as a passive effect description
+    def can_view_draw_pile_order(self) -> bool:
+        """Whether draw pile order should be visible."""
+        return True
+
 
 @register("relic")
 class HandDrill(Relic):
@@ -85,7 +89,8 @@ class HandDrill(Relic):
         self.rarity = RarityType.SHOP
 
     def on_damage_dealt(self, damage, target, player, entities):
-        return [ApplyPowerAction(power="Vulnerable", target=target, amount=2)]
+        return [ApplyPowerAction(power="Vulnerable", target=target,
+                                 amount=2, duration=2)]
 
 @register("relic")
 class LeesWaffle(Relic):
@@ -108,8 +113,14 @@ class MedicalKit(Relic):
         super().__init__()
         self.rarity = RarityType.SHOP
 
-    # This would need to hook into card play for status cards
-    # For now, implemented as a passive effect description
+    def can_play_status_cards(self) -> bool:
+        """Allow Status cards to be played."""
+        return True
+
+    def should_exhaust_status_on_play(self) -> bool:
+        """Played Status cards should exhaust."""
+        return True
+
 
 @register("relic")
 class MembershipCard(Relic):
@@ -119,8 +130,7 @@ class MembershipCard(Relic):
         super().__init__()
         self.rarity = RarityType.SHOP
 
-    # This would need to hook into shop price calculations
-    # For now, implemented as a passive effect description
+    # This hook into shop price calculations
 
 @register("relic")
 class PrismaticShard(Relic):
@@ -130,8 +140,10 @@ class PrismaticShard(Relic):
         super().__init__()
         self.rarity = RarityType.SHOP
 
-    # This would need to hook into card reward generation
-    # For now, implemented as a passive effect description
+    def enables_all_color_card_pool(self) -> bool:
+        """Allow card rewards to use all colors."""
+        return True
+
 
 @register("relic")
 class Orrery(Relic):
@@ -143,30 +155,22 @@ class Orrery(Relic):
 
     def on_obtain(self) -> List[Action]:
         from engine.game_state import game_state
+
+        has_prismatic_shard = any(
+            getattr(relic, "idstr", None) == "PrismaticShard"
+            for relic in game_state.player.relics
+        )
+        reward_namespace = None if has_prismatic_shard else game_state.player.namespace
+
         actions = []
         for _ in range(5):
             actions.append(ChooseObtainCardAction(
                 total=3,
-                namespace=game_state.player.namespace,
+                namespace=reward_namespace,
                 encounter_type="shop",
                 use_rolling_offset=False,
             ))
         return actions
-
-# !!! massive refactor
-# todo: 每一种遗物只存在一个类，不区分是否是Shop。
-# e.g. 如果一个遗物同时是UNCOMMON和SHOP，那么只需要保留UNCOMMON的一份
-# 特别建厂所有Shop结尾的遗物。如果有和其他遗物功能重复，则删除
-@register("relic")
-class PotionBeltShop(Relic):
-    """Upon pick up, gain 2 Potion slots."""
-    
-    def __init__(self):
-        super().__init__()
-        self.rarity = RarityType.SHOP
-
-    # This would need to hook into relic pickup events
-    # For now, implemented as a passive effect description
 
 @register("relic")
 class SlingOfCourage(Relic):
@@ -176,7 +180,15 @@ class SlingOfCourage(Relic):
         super().__init__()
         self.rarity = RarityType.SHOP
 
-    # todo: on_combat_start
+    def on_combat_start(self, player, entities):
+        """Start Elite combats with 2 Strength"""
+        from engine.game_state import game_state
+        from utils.types import CombatType
+        
+        combat = game_state.current_combat
+        if combat is not None and combat.combat_type == CombatType.ELITE:
+            return [ApplyPowerAction(power="Strength", target=player, amount=2)]
+        return []
 
 @register("relic")
 class StrangeSpoonShop(Relic):
@@ -186,8 +198,12 @@ class StrangeSpoonShop(Relic):
         super().__init__()
         self.rarity = RarityType.SHOP
 
-    # This would need to hook into card exhaust events
-    # For now, implemented as a passive effect description
+    def should_prevent_exhaust(self, card=None) -> bool:
+        """50% chance to discard a card instead of exhausting it."""
+        import random
+
+        return random.random() < 0.5
+
 
 @register("relic")
 class TheAbacus(Relic):
@@ -227,5 +243,28 @@ class Toolbox(Relic):
     
     def on_combat_start(self, player, entities):
         """Add 1 random Colorless card to hand at start of combat"""
-        # todo: ChooseAddRandomCardAction
-        return []
+        from actions.card import AddRandomCardAction
+        from engine.game_state import game_state
+        # Add a random colorless card to hand with 0 cost for the turn
+        return [AddRandomCardAction(
+            pile='hand', 
+            namespace='colorless',
+            temp_cost=0
+        )]
+
+
+@register("relic")
+class StrikeDummy(Relic):
+    """Strike cards deal 3 additional damage."""
+    
+    def __init__(self):
+        super().__init__()
+        self.rarity = RarityType.SHOP
+    
+    def modify_damage_dealt(self, base_damage: int, card=None, target=None) -> int:
+        """Add 3 damage to Strike cards."""
+        if card and hasattr(card, 'card_type') and card.card_type == CardType.ATTACK:
+            # Check if it's a Strike card by name pattern or card_id
+            if hasattr(card, 'card_id') and 'strike' in card.card_id.lower():
+                return base_damage + 3
+        return base_damage

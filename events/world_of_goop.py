@@ -15,7 +15,7 @@ from utils.option import Option
 from engine.game_state import game_state
 
 
-@register_event(event_id='world_of_goop', floors='early', weight=100)
+@register_event(event_id='world_of_goop', acts=[1], weight=100)
 class WorldOfGoop(Event):
     """World of Goop - lose gold or gain gold for HP."""
     

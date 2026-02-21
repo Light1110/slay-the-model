@@ -14,14 +14,9 @@ from utils.option import Option
 from engine.game_state import game_state
 
 
-@register_event(event_id='shining_light', floors='early', weight=100)
+@register_event(event_id='shining_light', acts=[1], weight=100)
 class ShiningLight(Event):
     """Shining Light - upgrade cards for HP."""
-    
-    @classmethod
-    def can_appear(cls) -> bool:
-        """Only appears on Ascension 15+."""
-        return game_state.ascension >= 15
     
     def trigger(self) -> BaseResult:
         actions = []

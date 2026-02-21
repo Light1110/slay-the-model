@@ -3,7 +3,7 @@ Entangled power for combat effects.
 Prevents playing Attack cards for duration.
 """
 from typing import Any, List
-from powers.base import Power
+from powers.base import Power, StackType
 from utils.registry import register
 
 
@@ -13,11 +13,10 @@ class EntangledPower(Power):
     
     name = "Entangled"
     description = "Cannot play Attack cards."
-    stackable = False
-    amount_equals_duration = False
+    stack_type = StackType.PRESENCE
     is_buff = False  # Debuff - prevents playing Attack cards
     
-    def __init__(self, amount: int = 1, duration: int = 1, owner=None):
+    def __init__(self, amount: int = 0, duration: int = 1, owner=None):
         """
         Args:
             amount: Not used (power is binary)

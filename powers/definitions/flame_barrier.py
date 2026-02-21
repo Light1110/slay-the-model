@@ -4,7 +4,7 @@ Gain block, deal damage to enemies that attack.
 """
 from typing import List, Any
 from actions.base import Action
-from powers.base import Power
+from powers.base import Power, StackType
 from actions.combat import DealDamageAction
 from utils.registry import register
 
@@ -15,17 +15,16 @@ class FlameBarrierPower(Power):
 
     name = "Flame Barrier"
     description = "Deal damage to enemies that attack you."
-    stackable = True
-    amount_equals_duration = False
+    stack_type = StackType.INTENSITY
     is_buff = True
 
-    def __init__(self, amount: int = 5, duration: int = 0, owner=None):
+    def __init__(self, amount: int = 5, duration: int = 1, owner=None):
         """
         Args:
             amount: Not used
             duration: Duration in turns
         """
-        super().__init__(amount=amount, duration=1, owner=owner)
+        super().__init__(amount=amount, duration=duration, owner=owner)
 
     def on_damage_taken(self, damage: int, source: Any = None, card: Any = None,
                        player: Any = None, damage_type: str = "direct") -> List[Action]:

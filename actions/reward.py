@@ -46,7 +46,14 @@ class AddRandomRelicAction(Action):
         rarity (RarityType): Single rarity (will be converted to list)
         pool (str): Pool name for special relic pools (e.g., 'face')
     """
-    def __init__(self, rarities: List[RarityType] = None, rarity: RarityType = None, pool: str = None):
+    def __init__(
+        self,
+        rarities: List[RarityType] = None,
+        rarity: RarityType = None,
+        pool: str = None,
+        characters: Optional[List[str]] = None,
+        character: Optional[str] = None,
+    ):
         if rarities is not None:
             self.rarities = rarities if isinstance(rarities, list) else [rarities]
         elif rarity is not None:
@@ -56,11 +63,22 @@ class AddRandomRelicAction(Action):
             from relics.base import RarityType as RT
             self.rarities = [RT.COMMON, RT.UNCOMMON, RT.RARE]
         self.pool = pool
+        if characters is not None:
+            self.characters = (
+                characters if isinstance(characters, list) else [characters]
+            )
+        elif character is not None:
+            self.characters = [character]
+        else:
+            self.characters = None
     
     def execute(self) -> 'BaseResult':
         from engine.game_state import game_state
         if game_state.player:
-            relic = get_random_relic(rarities=self.rarities)
+            relic = get_random_relic(
+                characters=self.characters,
+                rarities=self.rarities,
+            )
             if relic:
                 game_state.player.relics.append(relic)
                 # Track relic as obtained (even if removed later)
@@ -162,8 +180,24 @@ class AddGoldAction(Action):
         from engine.game_state import game_state
         if game_state.player:
             if random.random() < self.chance:
-                game_state.player.gold += self.amount
-                print(t("rewards.gold", default="Gained {amount} gold", amount=self.amount))
+                # Ectoplasm: block all gold gain.
+                if any(relic.idstr == "Ectoplasm"
+                       for relic in game_state.player.relics):
+                    return NoneResult()
+
+                # Calculate modified gold amount through relics
+                modified_amount = self.amount
+                for relic in game_state.player.relics:
+                    modified_amount = relic.modify_gold_gained(modified_amount)
+                
+                game_state.player.gold += modified_amount
+                print(t("rewards.gold", default="Gained {amount} gold", amount=modified_amount))
+                
+                # Trigger on_gold_gained for relics like BloodyIdol
+                for relic in game_state.player.relics:
+                    actions = relic.on_gold_gained(modified_amount, game_state.player)
+                    for action in actions:
+                        action.execute()
             else:
                 print(t("rewards.gold_fail", default="Failed to gain gold", chance=self.chance))
         return NoneResult()
@@ -253,7 +287,13 @@ class AddPotionAction(Action):
     
     def execute(self) -> 'BaseResult':
         from engine.game_state import game_state
-        added = game_state.player.potions.append(self.potion)
+        player = game_state.player
+        if not player:
+            return NoneResult()
+        # Sozu: player can no longer obtain potions.
+        if any(getattr(relic, "idstr", None) == "Sozu" for relic in player.relics):
+            return NoneResult()
+        added = player.potions.append(self.potion)
         if added:
             print(t("ui.received_potion", default=f"Received potion: {self.potion.idstr}!", name=self.potion.idstr))
         return NoneResult()

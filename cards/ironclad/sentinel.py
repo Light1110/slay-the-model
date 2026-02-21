@@ -4,7 +4,7 @@ Ironclad Uncommon Skill card - Sentinel
 
 from typing import List
 from actions.base import Action
-from actions.combat import GainBlockAction, ApplyPowerAction, GainEnergyAction
+from actions.combat import GainBlockAction, GainEnergyAction
 from cards.base import Card
 from entities.creature import Creature
 from utils.registry import register
@@ -34,10 +34,6 @@ class Sentinel(Card):
 
         # Gain block
         actions.append(GainBlockAction(block=self.block, target=game_state.player))
-
-        # Apply SentinelPower which gives energy on exhaust
-        energy_on_exhaust = self.get_magic_value("energy_on_exhaust")
-        actions.append(ApplyPowerAction(power="SentinelPower", target=game_state.player, amount=energy_on_exhaust, duration=1))
 
         return actions
 

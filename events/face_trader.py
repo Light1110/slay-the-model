@@ -14,7 +14,7 @@ from utils.option import Option
 from engine.game_state import game_state
 
 
-@register_event(event_id='face_trader', floors='early', weight=100)
+@register_event(event_id='face_trader', acts=[1, 2], weight=100)
 class FaceTrader(Event):
     """Face Trader - trade HP for gold or gamble for face relics."""
     
@@ -43,6 +43,22 @@ class FaceTrader(Event):
                 name=LocalStr('events.face_trader.trade'),
                 actions=[
                     # 50/50 chance for good/bad face relic
+                    # todo: 删除 AddRandomRelicAction 中的 pool 字段
+                    # 这里应该先随机选一个遗物，然后直接AddRelicAction
+                    """
+                    ```markdown
+# Options ⚜️
+Numbers in parentheses are for Ascension 15 or higher.
+- [Touch] Lose HP equal to 10% of Max HP. Gain 75 (50) Gold.
+- [Trade] Receive one of the following event relics:
+  - 🧠 Cultist Headpiece: You feel more talkative (Neutral Face).
+  - 🙏 Face of Cleric: Raise your Max HP by 1 after each combat (Good Face).
+  - 😈 Gremlin Visage: Start each combat with 1 🦴 Weak (Bad Face).
+  - 🤔 N'loth's Hungry Face: The next non-boss Chest you open is empty (Bad Face).
+  - 🐍 Ssserpent Head: Whenever you enter a ? room, gain 50 Gold (Good Face).
+```
+
+                    """
                     AddRandomRelicAction(pool='face')
                 ]
             ),

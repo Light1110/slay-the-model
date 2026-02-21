@@ -195,6 +195,8 @@ combat:
   retrieve_zero_cost: 从弃牌堆返回 {count} 张零费用牌到手牌。
   spot_weakness_no_attack: 没有敌人意图攻击。
   transform_card: 将牌转化为 {card}
+  transform_and_upgrade_card: 将 {card} 转化为 {new_card} 并升级
+  choose_transform_and_upgrade: 选择 {amount} 张牌进行变换并升级
   trigger_orb_passives: 触发 {count} 个 {orb_type} 球的被动能力。
   upgrade_card: 升级这张牌
   white_noise_add: 将 {card}（本回合费用0）添加到你的手牌。

@@ -2,10 +2,22 @@
 Power base class for combat effects.
 Powers modify creature stats, damage calculations, and combat flow.
 """
+from enum import Enum, auto
 from typing import List, Optional, Any
 from actions.base import Action
 from localization import Localizable
 from utils.types import TargetType
+from utils.damage_phase import DamagePhase
+
+
+class StackType(Enum):
+    """Defines how a power stacks when reapplied."""
+    INTENSITY = auto()      # Stacks amount only (Strength, Dexterity, Thorns)
+    DURATION = auto()       # Stacks duration only (Vulnerable, Weak, Frail)
+    BOTH = auto()           # Stacks both amount AND duration (Poison, Regen)
+    LINKED = auto()         # Amount and duration are synchronized
+    PRESENCE = auto()       # Single instance only (Barricade)
+    MULTI_INSTANCE = auto() # Creates new instance each time (The Bomb)
 
 
 class PowerType:
@@ -38,9 +50,15 @@ class Power(Localizable):
     localizable_fields = ("name", "description")
     
     # Power behavior
-    stackable: bool = True  # Can multiple instances stack?
+    stack_type: StackType = StackType.INTENSITY  # How this power stacks
     amount_equals_duration: bool = False  # Should amount be set to duration on apply?
     is_buff: bool = True  # True for beneficial effects, False for harmful effects
+    
+    # Damage modification phase
+    # ADDITIVE: Applied first (e.g., Strength +3)
+    # MULTIPLICATIVE: Applied second (e.g., Weak 0.75x)
+    # CAPPING: Applied last (e.g., Intangible caps at 1)
+    modify_phase: DamagePhase = DamagePhase.ADDITIVE
     
     def __init__(self, amount: int = 0, duration: int = -1, owner=None):
         """Initialize power with amount and duration.
@@ -53,9 +71,14 @@ class Power(Localizable):
         self._amount = amount
         self._duration = duration
         self.owner = owner
-        self.stackable = self.__class__.stackable
+        self.stack_type = self.__class__.stack_type
         self.amount_equals_duration = self.__class__.amount_equals_duration
         self.is_buff = self.__class__.is_buff
+    
+    @property
+    def stackable(self) -> bool:
+        """Derive stackable from stack_type for backward compatibility."""
+        return self.stack_type not in (StackType.PRESENCE, StackType.MULTI_INSTANCE)
     
     @property
     def idstr(self) -> str:
@@ -180,6 +203,22 @@ class Power(Localizable):
         """
         return []
     
+    def on_lose_hp(self, amount: int, source: Any = None, card: Any = None) -> List[Action]:
+        """Called when HP is lost (not from damage).
+        
+        This is triggered by HP loss effects like Biased Cognition,
+        offering, or self-damage cards, NOT from regular damage.
+        
+        Args:
+            amount: Amount of HP lost
+            source: Source of the HP loss
+            card: Card that caused HP loss (if applicable)
+            
+        Returns:
+            List of actions to execute when HP is lost
+        """
+        return []
+    
     def on_card_draw(self, card: Any) -> List[Action]:
         """Called when a card is drawn.
         
@@ -203,15 +242,28 @@ class Power(Localizable):
         """
         获取力量的完整信息显示
         
-        返回格式：
-        PowerName (Duration: Y, Type: Buff/Debuff)
-        Description text
-        或
-        PowerName (Type: Buff/Debuff)
-        Description text
+        根据 StackType 决定显示内容：
+        - INTENSITY: 只显示 amount
+        - DURATION, LINKED: 只显示 duration
+        - BOTH, MULTI_INSTANCE: 同时显示 amount 和 duration
+        - PRESENCE: 都不显示
         """
         power_type = "Buff" if self.is_buff else "Debuff"
-        if self.duration != 0:
-            return self.local("name") + f" (Duration: {self.duration}, Type: {power_type}, Amount: {self.amount})\n" + self.local("description")
-        else:
-            return self.local("name") + f" (Duration: Permanent, Type: {power_type}, Amount: {self.amount})\n" + self.local("description")
+        name = self.local("name")
+        description = self.local("description")
+        
+        # 根据 StackType 决定显示内容
+        if self.stack_type == StackType.INTENSITY:
+            # 只打印 amount
+            return f"{name} (Type: {power_type}, Amount: {self.amount})\n{description}"
+        elif self.stack_type in (StackType.DURATION, StackType.LINKED):
+            # 只打印 duration
+            duration_str = "Permanent" if self.duration == -1 else str(self.duration)
+            return f"{name} (Type: {power_type}, Duration: {duration_str})\n{description}"
+        elif self.stack_type in (StackType.BOTH, StackType.MULTI_INSTANCE):
+            # 都打印
+            duration_str = "Permanent" if self.duration == -1 else str(self.duration)
+            return f"{name} (Type: {power_type}, Duration: {duration_str}, Amount: {self.amount})\n{description}"
+        else:  # PRESENCE
+            # 都不打印
+            return f"{name} (Type: {power_type})\n{description}"

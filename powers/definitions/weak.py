@@ -3,7 +3,7 @@ Weak power for combat effects.
 Reduces damage dealt by 25%.
 """
 from typing import Any, List
-from powers.base import Power
+from powers.base import Power, StackType
 from utils.registry import register
 
 
@@ -13,11 +13,10 @@ class WeakPower(Power):
     
     name = "Weak"
     description = "Reduces damage dealt by 25%."
-    stackable = True
-    amount_equals_duration = False
+    stack_type = StackType.DURATION
     is_buff = False  # Debuff - reduces damage dealt
     
-    def __init__(self, amount: int = 2, duration: int = 2, owner=None):
+    def __init__(self, amount: int = 0, duration: int = 2, owner=None):
         """
         Args:
             amount: Weak stacks (default 2)

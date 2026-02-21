@@ -56,6 +56,7 @@ class AddCardAction(Action):
     def execute(self) -> 'BaseResult':
         import random
         from engine.game_state import game_state
+        from utils.types import CardType
 
         # Check probability if chance < 1.0
         if self.chance < 1.0 and random.random() >= self.chance:
@@ -65,7 +66,56 @@ class AddCardAction(Action):
         if self.card and game_state.player:
             if hasattr(game_state.player, "card_manager"):
                 target_pile = self.dest_pile or "deck"
+                follow_up_actions = []
+
+                # Omamori: negate curse cards that would be added to deck.
+                if (
+                    target_pile in ("deck")
+                    and getattr(self.card, "card_type", None) == CardType.CURSE
+                ):
+                    for relic in list(game_state.player.relics):
+                        if getattr(relic, "idstr", None) != "Omamori":
+                            continue
+                        if not hasattr(relic, "try_negate_curse"):
+                            continue
+                        if relic.try_negate_curse():
+                            if getattr(relic, "curses_to_negate", 0) <= 0:
+                                game_state.player.relics.remove(relic)
+                            print(
+                                f"[Relic] Omamori negated curse: "
+                                f"{self.card.display_name.resolve()}"
+                            )
+                            return NoneResult()
+
+                # Egg relics: upgrade qualifying cards before adding to deck.
+                if target_pile in ("deck"):
+                    for relic in list(game_state.player.relics):
+                        hook = getattr(relic, "should_upgrade_added_card", None)
+                        if not hook:
+                            continue
+                        if hook(self.card, target_pile) and self.card.can_upgrade():
+                            self.card.upgrade()
+
                 game_state.player.card_manager.add_to_pile(self.card, target_pile, pos=self.position)
+                # Ceramic Fish: whenever a card is added to deck, gain 9 gold.
+                if target_pile in ("deck"):
+                    from actions.reward import AddGoldAction
+                    if any(
+                        getattr(relic, "idstr", None) == "CeramicFish"
+                        for relic in game_state.player.relics
+                    ):
+                        AddGoldAction(amount=9).execute()
+                    for relic in list(game_state.player.relics):
+                        hook = getattr(relic, "on_card_added", None)
+                        if not hook:
+                            continue
+                        result = hook(self.card, target_pile)
+                        if not result:
+                            continue
+                        if isinstance(result, list):
+                            follow_up_actions.extend(result)
+                        else:
+                            follow_up_actions.append(result)
                 # Only show [Reward] for actual rewards, use appropriate prefix for others
                 if self.source is None:
                     print(f"Added {self.card.display_name.resolve()} to {target_pile}")
@@ -75,6 +125,9 @@ class AddCardAction(Action):
                     print(f"[Enemy] Added {self.card.display_name.resolve()} to {target_pile}")
                 else:
                     print(f"[{self.source.title()}] Added {self.card.display_name.resolve()} to {target_pile}")
+                if follow_up_actions:
+                    for action in follow_up_actions:
+                        action.execute()
         return NoneResult()
                 
 @register("action")
@@ -1074,6 +1127,101 @@ class UpgradeRandomCardAction(Action):
         else:
             return MultipleActionsResult(actions)
 
+@register("action")
+class TransformAndUpgradeCardAction(Action):
+    """Transform a card and upgrade the new card.
+    
+    Used by Astrolabe relic.
+    
+    Required:
+        card (Card): Card to transform
+        pile (str): Card location
+        
+    Optional:
+        None
+    """
+    def __init__(self, card, pile: str):
+        self.card = card
+        self.pile = pile
+    
+    def execute(self) -> 'BaseResult':
+        from engine.game_state import game_state
+
+        if not game_state.player:
+            return NoneResult()
+
+        namespace = self.card.namespace
+        
+        # Get a random card from the same namespace
+        new_card = get_random_card(namespaces=[namespace])
+        
+        if new_card is None:
+            return NoneResult()
+        
+        # Upgrade the new card before adding
+        if new_card.can_upgrade():
+            new_card.upgrade()
+        
+        # Return actions: remove old card, add upgraded new card
+        return MultipleActionsResult([
+            RemoveCardAction(card=self.card, src_pile=self.pile),
+            AddCardAction(card=new_card, dest_pile=self.pile),
+        ])
+
+
+@register("action")
+class ChooseTransformAndUpgradeAction(Action):
+    """Choose cards to transform and upgrade.
+    
+    Used by Astrolabe relic: Choose 3 cards, transform each into a random 
+    card of the same color, then upgrade them.
+    
+    Required:
+        pile (str): Card location ('deck' or 'hand')
+        amount (int): Amount of cards to transform (default 3 for Astrolabe)
+        
+    Optional:
+        None
+    """
+    def __init__(self, pile: str = 'deck', amount: int = 3):
+        self.pile = pile
+        self.amount = amount
+    
+    def execute(self) -> 'BaseResult':
+        from engine.game_state import game_state
+        from actions.combat import ModifyMaxHpAction
+        if not game_state.player:
+            return NoneResult()
+        pile = self.pile
+        amount = self.amount
+        
+        card_manager = game_state.player.card_manager
+        from actions.display import SelectAction
+
+        options = []
+        cards_in_pile = card_manager.get_pile(pile)
+
+        for card in cards_in_pile:
+            option = card.display_name
+            options.append(
+                Option(
+                    name = option,
+                    actions = [
+                        TransformAndUpgradeCardAction(card=card, pile=pile),
+                    ]
+                )
+            )
+        if not options:
+            return NoneResult()
+        select_action = SelectAction(
+            title = LocalStr("ui.choose_cards_to_transform_and_upgrade"),
+            options = options,
+            max_select = amount,
+            must_select = True
+        )
+        return SingleActionResult(select_action)
+
+
 @register("action")      
 class ChooseObtainCardAction(Action):
     """Choose a 1/N card to add to deck
@@ -1085,19 +1233,22 @@ class ChooseObtainCardAction(Action):
         use_rolling_offset (bool): If True, adjust rare chance based on common cards gained.
         exclude_set (Optional[List[str]]): List of card idstrs to exclude (prevents duplicates)
         pile (str): Destination pile for selected card
+        allow_upgraded (bool): Whether rewards can roll upgraded cards.
         
     Optional:
         None
     """
     def __init__(self, total: int = 3, namespace: Optional[str] = None, 
                  encounter_type: str = "normal", use_rolling_offset: bool = False,
-                 exclude_set: Optional[List[str]] = None, pile: str = "deck"):
+                 exclude_set: Optional[List[str]] = None, pile: str = "deck",
+                 allow_upgraded: bool = False):
         self.total = total
         self.namespace = namespace
         self.encounter_type = encounter_type
         self.use_rolling_offset = use_rolling_offset
         self.exclude_set = exclude_set or []
         self.pile = pile
+        self.allow_upgraded = allow_upgraded
     
     def execute(self) -> 'BaseResult':
         from engine.game_state import game_state
@@ -1106,17 +1257,31 @@ class ChooseObtainCardAction(Action):
 
         from actions.display import SelectAction
 
+        reward_namespace = self.namespace
+        has_prismatic_shard = any(
+            getattr(relic, "idstr", None) == "PrismaticShard"
+            for relic in game_state.player.relics
+        )
+        if has_prismatic_shard:
+            reward_namespace = None
+
         options = []
         selected_card_ids = list(self.exclude_set)  # Track selected cards to avoid duplicates
         for _ in range(self.total):
             random_card = get_random_card_reward(
-                namespaces=[self.namespace] if self.namespace else None,
+                namespaces=[reward_namespace] if reward_namespace else None,
                 encounter_type=self.encounter_type,
                 use_rolling_offset=self.use_rolling_offset,
-                exclude_set=selected_card_ids
+                exclude_set=selected_card_ids,
+                allow_upgraded=self.allow_upgraded,
             )
             if not random_card:
                 continue
+            if self.pile in ("deck"):
+                for relic in list(game_state.player.relics):
+                    hook = getattr(relic, "should_upgrade_added_card", None)
+                    if hook and hook(random_card, self.pile) and random_card.can_upgrade():
+                        random_card.upgrade()
             selected_card_ids.append(random_card.idstr)  # Track to avoid duplicates in next iteration
             option = random_card.display_name
             options.append(
@@ -1125,6 +1290,19 @@ class ChooseObtainCardAction(Action):
                     actions = [
                         AddCardAction(card=random_card, dest_pile=self.pile),
                     ]
+                )
+            )
+        can_singing_bowl = any(
+            getattr(relic, "idstr", None) == "SingingBowl"
+            and hasattr(relic, "can_choose_max_hp_instead_of_card")
+            and relic.can_choose_max_hp_instead_of_card()
+            for relic in game_state.player.relics
+        )
+        if can_singing_bowl:
+            options.append(
+                Option(
+                    name=LocalStr("ui.gain_max_hp_instead", default="Gain +2 Max HP"),
+                    actions=[ModifyMaxHpAction(amount=2)],
                 )
             )
         if not options:

@@ -15,7 +15,7 @@ from cards.colorless import JAX
 from relics.global_relics.event import MutagenicStrength
 
 
-@register_event(event_id='augmenter', floors='mid', weight=100)
+@register_event(event_id='augmenter', acts=[2], weight=100)
 class Augmenter(Event):
     """Augmenter - exclusive cards and relic."""
     

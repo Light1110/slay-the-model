@@ -16,7 +16,6 @@ from powers.definitions.mayhem import MayhemPower
 from powers.definitions.panache import PanachePower
 from powers.definitions.sadistic_nature import SadisticNaturePower
 from powers.definitions.the_bomb import TheBombPower
-from powers.definitions.shackled import ShackledPower
 from powers.definitions.thorns import ThornsPower
 from powers.definitions.poison import PoisonPower
 from powers.definitions.plated_armor import PlatedArmorPower
@@ -41,7 +40,6 @@ from powers.definitions.juggernaut import JuggernautPower
 from powers.definitions.metallicize import MetallicizePower
 from powers.definitions.rage import RagePower
 from powers.definitions.battle_trance_draw_power import BattleTranceDrawPower
-from powers.definitions.sentinel import SentinelPower
 from powers.definitions.buffer import BufferPower
 from powers.definitions.rupture import RupturePower
 from powers.definitions.enrage import EnragePower
@@ -64,7 +62,6 @@ __all__ = [
     "PanachePower",
     "SadisticNaturePower",
     "TheBombPower",
-    "ShackledPower",
     "ThornsPower",
     "PoisonPower",
     "PlatedArmorPower",
@@ -89,7 +86,6 @@ __all__ = [
     "MetallicizePower",
     "RagePower",
     "BattleTranceDrawPower",
-    "SentinelPower",
     "BufferPower",
     "RupturePower",
     "EnragePower",

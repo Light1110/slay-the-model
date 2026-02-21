@@ -16,7 +16,7 @@ from engine.game_state import game_state
 from cards.colorless.ritual_dagger import RitualDagger
 
 
-@register_event(event_id='the_nest', floors='mid', weight=100)
+@register_event(event_id='the_nest', acts=[2], weight=100)
 class TheNest(Event):
     """The Nest - gold or Ritual Dagger."""
     

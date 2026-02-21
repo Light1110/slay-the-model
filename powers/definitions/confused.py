@@ -3,7 +3,7 @@ Confused power for SneckoEye relic.
 Randomizes card costs whenever a card is drawn.
 """
 from typing import List, Optional
-from powers.base import Power
+from powers.base import Power, StackType
 from actions.base import Action, LambdaAction
 from utils.registry import register
 
@@ -13,17 +13,17 @@ class ConfusedPower(Power):
 
     name = "Confused"
     description = "Randomize the cost of cards whenever they are drawn."
-    stackable = False  # Only one instance needed
+    stack_type = StackType.PRESENCE
     is_buff = False  # Technically not a buff (unpredictable costs)
 
-    def __init__(self, amount: int = 0, duration: int = 0, owner=None):
+    def __init__(self, amount: int = 0, duration: int = -1, owner=None):
         """
         Args:
             amount: Not used for confused (effect is independent of amount)
             duration: 0 for permanent (lasts entire combat)
             owner: The creature that has this power
         """
-        super().__init__(amount=0, duration=duration, owner=owner)
+        super().__init__(amount=amount, duration=duration, owner=owner)
 
     def on_card_draw(self, card) -> List[Action]:
         """Randomize cost of a card when it is drawn.

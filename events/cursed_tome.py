@@ -14,8 +14,23 @@ from localization import LocalStr
 from utils.option import Option
 from engine.game_state import game_state
 
-
-@register_event(event_id='cursed_tome', floors='mid', weight=100)
+# todo: wrong logic
+"""
+```markdown
+# Options ⚜️
+Numbers in parentheses are for Ascension 15 or higher.
+- [Read]
+  - [Continue] Lose 1 HP.
+  - [Continue] Lose 2 HP.
+  - [Continue] Lose 3 HP.
+  - [Take] Obtain the Book. Lose 10 (15) HP.
+    - The book may be 📖 Enchiridion, 📜 Nilry's Codex, or 📖 Necronomicon.
+  - [Stop] Lose 3 HP.
+- [Leave] Nothing happens.
+```
+Hint: book are relics
+"""
+@register_event(event_id='cursed_tome', acts=[2], weight=100)
 class CursedTome(Event):
     """Cursed Tome - HP for boss relic."""
     

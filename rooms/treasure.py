@@ -80,6 +80,25 @@ class TreasureRoom(Room):
         boss_relic_classes = get_random_relic_by_rarity(RarityType.BOSS, count=3)
         boss_relics = [cls() for cls in boss_relic_classes]
         return {"gold": 0, "relic": RarityType.BOSS, "relics": boss_relics}
+
+    def get_chest_open_actions(self):
+        """Collect relic actions triggered when this chest is opened."""
+        if not game_state or not game_state.player:
+            return []
+
+        actions = []
+        for relic in list(game_state.player.relics):
+            hook = getattr(relic, "on_chest_open", None)
+            if not hook:
+                continue
+            result = hook(chest_type=self.chest_type)
+            if not result:
+                continue
+            if isinstance(result, list):
+                actions.extend(result)
+            else:
+                actions.append(result)
+        return actions
     
     def enter(self) -> BaseResult:
         """Enter treasure room and handle chest opening"""

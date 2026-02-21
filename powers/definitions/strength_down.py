@@ -4,7 +4,7 @@ Loses strength at end of turn.
 """
 from typing import List
 from actions.base import Action
-from powers.base import Power
+from powers.base import Power, StackType
 from utils.registry import register
 
 
@@ -14,8 +14,7 @@ class StrengthDownPower(Power):
 
     name = "Strength Down"
     description = "Lose {amount} Strength at the end of your turn."
-    stackable = True
-    amount_equals_duration = False
+    stack_type = StackType.INTENSITY
     is_buff = False
 
     def __init__(self, amount: int = 2, duration: int = 1, owner=None):

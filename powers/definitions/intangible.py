@@ -3,8 +3,9 @@ Intangible power for combat effects.
 Reduce all damage taken to 1.
 """
 from typing import List
-from powers.base import Power
+from powers.base import Power, StackType
 from utils.registry import register
+from utils.damage_phase import DamagePhase
 
 
 @register("power")
@@ -13,11 +14,11 @@ class IntangiblePower(Power):
 
     name = "Intangible"
     description = "Reduce all damage taken to 1."
-    stackable = True
-    amount_equals_duration = False
+    stack_type = StackType.DURATION
     is_buff = True
+    modify_phase = DamagePhase.CAPPING  # Applied last, caps damage to 1
 
-    def __init__(self, amount: int = 1, duration: int = 1, owner=None):
+    def __init__(self, amount: int = 0, duration: int = 1, owner=None):
         """
         Args:
             amount: Not used (duration controls effect)

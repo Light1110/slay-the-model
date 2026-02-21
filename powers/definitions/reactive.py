@@ -5,7 +5,7 @@ Upon receiving attack damage, changes its intent.
 """
 from typing import Any, List
 from actions.base import Action
-from powers.base import Power
+from powers.base import Power, StackType
 from localization import LocalStr
 from utils.registry import register
 
@@ -21,11 +21,10 @@ class ReactivePower(Power):
     """
     
     name = "Reactive"
-    stackable = False
-    amount_equals_duration = False
+    stack_type = StackType.INTENSITY
     is_buff = True
     
-    def __init__(self, amount: int = 1, duration: int = -1, owner=None):
+    def __init__(self, amount: int = 0, duration: int = -1, owner=None):
         """
         Args:
             amount: Not used, kept for consistency

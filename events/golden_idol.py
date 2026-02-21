@@ -9,7 +9,7 @@ from events.event_pool import register_event
 from actions.display import SelectAction, DisplayTextAction
 from actions.card import AddCardAction
 from actions.reward import AddRelicAction
-from actions.combat import LoseHPAction
+from actions.combat import LoseHPAction, ModifyMaxHpAction
 from localization import LocalStr
 from utils.option import Option
 from engine.game_state import game_state
@@ -17,7 +17,7 @@ from relics.global_relics.event import GoldenIdol
 from cards.colorless import Injury
 
 
-@register_event(event_id='golden_idol', floors='early', weight=100)
+@register_event(event_id='golden_idol', acts=[1], weight=100)
 class GoldenIdolEvent(Event):
     """Golden Idol - take relic and face trap consequences."""
     
@@ -53,7 +53,7 @@ class GoldenIdolEvent(Event):
                             ),
                             Option(
                                 name=LocalStr('events.golden_idol.hide'),
-                                actions=[LoseHPAction(percent=hide_percent)]
+                                actions=[ModifyMaxHpAction(percent=hide_percent)] # todo: ModifyMaxHpAction 只有 amount 参数。提前计算好。注意是negative
                             )
                         ]
                     )

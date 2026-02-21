@@ -128,8 +128,14 @@ class GameState:
     
     @property
     def has_all_keys(self) -> bool:
-        """Check if player has all 3 keys for Act 4 access."""
-        return self.ruby_key and self.emerald_key and self.sapphire_key
+        """Check if player has all 3 key relics for Act 4 access."""
+        from relics.global_relics.special import RedKey, BlueKey, GreenKey
+        
+        has_red = any(isinstance(r, RedKey) for r in self.player.relics)
+        has_blue = any(isinstance(r, BlueKey) for r in self.player.relics)
+        has_green = any(isinstance(r, GreenKey) for r in self.player.relics)
+        
+        return has_red and has_blue and has_green
     
     def advance_floor(self) -> bool:
         """

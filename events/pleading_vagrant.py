@@ -15,7 +15,7 @@ from engine.game_state import game_state
 from cards.colorless import Shame
 
 
-@register_event(event_id='pleading_vagrant', floors='mid', weight=100)
+@register_event(event_id='pleading_vagrant', acts=[2], weight=100)
 class PleadingVagrant(Event):
     """Pleading Vagrant - gold for relic or free relic + curse."""
     

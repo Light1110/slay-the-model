@@ -1596,7 +1596,7 @@ Selected:
 End turn
 [DEBUG] End of player turn - current powers: ['Buffer', 'Strength']
 [DEBUG] Power Buffer: duration=-1
-[DEBUG] Power Strength: duration=0
+[DEBUG] Power Strength: duration=-1
 [DEBUG] Marking power Strength for removal
 [DEBUG] remove_power called: power_name=Strength, current powers=['Buffer', 'Strength']
 [DEBUG] After removal: powers=['Buffer']

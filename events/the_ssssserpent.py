@@ -15,7 +15,7 @@ from engine.game_state import game_state
 from cards.colorless import Doubt
 
 
-@register_event(event_id='the_ssssserpent', floors='early', weight=100)
+@register_event(event_id='the_ssssserpent', acts=[1], weight=100)
 class TheSsssserpent(Event):
     """The Ssssserpent - gold for curse."""
     
@@ -36,7 +36,7 @@ class TheSsssserpent(Event):
                 name=LocalStr('events.the_ssssserpent.agree'),
                 actions=[
                     AddGoldAction(amount=gold_amount),
-                    AddCardAction(card=Doubt(), dest_pile="master_deck")
+                    AddCardAction(card=Doubt(), dest_pile="deck")
                 ]
             ),
             Option(

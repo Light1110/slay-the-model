@@ -17,7 +17,7 @@ from engine.game_state import game_state
 from cards.colorless import Decay
 
 
-@register_event(event_id='wheel_of_change', floors='all', weight=100)
+@register_event(event_id='wheel_of_change', acts='shared', weight=100)
 class WheelOfChange(Event):
     """Wheel of Change - random outcome wheel."""
     
@@ -31,8 +31,8 @@ class WheelOfChange(Event):
         
         # Determine outcomes
         outcomes = [
-            AddGoldAction(amount=random.randint(50, 150)),  # Gain gold
-            AddRandomRelicAction(),  # Gain relic
+            AddGoldAction(amount=random.randint(50, 150)),  # todo: Receive 100 gold on Act 1, 200 gold on Act 2, and 300 gold on Act 3.
+            AddRandomRelicAction(),  # todo: The Relic cannot be Bottled Flame, Bottled Lightning, Bottled Tornado, or Whetstone.
             HealAction(percent=1.0),  # Full heal
             AddCardAction(card=Decay()),  # Gain Decay curse
             ChooseRemoveCardAction(),  # Remove a card
@@ -48,10 +48,6 @@ class WheelOfChange(Event):
             Option(
                 name=LocalStr('events.wheel_of_change.play'),
                 actions=[chosen_outcome]
-            ),
-            Option(
-                name=LocalStr('events.wheel_of_change.leave'),
-                actions=[]
             )
         ]
         

@@ -428,15 +428,41 @@ class Card(Localizable):
     def can_play(self, ignore_energy=False) -> tuple[bool, Optional[str]]:
         """Check if this card can be played."""
         from engine.game_state import game_state
+        from utils.types import CardType
         assert game_state.current_combat is not None
         combat_state = game_state.current_combat.combat_state
         if not combat_state.turn_enable_card_play:
             return False, "Normality restriction"
         
+        # VelvetChoker restriction: cannot play more than 6 cards per turn
+        if game_state.player:
+            for relic in game_state.player.relics:
+                if relic.__class__.__name__ == "VelvetChoker":
+                    if combat_state.turn_cards_played >= 6:
+                        return False, "Velvet Choker restriction (max 6 cards per turn)"
+                    break
+        
         cost = self.cost
         
         if cost == COST_UNPLAYABLE:
-            # feture: 状态、诅咒牌在有特定遗物的情况下可以打出
+            if (
+                self.card_type == CardType.STATUS
+                and game_state.player
+                and any(
+                    getattr(relic, "idstr", None) == "MedicalKit"
+                    for relic in game_state.player.relics
+                )
+            ):
+                return True, None
+            if (
+                self.card_type == CardType.CURSE
+                and game_state.player
+                and any(
+                    getattr(relic, "idstr", None) == "BlueCandle"
+                    for relic in game_state.player.relics
+                )
+            ):
+                return True, None
             return False, "Unplayable card."
 
         if not ignore_energy and game_state.player:

@@ -8,7 +8,7 @@ from events.base_event import Event
 from events.event_pool import register_event
 from actions.display import SelectAction, DisplayTextAction
 from actions.card import AddCardAction
-from actions.combat import HealAction, LoseHPAction
+from actions.combat import HealAction, LoseHPAction, ModifyMaxHpAction
 from localization import LocalStr
 from utils.option import Option
 from engine.game_state import game_state
@@ -16,7 +16,7 @@ from cards.colorless.madness import Madness
 from cards.colorless.writhe import Writhe
 
 
-@register_event(event_id='winding_halls', floors='late', weight=100)
+@register_event(event_id='winding_halls', acts=[3], weight=100)
 class WindingHalls(Event):
     """Winding Halls - trade-offs for cards/heal."""
     
@@ -56,7 +56,7 @@ class WindingHalls(Event):
             ),
             Option(
                 name=LocalStr('events.winding_halls.retrace'),
-                actions=[LoseHPAction(percent=0.05)]
+                actions=[ModifyMaxHpAction(percent=0.05)] # 改为计算amount，注意是negative
             )
         ]
         

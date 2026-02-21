@@ -887,7 +887,7 @@ Selected:
 End turn
 [DEBUG] End of player turn - current powers: ['Buffer', 'Weak']
 [DEBUG] Power Buffer: duration=-1
-[DEBUG] Power Weak: duration=0
+[DEBUG] Power Weak: duration=-1
 [DEBUG] Marking power Weak for removal
 [DEBUG] remove_power called: power_name=Weak, current powers=['Buffer', 'Weak']
 [DEBUG] After removal: powers=['Buffer']
@@ -2973,7 +2973,7 @@ Selected:
 End turn
 [DEBUG] End of player turn - current powers: ['Buffer', 'Frail']
 [DEBUG] Power Buffer: duration=-1
-[DEBUG] Power Frail: duration=0
+[DEBUG] Power Frail: duration=-1
 [DEBUG] Marking power Frail for removal
 [DEBUG] remove_power called: power_name=Frail, current powers=['Buffer', 'Frail']
 [DEBUG] After removal: powers=['Buffer']

@@ -15,7 +15,7 @@ from relics.global_relics.event import WarpedTongs
 from cards.colorless import Pain
 
 
-@register_event(event_id='ominous_forge', floors='all', weight=100)
+@register_event(event_id='ominous_forge', acts='shared', weight=100)
 class OminousForge(Event):
     """Ominous Forge - upgrade card or get Warped Tongs + Pain."""
     

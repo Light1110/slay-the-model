@@ -4,13 +4,14 @@ Global relics available at boss rarity.
 """
 from typing import List
 from actions.base import Action, LambdaAction
-from actions.card import AddCardAction, ChooseRemoveCardAction, DrawCardsAction, TransformCardAction
+from actions.card import AddCardAction, ChooseRemoveCardAction, DrawCardsAction, TransformCardAction, ChooseTransformAndUpgradeAction
 from actions.combat import GainBlockAction, GainEnergyAction, HealAction, DealDamageAction, ApplyPowerAction
 from cards.colorless.curse_of_the_bell import CurseOfTheBell
 from cards.colorless.wound import Wound
 from relics.base import Relic
 from utils.types import CombatType, PilePosType, RarityType, CardType
 from utils.registry import register
+from utils.random import get_random_card
 
 # NOTE: AddRandomRelicAction must be imported lazily inside methods
 # to avoid circular import between actions.reward -> relics.base -> relics.global_relics.boss
@@ -40,8 +41,7 @@ class Astrolabe(Relic):
         self.rarity = RarityType.BOSS
     
     def on_obtain(self) -> List[Action]:
-        # todo: ChooseTransformAndUpgradeAction
-        return []
+        return [ChooseTransformAndUpgradeAction(pile="deck", amount=3)]
 
 @register("relic")
 class BlackStar(Relic):
@@ -51,8 +51,10 @@ class BlackStar(Relic):
         super().__init__()
         self.rarity = RarityType.BOSS
     
-    # This would need to hook into elite enemy defeat events
-    # For now, implemented as a passive effect description
+    def on_elite_victory(self, player, entities) -> List[Action]:
+        """Drop an additional random relic when defeating an elite."""
+        from actions.reward import AddRandomRelicAction
+        return [AddRandomRelicAction()]
 
 @register("relic")
 class BlackBlood(Relic):
@@ -77,8 +79,6 @@ class BustedCrown(Relic):
     def on_player_turn_start(self, player, entities):
         """Gain 1 Energy at start of each turn"""
         return [GainEnergyAction(energy=1)]
-    
-    # todo: Implement action in actions/reward.py, If player has this relic, the total options in ChooseAddAction change 3->1
 
 @register("relic")
 class CallingBell(Relic):
@@ -123,8 +123,19 @@ class CursedKey(Relic):
     def on_player_turn_start(self, player, entities):
         """Gain 1 Energy at start of each turn"""
         return [GainEnergyAction(energy=1)]
-    
-    # todo: on_chest_open
+
+    def on_chest_open(self, chest_type: str = None) -> List[Action]:
+        """Gain a Curse when opening a non-boss chest."""
+        if chest_type == "boss":
+            return []
+        curse = get_random_card(
+            namespaces=["colorless"],
+            card_types=[CardType.CURSE],
+            rarities=[RarityType.CURSE],
+        )
+        if curse is None:
+            return []
+        return [AddCardAction(curse, "deck")]
 
 @register("relic")
 class Ectoplasm(Relic):
@@ -137,8 +148,6 @@ class Ectoplasm(Relic):
     def on_player_turn_start(self, player, entities):
         """Gain 1 Energy at start of each turn"""
         return [GainEnergyAction(energy=1)]
-    
-    # todo: Implement in AddGoldAction
 
 @register("relic")
 class EmptyCage(Relic):
@@ -282,7 +291,9 @@ class RunicDome(Relic):
         """Gain 1 Energy at start of each turn"""
         return [GainEnergyAction(energy=1)]
     
-    # Implement the logic in Combat. Dont' print enemy intent info
+    # Hidden intent logic implemented in engine/combat.py:
+    # - _print_combat_state(): skips printing intention info
+    # - execute_enemy_phase(): skips printing "Enemy intends to" message
 
 @register("relic")
 class RunicPyramid(Relic):
@@ -292,8 +303,7 @@ class RunicPyramid(Relic):
         super().__init__()
         self.rarity = RarityType.BOSS
     
-    # This would need to hook into turn end events
-    # For now, implemented as a passive effect description
+    # Implemented in engine/combat.py - hand discard is skipped if player has this relic
 
 @register("relic")
 class SacredBark(Relic):
@@ -303,7 +313,7 @@ class SacredBark(Relic):
         super().__init__()
         self.rarity = RarityType.BOSS
 
-    # todo: Implement in AddPotionAction
+    # Implement in potion
 
 @register("relic")
 class SlaversCollar(Relic):
@@ -335,8 +345,6 @@ class Sozu(Relic):
         """Gain 1 Energy at start of each turn"""
         return [GainEnergyAction(energy=1)]
     
-    # todo: Implement in AddPotionAction
-
 @register("relic")
 class TinyHouse(Relic):
     """Obtain 1 Potion. Gain 50 Gold. Raise your Max HP by 5. Obtain 1 Card. Upgrade 1 Random Card."""
@@ -345,8 +353,19 @@ class TinyHouse(Relic):
         super().__init__()
         self.rarity = RarityType.BOSS
     
-    # This would need to hook into relic pickup events
-    # For now, implemented as a passive effect description
+    def on_obtain(self) -> List[Action]:
+        from actions.reward import AddRandomPotionAction, AddGoldAction
+        from actions.combat import ModifyMaxHpAction
+        from actions.card import ChooseObtainCardAction, UpgradeRandomCardAction
+        from engine.game_state import game_state
+        
+        return [
+            AddRandomPotionAction(game_state.player.namespace),
+            AddGoldAction(amount=50),
+            ModifyMaxHpAction(amount=5),
+            ChooseObtainCardAction(total=3, namespace=game_state.player.namespace, encounter_type="noraml", use_rolling_offset=True),
+            UpgradeRandomCardAction(count=1, namespace=game_state.player.namespace)
+        ]
 
 @register("relic")
 class VelvetChoker(Relic):
@@ -357,10 +376,11 @@ class VelvetChoker(Relic):
         self.rarity = RarityType.BOSS
 
     def on_player_turn_start(self, player, entities):
-        """Gain Energy at start of turn if not at card limit"""
+        """Gain Energy at start of turn"""
         return [GainEnergyAction(energy=1)]
-
-    # Implement in PlayCardAction or Card.can_play. Use combat_state's turn_cards_played
+    
+    # Card play limit implemented in Card.can_play() in cards/base.py
+    # Checks combat_state.turn_cards_played >= 6 and blocks further card plays
 
 @register("relic")
 class WristBlade(Relic):
@@ -370,4 +390,9 @@ class WristBlade(Relic):
         super().__init__()
         self.rarity = RarityType.BOSS
     
-    # Implement in resolve_card_damage and resolve_final_damage
+    def modify_damage_dealt(self, base_damage: int, card=None, target=None) -> int:
+        """Add 4 damage to 0-cost Attack cards."""
+        if card and hasattr(card, 'card_type') and card.card_type == CardType.ATTACK:
+            if hasattr(card, 'cost') and card.cost == 0:
+                return base_damage + 4
+        return base_damage

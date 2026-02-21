@@ -11,7 +11,16 @@ from engine.game_state import GameState
 from powers.definitions import VulnerablePower
 
 # Common relics
-from relics.global_relics.common import Akabeko, Anchor, BronzeScales
+from relics.global_relics.common import (
+    Akabeko,
+    Anchor,
+    BronzeScales,
+    Omamori,
+    PreservedInsect,
+    RegalPillow,
+    MealTicket,
+    ToyOrnithopter,
+)
 
 # Uncommon relics
 from relics.global_relics.uncommon import BlueCandle, Pantograph, Sundial
@@ -196,6 +205,112 @@ class TestNewRelicFeatures:
         assert hasattr(Relic, 'on_shuffle')
         assert hasattr(Relic, 'on_use_potion')
         assert hasattr(Relic, 'on_apply_power')
+
+    def test_omamori_negates_curse_added_to_deck(self):
+        """Omamori should negate curse cards added to deck and consume charges."""
+        from actions.card import AddCardAction
+        from cards.colorless.injury import Injury
+        from engine.game_state import game_state
+
+        game_state.__init__()
+        player = Player(max_hp=70)
+        game_state.player = player
+        player.relics.append(Omamori())
+
+        AddCardAction(card=Injury(), dest_pile="deck").execute()
+        assert len(player.card_manager.get_pile("deck")) == 0
+        assert player.relics[0].curses_to_negate == 1
+
+        AddCardAction(card=Injury(), dest_pile="deck").execute()
+        assert len(player.card_manager.get_pile("deck")) == 0
+        assert all(getattr(r, "idstr", None) != "Omamori" for r in player.relics)
+
+    def test_toy_ornithopter_heals_when_potion_used(self):
+        """ToyOrnithopter should heal 5 HP when a potion is consumed."""
+        from actions.combat import UsePotionAction
+        from engine.game_state import game_state
+        from utils.result_types import MultipleActionsResult
+
+        class DummyPotion:
+            name = "DummyPotion"
+
+            def on_use(self, target):
+                return []
+
+        game_state.__init__()
+        player = Player(max_hp=70)
+        player.hp = 50
+        game_state.player = player
+        player.relics.append(ToyOrnithopter())
+        potion = DummyPotion()
+        player.potions.append(potion)
+
+        result = UsePotionAction(potion=potion, target=player).execute()
+        assert isinstance(result, MultipleActionsResult)
+        for action in result.actions:
+            action.execute()
+
+        assert player.hp == 55
+
+    def test_preserved_insect_reduces_elite_hp(self):
+        """PreservedInsect should reduce elite enemy max HP by 25%."""
+        from engine.game_state import game_state
+        from rooms.combat import CombatRoom
+        from utils.types import RoomType
+
+        class DummyEnemy:
+            def __init__(self):
+                self.max_hp = 100
+                self.hp = 100
+
+        game_state.__init__()
+        player = Player(max_hp=70)
+        game_state.player = player
+        player.relics.append(PreservedInsect())
+        enemy = DummyEnemy()
+
+        room = CombatRoom(enemies=[enemy], room_type=RoomType.ELITE)
+        room.init()
+
+        assert enemy.max_hp == 75
+        assert enemy.hp == 75
+
+    def test_regal_pillow_increases_rest_heal(self):
+        """RegalPillow should add 15 HP to rest healing."""
+        from engine.game_state import game_state
+        from rooms.rest import RestRoom
+        from actions.combat import HealAction
+
+        game_state.__init__()
+        player = Player(max_hp=70)
+        game_state.player = player
+        player.relics.append(RegalPillow())
+
+        room = RestRoom()
+        options = room._create_options()
+        rest_option = options[0]
+        heal_actions = [a for a in rest_option.actions if isinstance(a, HealAction)]
+
+        assert len(heal_actions) == 1
+        assert heal_actions[0].amount == (player.max_hp // 10 * 3) + 15
+
+    def test_meal_ticket_heals_on_shop_entry(self):
+        """MealTicket should add a heal action when entering shop."""
+        from engine.game_state import game_state
+        from rooms.shop import ShopRoom
+        from actions.combat import HealAction
+        from utils.result_types import MultipleActionsResult
+
+        game_state.__init__()
+        player = Player(max_hp=70)
+        game_state.player = player
+        player.relics.append(MealTicket())
+
+        room = ShopRoom()
+        result = room.enter()
+        assert isinstance(result, MultipleActionsResult)
+        assert any(isinstance(action, HealAction) and action.amount == 15
+                   for action in result.actions)
 
 
 class TestRelicImports:

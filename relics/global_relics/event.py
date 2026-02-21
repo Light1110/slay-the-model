@@ -43,8 +43,9 @@ class GoldenIdol(Relic):
         super().__init__()
         self.rarity = RarityType.EVENT
 
-    # This would need to hook into enemy death/reward events
-    # For now, implemented as a passive effect description
+    def modify_gold_gained(self, base_gold: int) -> int:
+        """Increase gold gained by 25%."""
+        return int(base_gold * 1.25)
 
 @register("relic")
 class BloodyIdol(Relic):
@@ -54,9 +55,9 @@ class BloodyIdol(Relic):
         super().__init__()
         self.rarity = RarityType.EVENT
 
-    # This would need to hook into gold gain events
-    # For now, implemented as a passive effect description
-    # Implement in AddGoldAction
+    def on_gold_gained(self, gold_amount: int, player) -> List[Action]:
+        """Heal 5 HP when gold is gained."""
+        return [HealAction(target=player, amount=5)]
 
 @register("relic")
 class GremlinVisage(Relic):
@@ -81,9 +82,9 @@ class MarkOfBloom(Relic):
         super().__init__()
         self.rarity = RarityType.EVENT
 
-    # This would need to hook into healing events
-    # For now, implemented as a passive effect description
-    # Implement in HealAction
+    def modify_heal(self, base_heal: int) -> int:
+        """Completely prevent healing."""
+        return 0
 
 @register("relic")
 class MutagenicStrength(Relic):
@@ -93,9 +94,16 @@ class MutagenicStrength(Relic):
         super().__init__()
         self.rarity = RarityType.EVENT
 
-    def on_player_turn_start(self, player, entities) -> List[Action]:
-        # todo: ApplyPowerAction, Strength and StrengthDown
-        return []
+    def on_combat_start(self, player, entities) -> List[Action]:
+        """Gain 3 Strength at combat start (will be removed at turn end)"""
+        return [ApplyPowerAction(power="Strength", target=player, amount=3)]
+    
+    def on_player_turn_end(self, player, entities) -> List[Action]:
+        """Remove all Strength at turn end"""
+        from actions.combat import RemovePowerAction
+        # Remove all gained Strength (would need to track amount gained)
+        # Simplified: remove 3 Strength
+        return [ApplyPowerAction(power="Strength", target=player, amount=-3)]
 
 @register("relic")
 class Necronomicon(Relic):
@@ -137,7 +145,18 @@ class Enchiridion(Relic):
         super().__init__()
         self.rarity = RarityType.EVENT
 
-    # todo: on_combat_start, AddRandomCardAction
+    def on_combat_start(self, player, entities):
+        """Add a random Power to hand with 0 cost"""
+        from actions.card import AddRandomCardAction
+        from engine.game_state import game_state
+        from utils.types import CardType
+        
+        return [AddRandomCardAction(
+            pile='hand',
+            card_type=CardType.POWER,
+            namespace=game_state.player.namespace,
+            temp_cost=0
+        )]
 
 @register("relic")
 class NeowsLament(Relic):
@@ -147,14 +166,16 @@ class NeowsLament(Relic):
         super().__init__()
         self.rarity = RarityType.EVENT
         self.combat_count = 0
+        self.uses_remaining = 3
 
     def on_combat_start(self, player, entities):
         """Set enemy HP to 1 for first 3 combats"""
-        if self.combat_count < 3:
-            self.combat_count += 1
+        if self.uses_remaining > 0:
+            self.uses_remaining -= 1
             actions = []
             for enemy in entities:
-                actions.append(ModifyMaxHpAction(amount=-enemy.max_hp + 1))
+                # Set current HP to 1, not max HP
+                enemy.hp = 1
             return actions
         return []
 
@@ -165,10 +186,16 @@ class NlothHungryFace(Relic):
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.EVENT
-        self.chest_spawned = False
+        self.chest_consumed = False
 
-    # This would need to hook into chest opening events
-    # For now, implemented as a passive effect description
+    def should_empty_chest(self, chest_type: str = None) -> bool:
+        """The next non-boss chest opened by player is empty."""
+        if self.chest_consumed:
+            return False
+        if chest_type == "boss":
+            return False
+        self.chest_consumed = True
+        return True
 
 @register("relic")
 class OddMushroom(Relic):
@@ -177,9 +204,21 @@ class OddMushroom(Relic):
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.EVENT
+    
+    def modify_damage_taken(self, base_damage: int, source=None) -> int:
+        """Reduce Vulnerable damage from 50% to 25%."""
+        from engine.game_state import game_state
 
-    # This would need to hook into damage calculation
-    # For now, implemented as a passive effect description
+        player = getattr(game_state, "player", None)
+        if not player:
+            return base_damage
+
+        for power in getattr(player, "powers", []):
+            if getattr(power, "name", "") == "Vulnerable":
+                # Vulnerable multiplier has already been applied (x1.5).
+                # Convert to x1.25 by multiplying by 5/6.
+                return int(base_damage * 5 / 6)
+        return base_damage
 
 @register("relic")
 class SsserpentHead(Relic):
@@ -189,8 +228,7 @@ class SsserpentHead(Relic):
         super().__init__()
         self.rarity = RarityType.EVENT
 
-    # This would need to hook into room entry events
-    # For now, implemented as a passive effect description
+    # This hook into room entry events
 
 @register("relic")
 class WarpedTongs(Relic):
@@ -200,10 +238,16 @@ class WarpedTongs(Relic):
         super().__init__()
         self.rarity = RarityType.EVENT
         
-    # ! distinguish on_player_turn_start (pre-draw or post-draw)
-
-    # todo: UpgradeRandomCardAction
-    # Hint: exclude ungradable cards
+    def on_player_turn_start(self, player, entities):
+        """Upgrade a random card in hand for rest of combat"""
+        from actions.card import UpgradeRandomCardAction
+        from engine.game_state import game_state
+        
+        hand = game_state.player.card_manager.get_pile('hand')
+        if hand:
+            # Upgrade a random upgradable card in hand
+            return [UpgradeRandomCardAction(count=1, namespace=game_state.player.namespace)]
+        return []
 
 @register("relic")
 class RedMask(Relic):
@@ -228,7 +272,6 @@ class NlothGift(Relic):
         super().__init__()
         self.rarity = RarityType.EVENT
 
-    # This would need to hook into card reward generation
-    # For now, implemented as a passive effect description
-    
-    # Influence get_random_card_reward
+    def modifies_card_reward_rare_chance(self) -> bool:
+        """Marker hook for get_random_card_reward."""
+        return True

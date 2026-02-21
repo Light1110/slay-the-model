@@ -13,7 +13,7 @@ from localization import LocalStr
 from utils.option import Option
 
 
-@register_event(event_id='sensory_stone', floors='late', weight=100)
+@register_event(event_id='sensory_stone', acts=[3], weight=100)
 class SensoryStone(Event):
     """Sensory Stone - colorless cards for HP."""
     
@@ -30,24 +30,24 @@ class SensoryStone(Event):
             Option(
                 name=LocalStr('events.sensory_stone.recall_1'),
                 actions=[
-                    AddRandomCardAction(namespace='colorless', rarity='uncommon_or_rare')
+                    AddRandomCardAction(namespace='colorless')
                 ]
             ),
             Option(
                 name=LocalStr('events.sensory_stone.recall_2'),
                 actions=[
                     LoseHPAction(amount=5),
-                    AddRandomCardAction(namespace='colorless', rarity='uncommon_or_rare'),
-                    AddRandomCardAction(namespace='colorless', rarity='uncommon_or_rare')
+                    AddRandomCardAction(namespace='colorless'),
+                    AddRandomCardAction(namespace='colorless')
                 ]
             ),
             Option(
                 name=LocalStr('events.sensory_stone.recall_3'),
                 actions=[
                     LoseHPAction(amount=10),
-                    AddRandomCardAction(namespace='colorless', rarity='uncommon_or_rare'),
-                    AddRandomCardAction(namespace='colorless', rarity='uncommon_or_rare'),
-                    AddRandomCardAction(namespace='colorless', rarity='uncommon_or_rare')
+                    AddRandomCardAction(namespace='colorless'),
+                    AddRandomCardAction(namespace='colorless'),
+                    AddRandomCardAction(namespace='colorless')
                 ]
             )
         ]

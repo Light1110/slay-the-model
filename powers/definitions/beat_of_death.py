@@ -5,8 +5,8 @@ Deals damage to player whenever they play a card.
 from typing import List
 
 from actions.base import Action
-from actions.combat import AttackAction
-from powers.base import Power
+from actions.combat import DealDamageAction
+from powers.base import Power, StackType
 from utils.registry import register
 
 
@@ -16,11 +16,10 @@ class BeatOfDeathPower(Power):
 
     name = "Beat of Death"
     description = "Whenever you play a card, take damage."
-    stackable = True
-    amount_equals_duration = False
+    stack_type = StackType.INTENSITY
     is_buff = True
 
-    def __init__(self, amount: int = 1, duration: int = 0, owner=None):
+    def __init__(self, amount: int = 1, duration: int = -1, owner=None):
         """
         Args:
             amount: Damage dealt per card played
@@ -33,10 +32,10 @@ class BeatOfDeathPower(Power):
         if player is None or self.owner is None:
             return []
         return [
-            AttackAction(
+            DealDamageAction(
                 damage=self.amount,
                 target=player,
                 source=self.owner,
-                damage_type="beat_of_death",
+                damage_type="direct",
             )
         ]

@@ -9,11 +9,12 @@ from events.event_pool import register_event
 from actions.display import SelectAction, DisplayTextAction
 from actions.card import ChooseRemoveCardAction, UpgradeRandomCardAction
 # TODO: Create UpgradeAllStrikesAndDefendsAction in actions.card
+# ! No need to create new action. can use LambdaAction
 from localization import LocalStr
 from utils.option import Option
 
 
-@register_event(event_id='ancient_writing', floors='mid', weight=100)
+@register_event(event_id='ancient_writing', acts=[2], weight=100)
 class AncientWriting(Event):
     """Ancient Writing - remove card or upgrade Strikes/Defends."""
     

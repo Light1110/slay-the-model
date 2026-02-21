@@ -17,7 +17,7 @@ from cards.colorless.bite import Bite
 from relics.global_relics.common import BloodVial
 
 
-@register_event(event_id='vampires', floors='mid', weight=100)
+@register_event(event_id='vampires', acts=[2], weight=100)
 class Vampires(Event):
     """Vampires - Strikes to Bites for Max HP."""
     

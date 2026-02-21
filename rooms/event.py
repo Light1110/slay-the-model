@@ -4,13 +4,19 @@ Event room definitions.
 Event rooms are rooms where random events occur when player enters.
 Events can offer choices, rewards, or challenges based on game state.
 """
-from typing import List, Optional
+from typing import List
+
+from actions.base import LambdaAction
+from actions.display import DisplayTextAction, SelectAction
+from localization import LocalStr
 from rooms.base import Room
 from utils.result_types import BaseResult, NoneResult, GameStateResult, MultipleActionsResult, SingleActionResult
 from utils.types import RoomType
 from utils.random import get_random_events
-from actions.display import DisplayTextAction
+from utils.option import Option
+from utils.registry import register
 
+@register("room")
 class EventRoom(Room):
     """
     Event room - presents random events to the player.
@@ -41,20 +47,18 @@ class EventRoom(Room):
         Initialize event room and generate available events.
         
         Generates a list of available events based on current game state
-        including floor number, act, ascension level, and other factors.
+        including Act number and ascension level.
         """
         from engine.game_state import game_state
+        import events  # Ensure all @register_event decorators are loaded.
         
-        # Get random events based on current floor
-        # Can specify count of events and floor range
-        event_count = self._get_event_count(game_state.current_floor)
-        floor_range = self._get_floor_range(game_state.current_floor)
+        # Get random events based on current Act
+        event_count = self._get_event_count(game_state.current_act)
         
         # Get events from pool
         self.available_events = get_random_events(
-            floor=game_state.current_floor,
-            count=event_count,
-            floors=floor_range
+            act=game_state.current_act,
+            count=event_count
         )
         
         # If no events available, create a fallback event
@@ -68,78 +72,63 @@ class EventRoom(Room):
         Returns:
             Execution result from event or NoneResult
         """
-        from engine.game_state import game_state
-        from localization import t
-        from utils.result_types import MultipleActionsResult
-        import random
-
         # Display room description
-        display_action = DisplayTextAction(text=t("rooms.event.enter", default="You encounter a mysterious event..."))
+        display_action = DisplayTextAction(
+            text_key="rooms.event.enter",
+            default="You encounter a mysterious event...",
+        )
 
         # Check if we have available events
         if not self.available_events:
             # No events available, just return the display action
             return SingleActionResult(display_action)
 
-        # Randomly select one event to trigger
-        selected_event = random.choice(self.available_events)
+        # Multiple events: let player choose one event to engage with.
+        if len(self.available_events) > 1:
+            options = []
+            for event in self.available_events:
+                options.append(
+                    Option(
+                        name=self._get_event_option_name(event),
+                        actions=[LambdaAction(func=self._trigger_event, args=[event])],
+                    )
+                )
+            return MultipleActionsResult(
+                [
+                    display_action,
+                    SelectAction(
+                        title=LocalStr(
+                            "rooms.event.choose",
+                            default="Choose an event",
+                        ),
+                        options=options,
+                    ),
+                ]
+            )
 
-        # Trigger selected event
-        event_result = self._trigger_event(selected_event)
-
-        # If event returned a GameStateResult, return it directly
-        if isinstance(event_result, GameStateResult):
-            return event_result
-
-        # If event returned a SingleActionResult, combine with display action
-        if isinstance(event_result, SingleActionResult):
-            return MultipleActionsResult([display_action, event_result.action])
-
-        # If event returned a MultipleActionsResult, combine with display action
-        if isinstance(event_result, MultipleActionsResult):
-            return MultipleActionsResult([display_action] + event_result.actions)
-
-        # If event returned NoneResult, just return the display action
-        return SingleActionResult(display_action)
+        # Single event: trigger directly.
+        event_result = self._trigger_event(self.available_events[0])
+        return self._merge_display_with_result(display_action, event_result)
     
-    def _get_event_count(self, floor: int) -> int:
+    def _get_event_count(self, act: int) -> int:
         """
-        Determine how many events to offer based on floor.
+        Determine how many events to offer based on Act.
         
         Args:
-            floor: Current floor number
+            act: Current Act number (1-3)
             
         Returns:
             Number of events to present
         """
-        # Early game: offer 1 event
-        if floor <= 4:
+        # Act 1: offer 1 event
+        if act == 1:
             return 1
-        # Mid game: offer 2 events
-        elif floor <= 10:
+        # Act 2: offer 2 events
+        elif act == 2:
             return 2
-        # Late game: offer up to 3 events
+        # Act 3+: offer up to 3 events
         else:
             return 3
-    
-    def _get_floor_range(self, floor: int) -> str:
-        """
-        Get floor range category for event filtering.
-        
-        Args:
-            floor: Current floor number
-            
-        Returns:
-            Floor range string ('early', 'mid', 'late', 'boss')
-        """
-        if floor <= 4:
-            return 'early'
-        elif floor <= 10:
-            return 'mid'
-        elif floor <= 15:
-            return 'late'
-        else:
-            return 'boss'
     
     def _trigger_event(self, event) -> BaseResult:
         """
@@ -151,8 +140,6 @@ class EventRoom(Room):
         Returns:
             Result from event trigger
         """
-        from engine.game_state import game_state
-        
         # Mark the triggered event
         self.triggered_event = event
         
@@ -164,8 +151,8 @@ class EventRoom(Room):
             self.should_leave = True
             
             return result
-        
-        return game_state.execute_all_actions()
+
+        return NoneResult()
     
     def _create_fallback_event(self):
         """
@@ -187,8 +174,34 @@ class EventRoom(Room):
                 game_state.player.gold += gold_gain
 
                 return SingleActionResult(
-                    DisplayTextAction(text=t("rooms.event.fallback",
-                                         default=f"You found {gold_gain} gold!"))
+                    DisplayTextAction(
+                        text_key="rooms.event.fallback",
+                        default=f"You found {gold_gain} gold!",
+                    )
                 )
 
         self.available_events = [FallbackEvent()]
+
+    def _get_event_option_name(self, event) -> LocalStr:
+        """Build display text for an event option."""
+        if hasattr(event, "local"):
+            try:
+                return event.local("title")
+            except Exception:
+                pass
+        return LocalStr(
+            key=f"events.{event.__class__.__name__}.title",
+            default=event.__class__.__name__,
+        )
+
+    def _merge_display_with_result(
+        self, display_action: DisplayTextAction, event_result: BaseResult
+    ) -> BaseResult:
+        """Attach room entry display to event execution result."""
+        if isinstance(event_result, GameStateResult):
+            return event_result
+        if isinstance(event_result, SingleActionResult):
+            return MultipleActionsResult([display_action, event_result.action])
+        if isinstance(event_result, MultipleActionsResult):
+            return MultipleActionsResult([display_action] + event_result.actions)
+        return SingleActionResult(display_action)

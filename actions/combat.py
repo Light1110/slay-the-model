@@ -1,6 +1,5 @@
 from actions.base import Action
 from typing import Optional, Callable, Any, List, TYPE_CHECKING
-from actions.card import DiscardCardAction
 from utils.result_types import BaseResult, BaseResult, NoneResult, SingleActionResult, MultipleActionsResult
 from localization import t
 from utils.registry import register
@@ -124,6 +123,17 @@ class HealAction(Action):
                     self.amount or 0
                 )
 
+            # Apply healing modifiers from relics/powers.
+            if heal_target == game_state.player:
+                for relic in list(game_state.player.relics):
+                    if hasattr(relic, "modify_heal"):
+                        heal_amount = relic.modify_heal(heal_amount)
+            if hasattr(heal_target, "powers"):
+                for power in list(heal_target.powers):
+                    if hasattr(power, "modify_heal"):
+                        heal_amount = power.modify_heal(heal_amount)
+            heal_amount = max(0, int(heal_amount))
+
             # Trigger on_heal hook
             actions = heal_target.on_heal(heal_amount)
             if actions:
@@ -161,11 +171,16 @@ class LoseHPAction(Action):
 
     Optional:
         target (Creature): Target to lose HP (defaults to player)
+        card (Card): Card that caused the HP loss (for Rupture triggers)
+        source (Any): Source of the HP loss
     """
-    def __init__(self, amount: int | None = None, percent: float | None = None, target: 'Creature' = None):
+    def __init__(self, amount: int | None = None, percent: float | None = None, 
+                 target: 'Creature' = None, card=None, source=None):
         self.amount = amount
         self.percent = percent
         self.target = target
+        self.card = card
+        self.source = source
 
     def execute(self) -> 'BaseResult':
         from engine.game_state import game_state
@@ -186,8 +201,8 @@ class LoseHPAction(Action):
                 print(t("ui.hp_loss_prevented", default=f"HP loss prevented.", amount=hp_loss))
                 return NoneResult()
 
-            # Trigger on_lose_hp hook
-            actions = lose_target.on_lose_hp(hp_loss)
+            # Trigger on_lose_hp hook with card and source info
+            actions = lose_target.on_lose_hp(hp_loss, source=self.source, card=self.card)
             if actions:
                 actions_to_return.extend(actions)
 
@@ -332,14 +347,15 @@ class DealDamageAction(Action):
             if card_actions:
                 actions_to_return.extend(card_actions)
                 
-        # Trigger on_fatal - check if target is an enemy by checking for is_intention attribute
-        if hasattr(self.target, 'is_intention') and self.target.is_dead():
-            if self.card is not None:
-                actions_to_return.extend(self.card.on_fatal())
-            # Print enemy kill notification
-            from enemies.base import Enemy
-            if isinstance(self.target, Enemy):
-                print(t("combat.enemy_killed", default="Enemy {target_name} has been defeated!", target_name=target_name))
+        # Trigger on_fatal - check if target is an enemy and NOT a minion
+        # Minions (summoned enemies) should not trigger on_fatal effects
+        from enemies.base import Enemy
+        if isinstance(self.target, Enemy) and self.target.is_dead():
+            if not self.target.is_minion:
+                if self.card is not None:
+                    actions_to_return.extend(self.card.on_fatal())
+            # Print enemy kill notification (for all enemies including minions)
+            print(t("combat.enemy_killed", default="Enemy {target_name} has been defeated!", target_name=target_name))
 
         # Trigger relic hooks (on_damage_dealt)
         for relic in game_state.player.relics:
@@ -570,11 +586,16 @@ class PlayCardBHAction(Action):
         
     def execute(self) -> 'BaseResult':
         from engine.game_state import game_state
+        from cards.base import COST_X
+        from utils.types import CardType
         player = game_state.player
         enemies = game_state.current_combat.enemies
         
         # Spend energy
         cost = self.card.cost
+        if getattr(self.card, "_cost", None) == COST_X:
+            cost = player.energy
+            self.card._x_cost_energy = cost
         if cost > 0 and not self.ignore_energy:
             game_state.player.gain_energy(-cost)
             game_state.current_combat.combat_state.player_energy_spent_this_turn += cost
@@ -620,12 +641,54 @@ class PlayCardBHAction(Action):
         print(t('combat.play_card').format(card=card_name))
 
         # Remove card from hand
-        from actions.card import ExhaustCardAction
-        if self.card.get_value('exhaust') == True:
+        from actions.card import DiscardCardAction, ExhaustCardAction
+        has_medical_kit = any(
+            getattr(relic, "idstr", None) == "MedicalKit"
+            for relic in player.relics
+        )
+        should_exhaust_status = (
+            has_medical_kit and self.card.card_type == CardType.STATUS
+        )
+        has_blue_candle = any(
+            getattr(relic, "idstr", None) == "BlueCandle"
+            for relic in player.relics
+        )
+        should_exhaust_curse = (
+            has_blue_candle and self.card.card_type == CardType.CURSE
+        )
+        will_exhaust = (
+            self.card.get_value('exhaust') is True
+            or should_exhaust_status
+            or should_exhaust_curse
+        )
+
+        prevent_exhaust = False
+        if will_exhaust:
+            for relic in player.relics:
+                hook = getattr(relic, "should_prevent_exhaust", None)
+                if not hook:
+                    continue
+                if hook(card=self.card):
+                    prevent_exhaust = True
+                    break
+
+        if will_exhaust and prevent_exhaust:
+            actions.append(DiscardCardAction(card=self.card))
+        elif will_exhaust:
             actions.append(ExhaustCardAction(card=self.card))
         else:
             # Move to discard pile
             actions.append(DiscardCardAction(card=self.card))
+
+        if should_exhaust_curse:
+            hp_loss = 1
+            for relic in player.relics:
+                if getattr(relic, "idstr", None) == "BlueCandle":
+                    hook = getattr(relic, "curse_play_hp_loss", None)
+                    if hook:
+                        hp_loss = hook()
+                    break
+            actions.append(LoseHPAction(amount=hp_loss, target=player, source=self.card))
 
         return MultipleActionsResult(actions)
 
@@ -661,16 +724,15 @@ class ApplyPowerAction(Action):
     Required:
         power (str or Power): Power name string or Power instance
         target (Creature): Target creature to apply power to
-        amount (int): Power amount
-
-    Optional:
         duration (int): Power duration (None to use power's default, 0 for permanent)
+        amount (int): Power amount        
+        
     """
-    def __init__(self, power, target: Creature, amount: int, duration: int = None):
+    def __init__(self, power, target: Creature, duration: int = -1, amount: int = 0):
         self.power = power
         self.target = target
-        self.amount = amount
         self.duration = duration
+        self.amount = amount
 
     def execute(self) -> 'BaseResult':
         """Apply the power to the target creature"""
@@ -695,14 +757,22 @@ class ApplyPowerAction(Action):
             if not power_class:
                 print(f"Power {self.power} not found")
                 return NoneResult()
-            # Create power instance - only pass duration if specified, let power use its default otherwise
-            if self.duration is not None:
-                power_instance = power_class(amount=self.amount, duration=self.duration)
-            else:
-                power_instance = power_class(amount=self.amount)
+            # Create power instance
+            power_instance = power_class(amount=self.amount, duration=self.duration)
         else:
             # Already a Power instance
             power_instance = self.power
+
+        # Check if target's relics prevent this power (e.g., Ginger prevents Weak, Turnip prevents Frail)
+        if game_state.player and self.target == game_state.player:
+            power_name_lower = getattr(power_instance, 'idstr', '').lower()
+            if not power_name_lower:
+                power_name_lower = str(self.power).lower() if isinstance(self.power, str) else ''
+            for relic in game_state.player.relics:
+                if hasattr(relic, "can_receive_power"):
+                    if not relic.can_receive_power(power_name_lower):
+                        print(f"[{relic.__class__.__name__}] Prevented {power_name_lower} from being applied!")
+                        return NoneResult()
 
         # Trigger on_power_added hook before adding
         actions = self.target.on_power_added(power_instance)
@@ -830,6 +900,7 @@ class StartFightAction(Action):
         # Start combat
         combat = Combat(game_state.player, enemy_instances)
         game_state.current_combat = combat
+        # todo: 检查：是不是没有combat.start??
         
         return NoneResult()
 
@@ -918,13 +989,30 @@ class UsePotionAction(Action):
         
         # Get actions from potion's on_use method
         actions = self.potion.on_use(self.target)
-        
+
+        # Trigger relic callbacks for potion use (e.g., ToyOrnithopter).
+        relic_actions = []
+        for relic in list(game_state.player.relics):
+            if not hasattr(relic, "on_use_potion"):
+                continue
+            result = relic.on_use_potion(
+                potion=self.potion,
+                player=game_state.player,
+                entities=game_state.current_combat.enemies if game_state.current_combat else [],
+            )
+            if result:
+                relic_actions.extend(result if isinstance(result, list) else [result])
+
         # Remove potion from player's inventory
         if self.potion in game_state.player.potions:
             game_state.player.potions.remove(self.potion)
         
         target_name = getattr(self.target, 'name', str(self.target))
         print(f"Used potion: {self.potion.name} on {target_name}")
-        
-        return MultipleActionsResult(actions)
-        return NoneResult()
+
+        all_actions = []
+        if actions:
+            all_actions.extend(actions if isinstance(actions, list) else [actions])
+        all_actions.extend(relic_actions)
+
+        return MultipleActionsResult(all_actions)

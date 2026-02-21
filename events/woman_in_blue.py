@@ -11,9 +11,16 @@ from localization import LocalStr
 from utils.option import Option
 from utils.types import RarityType
 
+# todo: wrong logic!
+"""
+[Buy 1 Potion] 20 Gold.
+[Buy 2 Potions] 30 Gold.
+[Buy 3 Potions] 40 Gold.
+[Leave] Nothing happens (Lose HP equal to 5% of Max HP).
+"""
 @register_event(
     event_id="woman_in_blue",
-    floors='mid',
+    acts='shared',
     weight=100
 )
 class WomanInBlueEvent(Event):

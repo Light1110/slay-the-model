@@ -17,7 +17,7 @@ from cards.colorless import Decay
 from relics.global_relics.event import GoldenIdol, BloodyIdol
 
 
-@register_event(event_id='forgotten_altar', floors='mid', weight=100)
+@register_event(event_id='forgotten_altar', acts=[2], weight=100)
 class ForgottenAltar(Event):
     """Forgotten Altar - Golden Idol trade or Max HP sacrifice."""
     

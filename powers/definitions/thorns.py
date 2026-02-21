@@ -5,7 +5,7 @@ Deal damage back when attacked.
 from typing import Any, List
 from actions.base import Action
 from actions.combat import DealDamageAction
-from powers.base import Power
+from powers.base import Power, StackType
 from utils.registry import register
 
 @register("power")
@@ -14,11 +14,10 @@ class ThornsPower(Power):
     
     name = "Thorns"
     description = "When attacked, deal damage back."
-    stackable = True
-    amount_equals_duration = False
+    stack_type = StackType.INTENSITY
     is_buff = True  # Beneficial effect - reflects damage
     
-    def __init__(self, amount: int = 3, duration: int = 0, owner=None):
+    def __init__(self, amount: int = 3, duration: int = -1, owner=None):
         """
         Args:
             amount: Thorns damage to deal (default 3)

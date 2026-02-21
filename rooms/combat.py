@@ -27,6 +27,18 @@ class CombatRoom(Room):
     
     def init(self):
         """Initialize the combat instance"""
+        from engine.game_state import game_state
+
+        if (
+            self.room_type == RoomType.ELITE
+            and game_state.player is not None
+        ):
+            for relic in game_state.player.relics:
+                if getattr(relic, "idstr", None) == "PreservedInsect":
+                    if hasattr(relic, "apply_elite_hp_reduction"):
+                        relic.apply_elite_hp_reduction(self.enemies)
+                    break
+
         # Determine combat type based on room type
         combat_type = CombatType.BOSS if self.room_type == RoomType.BOSS else CombatType.ELITE if self.room_type == RoomType.ELITE else CombatType.NORMAL
         
@@ -88,6 +100,13 @@ class CombatRoom(Room):
         if self.room_type == RoomType.ELITE:
             if self.encounter_name:
                 game_state.elite_history.append(self.encounter_name)
+            # Trigger elite victory hooks for relics (e.g., BlackStar)
+            for relic in game_state.player.relics:
+                elite_actions = relic.on_elite_victory(
+                    player=game_state.player,
+                    entities=[]
+                )
+                actions.extend(elite_actions)
 
         # Calculate gold reward
         gold_amount = self._calculate_gold_reward()
@@ -96,12 +115,22 @@ class CombatRoom(Room):
 
         # Add card reward (non-boss)
         if self.room_type != RoomType.BOSS:
+            from actions.misc import _has_relic
+            reward_options = 1 if _has_relic("Busted Crown", game_state) else 3
+            
+            # Check for PrayerWheel - adds extra card reward for normal enemies
+            combat_type_str = "normal" if self.combat.combat_type == CombatType.NORMAL else "elite"
+            for relic in game_state.player.relics:
+                if hasattr(relic, "modify_card_reward_count"):
+                    reward_options = relic.modify_card_reward_count(reward_options, combat_type_str)
+            
             # 3 choose 1, rarity determined by encounter type
             actions.append(ChooseObtainCardAction(
-                total=3,
+                total=reward_options,
                 namespace=game_state.player.namespace,
-                encounter_type="normal" if self.combat.combat_type==CombatType.NORMAL else "elite",
+                encounter_type=combat_type_str,
                 use_rolling_offset=True,
+                allow_upgraded=True,
             ))
         else:  # boss - 3 rare cards
             actions.append(ChooseAddRandomCardAction(
@@ -114,8 +143,6 @@ class CombatRoom(Room):
         # Add potion reward with probability check
         # Base 40% chance, -10% after drop, +10% after no drop
         # White Beast Statue: always drop
-        from actions.misc import _has_relic
-
         if _has_relic("White Beast Statue", game_state):
             # Always drop with White Beast Statue
             actions.append(AddRandomPotionAction(

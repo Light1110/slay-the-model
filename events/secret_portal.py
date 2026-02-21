@@ -13,14 +13,14 @@ from utils.option import Option
 from engine.game_state import game_state
 
 
-@register_event(event_id='secret_portal', floors='late', weight=100)
+@register_event(event_id='secret_portal', acts=[3], weight=100)
 class SecretPortal(Event):
     """Secret Portal - skip to boss."""
     
     @classmethod
     def can_appear(cls) -> bool:
         """Only appears if 800+ seconds (13:20) elapsed."""
-        return game_state.elapsed_time >= 800
+        return game_state.elapsed_time >= 800 # todo: 在游戏中增加计时策略
     
     def trigger(self) -> BaseResult:
         actions = []

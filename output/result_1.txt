@@ -3953,7 +3953,7 @@ Selected:
 End turn
 [DEBUG] End of player turn - current powers: ['Buffer', 'Dexterity']
 [DEBUG] Power Buffer: duration=-1
-[DEBUG] Power Dexterity: duration=0
+[DEBUG] Power Dexterity: duration=-1
 [DEBUG] Marking power Dexterity for removal
 [DEBUG] remove_power called: power_name=Dexterity, current powers=['Buffer', 'Dexterity']
 [DEBUG] After removal: powers=['Buffer']
@@ -4371,7 +4371,7 @@ Selected:
 End turn
 [DEBUG] End of player turn - current powers: ['Buffer', 'Dexterity']
 [DEBUG] Power Buffer: duration=-1
-[DEBUG] Power Dexterity: duration=0
+[DEBUG] Power Dexterity: duration=-1
 [DEBUG] Marking power Dexterity for removal
 [DEBUG] remove_power called: power_name=Dexterity, current powers=['Buffer', 'Dexterity']
 [DEBUG] After removal: powers=['Buffer']

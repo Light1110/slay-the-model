@@ -119,9 +119,16 @@ class BuyItemAction(Action):
 
         self.shop_item.purchased = True
 
-        if self.shop_item.item_type != "relic" and _has_relic("TheCourier", game_state):
-            # TheCourier restock: when relic items are bought, restock at 80% price
-            self.shop_item.price_multiplier = 0.8
+        # TheCourier: restock cards/relics/potions after purchase.
+        if _has_relic("TheCourier", game_state):
+            should_restock = True
+            for relic in game_state.player.relics:
+                hook = getattr(relic, "should_restock_shop_item", None)
+                if hook:
+                    should_restock = hook(self.shop_item.item_type, self.shop_item.item)
+                    break
+            if should_restock:
+                self._restock_shop_item(game_state)
 
         # Get item name - cards use display_name, relics use name
         item_name = getattr(self.shop_item.item, 'display_name', None)
@@ -136,6 +143,87 @@ class BuyItemAction(Action):
         if _has_relic("MawBank", game_state):
             game_state.gold_spent_in_shop = getattr(game_state, "gold_spent_in_shop", 0) + gold_spent
         return NoneResult()
+
+    def _restock_shop_item(self, game_state) -> None:
+        """Replace purchased shop slot with a new generated item."""
+        from rooms.shop import ShopItem
+        from utils.random import get_random_card, get_random_relic, get_random_potion
+        from utils.types import RarityType, CardType
+        import random
+
+        player = game_state.player
+        if not player:
+            return
+
+        namespace = player.namespace
+        if any(getattr(r, "idstr", None) == "PrismaticShard" for r in player.relics):
+            card_namespaces = None
+        else:
+            card_namespaces = [namespace]
+
+        if self.shop_item.item_type == "card":
+            card_type = random.choice([CardType.ATTACK, CardType.SKILL, CardType.POWER])
+            new_item = get_random_card(
+                rarities=[RarityType.COMMON, RarityType.UNCOMMON, RarityType.RARE],
+                card_types=[card_type],
+                namespaces=card_namespaces,
+            )
+            if not new_item:
+                return
+            if new_item.rarity == RarityType.COMMON:
+                base_price = random.randint(45, 55)
+            elif new_item.rarity == RarityType.UNCOMMON:
+                base_price = random.randint(68, 83)
+            else:
+                base_price = random.randint(135, 165)
+            self.shop_item.item = new_item
+            self.shop_item.base_price = base_price
+            self.shop_item.discount = 0
+            self.shop_item.purchased = False
+            return
+
+        if self.shop_item.item_type == "potion":
+            rarity_roll = random.random()
+            rarity = (
+                RarityType.COMMON
+                if rarity_roll < 0.65
+                else RarityType.UNCOMMON if rarity_roll < 0.90 else RarityType.RARE
+            )
+            new_item = get_random_potion(rarities=[rarity])
+            if not new_item:
+                return
+            if rarity == RarityType.COMMON:
+                base_price = random.randint(48, 53)
+            elif rarity == RarityType.UNCOMMON:
+                base_price = random.randint(71, 79)
+            else:
+                base_price = random.randint(95, 105)
+            self.shop_item.item = new_item
+            self.shop_item.base_price = base_price
+            self.shop_item.discount = 0
+            self.shop_item.purchased = False
+            return
+
+        if self.shop_item.item_type == "relic":
+            rarity_roll = random.random()
+            rarity = (
+                RarityType.COMMON
+                if rarity_roll < 0.50
+                else RarityType.UNCOMMON if rarity_roll < 0.83 else RarityType.RARE
+            )
+            new_item = get_random_relic(rarities=[rarity])
+            if not new_item:
+                return
+            if rarity == RarityType.COMMON:
+                base_price = random.randint(143, 158)
+            elif rarity == RarityType.UNCOMMON:
+                base_price = random.randint(238, 263)
+            else:
+                base_price = random.randint(285, 315)
+            self.shop_item.item = new_item
+            self.shop_item.base_price = base_price
+            self.shop_item.discount = 0
+            self.shop_item.purchased = False
 
 
 # ============================================================================
@@ -155,6 +243,20 @@ class OpenChestAction(Action):
             return NoneResult()
 
         self.treasure_room.chest_opened = True
+        chest_open_actions = self.treasure_room.get_chest_open_actions()
+        empty_chest = False
+
+        if game_state and game_state.player:
+            for relic in list(game_state.player.relics):
+                hook = getattr(relic, "should_empty_chest", None)
+                if not hook:
+                    continue
+                if hook(chest_type=self.treasure_room.chest_type):
+                    empty_chest = True
+                    break
+
+        if empty_chest:
+            return MultipleActionsResult(chest_open_actions)
 
         # Handle chest contents based on type
         if self.treasure_room.chest_type == "boss":
@@ -180,11 +282,13 @@ class OpenChestAction(Action):
                 actions=[]
             ))
 
-            # Return SelectAction to be added to room's action_queue
-            return SingleActionResult(SelectAction(
+            select_action = SelectAction(
                 title=LocalStr("ui.choose_boss_relic"),
                 options=options
-            ))
+            )
+            if chest_open_actions:
+                return MultipleActionsResult(chest_open_actions + [select_action])
+            return SingleActionResult(select_action)
 
         elif self.treasure_room.chest_type == "small":
             actions = []
@@ -199,7 +303,7 @@ class OpenChestAction(Action):
             if relic:
                 actions.append(AddRelicAction(relic=relic.idstr))
                 
-            return MultipleActionsResult(actions)
+            return MultipleActionsResult(chest_open_actions + actions)
             
         elif self.treasure_room.chest_type == "medium":
             actions = []
@@ -217,7 +321,7 @@ class OpenChestAction(Action):
             if relic:
                 actions.append(AddRelicAction(relic=relic.idstr))
                 
-            return MultipleActionsResult(actions)
+            return MultipleActionsResult(chest_open_actions + actions)
 
         elif self.treasure_room.chest_type == "large":
             actions = []
@@ -232,7 +336,7 @@ class OpenChestAction(Action):
             if relic:
                 actions.append(AddRelicAction(relic=relic.idstr))
                 
-            return MultipleActionsResult(actions)
+            return MultipleActionsResult(chest_open_actions + actions)
         
         else:
             raise ValueError(f"Invalid chest type: {self.treasure_room.chest_type}")

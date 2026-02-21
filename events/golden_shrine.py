@@ -14,7 +14,7 @@ from utils.option import Option
 from cards.colorless import Regret
 
 
-@register_event(event_id='golden_shrine', floors='all', weight=100)
+@register_event(event_id='golden_shrine', acts='shared', weight=100)
 class GoldenShrine(Event):
     """Golden shrine - gain gold or gold with curse."""
     

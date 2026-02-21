@@ -30,7 +30,8 @@ class Shame(Card):
         actions.append(ApplyPowerAction(
             power="Frail",
             target=game_state.player,
-            amount=frail_amount
+            amount=frail_amount,
+            duration=frail_amount,
         ))
 
         return actions

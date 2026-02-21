@@ -38,7 +38,8 @@ class Blind(Card):
                 actions.append(ApplyPowerAction(
                     power="Weak",
                     target=enemy,
-                    amount=weak_amount
+                    amount=weak_amount,
+                    duration=weak_amount,
                 ))
         else:
             # Base: Apply to single target
@@ -46,7 +47,8 @@ class Blind(Card):
                 actions.append(ApplyPowerAction(
                     power="Weak",
                     target=target,
-                    amount=weak_amount
+                    amount=weak_amount,
+                    duration=weak_amount,
                 ))
 
         return actions

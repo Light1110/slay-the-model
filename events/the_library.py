@@ -14,7 +14,7 @@ from utils.option import Option
 from engine.game_state import game_state
 
 
-@register_event(event_id='the_library', floors='mid', weight=100)
+@register_event(event_id='the_library', acts=[2], weight=100)
 class TheLibrary(Event):
     """The Library - choose card or heal."""
     

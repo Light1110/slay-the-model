@@ -3,7 +3,7 @@ Evolve power for Ironclad.
 Whenever you draw a status card, draw additional cards.
 """
 from typing import TYPE_CHECKING, List, Any
-from powers.base import Power
+from powers.base import Power, StackType
 from actions.base import Action
 from actions.card import DrawCardsAction
 from utils.registry import register
@@ -15,17 +15,16 @@ class EvolvePower(Power):
 
     name = "Evolve"
     description = "Whenever you draw a status card, draw 1/2."
-    stackable = False
-    amount_equals_duration = False
+    stack_type = StackType.INTENSITY
     is_buff = True
 
-    def __init__(self, amount: int = 1, duration: int = 0, owner=None):
+    def __init__(self, amount: int = 1, duration: int = -1, owner=None):
         """
         Args:
             amount: Cards to draw when status is drawn (default 1)
             duration: 0 for permanent
         """
-        super().__init__(amount=amount, duration=-1, owner=owner)
+        super().__init__(amount=amount, duration=duration, owner=owner)
 
     def on_card_draw(self, card: Any) -> List[Action]:
         """Draw additional card when a status card is drawn."""

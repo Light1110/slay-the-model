@@ -12,7 +12,7 @@ from localization import LocalStr
 from utils.option import Option
 
 
-@register_event(event_id='living_wall', floors='early', weight=100)
+@register_event(event_id='living_wall', acts=[1], weight=100)
 class LivingWall(Event):
     """Living Wall - forced choice of remove/transform/upgrade card."""
     

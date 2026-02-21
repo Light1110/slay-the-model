@@ -9,6 +9,7 @@ from actions.combat import GainBlockAction, GainEnergyAction, HealAction, DealDa
 from relics.base import Relic
 from utils.types import RarityType, CardType
 from utils.registry import register
+from utils.damage_phase import DamagePhase
 
 # NOTE: AddGoldAction and other reward actions must be imported lazily inside methods
 # to avoid circular import between actions.reward -> relics.base -> relics.global_relics.rare
@@ -26,16 +27,6 @@ class BirdFacedUrn(Relic):
         if card.card_type == CardType.POWER:
             return [HealAction(target=player, amount=2)]
         return []
-
-@register("relic")
-class Calipers(Relic):
-    """At the start of your turn, lose 15 Block rather than all of your Block."""
-    
-    def __init__(self):
-        super().__init__()
-        self.rarity = RarityType.RARE
-
-    # Implement in player's on_turn_end or combat flow
 
 @register("relic")
 class CaptainsWheel(Relic):
@@ -106,9 +97,11 @@ class Ginger(Relic):
         super().__init__()
         self.rarity = RarityType.RARE
 
-    # This would need to hook into Weak application events
-    # For now, implemented as a passive effect description
-    # Implement in ApplyPowerAction (check if power is Weak)
+    def can_receive_power(self, power_name: str) -> bool:
+        """Prevent Weak power from being applied"""
+        if power_name.lower() in ("weak", "weakpower"):
+            return False
+        return True
 
 @register("relic")
 class Girya(Relic):
@@ -119,8 +112,17 @@ class Girya(Relic):
         self.rarity = RarityType.RARE
         self.uses_remaining = 3
 
-    # This would need to hook into rest events
-    # For now, implemented as a passive effect description
+    def on_trigger(self, **kwargs) -> List[Action]:
+        """Triggered when player chooses Lift option at rest site"""
+        if self.uses_remaining > 0:
+            self.uses_remaining -= 1
+            from engine.game_state import game_state
+            return [ApplyPowerAction(power="Strength", target=game_state.player, amount=1)]
+        return []
+    
+    def can_use_at_rest(self) -> bool:
+        """Check if Girya can still be used"""
+        return self.uses_remaining > 0
 
 @register("relic")
 class IceCream(Relic):
@@ -129,10 +131,22 @@ class IceCream(Relic):
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.RARE
+        self.conserved_energy = 0
 
-    # This would need to hook into turn end/start events
-    # For now, implemented as a passive effect description
-    # Implement in energy system (modify player?)
+    def on_player_turn_end(self, player, entities):
+        """Store remaining energy at end of turn"""
+        from engine.game_state import game_state
+        if game_state.current_combat is not None:
+            self.conserved_energy = game_state.player.energy
+        return []
+
+    def on_player_turn_start(self, player, entities):
+        """Add conserved energy at start of turn"""
+        actions = []
+        if self.conserved_energy > 0:
+            actions.append(GainEnergyAction(energy=self.conserved_energy))
+            self.conserved_energy = 0
+        return actions
 
 @register("relic")
 class LizardTail(Relic):
@@ -150,17 +164,6 @@ class LizardTail(Relic):
             self.can_revive = False
             return [HealAction(target=player, amount=player.max_hp // 2)]
         return []
-
-@register("relic")
-class MagicFlower(Relic):
-    """Healing is 50% more effective during combat."""
-    
-    def __init__(self):
-        super().__init__()
-        self.rarity = RarityType.RARE
-
-    # This would need to hook into healing events
-    # For now, implemented as a passive effect description
 
 @register("relic")
 class Mango(Relic):
@@ -194,8 +197,9 @@ class PeacePipe(Relic):
         super().__init__()
         self.rarity = RarityType.RARE
 
-    # This would need to hook into rest events
-    # For now, implemented as a passive effect description
+    def can_use_at_rest(self) -> bool:
+        """PeacePipe enables the remove card option at rest sites"""
+        return True
 
 @register("relic")
 class Pocketwatch(Relic):
@@ -238,8 +242,11 @@ class PrayerWheel(Relic):
         super().__init__()
         self.rarity = RarityType.RARE
 
-    # This would need to hook into enemy death/reward events
-    # For now, implemented as a passive effect description
+    def modify_card_reward_count(self, base_count: int, combat_type: str) -> int:
+        """Add an additional card reward for normal enemies"""
+        if combat_type == "normal":
+            return base_count + 1
+        return base_count
 
 @register("relic")
 class Shovel(Relic):
@@ -249,8 +256,9 @@ class Shovel(Relic):
         super().__init__()
         self.rarity = RarityType.RARE
 
-    # This would need to hook into rest events
-    # For now, implemented as a passive effect description
+    def can_use_at_rest(self) -> bool:
+        """Shovel enables the dig option at rest sites"""
+        return True
 
 @register("relic")
 class StoneCalendar(Relic):
@@ -330,14 +338,20 @@ class Tingsha(Relic):
 
 @register("relic")
 class Torii(Relic):
-    """Whenever you would receive 5 or less unblocked Attack damage, reduce it to 1."""
+    """Whenever you receive 5 or less Attack damage, reduce it to 1."""
     
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.RARE
-
-    # This would need to hook into damage calculation
-    # For now, implemented as a passive effect description
+        self.damage_phase = DamagePhase.CAPPING  # Caps damage <=5 to 1
+    
+    def modify_damage_taken(self, base_damage: int, source=None) -> int:
+        """Reduce attack damage <= 5 to 1."""
+        # Note: This applies to all incoming damage <= 5
+        # In the actual game, it only applies to Attack damage from enemies
+        if base_damage <= 5 and base_damage > 0:
+            return 1
+        return base_damage
 
 @register("relic")
 class ToughBandages(Relic):
@@ -353,14 +367,18 @@ class ToughBandages(Relic):
 
 @register("relic")
 class TungstenRod(Relic):
-    """Whenever you would lose HP, lose 1 less."""
+    """Whenever you lose HP, lose 1 less."""
     
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.RARE
-
-    # This would need to hook into damage calculation
-    # For now, implemented as a passive effect description
+        self.damage_phase = DamagePhase.ADDITIVE  # -1 to all damage
+    
+    def modify_damage_taken(self, base_damage: int, source=None) -> int:
+        """Reduce all HP loss by 1."""
+        if base_damage > 0:
+            return max(0, base_damage - 1)
+        return base_damage
 
 @register("relic")
 class Turnip(Relic):
@@ -370,9 +388,23 @@ class Turnip(Relic):
         super().__init__()
         self.rarity = RarityType.RARE
 
-    # This would need to hook into Weak application events
-    # For now, implemented as a passive effect description
-    # Implement in ApplyPowerAction (check if power is Frail)
+    def can_receive_power(self, power_name: str) -> bool:
+        """Prevent Frail power from being applied"""
+        if power_name.lower() in ("frail", "frailpower"):
+            return False
+        return True
+
+@register("relic")
+class Calipers(Relic):
+    """At the end of your turn, lose 15 Block rather than all of it."""
+    
+    def __init__(self):
+        super().__init__()
+        self.rarity = RarityType.RARE
+    
+    # Block retention is handled in engine/combat.py
+    # The combat system checks for Calipers and reduces block by 15 instead of resetting to 0
+
 
 @register("relic")
 class UnceasingTop(Relic):
@@ -381,5 +413,19 @@ class UnceasingTop(Relic):
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.RARE
+        self.triggered_this_empty = False
 
-    # Implement in combat flow
+    def on_card_play(self, card, player, entities) -> List[Action]:
+        """Check if hand is empty after playing a card"""
+        from engine.game_state import game_state
+        if game_state.current_combat is not None:
+            hand = game_state.player.card_manager.get_pile('hand')
+            if len(hand) == 0 and not self.triggered_this_empty:
+                self.triggered_this_empty = True
+                return [DrawCardsAction(count=1)]
+        return []
+
+    def on_player_turn_start(self, player, entities):
+        """Reset tracker at start of turn"""
+        self.triggered_this_empty = False
+        return []

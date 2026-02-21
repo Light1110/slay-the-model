@@ -12,13 +12,13 @@ class TorchHead(Enemy):
     """Minion spawned by The Collector.
     
     Simple enemy that only uses Tackle.
+    This is a summoned minion and should not trigger on_fatal effects.
     """
     
     enemy_type = EnemyType.NORMAL
     
     def __init__(self):
-        super().__init__(hp_range=(20, 25))
-        self._is_minion = True
+        super().__init__(hp_range=(20, 25), is_minion=True)
         
         # Register intentions
         from enemies.act2.the_collector_intentions import Tackle

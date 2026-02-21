@@ -16,7 +16,7 @@ from utils.option import Option
 from engine.game_state import game_state
 
 
-@register_event(event_id='wing_statue', floors='early', weight=100)
+@register_event(event_id='wing_statue', acts=[1], weight=100)
 class WingStatue(Event):
     """Wing Statue - remove card for HP or gold for attack."""
     

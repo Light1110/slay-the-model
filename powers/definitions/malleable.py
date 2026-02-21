@@ -7,7 +7,7 @@ Resets at the start of turn.
 from typing import Any, List
 from actions.base import Action
 from actions.combat import GainBlockAction
-from powers.base import Power
+from powers.base import Power, StackType
 from localization import LocalStr
 from utils.registry import register
 
@@ -22,8 +22,7 @@ class MalleablePower(Power):
     """
     
     name = "Malleable"
-    stackable = True
-    amount_equals_duration = False
+    stack_type = StackType.INTENSITY
     is_buff = True
     
     def __init__(self, amount: int = 4, duration: int = -1, owner=None):

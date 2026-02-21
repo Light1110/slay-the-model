@@ -3,7 +3,7 @@ Strength power for combat effects.
 Increases attack damage by amount.
 """
 from typing import Any, List
-from powers.base import Power
+from powers.base import Power, StackType
 from utils.registry import register
 
 
@@ -13,11 +13,11 @@ class StrengthPower(Power):
     
     name = "Strength"
     description = "Increases attack damage by amount."
-    stackable = True
+    stack_type = StackType.INTENSITY
     is_buff = True  # Beneficial effect - increases damage
     is_additive = True  # Additive modifier (applied before multiplicative)
     
-    def __init__(self, amount: int = 2, duration: int = 0, owner=None):
+    def __init__(self, amount: int = 2, duration: int = -1, owner=None):
         """
         Args:
             amount: Strength to add (default 2, upgraded 4)

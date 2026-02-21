@@ -7,12 +7,15 @@ from enemies.act2.bronze_orb_intentions import Steal, SupportBeam, Beam
 
 
 class BronzeOrb(Enemy):
-    """Bronze Orb is a minion summoned only by the Bronze Automaton."""
+    """Bronze Orb is a minion summoned only by the Bronze Automaton.
+    
+    This is a summoned minion and should not trigger on_fatal effects.
+    """
 
     enemy_type = EnemyType.NORMAL
 
     def __init__(self):
-        super().__init__(hp_range=(20, 21))
+        super().__init__(hp_range=(20, 21), is_minion=True)
         self.add_intention(Steal(self))
         self.add_intention(SupportBeam(self))
         self.add_intention(Beam(self))

@@ -28,9 +28,12 @@ class Debilitate(Intention):
         player = game_state.player
 
         actions: List[Action] = [
-            ApplyPowerAction(power="Vulnerable", target=player, amount=2),
-            ApplyPowerAction(power="Weak", target=player, amount=2),
-            ApplyPowerAction(power="Frail", target=player, amount=2),
+            ApplyPowerAction(power="Vulnerable", target=player,
+                             amount=2, duration=2),
+            ApplyPowerAction(power="Weak", target=player,
+                             amount=2, duration=2),
+            ApplyPowerAction(power="Frail", target=player,
+                             amount=2, duration=2),
         ]
 
         for status_cls in (Burn, Dazed, Slimed, Void, Wound):

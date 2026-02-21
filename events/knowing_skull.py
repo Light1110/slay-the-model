@@ -16,14 +16,14 @@ from utils.option import Option
 from engine.game_state import game_state
 
 
-@register_event(event_id='knowing_skull', floors='mid', weight=100)
+@register_event(event_id='knowing_skull', acts=[2], weight=100)
 class KnowingSkull(Event):
     """Knowing Skull - repeatable HP for rewards."""
     
     @classmethod
     def can_appear(cls) -> bool:
         """Only appears if player has 13+ HP."""
-        return game_state.player.current_hp >= 13
+        return game_state.player.hp >= 13
     
     def __init__(self):
         super().__init__()
@@ -41,6 +41,7 @@ class KnowingSkull(Event):
         base_hp = max(int(game_state.player.max_hp * 0.10), 6)
         hp_cost = base_hp + self.use_count
         
+        # todo: 这里应该有一个循环，可以反复选择。只有选择leave才会离开
         # Build options
         options = [
             Option(

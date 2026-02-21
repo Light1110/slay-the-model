@@ -113,4 +113,4 @@ class ParasiteIntention(Intention):
         from actions.card import AddCardAction
         from cards.colorless.parasite import Parasite
         
-        return [AddCardAction(card=Parasite(), dest_pile="master_deck", source="enemy")]
+        return [AddCardAction(card=Parasite(), dest_pile="deck", source="enemy")]

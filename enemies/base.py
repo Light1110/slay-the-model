@@ -32,6 +32,7 @@ class Enemy(Creature):
         name: str = None,
         max_hp: int = None,
         damage: int = None,
+        is_minion: bool = False,
         **kwargs
     ) -> None:
         """
@@ -42,6 +43,7 @@ class Enemy(Creature):
             name: Optional name override for testing
             max_hp: Optional max HP override for testing (bypasses hp_range)
             damage: Optional base damage for testing
+            is_minion: Whether this enemy is a summoned minion (minions don't trigger on_fatal)
         """
         if max_hp is not None:
             actual_max_hp = max_hp
@@ -53,6 +55,9 @@ class Enemy(Creature):
         # Store optional overrides
         self._name_override = name
         self._base_damage = damage
+        
+        # Minion flag - summoned enemies that shouldn't trigger on_fatal effects
+        self.is_minion = is_minion
         
         # Intention system
         self.intentions: Dict[str, 'Intention'] = {}

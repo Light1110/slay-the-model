@@ -14,7 +14,7 @@ from utils.option import Option
 from engine.game_state import game_state
 
 
-@register_event(event_id='a_note_for_yourself', floors='all', weight=100)
+@register_event(event_id='a_note_for_yourself', acts='shared', weight=100)
 class ANoteForYourself(Event):
     """A Note For Yourself - cross-run card storage."""
     

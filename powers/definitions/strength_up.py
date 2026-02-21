@@ -6,7 +6,7 @@ from typing import List
 
 from actions.base import Action
 from actions.combat import ApplyPowerAction
-from powers.base import Power
+from powers.base import Power, StackType
 from utils.registry import register
 
 
@@ -16,8 +16,7 @@ class StrengthUpPower(Power):
 
     name = "Strength Up"
     description = "At the end of turn, gain {amount} Strength."
-    stackable = False
-    amount_equals_duration = False
+    stack_type = StackType.INTENSITY
     is_buff = True
 
     def __init__(self, amount: int = 0, duration: int = 1, owner=None):

@@ -4,7 +4,7 @@ Whenever you lose HP from a card, gain Strength.
 """
 from typing import List, Any
 from actions.base import Action
-from powers.base import Power
+from powers.base import Power, StackType
 from actions.combat import ApplyPowerAction
 from utils.registry import register
 
@@ -15,27 +15,37 @@ class RupturePower(Power):
 
     name = "Rupture"
     description = "Whenever you lose HP from a card, gain Strength."
-    stackable = True
-    amount_equals_duration = False
+    stack_type = StackType.INTENSITY
     is_buff = True
 
-    def __init__(self, amount: int = 1, duration: int = 0, owner=None):
+    def __init__(self, amount: int = 1, duration: int = -1, owner=None):
         """
         Args:
             amount: Strength to gain when HP is lost (default 1)
-            duration: 0 for permanent
+            duration: -1 for permanent
         """
         super().__init__(amount=amount, duration=-1, owner=owner)
 
-    def on_damage_taken(self, damage: int, source: Any = None, card: Any = None,
-                       player: Any = None, damage_type: str = "direct") -> List[Action]:
-        """Gain Strength when HP is lost from a card."""
+    def on_lose_hp(self, amount: int, source: Any = None, card: Any = None) -> List[Action]:
+        """Gain Strength when HP is lost from a card.
+        
+        Rupture triggers on any HP loss (not damage), such as from
+        self-damage cards like Bloodletting or Burning Blood.
+        
+        Args:
+            amount: Amount of HP lost
+            source: Source of the HP loss
+            card: Card that caused HP loss (if applicable)
+            
+        Returns:
+            List of actions to gain Strength
+        """
         from engine.game_state import game_state
 
         actions = []
 
-        # Only trigger if damage is from a card
-        if damage_type == "hp_loss":
+        # Only trigger if HP loss is from a card
+        if card is not None:
             actions.append(ApplyPowerAction(
                 power="Strength",
                 target=game_state.player,

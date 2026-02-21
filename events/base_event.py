@@ -32,7 +32,6 @@ class Event(Localizable):
         Returns:
             BaseResult: The result of this event.
         """
-        from utils.result_types import NoneResult
         raise NotImplementedError(f"{self.__class__.__name__} must implement trigger()")
     
     def end_event(self) -> None:

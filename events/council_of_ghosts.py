@@ -8,14 +8,14 @@ from events.base_event import Event
 from events.event_pool import register_event
 from actions.display import SelectAction, DisplayTextAction
 from actions.card import AddCardAction
-# TODO: Create LoseMaxHPAction or use ModifyMaxHPAction
+# TODO: use ModifyMaxHPAction
 from localization import LocalStr
 from utils.option import Option
 from engine.game_state import game_state
 from cards.colorless import Apparition
 
 
-@register_event(event_id='council_of_ghosts', floors='mid', weight=100)
+@register_event(event_id='council_of_ghosts', acts=[2], weight=100)
 class CouncilOfGhosts(Event):
     """Council of Ghosts - Max HP for Apparition cards."""
     

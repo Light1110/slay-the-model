@@ -4,7 +4,8 @@ Prevents gaining block for duration.
 """
 from __future__ import annotations
 from typing import List
-from powers.base import Power
+from actions.base import Action
+from powers.base import Power, StackType
 from utils.registry import register
 
 
@@ -14,11 +15,10 @@ class NoBlockPower(Power):
 
     name = "No Block"
     description = "Cannot gain block."
-    stackable = False
-    amount_equals_duration = False
+    stack_type = StackType.DURATION
     is_buff = False
 
-    def __init__(self, amount: int = 1, duration: int = 2, owner=None):
+    def __init__(self, amount: int = 0, duration: int = 2, owner=None):
         """
         Args:
             amount: Not used (power is binary)

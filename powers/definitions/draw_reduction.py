@@ -3,7 +3,7 @@ Draw Reduction power for Time Eater boss.
 Draw 1 less card at the start of each turn.
 """
 from typing import List
-from powers.base import Power
+from powers.base import Power, StackType
 from utils.registry import register
 
 
@@ -17,8 +17,7 @@ class DrawReductionPower(Power):
 
     name = "Draw Reduction"
     description = "Draw 1 less card at the start of each turn."
-    stackable = True
-    amount_equals_duration = True  # amount equals duration for this power
+    stack_type = StackType.INTENSITY
     is_buff = False  # This is a debuff
 
     def __init__(self, amount: int = 1, duration: int = 1, owner=None):
@@ -31,8 +30,5 @@ class DrawReductionPower(Power):
     
     def get_draw_reduction(self) -> int:
         """Return the number of cards to reduce from draw count.
-        
-        Returns:
-            1 (always reduces by 1 card per turn, regardless of stacks)
         """
-        return 1
+        return self.amount

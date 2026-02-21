@@ -13,7 +13,7 @@ from utils.option import Option
 from engine.game_state import game_state
 
 
-@register_event(event_id='divine_fountain', floors='all', weight=100)
+@register_event(event_id='divine_fountain', acts='shared', weight=100)
 class DivineFountain(Event):
     """Divine Fountain - remove all curses."""
     

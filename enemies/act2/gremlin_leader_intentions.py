@@ -113,6 +113,10 @@ class Rally(Intention):
         
         for _ in range(to_summon):
             gremlin_class = random.choice(GREMLIN_TYPES)
-            actions.append(AddEnemyAction(gremlin_class()))
+            # Summoned gremlins are minions and should not trigger on_fatal
+            gremlin = gremlin_class()
+            gremlin.is_minion = True
+            gremlin._is_gremlin = True
+            actions.append(AddEnemyAction(gremlin))
         
         return actions

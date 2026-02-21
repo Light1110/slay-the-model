@@ -4,7 +4,7 @@ Whenever you draw a status card, deal damage to ALL enemies.
 """
 from typing import List, Any
 from actions.base import Action
-from powers.base import Power
+from powers.base import Power, StackType
 from actions.combat import DealDamageAction
 from utils.registry import register
 from utils.types import CardType
@@ -16,11 +16,10 @@ class FireBreathing(Power):
 
     name = "Fire Breathing"
     description = "Whenever you draw a status card, deal damage to ALL enemies."
-    stackable = True
-    amount_equals_duration = False
+    stack_type = StackType.INTENSITY
     is_buff = True
 
-    def __init__(self, amount: int = 7, duration: int = 0, owner=None):
+    def __init__(self, amount: int = 7, duration: int = -1, owner=None):
         """
         Args:
             amount: Damage to deal when status is drawn

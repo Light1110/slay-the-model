@@ -14,7 +14,7 @@ from utils.option import Option
 from engine.game_state import game_state
 
 
-@register_event(event_id='old_beggar', floors='mid', weight=100)
+@register_event(event_id='old_beggar', acts=[2], weight=100)
 class OldBeggar(Event):
     """Old Beggar - pay gold to remove card."""
     

@@ -22,13 +22,18 @@ class Transmutation(Card):
     base_exhaust = True
 
     def on_play(self, targets: List[Creature] = []) -> List[Action]:
-        target = targets[0] if targets else None
         from engine.game_state import game_state
 
         actions = super().on_play(targets)
 
-        # Get X value (energy spent)
-        x_value = self.cost  # This will be the actual energy spent
+        # Get X value (energy spent before card play).
+        x_value = getattr(self, "_x_cost_energy", 0)
+        has_chemical_x = any(
+            getattr(relic, "idstr", None) == "ChemicalX"
+            for relic in game_state.player.relics
+        )
+        if has_chemical_x:
+            x_value += 2
 
         # Add X random colorless cards
         use_upgraded = self.upgrade_level > 0

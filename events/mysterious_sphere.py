@@ -14,7 +14,7 @@ from localization import LocalStr
 from utils.option import Option
 
 
-@register_event(event_id='mysterious_sphere', floors='late', weight=100)
+@register_event(event_id='mysterious_sphere', acts=[3], weight=100)
 class MysteriousSphere(Event):
     """Mysterious Sphere - fight for relic."""
     
@@ -33,7 +33,7 @@ class MysteriousSphere(Event):
                 actions=[
                     StartFightAction(enemies=['orb_walker', 'orb_walker']),
                     AddRandomRelicAction(rarity='rare'),
-                    AddGoldAction(amount=50),  # 45-55 gold
+                    AddGoldAction(amount=50),  # todo: 45-55 gold
                     AddRandomCardAction()
                 ]
             ),

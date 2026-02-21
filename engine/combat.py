@@ -3,6 +3,7 @@ Combat logic class - independent from rooms.
 Can be triggered by CombatRoom or Events.
 Uses global action queue for action management.
 """
+from collections import Counter
 from typing import List
 from actions.base import Action
 from actions.card import DiscardCardAction
@@ -196,11 +197,18 @@ class Combat(Localizable):
 
     def _print_combat_state(self):
         """Print detailed combat state for player feedback"""
+        import random
         from engine.game_state import game_state
         from localization import t
 
         player = game_state.player
         hand = game_state.player.card_manager.get_pile("hand")
+        draw_pile = list(game_state.player.card_manager.get_pile("draw_pile"))
+        discard_pile = list(game_state.player.card_manager.get_pile("discard_pile"))
+        has_frozen_eye = any(
+            getattr(relic, "idstr", None) == "FrozenEye"
+            for relic in game_state.player.relics
+        )
 
         # Print combat status
         print(f"\n{t('combat.display', default='--- Combat Status ---')}")
@@ -212,6 +220,17 @@ class Combat(Localizable):
         print(f"\n{t('ui.hand', default='Hand')} ({len(hand)}):")
         for i, card in enumerate(hand):
             print(f"  [{i+1}] {card.info()}")
+
+        draw_display = list(reversed(draw_pile))
+        if not has_frozen_eye:
+            random.shuffle(draw_display)
+        draw_text = ", ".join(card.display_name.resolve() for card in draw_display)
+        discard_text = ", ".join(card.display_name.resolve() for card in discard_pile)
+        print(f"\n{t('ui.draw_pile', default='Draw Pile')} ({len(draw_pile)}): {draw_text}")
+        print(
+            f"{t('ui.discard_pile', default='Discard Pile')} "
+            f"({len(discard_pile)}): {discard_text}"
+        )
         
         # Print player powers with descriptions
         if player.powers:
@@ -253,8 +272,9 @@ class Combat(Localizable):
                     if power_desc and not power_desc.startswith(power.localization_prefix if hasattr(power, 'localization_prefix') else ""):
                         print(f"      {power_desc}")
             
-            # Print enemy intention
-            if enemy.current_intention:
+            # Print enemy intention (hidden if player has RunicDome)
+            has_runic_dome = any(r.__class__.__name__ == "RunicDome" for r in game_state.player.relics)
+            if enemy.current_intention and not has_runic_dome:
                 intention = enemy.current_intention
                 intention_text = intention.description.resolve()
                 print(f"  {t('ui.intention', default='Intention')}: {intention_text}")
@@ -298,8 +318,10 @@ class Combat(Localizable):
             game_state.action_queue.add_actions(card.on_player_turn_end())
 
         # Discard hand (cards in hand are shuffled into discard pile)
+        # RunicPyramid: At the end of your turn, you no longer discard your hand.
         from actions.card import ExhaustCardAction
-        if game_state.player.card_manager:
+        has_runic_pyramid = any(r.__class__.__name__ == "RunicPyramid" for r in game_state.player.relics)
+        if game_state.player.card_manager and not has_runic_pyramid:
             hand = game_state.player.card_manager.get_pile("hand").copy()
             for card in hand:
                 game_state.action_queue.add_action(DiscardCardAction(card=card, source_pile="hand"))
@@ -335,21 +357,23 @@ class Combat(Localizable):
                 if not has_barricade:
                     enemy.block = 0
                 
-                # Print enemy intention before executing
-                enemy_name_raw = enemy.local("name").resolve() if hasattr(enemy, 'local') else 'Enemy'
-                # Extract readable name from localization key (e.g., "Cultist" from "enemies.Cultist.name")
-                if enemy_name_raw.startswith("enemies."):
-                    enemy_name = enemy_name_raw.split(".")[1] if len(enemy_name_raw.split(".")) > 1 else enemy_name_raw
-                else:
-                    enemy_name = enemy_name_raw
-                intent_desc_raw = enemy.current_intention.description.resolve() if hasattr(enemy, 'current_intention') and hasattr(enemy.current_intention, 'description') else ''
-                # Extract readable description from localization key
-                if intent_desc_raw.startswith("enemies."):
-                    intent_desc = intent_desc_raw.split(".")[-1] if "." in intent_desc_raw else intent_desc_raw
-                else:
-                    intent_desc = intent_desc_raw
-                if intent_desc:
-                    print(f">> Enemy [{enemy_name}] intends to: {intent_desc}")
+                # Print enemy intention before executing (hidden if player has RunicDome)
+                has_runic_dome = any(r.__class__.__name__ == "RunicDome" for r in game_state.player.relics)
+                if not has_runic_dome:
+                    enemy_name_raw = enemy.local("name").resolve() if hasattr(enemy, 'local') else 'Enemy'
+                    # Extract readable name from localization key (e.g., "Cultist" from "enemies.Cultist.name")
+                    if enemy_name_raw.startswith("enemies."):
+                        enemy_name = enemy_name_raw.split(".")[1] if len(enemy_name_raw.split(".")) > 1 else enemy_name_raw
+                    else:
+                        enemy_name = enemy_name_raw
+                    intent_desc_raw = enemy.current_intention.description.resolve() if hasattr(enemy, 'current_intention') and hasattr(enemy.current_intention, 'description') else ''
+                    # Extract readable description from localization key
+                    if intent_desc_raw.startswith("enemies."):
+                        intent_desc = intent_desc_raw.split(".")[-1] if "." in intent_desc_raw else intent_desc_raw
+                    else:
+                        intent_desc = intent_desc_raw
+                    if intent_desc:
+                        print(f">> Enemy [{enemy_name}] intends to: {intent_desc}")
                 game_state.action_queue.add_actions(enemy.execute_intention())
 
         # Process enemy turn-end effects (tick down power durations)
@@ -416,6 +440,7 @@ class Combat(Localizable):
         # Reset card manager for combat (initialize draw pile from deck)
         if hasattr(game_state.player, 'card_manager'):
             game_state.player.card_manager.reset_for_combat()
+            self._prepare_opening_hand()
         
         # Reset combat flags
         self.combat_ended = False
@@ -443,7 +468,43 @@ class Combat(Localizable):
             game_state.player.add_power(BufferPower(amount=999, owner=game_state.player))
             # print(f"[DEBUG] Added BufferPower with 999 stacks to player")
         
-        # todo: prepare innate cards to top of draw_pile
+    def _prepare_opening_hand(self):
+        """Move innate/bottled cards from draw pile to opening hand."""
+        from engine.game_state import game_state
+
+        card_manager = game_state.player.card_manager
+        draw_pile = list(card_manager.get_pile("draw_pile"))
+
+        def _bottle_key(card):
+            """Key for bottled-card matching: distinguish upgrade levels."""
+            card_id = getattr(card, "idstr", card.__class__.__name__)
+            upgrade_level = getattr(card, "upgrade_level", 0)
+            return (card_id, upgrade_level)
+
+        # 1) Innate cards always start in hand.
+        for card in draw_pile:
+            if getattr(card, "innate", False):
+                card_manager.move_to(card=card, src="draw_pile", dst="hand")
+
+        # 2) Bottled relic cards (if selected) should also start in hand.
+        # selected_card references deck-time objects, so match by id+upgrade_level.
+        bottled_targets = Counter()
+        for relic in game_state.player.relics:
+            selected_card = getattr(relic, "selected_card", None)
+            if selected_card is None:
+                continue
+            card_key = _bottle_key(selected_card)
+            bottled_targets[card_key] += 1
+
+        if not bottled_targets:
+            return
+
+        for card in list(card_manager.get_pile("draw_pile")):
+            card_key = _bottle_key(card)
+            if bottled_targets[card_key] <= 0:
+                continue
+            card_manager.move_to(card=card, src="draw_pile", dst="hand")
+            bottled_targets[card_key] -= 1
 
     def _start_player_turn(self):
         """Start player turn - draw cards, reset energy, trigger start-of-turn effects"""
@@ -474,6 +535,12 @@ class Combat(Localizable):
                 draw_reduction += power.get_draw_reduction()
         
         draw_count = max(0, draw_count - draw_reduction)
+
+        # First combat turn only: if opening hand already has X cards
+        # (e.g., Innate/Bottled), only draw max(Y-X, 0) cards.
+        if self.combat_state.combat_turn == 0:
+            opening_hand_count = len(game_state.player.card_manager.get_pile("hand"))
+            draw_count = max(0, draw_count - opening_hand_count)
         
         if draw_count > 0:
             print(f"\n{t('combat.draw_cards', count=draw_count, default=f'Draw {draw_count} cards')}")

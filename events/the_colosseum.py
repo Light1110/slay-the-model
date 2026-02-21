@@ -15,7 +15,7 @@ from utils.option import Option
 from engine.game_state import game_state
 
 
-@register_event(event_id='the_colosseum', floors='mid', weight=100)
+@register_event(event_id='the_colosseum', acts=[2], weight=100)
 class TheColosseum(Event):
     """The Colosseum - double fight for rewards."""
     
@@ -39,6 +39,8 @@ class TheColosseum(Event):
         # Build options
         options = []
         
+        # todo: 不能用if-else。而是顺序关系。
+        # 分析：应该事件只为trigger一次吧？那就要在同一个事件里进行（可能的）两场战斗
         if not self.first_fight_done:
             options.append(Option(
                 name=LocalStr('events.the_colosseum.fight'),

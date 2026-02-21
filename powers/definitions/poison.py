@@ -5,7 +5,7 @@ Lose HP at start of turn, then reduce by 1.
 from typing import List
 from actions.base import Action
 from actions.combat import LoseHPAction
-from powers.base import Power
+from powers.base import Power, StackType
 from utils.registry import register
 
 @register("power")
@@ -14,8 +14,7 @@ class PoisonPower(Power):
     
     name = "Poison"
     description = "Lose HP at start of turn, then reduce by 1."
-    stackable = True
-    amount_equals_duration = False
+    stack_type = StackType.LINKED
     is_buff = False  # Debuff - loses HP over time
     
     def __init__(self, amount: int = 3, duration: int = 3, owner=None):

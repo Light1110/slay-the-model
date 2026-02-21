@@ -2,7 +2,7 @@
 """Thievery power - steals gold when attacking."""
 
 from typing import List, Any, TYPE_CHECKING
-from powers.base import Power
+from powers.base import Power, StackType
 from utils.registry import register
 
 if TYPE_CHECKING:
@@ -17,7 +17,7 @@ class ThieveryPower(Power):
     """
     
     localization_prefix = "powers"
-    stackable = True
+    stack_type = StackType.INTENSITY
     is_buff = True
     
     def __init__(self, amount: int = 15, duration: int = -1, owner=None):

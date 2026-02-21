@@ -15,14 +15,9 @@ from engine.game_state import game_state
 from cards.colorless import Writhe
 
 
-@register_event(event_id='the_mausoleum', floors='mid', weight=100)
+@register_event(event_id='the_mausoleum', acts=[2], weight=100)
 class TheMausoleum(Event):
     """The Mausoleum - relic with curse risk."""
-    
-    @classmethod
-    def can_appear(cls) -> bool:
-        """Only appears on Ascension 15+."""
-        return game_state.ascension >= 15
     
     def trigger(self) -> BaseResult:
         actions = []

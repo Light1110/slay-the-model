@@ -7,7 +7,7 @@ from typing import List
 from actions.base import Action
 from actions.card import AddCardAction
 from cards.colorless.wound import Wound
-from powers.base import Power
+from powers.base import Power, StackType
 from utils.registry import register
 from utils.types import CardType
 
@@ -18,11 +18,10 @@ class PainfulStabsPower(Power):
 
     name = "Painful Stabs"
     description = "Whenever you play an Attack, shuffle a Wound into discard."
-    stackable = False
-    amount_equals_duration = False
+    stack_type = StackType.PRESENCE
     is_buff = True
 
-    def __init__(self, amount: int = 1, duration: int = 0, owner=None):
+    def __init__(self, amount: int = 0, duration: int = -1, owner=None):
         """
         Args:
             amount: Not used for this power (non-stackable)

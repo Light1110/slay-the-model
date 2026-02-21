@@ -14,7 +14,7 @@ from utils.option import Option
 from engine.game_state import game_state
 
 
-@register_event(event_id='we_meet_again', floors='all', weight=100)
+@register_event(event_id='we_meet_again', acts='shared', weight=100)
 class WeMeetAgain(Event):
     """We Meet Again! - trade items for relic."""
     
@@ -44,7 +44,7 @@ class WeMeetAgain(Event):
             options.append(Option(
                 name=LocalStr('events.we_meet_again.give_gold'),
                 actions=[
-                    LoseGoldAction(amount=100),  # Average of 50-150
+                    LoseGoldAction(amount=100),  # todo: random in range 50-min(player.gold, 150)
                     AddRandomRelicAction()
                 ]
             ))
@@ -53,6 +53,13 @@ class WeMeetAgain(Event):
         options.append(Option(
             name=LocalStr('events.we_meet_again.give_card'),
             actions=[
+                # todo: 需要 filter 掉一下类型手牌：
+                # ? 可能要修改ChooseRemoveCardAction
+                """
+                Not a Curse card.
+                Not a Basic（Starter） card.
+                Not a Bottled card.
+                """
                 ChooseRemoveCardAction(),  # Player chooses a card to remove
                 AddRandomRelicAction()
             ]

@@ -12,7 +12,7 @@ from localization import LocalStr
 from utils.option import Option
 
 
-@register_event(event_id='upgrade_shrine', floors='all', weight=100)
+@register_event(event_id='upgrade_shrine', acts='shared', weight=100)
 class UpgradeShrine(Event):
     """Upgrade shrine - upgrade a card."""
     

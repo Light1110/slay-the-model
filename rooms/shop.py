@@ -45,8 +45,8 @@ class ShopItem:
             if _has_relic("MembershipCard", game_state):
                 final_price = int(final_price * 0.5)
 
-            # TheCourier: 80% price on restocked items (after purchase)
-            if self.item_type != "relic" and _has_relic("TheCourier", game_state) and self.purchased:
+            # TheCourier: all shop prices are reduced by 20%.
+            if _has_relic("TheCourier", game_state):
                 final_price = int(final_price * 0.8)
 
             # SmilingMask: card removal always 50 gold
@@ -74,6 +74,16 @@ class ShopRoom(Room):
         """Enter shop room and handle purchasing loop"""
         # Display shop entry message
         entry_action = DisplayTextAction(text_key="rooms.shop.enter")
+        entry_bonus_actions = []
+
+        # MealTicket: heal 15 HP on shop entry.
+        for relic in game_state.player.relics:
+            if getattr(relic, "idstr", None) == "MealTicket" and hasattr(relic, "on_shop_enter"):
+                result = relic.on_shop_enter(player=game_state.player, entities=[])
+                if result:
+                    entry_bonus_actions.extend(
+                        result if isinstance(result, list) else [result]
+                    )
 
         # Main shop loop
         while not self.should_leave:
@@ -83,7 +93,7 @@ class ShopRoom(Room):
             if select_action:
                 # Return entry message on first iteration, then select action
                 if entry_action:
-                    actions = [entry_action, select_action]
+                    actions = [entry_action] + entry_bonus_actions + [select_action]
                     entry_action = None  # Only show entry message once
                 else:
                     actions = [select_action]
@@ -111,6 +121,12 @@ class ShopRoom(Room):
         items = []
         character = game_state.player.character if game_state.player else "Ironclad"
         namespace = game_state.player.namespace if game_state.player else "ironclad"
+        card_namespaces = [namespace]
+        if game_state.player and any(
+            getattr(relic, "idstr", None) == "PrismaticShard"
+            for relic in game_state.player.relics
+        ):
+            card_namespaces = None
         ascension = getattr(game_state, 'ascension_level', 0)
         
         # Generate 5 colored cards (2 attacks, 2 skills, 1 power)
@@ -118,7 +134,7 @@ class ShopRoom(Room):
             card = get_random_card(
                 rarities=[RarityType.COMMON, RarityType.UNCOMMON, RarityType.RARE],
                 card_types=[CardType.SKILL],
-                namespaces=[namespace]
+                namespaces=card_namespaces
             )
             if card is None:
                 raise ValueError("unable to get card")
@@ -188,7 +204,7 @@ Having both this and MembershipCard.png Membership Card will reduce prices by a 
             card = get_random_card(
                 rarities=[RarityType.COMMON, RarityType.UNCOMMON, RarityType.RARE],
                 card_types=[CardType.SKILL],
-                namespaces=[namespace]
+                namespaces=card_namespaces
             )
             if card is None:
                 raise ValueError("unable to get card")
@@ -204,7 +220,7 @@ Having both this and MembershipCard.png Membership Card will reduce prices by a 
         card = get_random_card(
             rarities=[RarityType.COMMON, RarityType.UNCOMMON, RarityType.RARE],
             card_types=[CardType.POWER],
-            namespaces=[namespace]
+            namespaces=card_namespaces
         )
         if card is None:
             raise ValueError("unable to get card")
@@ -221,7 +237,7 @@ Having both this and MembershipCard.png Membership Card will reduce prices by a 
             card = get_random_card(
                 rarities=[RarityType.COMMON, RarityType.UNCOMMON, RarityType.RARE],
                 card_types=[CardType.SKILL],
-                namespaces=[namespace]
+                namespaces=card_namespaces
             )
             if card is None:
                 raise ValueError("unable to get card")
@@ -237,7 +253,7 @@ Having both this and MembershipCard.png Membership Card will reduce prices by a 
         card = get_random_card(
             rarities=[RarityType.COMMON, RarityType.UNCOMMON, RarityType.RARE],
             card_types=[CardType.POWER],
-            namespaces=[namespace]
+            namespaces=card_namespaces
         )
         if card is None:
             raise ValueError("unable to get card")
@@ -304,13 +320,19 @@ Having both this and MembershipCard.png Membership Card will reduce prices by a 
         cards = []
         character = game_state.player.character if game_state.player else "Ironclad"
         namespace = game_state.player.namespace if game_state.player else "ironclad"
+        card_namespaces = [namespace]
+        if game_state.player and any(
+            getattr(relic, "idstr", None) == "PrismaticShard"
+            for relic in game_state.player.relics
+        ):
+            card_namespaces = None
         
         # Generate 2 attacks
         for _ in range(2):
             card = get_random_card(
                 rarities=[RarityType.COMMON, RarityType.UNCOMMON, RarityType.RARE],
                 card_types=[CardType.ATTACK],
-                namespaces=[namespace]
+                namespaces=card_namespaces
             )
             if card:
                 cards.append(card)
@@ -320,7 +342,7 @@ Having both this and MembershipCard.png Membership Card will reduce prices by a 
             card = get_random_card(
                 rarities=[RarityType.COMMON, RarityType.UNCOMMON, RarityType.RARE],
                 card_types=[CardType.SKILL],
-                namespaces=[namespace]
+                namespaces=card_namespaces
             )
             if card:
                 cards.append(card)
@@ -329,7 +351,7 @@ Having both this and MembershipCard.png Membership Card will reduce prices by a 
         card = get_random_card(
             rarities=[RarityType.COMMON, RarityType.UNCOMMON, RarityType.RARE],
             card_types=[CardType.POWER],
-            namespaces=[namespace]
+            namespaces=card_namespaces
         )
         if card:
             cards.append(card)

@@ -150,12 +150,12 @@ class TestPowerInfo(unittest.TestCase):
         self.assertIn("Type: Debuff", str(info))
         
     def test_power_info_permanent(self):
-        """Test power info for permanent power (duration=0)"""
+        """Test power info for permanent power (duration=-1)"""
         
         class TestPermanent(Power):
             is_buff = True
         
-        power = TestPermanent(amount=10, duration=0)
+        power = TestPermanent(amount=10, duration=-1)
         info = power.info()
         
         self.assertIn("Amount: 10", str(info))

@@ -3,8 +3,9 @@ Curiosity power for enemies.
 Gain Strength when the player plays a Power card.
 """
 from typing import List
+from actions.base import Action
 from actions.combat import ApplyPowerAction
-from powers.base import Power
+from powers.base import Power, StackType
 from powers.definitions.strength import StrengthPower
 from utils.registry import register
 
@@ -18,7 +19,7 @@ class CuriosityPower(Power):
     
     name = "Curiosity"
     description = "Whenever the player plays a Power card, gain 1 Strength."
-    stackable = True
+    stack_type = StackType.INTENSITY
     is_buff = True  # Beneficial effect for the enemy
     
     def __init__(self, amount: int = 1, duration: int = -1, owner=None):

@@ -185,3 +185,114 @@ class TestGetRandomCardRewardIntegration:
         )
         assert card_shop is not None
 
+
+class TestRewardCardUpgradeChance:
+    """Tests for combat reward upgraded card chance by act/ascension."""
+
+    @patch('utils.random.random.choice', side_effect=lambda seq: seq[0])
+    @patch('utils.random.random.choices')
+    @patch('utils.random.list_registered')
+    @patch('utils.random.get_registered')
+    @patch('engine.game_state.game_state')
+    def test_act2_reward_can_upgrade(self, mock_gs, mock_get, mock_list,
+                                     mock_choices, _mock_choice):
+        """Act 2 combat rewards can roll upgraded cards."""
+        mock_gs.current_act = 2
+        mock_gs.ascension = 0
+        mock_gs.player.relics = []
+
+        mock_list.return_value = ["card1"]
+
+        mock_card_cls = MagicMock()
+        mock_card = MagicMock()
+        mock_card.namespace = "test"
+        mock_card.rarity = RarityType.COMMON
+        mock_card.can_upgrade.return_value = True
+        mock_card_cls.return_value = mock_card
+        mock_get.return_value = mock_card_cls
+
+        mock_choices.return_value = [(RarityType.COMMON, ["card1"])]
+
+        from utils.random import get_random_card_reward
+
+        with patch('utils.random.random.random', return_value=0.2):
+            card = get_random_card_reward(
+                namespaces=["test"],
+                encounter_type="normal",
+                allow_upgraded=True,
+            )
+
+        assert card is mock_card
+        mock_card.upgrade.assert_called_once()
+
+    @patch('utils.random.random.choice', side_effect=lambda seq: seq[0])
+    @patch('utils.random.random.choices')
+    @patch('utils.random.list_registered')
+    @patch('utils.random.get_registered')
+    @patch('engine.game_state.game_state')
+    def test_act1_reward_never_upgrades(self, mock_gs, mock_get, mock_list,
+                                        mock_choices, _mock_choice):
+        """Act 1 combat rewards should not upgrade."""
+        mock_gs.current_act = 1
+        mock_gs.ascension = 0
+        mock_gs.player.relics = []
+
+        mock_list.return_value = ["card1"]
+
+        mock_card_cls = MagicMock()
+        mock_card = MagicMock()
+        mock_card.namespace = "test"
+        mock_card.rarity = RarityType.COMMON
+        mock_card.can_upgrade.return_value = True
+        mock_card_cls.return_value = mock_card
+        mock_get.return_value = mock_card_cls
+
+        mock_choices.return_value = [(RarityType.COMMON, ["card1"])]
+
+        from utils.random import get_random_card_reward
+
+        with patch('utils.random.random.random', return_value=0.0):
+            card = get_random_card_reward(
+                namespaces=["test"],
+                encounter_type="normal",
+                allow_upgraded=True,
+            )
+
+        assert card is mock_card
+        mock_card.upgrade.assert_not_called()
+
+    @patch('utils.random.random.choice', side_effect=lambda seq: seq[0])
+    @patch('utils.random.random.choices')
+    @patch('utils.random.list_registered')
+    @patch('utils.random.get_registered')
+    @patch('engine.game_state.game_state')
+    def test_asc12_act2_upgrade_chance_halved(self, mock_gs, mock_get, mock_list,
+                                              mock_choices, _mock_choice):
+        """Ascension 12+ halves Act 2 reward upgrade chance to 12.5%."""
+        mock_gs.current_act = 2
+        mock_gs.ascension = 12
+        mock_gs.player.relics = []
+
+        mock_list.return_value = ["card1"]
+
+        mock_card_cls = MagicMock()
+        mock_card = MagicMock()
+        mock_card.namespace = "test"
+        mock_card.rarity = RarityType.COMMON
+        mock_card.can_upgrade.return_value = True
+        mock_card_cls.return_value = mock_card
+        mock_get.return_value = mock_card_cls
+
+        mock_choices.return_value = [(RarityType.COMMON, ["card1"])]
+
+        from utils.random import get_random_card_reward
+
+        with patch('utils.random.random.random', return_value=0.2):
+            card = get_random_card_reward(
+                namespaces=["test"],
+                encounter_type="normal",
+                allow_upgraded=True,
+            )
+
+        assert card is mock_card
+        mock_card.upgrade.assert_not_called()

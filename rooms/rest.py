@@ -1,7 +1,11 @@
 """
 Rest room implementation.
 """
-from actions.card import ChooseRemoveCardAction, ChooseUpgradeCardAction
+from actions.card import (
+    ChooseObtainCardAction,
+    ChooseRemoveCardAction,
+    ChooseUpgradeCardAction,
+)
 from actions.display import SelectAction, DisplayTextAction
 from actions.reward import AddRelicAction, AddRandomRelicAction
 from actions.misc import LeaveRoomAction, _has_relic
@@ -25,16 +29,18 @@ class RestRoom(Room):
     
     def init(self):
         """Initialize the rest room"""
-        # Handle Eternal Feather - heal on enter
+        pass
+    
+    def enter(self) -> BaseResult:
+        """Enter rest room and handle rest options"""
+        # Handle Eternal Feather - heal on enter (每5张牌回3血)
         if _has_relic("EternalFeather"):
             deck = game_state.player.card_manager.get_pile('deck')
             deck_size = len(deck)
             heal_amount = (deck_size // 5) * 3
             if heal_amount > 0:
                 game_state.action_queue.add_action(HealAction(amount=heal_amount))
-    
-    def enter(self) -> BaseResult:
-        """Enter rest room and handle rest options"""
+        
         # Display entry message
         game_state.action_queue.add_action(DisplayTextAction(
             text_key="rooms.rest.enter"
@@ -74,9 +80,23 @@ class RestRoom(Room):
         
         # Rest option - heal 30% of max HP
         heal_amount = game_state.player.max_hp // 10 * 3
+        for relic in game_state.player.relics:
+            if hasattr(relic, "modify_rest_heal"):
+                heal_amount = relic.modify_rest_heal(heal_amount)
+        rest_actions = [HealAction(amount=heal_amount)]
+        if _has_relic("DreamCatcher"):
+            rest_actions.append(
+                ChooseObtainCardAction(
+                    total=3,
+                    namespace=game_state.player.namespace,
+                    encounter_type="normal",
+                    use_rolling_offset=True,
+                )
+            )
+        rest_actions.append(LeaveRoomAction(room=self))
         options.append(Option(
             name=self.local("RestRoom.rest"),
-            actions=[HealAction(amount=heal_amount), LeaveRoomAction(room=self)]
+            actions=rest_actions
         ))
 
 
@@ -103,10 +123,15 @@ class RestRoom(Room):
         
         # Special relic options (Girya, Peace Pipe, Shovel)
         if _has_relic("Girya"):
-            options.append(Option(
-                name=self.local("RestRoom.lift"),
-                actions=[TriggerRelicAction(relic_name="Lift"), LeaveRoomAction(room=self)],
-            ))
+            # Check if Girya can still be used
+            for relic in game_state.player.relics:
+                if getattr(relic, "idstr", None) == "Girya":
+                    if hasattr(relic, "can_use_at_rest") and relic.can_use_at_rest():
+                        options.append(Option(
+                            name=self.local("RestRoom.lift"),
+                            actions=[TriggerRelicAction(relic_name="Lift"), LeaveRoomAction(room=self)],
+                        ))
+                    break
         
         if _has_relic("PeacePipe"):
             options.append(Option(
@@ -139,9 +164,23 @@ class RestRoom(Room):
 
         # Rest option - heal 30% of max HP
         heal_amount = game_state.player.max_hp // 10 * 3
+        for relic in game_state.player.relics:
+            if hasattr(relic, "modify_rest_heal"):
+                heal_amount = relic.modify_rest_heal(heal_amount)
+        rest_actions = [HealAction(amount=heal_amount)]
+        if self._has_relic("DreamCatcher"):
+            rest_actions.append(
+                ChooseObtainCardAction(
+                    total=3,
+                    namespace=game_state.player.namespace,
+                    encounter_type="normal",
+                    use_rolling_offset=True,
+                )
+            )
+        rest_actions.append(LeaveRoomAction(room=self))
         options.append(Option(
             name=self.local("RestRoom.rest"),
-            actions=[HealAction(amount=heal_amount), LeaveRoomAction(room=self)]
+            actions=rest_actions
         ))
 
         can_smith = not self._has_relic("FusionHammer")

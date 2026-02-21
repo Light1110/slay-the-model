@@ -13,12 +13,13 @@ class Dagger(Enemy):
     Special mechanics:
     - Uses Wound then Explode (always in this order)
     - Dies after Explode
+    - Is a minion and should not trigger on_fatal effects
     """
     
     enemy_type = EnemyType.NORMAL  # Minions are treated as normal enemies
     
     def __init__(self):
-        super().__init__(hp_range=(20, 20))
+        super().__init__(hp_range=(20, 20), is_minion=True)
         self._turn_count = 0
         
         # Register intentions

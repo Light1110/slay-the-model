@@ -41,7 +41,8 @@ class Trip(Card):
                 actions.append(ApplyPowerAction(
                     power="Vulnerable",
                     target=enemy,
-                    amount=vuln_amount
+                    amount=vuln_amount,
+                    duration=vuln_amount,
                 ))
         else:
             # Base: Apply to single target
@@ -49,7 +50,8 @@ class Trip(Card):
                 actions.append(ApplyPowerAction(
                     power="Vulnerable",
                     target=target,
-                    amount=vuln_amount
+                    amount=vuln_amount,
+                    duration=vuln_amount,
                 ))
 
         return actions

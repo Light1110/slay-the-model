@@ -3,7 +3,7 @@ Enrage power - Gains Strength when player plays a Skill card.
 """
 from typing import List, Any
 from actions.base import Action
-from powers.base import Power
+from powers.base import Power, StackType
 from actions.combat import ApplyPowerAction
 from utils.registry import register
 
@@ -14,17 +14,16 @@ class EnragePower(Power):
 
     name = "Enrage"
     description = "When the player plays a Skill, gain 1 Strength."
-    stackable = True
-    amount_equals_duration = False
+    stack_type = StackType.INTENSITY
     is_buff = True
 
-    def __init__(self, amount: int = 1, duration: int = 0, owner=None):
+    def __init__(self, amount: int = 1, duration: int = -1, owner=None):
         """
         Args:
             amount: Strength to gain per skill played (default 1)
-            duration: 0 for permanent
+            duration: -1 for permanent
         """
-        super().__init__(amount=amount, duration=-1, owner=owner)
+        super().__init__(amount=amount, duration=duration, owner=owner)
 
     def on_card_play(self, card, player, entities) -> List[Action]:
         """Trigger when player plays a card."""
@@ -39,7 +38,7 @@ class EnragePower(Power):
                     power="strength",
                     target=self.owner,
                     amount=self.amount,
-                    duration=-1
+                    duration=self.duration
                 )
             )
         

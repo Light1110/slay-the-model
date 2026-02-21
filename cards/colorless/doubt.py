@@ -30,7 +30,8 @@ class Doubt(Card):
         actions.append(ApplyPowerAction(
             power="Weak",
             target=game_state.player,
-            amount=weak_amount
+            amount=weak_amount,
+            duration=weak_amount,
         ))
 
         return actions

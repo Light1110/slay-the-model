@@ -3,7 +3,7 @@
 CurlUpPower - Louse enemy ability
 When taking damage, gains block equal to the amount.
 """
-from powers.base import Power
+from powers.base import Power, StackType
 from localization import LocalStr
 from utils.registry import register
 from actions.combat import GainBlockAction, RemovePowerAction
@@ -17,6 +17,8 @@ class CurlUpPower(Power):
     
     This power is triggered by the enemy's on_damage_taken method.
     """
+    
+    stack_type = StackType.INTENSITY
     
     def __init__(self, amount: int = 4, owner=None):
         super().__init__()

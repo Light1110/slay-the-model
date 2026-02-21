@@ -15,14 +15,14 @@ from engine.game_state import game_state
 from relics.global_relics.event import GoldenIdol
 
 
-@register_event(event_id='the_moai_head', floors='late', weight=100)
+@register_event(event_id='the_moai_head', acts=[3], weight=100)
 class TheMoaiHead(Event):
     """The Moai Head - heal or trade Golden Idol."""
     
     @classmethod
     def can_appear(cls) -> bool:
         """Only appears if HP <= 50% or have Golden Idol."""
-        hp_low = game_state.player.current_hp <= game_state.player.max_hp * 0.50
+        hp_low = game_state.player.hp <= game_state.player.max_hp * 0.50
         has_golden_idol = any(
             isinstance(r, GoldenIdol) for r in game_state.player.relics
         )

@@ -4,11 +4,12 @@ Event pool system for managing available events.
 This module provides a centralized registry and management system
 for all game events, allowing EventRooms to select events
 based on configurable rules and weights.
+
+Events are categorized by Act (1, 2, 3) or as 'shared' (appears in all Acts 1-3).
+Multi-Act events can appear in multiple specific Acts (e.g., [1, 2] for Acts 1-2).
 """
 import random
-from typing import Dict, List, Optional, Type, Callable, Any
-from engine.game_state import game_state
-from utils.registry import list_registered, get_registered_instance
+from typing import Dict, List, Optional, Type, Callable, Any, Union
 
 
 class EventMetadata:
@@ -20,14 +21,14 @@ class EventMetadata:
         self,
         event_class: Type,
         event_id: str,
-        floors: str = 'all',
+        acts: Union[str, List[int]] = 'shared',
         weight: int = 100,
         requires_condition: Optional[Callable[[], bool]] = None,
         is_unique: bool = False
     ):
         self.event_class = event_class
         self.event_id = event_id
-        self.floors = floors
+        self.acts = acts  # 'shared', [1], [2], [3], [1, 2], [2, 3], etc.
         self.weight = weight
         self.requires_condition = requires_condition
         self.is_unique = is_unique
@@ -39,26 +40,27 @@ class EventPool:
     Centralized event pool manager.
     
     Manages available events and provides methods to select events
-    based on game state, floors, and other criteria.
+    based on game state, Act, and other criteria.
     """
     
     def __init__(self):
         # Event registry: maps event class names to their metadata
         self._event_registry: Dict[str, EventMetadata] = {}
         
-        # Event pools organized by floor ranges
-        self._floor_pools: Dict[str, List[str]] = {
-            'early': [],    # Floors 1-4
-            'mid': [],      # Floors 5-10
-            'late': [],     # Floors 11-15
-            'boss': []      # Floor 16
+        # Event pools organized by Act
+        # 'shared' events appear in all Acts 1-3
+        self._act_pools: Dict[Union[int, str], List[str]] = {
+            1: [],         # Act 1 exclusive events
+            2: [],         # Act 2 exclusive events
+            3: [],         # Act 3 exclusive events
+            'shared': []   # Common events (appear in all Acts 1-3)
         }
     
     def register_event(
         self,
         event_class: Type,
         event_id: str,
-        floors: str = 'all',
+        acts: Union[str, List[int]] = 'shared',
         weight: int = 100,
         requires_condition: Optional[Callable[[], bool]] = None,
         is_unique: bool = False
@@ -69,7 +71,13 @@ class EventPool:
         Args:
             event_class: The Event class to register
             event_id: Unique identifier for the event
-            floors: When this event can appear ('early', 'mid', 'late', 'boss', 'all')
+            acts: When this event can appear:
+                - 'shared': Appears in all Acts 1-3
+                - [1]: Act 1 only
+                - [2]: Act 2 only
+                - [3]: Act 3 only
+                - [1, 2]: Acts 1 and 2 only
+                - [2, 3]: Acts 2 and 3 only
             weight: Selection weight (higher = more likely to be chosen)
             requires_condition: Optional function that returns True if event can appear
             is_unique: Whether this event can only appear once per run
@@ -77,7 +85,7 @@ class EventPool:
         metadata = EventMetadata(
             event_class=event_class,
             event_id=event_id,
-            floors=floors,
+            acts=acts,
             weight=weight,
             requires_condition=requires_condition,
             is_unique=is_unique
@@ -85,32 +93,50 @@ class EventPool:
         
         self._event_registry[event_id] = metadata
         
-        # Add to appropriate floor pools
-        if floors == 'all':
-            for pool in self._floor_pools.values():
-                pool.append(event_id)
-        elif floors in self._floor_pools:
-            self._floor_pools[floors].append(event_id)
-        else:
-            # Add to all pools if floor not recognized
-            for pool in self._floor_pools.values():
-                pool.append(event_id)
+        # Add to appropriate Act pools
+        self._add_to_act_pools(event_id, acts)
     
-    def get_available_events(self, floor: int = 0) -> List[EventMetadata]:
+    def _add_to_act_pools(self, event_id: str, acts: Union[str, List[int]]):
         """
-        Get all available events for the current floor.
+        Add an event to the appropriate Act pools.
         
         Args:
-            floor: Current floor number
+            event_id: Event identifier
+            acts: Act specification
+        """
+        if acts == 'shared':
+            # Shared events go to 'shared' pool (included in all Acts 1-3)
+            self._act_pools['shared'].append(event_id)
+        elif isinstance(acts, list):
+            # Multi-Act events: add to each specified Act pool
+            for act in acts:
+                if act in self._act_pools:
+                    self._act_pools[act].append(event_id)
+        elif isinstance(acts, int) and acts in self._act_pools:
+            # Single Act as int
+            self._act_pools[acts].append(event_id)
+    
+    def get_available_events(self, act: int = 1) -> List[EventMetadata]:
+        """
+        Get all available events for the current Act.
+        
+        Args:
+            act: Current Act number (1-3)
             
         Returns:
             List of available event metadata
         """
-        # Determine floor range
-        floor_range = self._get_floor_range(floor)
+        if act < 1 or act > 3:
+            act = 1  # Default to Act 1 if out of range
         
-        # Get events for this floor range
-        event_ids = self._floor_pools.get(floor_range, [])
+        # Get events for this Act (exclusive + shared + multi-Act that include this act)
+        event_ids = set()
+        
+        # Add Act-exclusive events
+        event_ids.update(self._act_pools.get(act, []))
+        
+        # Add shared events (common to all Acts)
+        event_ids.update(self._act_pools.get('shared', []))
         
         # Filter by conditions
         available = []
@@ -121,17 +147,17 @@ class EventPool:
         
         return available
     
-    def get_random_event(self, floor: int = 0) -> Optional[Type]:
+    def get_random_event(self, act: int = 1) -> Optional[Type]:
         """
         Get a random event weighted by their weights.
         
         Args:
-            floor: Current floor number
+            act: Current Act number (1-3)
             
         Returns:
             Event class or None if no events available
         """
-        available = self.get_available_events(floor)
+        available = self.get_available_events(act)
         
         if not available:
             return None
@@ -169,25 +195,6 @@ class EventPool:
         if event_id in self._event_registry:
             self._event_registry[event_id].has_been_used = True
     
-    def _get_floor_range(self, floor: int) -> str:
-        """
-        Get the floor range category.
-        
-        Args:
-            floor: Floor number
-            
-        Returns:
-            Floor range string
-        """
-        if floor <= 4:
-            return 'early'
-        elif floor <= 10:
-            return 'mid'
-        elif floor <= 15:
-            return 'late'
-        else:
-            return 'boss'
-    
     def _is_event_available(self, metadata: 'EventMetadata') -> bool:
         """
         Check if an event is currently available.
@@ -216,6 +223,30 @@ class EventPool:
         for metadata in self._event_registry.values():
             if metadata.is_unique:
                 metadata.has_been_used = False
+    
+    def get_events_by_act(self, act: int) -> List[str]:
+        """
+        Get list of event IDs available for a specific Act.
+        
+        Args:
+            act: Act number (1-3)
+            
+        Returns:
+            List of event IDs
+        """
+        event_ids = set()
+        event_ids.update(self._act_pools.get(act, []))
+        event_ids.update(self._act_pools.get('shared', []))
+        return list(event_ids)
+    
+    def get_all_registered_events(self) -> Dict[str, EventMetadata]:
+        """
+        Get all registered events.
+        
+        Returns:
+            Dictionary of event_id to EventMetadata
+        """
+        return self._event_registry.copy()
 
 
 # Global event pool instance
@@ -225,7 +256,7 @@ event_pool = EventPool()
 # Decorator for registering events
 def register_event(
     event_id: str,
-    floors: str = 'all',
+    acts: Union[str, List[int]] = 'shared',
     weight: int = 100,
     requires_condition: Optional[Callable[[], bool]] = None,
     is_unique: bool = False
@@ -233,14 +264,44 @@ def register_event(
     """
     Decorator to register an event to the global pool.
     
+    Args:
+        event_id: Unique identifier for the event
+        acts: When this event can appear:
+            - 'shared': Appears in all Acts 1-3
+            - [1]: Act 1 only
+            - [2]: Act 2 only
+            - [3]: Act 3 only
+            - [1, 2]: Acts 1 and 2 only
+            - [2, 3]: Acts 2 and 3 only
+        weight: Selection weight (higher = more likely)
+        requires_condition: Optional function that returns True if event can appear
+        is_unique: Whether this event can only appear once per run
+    
     Usage:
         @register_event(
-            event_id="my_event",
-            floors='early',
-            weight=150,
-            is_unique=True
+            event_id="big_fish",
+            acts=[1],
+            weight=100
         )
-        class MyEvent(Event):
+        class BigFishEvent(Event):
+            def trigger(self) -> str:
+                ...
+        
+        @register_event(
+            event_id="woman_in_blue",
+            acts='shared',
+            weight=100
+        )
+        class WomanInBlueEvent(Event):
+            def trigger(self) -> str:
+                ...
+        
+        @register_event(
+            event_id="face_trader",
+            acts=[1, 2],
+            weight=100
+        )
+        class FaceTraderEvent(Event):
             def trigger(self) -> str:
                 ...
     """
@@ -248,7 +309,7 @@ def register_event(
         event_pool.register_event(
             event_class=event_class,
             event_id=event_id,
-            floors=floors,
+            acts=acts,
             weight=weight,
             requires_condition=requires_condition,
             is_unique=is_unique

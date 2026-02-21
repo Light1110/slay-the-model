@@ -15,8 +15,7 @@ from utils.option import Option
 from utils.types import RarityType
 from engine.game_state import game_state
 
-
-@register_event(event_id='dead_adventurer', floors='early', weight=100)
+@register_event(event_id='dead_adventurer', acts=[1], weight=100)
 class DeadAdventurer(Event):
     """Dead Adventurer - search for loot with elite risk."""
     
@@ -45,6 +44,37 @@ class DeadAdventurer(Event):
         
         # Option to continue searching (max 3 times)
         # Note: Elite fight mechanic simplified - just provides loot
+        # todo: 应当有概率碰到精英！
+        """
+        # Options ⚜️
+
+Numbers in parentheses are for Ascension 15 or higher.
+
+- [Search] Find Loot. 25% (35%) that an Elite will return to fight you.
+  - [Search] can yield:
+    - 30 Gold.
+    - A random Relic.
+    - Nothing.
+  - Each reward only occurs once - if the player's first search found nothing and the second search found the Relic, the third search will either reward 30 Gold or start a battle.
+  - Each subsequent [Search] increases the chance to encounter an Elite by 25%.
+  - If the player successfully [Search] three times without encountering an Elite, the event will end with a short dialogue detailing the success.
+- [Escape] End the search and resume your journey.
+  - There is no penalty for choosing [Escaping] - the player keeps whatever they obtained from [Search] and resume their journey.
+
+The Event has a text at the beginning, describing how the unfortunate adventurer was killed. It gives a hint about which Elite you will fight:
+
+- "...eviscerated and chopped by giant claws.": Lagavulin
+  - Unlike its usual Elite battle, Lagavulin doesn't begin Asleep. It instead starts the fight with Siphon Soul.
+- "...scoured by flames.": 3 Sentries
+- "...gouged and trampled by a horned beast.": Gremlin Nob
+
+Defeating the Elite grants whatever rewards not yet found by [Search], in addition to 25-35 gold.
+
+- Note that the Elite itself doesn't reward an additional Relic if you had already found one from [Search].
+
+Relics that triggers on Elites combat - 🐛 Preserved Insect, 🏹 Sling of Courage, and 🐺 Slaver's Collar - also works on Elite combat of this event. The only exception is ⭐ Black Star, which has no effect whatsoever in this fight.
+
+        """
         if self.search_count < 3:
             # Determine what can be found (in order)
             if not self.found_gold:

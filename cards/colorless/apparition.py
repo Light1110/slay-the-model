@@ -35,7 +35,8 @@ class Apparition(Card):
         actions.append(ApplyPowerAction(
             power="Intangible",
             target=game_state.player,
-            amount=intangible_amount
+            amount=intangible_amount,
+            duration=intangible_amount,
         ))
 
         return actions

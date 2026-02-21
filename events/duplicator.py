@@ -12,7 +12,7 @@ from localization import LocalStr
 from utils.option import Option
 
 
-@register_event(event_id='duplicator', floors='all', weight=100)
+@register_event(event_id='duplicator', acts='shared', weight=100)
 class Duplicator(Event):
     """Duplicator shrine - allows duplicating a card."""
     

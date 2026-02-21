@@ -34,6 +34,7 @@ class Berserk(Card):
 
         # Apply BerserkPower (which handles energy gain) and VulnerablePower
         actions.append(ApplyPowerAction(power="BerserkPower", target=target, amount=1, duration=-1))
-        actions.append(ApplyPowerAction(power="Vulnerable", target=target, amount=magic))
+        actions.append(ApplyPowerAction(power="Vulnerable", target=target,
+                                        amount=magic, duration=magic))
 
         return actions

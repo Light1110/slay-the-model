@@ -6,7 +6,7 @@ ends their turn and the owner gains 1 Strength.
 from typing import List
 from actions.base import Action
 from actions.combat import ApplyPowerAction, EndTurnAction
-from powers.base import Power
+from powers.base import Power, StackType
 from utils.registry import register
 from localization import LocalStr
 
@@ -21,7 +21,7 @@ class TimeWarpPower(Power):
     
     name = "Time Warp"
     description = "Whenever you play 12 cards, end your turn and gain 1 Strength."
-    stackable = False
+    stack_type = StackType.INTENSITY
     is_buff = True
     localization_prefix = "powers"
     localizable_fields = ("name", "description")
@@ -52,7 +52,6 @@ class TimeWarpPower(Power):
         Returns:
             List of actions to execute (EndTurn + GainStrength when triggered)
         """
-        from engine.game_state import game_state
         from localization import t
         
         self.card_counter += 1
@@ -70,8 +69,8 @@ class TimeWarpPower(Power):
             # Return actions: end turn and gain strength
             actions = []
             
-            # End player turn - set phase to enemy_action
-            game_state.current_combat.combat_state.current_phase = "enemy_action"
+            # End player turn using EndTurnAction
+            actions.append(EndTurnAction())
             
             # Time Eater gains 1 Strength
             if self.owner:

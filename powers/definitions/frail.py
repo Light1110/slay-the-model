@@ -3,7 +3,7 @@ Frail power for combat effects.
 Reduce block gained by 25%.
 """
 from typing import List
-from powers.base import Power
+from powers.base import Power, StackType
 from utils.registry import register
 
 
@@ -13,11 +13,10 @@ class FrailPower(Power):
 
     name = "Frail"
     description = "Reduce block gained by 25%."
-    stackable = True
-    amount_equals_duration = False
+    stack_type = StackType.DURATION
     is_buff = False
 
-    def __init__(self, amount: int = 1, duration: int = 1, owner=None):
+    def __init__(self, amount: int = 0, duration: int = 1, owner=None):
         """
         Args:
             amount: Frail stacks (default 1)

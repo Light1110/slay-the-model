@@ -17,7 +17,7 @@ from relics.global_relics.event import OddMushroom
 from cards.colorless import Parasite
 
 
-@register_event(event_id='hypnotizing_mushrooms', floors='early', weight=100)
+@register_event(event_id='hypnotizing_mushrooms', acts=[1], weight=100)
 class HypnotizingColoredMushrooms(Event):
     """Hypnotizing Colored Mushrooms - heal with curse or fight for relic."""
     
@@ -41,7 +41,7 @@ class HypnotizingColoredMushrooms(Event):
             Option(
                 name=LocalStr('events.hypnotizing_mushrooms.stomp'),
                 actions=[
-                    AddRelicAction(relic=OddMushroom())
+                    AddRelicAction(relic=OddMushroom()) # todo: 改为触发一场战斗，战斗奖励是这个遗物。敌人是 3 * Fungi Beast
                 ]
             ),
             Option(

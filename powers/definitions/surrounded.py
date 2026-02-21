@@ -2,7 +2,7 @@
 Surrounded power for combat effects.
 Telegraph debuff - no gameplay hooks yet.
 """
-from powers.base import Power
+from powers.base import Power, StackType
 from utils.registry import register
 
 
@@ -12,10 +12,10 @@ class SurroundedPower(Power):
     
     name = "Surrounded"
     description = "从背后被攻击时，受伤+50%"
-    stackable = False
+    stack_type = StackType.PRESENCE
     is_buff = False  # Debuff effect - increases damage taken
     
-    def __init__(self, amount: int = 1, duration: int = 0, owner=None):
+    def __init__(self, amount: int = 1, duration: int = -1, owner=None):
         """
         Args:
             amount: Magnitude (default 1)

@@ -76,9 +76,9 @@ def get_random_card(namespaces: Optional[List[str]] = None,
 
 # 基础概率配置（按百分比）
 CARD_RARITY_PROBABILITIES = {
-    "normal": {RarityType.COMMON: 60, RarityType.UNCOMMON: 37, RarityType.RARE: -2}, # 3
-    "elite": {RarityType.COMMON: 50, RarityType.UNCOMMON: 40, RarityType.RARE: 5}, # 10
-    "shop": {RarityType.COMMON: 54, RarityType.UNCOMMON: 37, RarityType.RARE: 4}, # 9
+    "normal": {RarityType.COMMON: 60, RarityType.UNCOMMON: 37, RarityType.RARE: 3},
+    "elite": {RarityType.COMMON: 50, RarityType.UNCOMMON: 40, RarityType.RARE: 10},
+    "shop": {RarityType.COMMON: 54, RarityType.UNCOMMON: 37, RarityType.RARE: 9},
 }
 
 card_rarity_probabilities = CARD_RARITY_PROBABILITIES.copy()
@@ -86,7 +86,8 @@ card_rarity_probabilities = CARD_RARITY_PROBABILITIES.copy()
 def get_random_card_reward(namespaces: Optional[List[str]] = None,
                          encounter_type: str = "normal",
                          use_rolling_offset: bool = False,
-                         exclude_set: Optional[List[str]] = None) -> Optional[Card]:
+                         exclude_set: Optional[List[str]] = None,
+                         allow_upgraded: bool = False) -> Optional[Card]:
     """
     Get a random card from registry with rarity weights based on encounter type.
 
@@ -95,12 +96,33 @@ def get_random_card_reward(namespaces: Optional[List[str]] = None,
         encounter_type (str): Type of encounter for rarity weights ("normal", "elite", "shop").
         use_rolling_offset (bool): If True, adjust rare chance based on common cards gained.
         exclude_set (Optional[List[str]]): List of card idstrs to exclude (prevents duplicates).
+        allow_upgraded (bool): If True, card can roll as upgraded based on act/ascension.
 
     returns:
         Optional[Card]: A random card matching criteria with weighted rarity, or None if none found.
     """
     # Get base probabilities for this encounter type
     base_probs = card_rarity_probabilities.get(encounter_type, card_rarity_probabilities["normal"]).copy()
+
+    # N'loth's Gift: rare chance x3, taken from common chance.
+    try:
+        from engine.game_state import game_state
+        has_nloth_gift = any(
+            getattr(relic, "idstr", None) == "NlothGift"
+            for relic in getattr(game_state.player, "relics", [])
+        )
+    except Exception:
+        has_nloth_gift = False
+
+    if has_nloth_gift:
+        original_rare = base_probs.get(RarityType.RARE, 0)
+        boosted_rare = max(0, original_rare) * 3
+        common_shift = boosted_rare - max(0, original_rare)
+        base_probs[RarityType.RARE] = boosted_rare
+        base_probs[RarityType.COMMON] = max(
+            0,
+            base_probs.get(RarityType.COMMON, 0) - common_shift,
+        )
 
     # Filter available cards
     all_card_idstrs = list_registered("card")
@@ -176,7 +198,42 @@ def get_random_card_reward(namespaces: Optional[List[str]] = None,
     selected_card_cls = get_registered("card", selected_card_idstr)
     selected_card = selected_card_cls() if selected_card_cls else None
 
+    if (
+        selected_card is not None
+        and allow_upgraded
+        and selected_card.can_upgrade()
+    ):
+        act = 1
+        ascension = 0
+        try:
+            from engine.game_state import game_state
+            act = max(1, min(3, getattr(game_state, "current_act", 1)))
+            ascension = getattr(game_state, "ascension", 0)
+        except Exception:
+            pass
+
+        upgrade_chance = _get_card_reward_upgrade_chance(
+            act=act,
+            ascension=ascension,
+        )
+        if random.random() < upgrade_chance:
+            selected_card.upgrade()
+
     return selected_card
+
+
+def _get_card_reward_upgrade_chance(act: int, ascension: int) -> float:
+    """Get upgraded card chance for combat rewards by act and ascension."""
+    base_chance_by_act = {
+        1: 0.0,
+        2: 0.25,
+        3: 0.5,
+    }
+    normalized_act = max(1, min(3, act))
+    chance = base_chance_by_act[normalized_act]
+    if ascension >= 12:
+        chance /= 2
+    return chance
 
 
 def increment_card_chance_common_counter():
@@ -280,30 +337,25 @@ def get_random_potion(characters: Optional[List[str]] = None,
     return selected_potion_cls() if selected_potion_cls else None
 
 
-def get_random_events(floor: int = 0, count: int = 1, floors: Optional[str] = None) -> List[Any]:
+def get_random_events(act: int = 1, count: int = 1) -> List[Any]:
     """
-    Get random events from the event pool based on criteria.
+    Get random events from the event pool based on current Act.
     
     args:
-        floor (int): Current floor number for filtering.
+        act (int): Current Act number (1-3) for filtering.
         count (int): Number of events to return (default: 1).
-        floors (Optional[str]): Floor range filter ('early', 'mid', 'late', 'boss', 'all').
         
     returns:
         List[Any]: List of event instances matching criteria.
     """
     from events.event_pool import event_pool
     
-    # Get available events based on floor
-    available_metadata = event_pool.get_available_events(floor)
+    # Ensure act is valid
+    if act < 1 or act > 3:
+        act = 1
     
-    # Filter by floor range if specified
-    if floors and floors != 'all':
-        floor_range = event_pool._get_floor_range(floor)
-        available_metadata = [
-            m for m in available_metadata
-            if m.floors == floors or m.floors == 'all' or m.floors == floor_range
-        ]
+    # Get available events based on Act
+    available_metadata = event_pool.get_available_events(act)
     
     if not available_metadata:
         return []

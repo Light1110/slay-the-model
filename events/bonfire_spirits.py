@@ -19,7 +19,7 @@ from utils.option import Option
 from engine.game_state import game_state
 
 
-@register_event(event_id='bonfire_spirits', floors='all', weight=100)
+@register_event(event_id='bonfire_spirits', acts='shared', weight=100)
 class BonfireSpirits(Event):
     """Bonfire Spirits - sacrifice card for reward by rarity."""
     
@@ -33,6 +33,46 @@ class BonfireSpirits(Event):
         
         # Build options
         # TODO: Implement proper card sacrifice with rarity-based rewards
+        """
+        You happen upon what looks like a group of purple fire spirits dancing around a large bonfire.
+Before selecting [Offer]
+
+The spirits toss small bones and fragments into the fire, which brilliantly erupts each time.
+As you approach, the spirits all turn to you, expectantly...
+
+[Offer]
+
+You toss an offering into the bonfire.
+When offering a Basic card
+
+Nothing happens...
+The spirits seem to be ignoring you now. Disappointing...
+
+When offering a Common card
+
+The flames grow slightly brighter.
+The spirits continue dancing. You feel slightly warmer from their presence..
+You heal 5 HP.
+
+When offering an Uncommon card
+
+The flames erupt, growing significantly stronger!
+The spirits dance around you excitedly, filling you with a sense of warmth.
+You are healed to full HP.
+
+When offering a Rare card
+
+The flames burst, nearly knocking you off your feet, as the fire doubles in strength.
+The spirits dance around you excitedly before merging into your form, filling you with warmth and strength.
+Your Max HP increases by 10 and you are healed to full HP.
+
+When offering a Curse
+
+However, the spirits aren't happy you offered a Curse...
+The card fizzles a meek black smoke. You receive a... something in return.
+(Gives 🧪 Spirit Poop)
+
+        """
         # For now, use ChooseRemoveCardAction with heal reward
         options = [
             Option(

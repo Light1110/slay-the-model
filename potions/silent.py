@@ -62,4 +62,6 @@ class GhostInAJar(Potion):
 
     def on_use(self, target) -> List[Action]:
         from engine.game_state import game_state
-        return [ApplyPowerAction(power="Intangible", target=game_state.player, amount=self.amount)]
+        return [ApplyPowerAction(power="Intangible", target=game_state.player,
+                                 amount=self.amount,
+                                 duration=self.amount)]

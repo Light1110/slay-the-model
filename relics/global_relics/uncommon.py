@@ -10,6 +10,7 @@ from actions.combat import GainBlockAction, GainEnergyAction, HealAction, DealDa
 from relics.base import Relic
 from utils.types import RarityType, CardType
 from utils.registry import register
+from utils.damage_phase import DamagePhase
 
 # Existing relic
 @register("relic")
@@ -36,9 +37,19 @@ class BlueCandle(Relic):
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
-    
-    # This would need to hook into card play for curses
-    # For now, implemented as a passive effect description
+
+    def can_play_curse_cards(self) -> bool:
+        """Allow Curse cards to be played."""
+        return True
+
+    def should_exhaust_curse_on_play(self) -> bool:
+        """Played Curse cards should exhaust."""
+        return True
+
+    def curse_play_hp_loss(self) -> int:
+        """HP loss when a Curse is played."""
+        return 1
+
 
 @register("relic")
 class BottledFlame(Relic):
@@ -48,16 +59,6 @@ class BottledFlame(Relic):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
         self.selected_card = None  # Set on pickup (not implemented yet)
-    
-    def on_combat_start(self, player, entities):
-        """Move selected card to hand at start of combat"""
-        from actions.card import MoveCardAction
-        
-        # Simplified: just move selected card to hand if set
-        # Note: Full implementation would also: copy deck to draw_pile, draw 5 cards
-        if self.selected_card:
-            return [MoveCardAction(card=self.selected_card, src_pile="draw_pile", dst_pile="hand")]
-        return []
 
 @register("relic")
 class BottledLightning(Relic):
@@ -67,14 +68,6 @@ class BottledLightning(Relic):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
         self.selected_card = None
-    
-    def on_combat_start(self, player, entities):
-        """Move selected card to hand at start of combat"""
-        from actions.card import MoveCardAction
-        
-        if self.selected_card:
-            return [MoveCardAction(card=self.selected_card, src_pile="draw_pile", dst_pile="hand")]
-        return []
 
 @register("relic")
 class BottledTornado(Relic):
@@ -84,14 +77,6 @@ class BottledTornado(Relic):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
         self.selected_card = None
-    
-    def on_combat_start(self, player, entities):
-        """Move selected card to hand at start of combat"""
-        from actions.card import MoveCardAction
-        
-        if self.selected_card:
-            return [MoveCardAction(card=self.selected_card, src_pile="draw_pile", dst_pile="hand")]
-        return []
 
 @register("relic")
 class DarkstonePeriapt(Relic):
@@ -100,9 +85,15 @@ class DarkstonePeriapt(Relic):
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
-    
-    # This would need to hook into curse acquisition events
-    # For now, implemented as a passive effect description
+
+    def on_card_added(self, card, dest_pile: str = "deck") -> List[Action]:
+        """Gain max HP when obtaining a Curse."""
+        if dest_pile not in ("deck"):
+            return []
+        if getattr(card, "card_type", None) == CardType.CURSE:
+            return [ModifyMaxHpAction(amount=6)]
+        return []
+
 
 @register("relic")
 class EternalFeather(Relic):
@@ -112,8 +103,7 @@ class EternalFeather(Relic):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
     
-    # This would need to hook into rest events
-    # For now, implemented as a passive effect description
+    # This hook into rest events
 
 @register("relic")
 class FrozenEgg(Relic):
@@ -122,9 +112,14 @@ class FrozenEgg(Relic):
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
-    
-    # This would need to hook into card addition events
-    # For now, implemented as a passive effect description
+
+    def should_upgrade_added_card(self, card, dest_pile: str = "deck") -> bool:
+        """Upgrade added Power cards."""
+        return (
+            dest_pile in ("deck")
+            and getattr(card, "card_type", None) == CardType.POWER
+        )
+
 
 @register("relic")
 class GremlinHorn(Relic):
@@ -169,16 +164,16 @@ class Kunai(Relic):
         self.rarity = RarityType.UNCOMMON
         self.attacks_played_this_turn = 0
     
-    def on_combat_start(self, player, entities):
+    def on_player_turn_start(self, player, entities):
         """Reset attack counter at start of each turn"""
         self.attacks_played_this_turn = 0
         return []
     
     def on_card_play(self, card, player, entities):
-        """Track attacks played and gain Dexterity"""
+        """Track attacks played and gain Dexterity on 3rd attack"""
         if card.card_type == CardType.ATTACK:
             self.attacks_played_this_turn += 1
-            if self.attacks_played_this_turn >= 3:
+            if self.attacks_played_this_turn == 3:
                 return [ApplyPowerAction(power="Dexterity", target=player, amount=1)]
         return []
 
@@ -191,16 +186,16 @@ class LetterOpener(Relic):
         self.rarity = RarityType.UNCOMMON
         self.skills_played_this_turn = 0
     
-    def on_combat_start(self, player, entities):
+    def on_player_turn_start(self, player, entities):
         """Reset skill counter at start of each turn"""
         self.skills_played_this_turn = 0
         return []
     
     def on_card_play(self, card, player, entities):
-        """Track skills played and deal damage"""
+        """Track skills played and deal damage on 3rd skill"""
         if card.card_type == CardType.SKILL:
             self.skills_played_this_turn += 1
-            if self.skills_played_this_turn >= 3:
+            if self.skills_played_this_turn == 3:
                 actions = []
                 for enemy in entities:
                     actions.append(DealDamageAction(damage=5, target=enemy))
@@ -215,9 +210,51 @@ class Matryoshka(Relic):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
         self.chests_to_spawn = 2
-    
-    # This would need to hook into chest opening events
-    # For now, implemented as a passive effect description
+
+    def on_chest_open(self, chest_type: str = None) -> List[Action]:
+        """Grant an extra relic from the next two non-boss chests."""
+        if chest_type == "boss" or self.chests_to_spawn <= 0:
+            return []
+        from actions.reward import AddRandomRelicAction
+        from engine.game_state import game_state
+        import random
+
+        self.chests_to_spawn -= 1
+        if chest_type == "small":
+            rarity = (
+                RarityType.COMMON
+                if random.random() < 0.75
+                else RarityType.UNCOMMON
+            )
+        elif chest_type == "medium":
+            rarity_roll = random.random()
+            if rarity_roll < 0.35:
+                rarity = RarityType.COMMON
+            elif rarity_roll < 0.85:
+                rarity = RarityType.UNCOMMON
+            else:
+                rarity = RarityType.RARE
+        elif chest_type == "large":
+            rarity = (
+                RarityType.UNCOMMON
+                if random.random() < 0.75
+                else RarityType.RARE
+            )
+        else:
+            rarity = RarityType.UNCOMMON
+
+        character = (
+            game_state.player.namespace
+            if game_state and game_state.player
+            else None
+        )
+        return [
+            AddRandomRelicAction(
+                rarities=[rarity],
+                characters=[character] if character else None,
+            )
+        ]
+
 
 @register("relic")
 class MeatOnBone(Relic):
@@ -255,9 +292,14 @@ class MoltenEgg(Relic):
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
-    
-    # This would need to hook into card addition events
-    # For now, implemented as a passive effect description
+
+    def should_upgrade_added_card(self, card, dest_pile: str = "deck") -> bool:
+        """Upgrade added Attack cards."""
+        return (
+            dest_pile in ("deck")
+            and getattr(card, "card_type", None) == CardType.ATTACK
+        )
+
 
 @register("relic")
 class MummifiedHand(Relic):
@@ -285,9 +327,9 @@ class NinjaScroll(Relic):
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
-    
-    # This is Silent-specific, would need to add Shiv cards
-    # For now, implemented as a passive effect description
+
+    # Silent-specific; no-op in current card pool (no Shiv card registered).
+
 
 @register("relic")
 class OrnamentalFan(Relic):
@@ -298,16 +340,16 @@ class OrnamentalFan(Relic):
         self.rarity = RarityType.UNCOMMON
         self.attacks_played_this_turn = 0
     
-    def on_combat_start(self, player, entities):
+    def on_player_turn_start(self, player, entities):
         """Reset attack counter at start of each turn"""
         self.attacks_played_this_turn = 0
         return []
     
     def on_card_play(self, card, player, entities):
-        """Track attacks played and gain Block"""
+        """Track attacks played and gain Block on 3rd attack"""
         if card.card_type == CardType.ATTACK:
             self.attacks_played_this_turn += 1
-            if self.attacks_played_this_turn >= 3:
+            if self.attacks_played_this_turn == 3:
                 return [GainBlockAction(block=4, target=player)]
         return []
 
@@ -336,9 +378,17 @@ class PaperKrane(Relic):
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
-    
-    # This would need to hook into damage calculation
-    # For now, implemented as a passive effect description
+        self.damage_phase = DamagePhase.MULTIPLICATIVE  # Weak multiplier adjustment
+
+    def modify_damage_taken(self, base_damage: int, source=None) -> int:
+        """Weak reduces enemy damage by 40% instead of 25%."""
+        if source and hasattr(source, "powers"):
+            for power in source.powers:
+                if getattr(power, "name", "") == "Weak":
+                    # Weak already applied as x0.75; convert to x0.60 via x4/5.
+                    return int(base_damage * 4 / 5)
+        return base_damage
+
 
 @register("relic")
 class PaperPhrog(Relic):
@@ -347,9 +397,18 @@ class PaperPhrog(Relic):
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
-    
-    # This would need to hook into damage calculation
-    # For now, implemented as a passive effect description
+        self.damage_phase = DamagePhase.MULTIPLICATIVE  # Vulnerable multiplier adjustment
+
+    def modify_damage_dealt(self, base_damage: int, card=None, target=None) -> int:
+        """Vulnerable increases damage by 75% instead of 50%."""
+        if target and hasattr(target, "powers"):
+            for power in target.powers:
+                if getattr(power, "name", "") == "Vulnerable":
+                    # Vulnerable multiplier (x1.5) is applied later in pipeline.
+                    # Pre-scale by 7/6 so total becomes x1.75.
+                    return int(base_damage * 7 / 6)
+        return base_damage
+
 
 @register("relic")
 class Pear(Relic):
@@ -369,9 +428,11 @@ class QuestionCard(Relic):
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
-    
-    # This would need to hook into card reward events
-    # For now, implemented as a passive effect description
+
+    def modify_card_reward_count(self, base_count: int, encounter_type: str = "normal") -> int:
+        """Increase card reward options by 1."""
+        return base_count + 1
+
 
 @register("relic")
 class SelfFormingClay(Relic):
@@ -405,16 +466,16 @@ class Shuriken(Relic):
         self.rarity = RarityType.UNCOMMON
         self.attacks_played_this_turn = 0
     
-    def on_combat_start(self, player, entities):
+    def on_player_turn_start(self, player, entities):
         """Reset attack counter at start of each turn"""
         self.attacks_played_this_turn = 0
         return []
     
     def on_card_play(self, card, player, entities):
-        """Track attacks played and gain Strength"""
+        """Track attacks played and gain Strength on 3rd attack"""
         if card.card_type == CardType.ATTACK:
             self.attacks_played_this_turn += 1
-            if self.attacks_played_this_turn >= 3:
+            if self.attacks_played_this_turn == 3:
                 return [ApplyPowerAction(power="Strength", target=player, amount=1)]
         return []
 
@@ -425,10 +486,11 @@ class SingingBowl(Relic):
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
-    
-    # This would need to hook into card addition events with a choice
-    # For now, implemented as a passive effect description
-    # This is implemented in giving card reward
+
+    def can_choose_max_hp_instead_of_card(self) -> bool:
+        """Enable +2 max HP option on card reward screens."""
+        return True
+
 
 @register("relic")
 class StrikeDummy(Relic):
@@ -437,10 +499,17 @@ class StrikeDummy(Relic):
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
-    
-    # This would need to hook into damage calculation for Strike cards
-    # For now, implemented as a passive effect description
-    # in resolve_card_damage && resolve_potential_damange
+        self.damage_phase = DamagePhase.ADDITIVE  # +3 damage for Strike cards
+
+    def modify_damage_dealt(self, base_damage: int, card=None, target=None) -> int:
+        """Add 3 damage to Strike cards."""
+        if card and getattr(card, "card_type", None) == CardType.ATTACK:
+            card_id = getattr(card, "idstr", "").lower()
+            card_name = str(getattr(card, "display_name", "")).lower()
+            if "strike" in card_id or "strike" in card_name:
+                return base_damage + 3
+        return base_damage
+
 
 @register("relic")
 class Sundial(Relic):
@@ -466,9 +535,15 @@ class TheCourier(Relic):
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
-    
-    # This would need to hook into shop events
-    # For now, implemented as a passive effect description
+
+    def should_restock_shop_item(self, item_type: str, item=None) -> bool:
+        """Restock purchased non-shop-relic items."""
+        if item_type == "remove":
+            return False
+        if item_type != "relic":
+            return True
+        return getattr(item, "rarity", None) != RarityType.SHOP
+
 
 @register("relic")
 class ToxicEgg(Relic):
@@ -477,9 +552,14 @@ class ToxicEgg(Relic):
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
-    
-    # This would need to hook into card addition events
-    # For now, implemented as a passive effect description
+
+    def should_upgrade_added_card(self, card, dest_pile: str = "deck") -> bool:
+        """Upgrade added Skill cards."""
+        return (
+            dest_pile in ("deck")
+            and getattr(card, "card_type", None) == CardType.SKILL
+        )
+
 
 @register("relic")
 class WhiteBeastStatue(Relic):
@@ -488,6 +568,8 @@ class WhiteBeastStatue(Relic):
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
-    
-    # This would need to hook into combat end events
-    # For now, implemented as a passive effect description
+
+    def forces_potion_drop(self) -> bool:
+        """Always drop potion rewards after combat."""
+        return True
+

@@ -23,7 +23,7 @@ class BurningBlood(Relic):
         """Heal 6 HP at combat end"""
         return [HealAction(amount=6)]
 
-# Common Relic (Global but Ironclad can use it)
+# Common Relic (Ironclad-specific)
 @register("relic")
 class RedSkull(Relic):
     """While your HP is at or below 50%, you have 3 additional Strength."""
@@ -31,27 +31,35 @@ class RedSkull(Relic):
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.COMMON
-        self.check_hp = True
+        self.strength_applied = False
         
     def on_combat_start(self, player, entities) -> List[Action]:
-        self.check_hp = True
+        self.strength_applied = False
+        # Check if HP is already <= 50% at combat start
+        if player.hp <= player.max_hp // 2:
+            self.strength_applied = True
+            return [ApplyPowerAction("Strength", target=player, amount=3)]
         return []
     
     def on_damage_taken(self, damage, source, player, entities) -> List[Action]:
-        return [ApplyPowerAction("Strength", target=player, amount=3)]
+        """Check if HP dropped to 50% or below"""
+        if not self.strength_applied and player.hp <= player.max_hp // 2:
+            self.strength_applied = True
+            return [ApplyPowerAction("Strength", target=player, amount=3)]
+        return []
+    
+    def on_heal(self, heal_amount, player, entities) -> List[Action]:
+        """Check if HP went above 50% after heal, remove Strength if so"""
+        if self.strength_applied:
+            # Calculate HP after heal (before actual HP change)
+            new_hp = min(player.hp + heal_amount, player.max_hp)
+            if new_hp > player.max_hp // 2:
+                self.strength_applied = False
+                return [ApplyPowerAction(power="Strength", target=player, amount=-3)]
+        return []
         
 
-# Uncommon Relic
-@register("relic")
-class PaperPhrog(Relic):
-    """Enemies with Vulnerable take 75% more damage rather than 50%."""
-    
-    def __init__(self):
-        super().__init__()
-        self.rarity = RarityType.UNCOMMON
-
-    # This would need to hook into damage calculation
-    # For now, implemented as a passive effect description
+# PaperPhrog removed - duplicate of PaperPhrog in global_relics/uncommon.py
 
 # Rare Relic
 @register("relic")
@@ -67,7 +75,10 @@ class ChampionBelt(Relic):
         from actions.combat import ApplyPowerAction
         
         if isinstance(power, VulnerablePower):
-            return [ApplyPowerAction(power="Weak", amount=1, target=target), ApplyPowerAction(power="Frail", amount=1, target=target)]
+            return [
+                ApplyPowerAction(power="Weak", amount=1,
+                                 duration=1, target=target)
+            ]
         return []
 
 @register("relic")
@@ -91,14 +102,16 @@ class CharonsAshes(Relic):
 @register("relic")
 class MagicFlower(Relic):
     """Healing is 50% more effective during combat."""
-    
+
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.RARE
 
-    # This would need to hook into healing events
-    # For now, implemented as a passive effect description
-    # 实现在 HealAction中
+    def modify_heal(self, base_heal: int) -> int:
+        """Increase healing by 50%."""
+        if base_heal > 0:
+            return int(base_heal * 1.5)
+        return base_heal
 
 # Boss Relic
 @register("relic")

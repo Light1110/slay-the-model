@@ -16,7 +16,7 @@ from engine.game_state import game_state
 from relics.global_relics.event import RedMask
 
 
-@register_event(event_id='masked_bandits', floors='mid', weight=100)
+@register_event(event_id='masked_bandits', acts=[2], weight=100)
 class MaskedBandits(Event):
     """Masked Bandits - pay gold or fight for Red Mask."""
     
@@ -37,10 +37,8 @@ class MaskedBandits(Event):
             Option(
                 name=LocalStr('events.masked_bandits.fight'),
                 actions=[
-                    StartFightAction(enemies=['pointy', 'romeo', 'bear']),
+                    StartFightAction(enemies=['pointy', 'romeo', 'bear']), # todo: 检查 StartFightAction 是否功能正确
                     AddRelicAction(relic=RedMask()),
-                    AddGoldAction(amount=30),  # 25-35 gold
-                    AddRandomCardAction()  # Card reward
                 ]
             )
         ]

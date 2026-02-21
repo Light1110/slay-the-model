@@ -174,20 +174,47 @@ class Creature(Localizable):
         return actions
 
     def add_power(self, power) -> None:
+        """Add a power to this creature with correct stacking semantics."""
         if not power:
             return
-        print(f"[DEBUG] add_power called: power={power.name if power else None}, current powers count={len(self.powers)}")
+        
+        from powers.base import StackType
+        
         for existing in self.powers:
-            if existing.name == power.name and existing.stackable:
-                if getattr(power, "amount", 0):
-                    existing.amount += power.amount
-                if getattr(power, "duration", 0):
-                    existing.duration += power.duration
-                print(f"[DEBUG] Stacked power: {power.name}, new amount={existing.amount}")
+            if existing.name == power.name:
+                # Handle based on stack type
+                if power.stack_type == StackType.PRESENCE:
+                    # Presence powers don't stack - refresh duration if longer
+                    if power.duration > 0 and power.duration > existing.duration:
+                        existing.duration = power.duration
+                    return
+                
+                if power.stack_type == StackType.MULTI_INSTANCE:
+                    # Multi-instance powers always create new instances
+                    break  # Fall through to append new instance
+                
+                # Stackable types - merge with existing
+                if power.stack_type == StackType.INTENSITY:
+                    if power.amount:
+                        existing.amount += power.amount
+                elif power.stack_type == StackType.DURATION:
+                    if power.duration and power.duration > 0:
+                        existing.duration += power.duration
+                elif power.stack_type == StackType.BOTH:
+                    if power.amount:
+                        existing.amount += power.amount
+                    if power.duration and power.duration > 0:
+                        existing.duration += power.duration
+                elif power.stack_type == StackType.LINKED:
+                    if power.duration and power.duration > 0:
+                        existing.duration += power.duration
+                    elif power.amount:
+                        existing.amount += power.amount
                 return
+        
+        # New power instance
         power.owner = self
         self.powers.append(power)
-        print(f"[DEBUG] Added new power: {power.name}, total powers count={len(self.powers)}, powers={[p.name for p in self.powers]}")
 
     def remove_power(self, power_name: str) -> None:
         print(f"[DEBUG] remove_power called: power_name={power_name}, current powers={[p.name for p in self.powers]}")
@@ -242,16 +269,29 @@ class Creature(Localizable):
         """
         return []
 
-    def on_lose_hp(self, amount: int) -> List['Action']:
+    def on_lose_hp(self, amount: int, source=None, card=None) -> List['Action']:
         """Called when creature loses HP.
+        
+        Triggers power on_lose_hp hooks.
         
         Args:
             amount: Amount of HP lost
+            source: Source of the HP loss
+            card: Card that caused HP loss (if applicable)
             
         Returns:
             List of actions to queue after losing HP
         """
-        return []
+        actions = []
+        
+        # Call on_lose_hp on all powers
+        for power in self.powers[:]:  # Copy list to allow modification during iteration
+            if hasattr(power, 'on_lose_hp') and callable(power.on_lose_hp):
+                result = power.on_lose_hp(amount, source=source, card=card)
+                if result:
+                    actions.extend(result)
+        
+        return actions
 
     def on_damage_dealt(self, damage: int, target=None, card=None, damage_type: str = "direct") -> List['Action']:
         """Called when this creature deals damage.
@@ -283,10 +323,21 @@ class Creature(Localizable):
     def on_power_added(self, power) -> List['Action']:
         """Called when a power is added to this creature.
         
+        Triggers on_power_added hooks on all existing powers.
+        
         Args:
             power: The power being added
             
         Returns:
             List of actions to queue after power is added
         """
-        return []
+        actions = []
+        
+        # Call on_power_added on all existing powers
+        for existing_power in self.powers[:]:  # Copy list to allow modification during iteration
+            if hasattr(existing_power, 'on_power_added') and callable(existing_power.on_power_added):
+                result = existing_power.on_power_added(power)
+                if result:
+                    actions.extend(result)
+        
+        return actions

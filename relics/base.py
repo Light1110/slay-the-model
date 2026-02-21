@@ -2,6 +2,7 @@ from typing import List, Optional, Tuple
 from actions.base import Action
 from localization import Localizable
 from utils.types import RarityType
+from utils.damage_phase import DamagePhase
 
 class Relic(Localizable):
     """Base class for all relics in the game.
@@ -12,6 +13,12 @@ class Relic(Localizable):
     localization_prefix = "relics"
     localizable_fields: Tuple[str, ...] = ("name", "description")
     rarity = RarityType.COMMON
+    
+    # Damage modification phase (same as Power)
+    # ADDITIVE: Applied first (e.g., +3 damage)
+    # MULTIPLICATIVE: Applied second (e.g., 2x damage)
+    # CAPPING: Applied last (e.g., cap at 1)
+    modify_phase: DamagePhase = DamagePhase.ADDITIVE
 
     def __init__(self):
         pass
@@ -34,6 +41,14 @@ class Relic(Localizable):
         
         Returns:
             List of actions to execute after combat ends.
+        """
+        return []
+    
+    def on_elite_victory(self, player, entities) -> List[Action]:
+        """Called when player defeats an elite enemy.
+        
+        Returns:
+            List of actions to execute after elite victory.
         """
         return []
 
@@ -143,6 +158,78 @@ class Relic(Localizable):
             
         Returns:
             List of actions to execute when healing occurs
+        """
+        return []
+    
+    # ==================== Modification Hooks ====================
+    
+    def modify_damage_dealt(self, base_damage: int, card=None, target=None) -> int:
+        """Modify damage dealt by the player.
+        
+        Args:
+            base_damage: Original damage amount
+            card: Card being played (if applicable)
+            target: Target receiving damage (if applicable)
+            
+        Returns:
+            Modified damage amount
+        """
+        return base_damage
+    
+    def modify_damage_taken(self, base_damage: int, source=None) -> int:
+        """Modify damage taken by the player.
+        
+        Args:
+            base_damage: Original damage amount
+            source: Source dealing damage (if applicable)
+            
+        Returns:
+            Modified damage amount
+        """
+        return base_damage
+    
+    def modify_heal(self, base_heal: int) -> int:
+        """Modify healing received.
+        
+        Args:
+            base_heal: Original heal amount
+            
+        Returns:
+            Modified heal amount
+        """
+        return base_heal
+    
+    def modify_block_gained(self, base_block: int) -> int:
+        """Modify block gained.
+        
+        Args:
+            base_block: Original block amount
+            
+        Returns:
+            Modified block amount
+        """
+        return base_block
+    
+    def modify_gold_gained(self, base_gold: int) -> int:
+        """Modify gold gained.
+        
+        Args:
+            base_gold: Original gold amount
+            
+        Returns:
+            Modified gold amount
+        """
+        return base_gold
+    
+    def on_gold_gained(self, gold_amount: int, player) -> List[Action]:
+        """Called when gold is gained.
+        
+        Args:
+            gold_amount: Amount of gold gained
+            player: Player instance
+            
+        Returns:
+            List of actions to execute when gold is gained
         """
         return []
     

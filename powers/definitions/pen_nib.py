@@ -3,7 +3,7 @@ PenNib power for double damage on every 10th attack.
 """
 from typing import Any, List
 from actions.base import Action
-from powers.base import Power
+from powers.base import Power, StackType
 from utils.registry import register
 
 
@@ -13,10 +13,10 @@ class PenNibPower(Power):
     
     name = "PenNib"
     description = "Next attack deals double damage."
-    stackable = True
+    stack_type = StackType.DURATION
     is_buff = True
     
-    def __init__(self, amount: int = 1, duration: int = 1, owner=None):
+    def __init__(self, amount: int = 0, duration: int = -1, owner=None):
         """
         Args:
             amount: Multiplier (default 1 for double damage)
@@ -38,7 +38,9 @@ class PenNibPower(Power):
             from utils.types import CardType
             if card.card_type == CardType.ATTACK:
                 self.active = False  # Only apply once
-                self.duration = 0  # Will be removed after this attack
+                # Directly remove power instead of setting duration
+                if self.owner:
+                    self.owner.remove_power(self.name)
                 return base_damage * self.damage_multiplier
         
         return base_damage

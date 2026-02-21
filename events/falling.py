@@ -13,7 +13,7 @@ from utils.option import Option
 from utils.types import CardType
 
 
-@register_event(event_id='falling', floors='late', weight=100)
+@register_event(event_id='falling', acts=[3], weight=100)
 class Falling(Event):
     """Falling - forced card loss by type."""
     

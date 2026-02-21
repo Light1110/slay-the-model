@@ -10,9 +10,19 @@ from localization import LocalStr
 from utils.option import Option
 from utils.types import CardType, RarityType
 
+# todo: original wrong logic
+"""
+[Banana] Heal 1/3 of your max HP.
+If the player's HP is not divisible by 3, the HP gain is rounded down.
+[Donut] Max HP +5.
+Like all HP gain, the extra hit points are healed when you get them.
+[Box] Receive a Relic. Become Cursed: Regret.
+The Relic is a randomly-selected Common, Uncommon or Rare Relic.
+"""
+
 @register_event(
     event_id="big_fish",
-    floors='early',
+    acts=[1],
     weight=100
 )
 class BigFishEvent(Event):
