@@ -41,15 +41,15 @@ class RupturePower(Power):
             List of actions to gain Strength
         """
         from engine.game_state import game_state
+        from powers.definitions.strength import StrengthPower
 
         actions = []
 
         # Only trigger if HP loss is from a card
         if card is not None:
             actions.append(ApplyPowerAction(
-                power="Strength",
-                target=game_state.player,
-                amount=self.amount
+                StrengthPower(amount=self.amount, owner=game_state.player),
+                game_state.player
             ))
 
         return actions

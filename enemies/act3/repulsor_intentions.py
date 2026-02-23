@@ -39,7 +39,7 @@ class RepulsorAttack(Intention):
         if game_state.ascension >= 17:
             damage = 13
         return [AttackAction(
-            self.enemy.get_damage(damage),
+            self.enemy.calculate_damage(damage),
             game_state.player,
             self.enemy,
             "attack"

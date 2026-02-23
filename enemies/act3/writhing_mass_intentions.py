@@ -21,7 +21,7 @@ class MultiHit(Intention):
         if game_state.ascension >= 17:
             damage = 8
         return [AttackAction(
-            self.enemy.get_damage(damage),
+            self.enemy.calculate_damage(damage),
             game_state.player,
             self.enemy,
             "attack"
@@ -44,7 +44,7 @@ class DebuffAttackMass(Intention):
             damage = 11
         return [
             AttackAction(
-                self.enemy.get_damage(damage),
+                self.enemy.calculate_damage(damage),
                 game_state.player,
                 self.enemy,
                 "attack"
@@ -69,7 +69,7 @@ class BigHit(Intention):
         if game_state.ascension >= 17:
             damage = 35
         return [AttackAction(
-            self.enemy.get_damage(damage),
+            self.enemy.calculate_damage(damage),
             game_state.player,
             self.enemy,
             "attack"
@@ -93,7 +93,7 @@ class BlockAttackMass(Intention):
             damage = 16
         return [
             AttackAction(
-                self.enemy.get_damage(damage),
+                self.enemy.calculate_damage(damage),
                 game_state.player,
                 self.enemy,
                 "attack"

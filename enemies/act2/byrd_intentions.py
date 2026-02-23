@@ -134,7 +134,7 @@ class GoAirborneIntention(Intention):
         
         return [
             ApplyPowerAction(
-                power="flying",
+                power="Flying",
                 target=self.enemy,
                 amount=self.base_flying_gain,
                 duration=-1

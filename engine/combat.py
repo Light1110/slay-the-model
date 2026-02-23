@@ -417,12 +417,12 @@ class Combat(Localizable):
         
         # Check if all enemies are dead
         if not self.enemies or all(e.is_dead() for e in self.enemies):
-            print(f"\n[COMBAT END] COMBAT_WIN - All enemies defeated!")
+            # print(f"\n[COMBAT END] COMBAT_WIN - All enemies defeated!")
             return GameStateResult("COMBAT_WIN")
         
         # Check if player is dead
         if game_state.player.is_dead():
-            print(f"\n[COMBAT END] GAME_LOSE - Player defeated!")
+            # print(f"\n[COMBAT END] GAME_LOSE - Player defeated!")
             return GameStateResult("GAME_LOSE")
         
         return NoneResult()
@@ -460,13 +460,14 @@ class Combat(Localizable):
         for enemy in self.enemies:
             enemy.on_combat_start(floor=game_state.current_floor)
         
-        # God mode: apply 999 BufferPower if enabled
+        # God mode: set all enemies to 1 HP if enabled
         god_mode_enabled = game_state.config.get("debug.god_mode", False)
-        # print(f"[DEBUG] god_mode enabled: {god_mode_enabled}")
         if god_mode_enabled:
-            from powers.definitions.buffer import BufferPower
-            game_state.player.add_power(BufferPower(amount=999, owner=game_state.player))
-            # print(f"[DEBUG] Added BufferPower with 999 stacks to player")
+            for enemy in self.enemies:
+                enemy.max_hp = 1
+                enemy.hp = 1
+            game_state.player.max_hp = 10000
+            game_state.player.hp = 10000
         
     def _prepare_opening_hand(self):
         """Move innate/bottled cards from draw pile to opening hand."""

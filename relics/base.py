@@ -21,7 +21,21 @@ class Relic(Localizable):
     modify_phase: DamagePhase = DamagePhase.ADDITIVE
 
     def __init__(self):
-        pass
+        self.namespace = self._resolve_namespace()
+
+    def _resolve_namespace(self) -> str:
+        """Infer relic namespace from module path.
+
+        Character relics live under ``relics.character.<character>``.
+        All other relics are global and use ``any``.
+        """
+        module = getattr(self.__class__, "__module__", "")
+        parts = module.split(".")
+        if "character" in parts:
+            idx = parts.index("character")
+            if idx + 1 < len(parts):
+                return parts[idx + 1]
+        return "any"
     
     def on_obtain(self) -> List[Action]:
         return []

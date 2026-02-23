@@ -55,7 +55,7 @@ def test_map_generation():
             print(f"Floor {floor}: (empty)")
     
     print()
-    return map_data, manager
+    # Test passed
 
 
 def test_path_selection(manager):
@@ -208,12 +208,12 @@ def main():
     print("\n")
     
     try:
-        # Test 1: Map generation
-        map_data, manager = test_map_generation()
-        
+        # Test 1: Map generation (run test, but also create manager for other tests)
+        test_map_generation()
+        manager = MapManager(seed=12345, act_id=1)
+        manager.generate_map()
         # Test 2: Path selection
         test_path_selection(manager)
-        
         # Test 3: Room type distribution
         test_room_type_distribution()
         

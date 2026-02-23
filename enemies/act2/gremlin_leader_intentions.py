@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, List
 
 from actions.combat import AttackAction, GainBlockAction, ApplyPowerAction
 from enemies.intention import Intention
-from powers.base import PowerType
+from powers.definitions.strength import StrengthPower
 
 if TYPE_CHECKING:
     from enemies.act2.gremlin_leader import GremlinLeader
@@ -33,12 +33,9 @@ class Encourage(Intention):
         # Apply strength to all enemies (including self)
         for enemy in enemies:
             if enemy.is_alive:
-                actions.append(ApplyPowerAction(
-                    power=PowerType.STRENGTH,
-                    target=enemy,
-                    amount=self.base_strength_gain,
-                    duration=-1  # Permanent
-                ))
+                actions.append(ApplyPowerAction(StrengthPower(amount=self.base_strength_gain, owner=enemy), enemy))
+
+
                 
                 # Give block to OTHER enemies (not self)
                 if enemy != self.enemy:

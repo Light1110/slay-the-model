@@ -20,28 +20,6 @@ class StackType(Enum):
     MULTI_INSTANCE = auto() # Creates new instance each time (The Bomb)
 
 
-class PowerType:
-    """Power type constants for use in ApplyPowerAction."""
-    STRENGTH = "Strength"
-    DEXTERITY = "Dexterity"
-    WEAK = "Weak"
-    VULNERABLE = "Vulnerable"
-    FRAIL = "Frail"
-    POISON = "Poison"
-    REGENERATE = "Regenerate"
-    INTANGIBLE = "Intangible"
-    BARRICADE = "Barricade"
-    BUFFER = "Buffer"
-    ANGER = "Anger"
-    RITUAL = "Ritual"
-    THORNS = "Thorns"
-    CONSTRICTED = "Constricted"
-    FLYING = "Flying"
-    HEX = "Hex"
-    PLATED_ARMOR = "Plated Armor"
-    CONFUSED = "Confused"
-
-
 class Power(Localizable):
     """Base power class for temporary and permanent combat effects."""
     

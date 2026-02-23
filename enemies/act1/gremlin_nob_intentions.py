@@ -56,12 +56,11 @@ class SkullBashIntention(Intention):
                 )
             )
             # Apply Vulnerable
+            from powers.definitions.vulnerable import VulnerablePower
             actions.append(
                 ApplyPowerAction(
-                    power="Vulnerable",
-                    target=game_state.player,
-                    amount=self.vulnerable_stacks,
-                    duration=self.vulnerable_stacks
+                    VulnerablePower(amount=self.vulnerable_stacks, duration=self.vulnerable_stacks, owner=game_state.player),
+                    game_state.player
                 )
             )
         

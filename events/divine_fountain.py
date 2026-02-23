@@ -36,7 +36,7 @@ class DivineFountain(Event):
         # Get all curse cards and create remove actions
         curse_cards = [card for card in game_state.player.deck 
                        if hasattr(card, 'is_curse') and card.is_curse]
-        remove_actions = [RemoveCardAction(card) for card in curse_cards]
+        remove_actions = [RemoveCardAction(card=card, src_pile='deck') for card in curse_cards]
         
         # Build options
         options = [

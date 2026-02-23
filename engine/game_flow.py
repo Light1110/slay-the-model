@@ -7,7 +7,7 @@ from rooms.base import Room
 from utils.registry import get_registered_instance
 from localization import t, LocalStr
 from utils.types import RoomType
-from engine.game_state import game_state, FLOORS_PER_ACT, MAX_ACTS
+from engine.game_state import game_state, MAX_ACTS
 from utils.result_types import BaseResult, GameStateResult, SingleActionResult
 
 
@@ -28,15 +28,13 @@ class GameFlow:
         self.current_room = None
     
     def _get_max_floor(self, game_state) -> int:
-        """Get the maximum floor number for current act (0-indexed)."""
-        from engine.game_state import FLOORS_PER_ACT
-        
+        """Get the maximum floor number for current act (0-indexed)."""        
         if game_state.current_act == 4:
             return 5  # Act 4: 6 floors (0-5)
         elif game_state.current_act == 3 and game_state.ascension >= 20:
             return 18  # Act 3 A20: 19 floors (0-18)
         else:
-            return FLOORS_PER_ACT - 1  # Default: 18 floors (0-17)
+            return 17  # Default: 18 floors (0-17)
     
     def start_game(self, game_state):
         """
@@ -80,10 +78,11 @@ class GameFlow:
         from rooms.victory import VictoryRoom
         
         result = ""
-        max_floor = self._get_max_floor(game_state)
+        # max_floor = self._get_max_floor(game_state)
+        current_act = game_state.current_act
         
         # Act loop - iterate over floors up to max_floor
-        while game_state.floor_in_act < max_floor:
+        while game_state.current_act == current_act:
             # Select next room from map
             cur_room = self._select_next_room(game_state)
             if cur_room is None:
@@ -130,27 +129,8 @@ class GameFlow:
         from utils.result_types import MultipleActionsResult
         from rooms.treasure import TreasureRoom
         
-        # Boss treasure room (Act 1 & 2 only - Acts 3 & 4 use VictoryRoom on map)
-        if game_state.current_act <= 2:
-            # Treasure room for Act 1 and 2
-            treasure_room = TreasureRoom(is_boss=True)
-            game_state.current_room = treasure_room
-            treasure_room.init()
-            print(t('rooms.treasure.boss_chest', default='\n=== Boss Treasure Room ==='))
-            result = treasure_room.enter()
-            
-            if isinstance(result, MultipleActionsResult):
-                game_state.action_queue.add_actions(result.actions)
-                game_state.execute_all_actions()
-            
-            treasure_room.leave()
-        else:
-            # Act 3 & 4: Victory/transition room (no treasure)
-            print(t('ui.act_complete', act=game_state.current_act, 
-                   default=f'\n=== Act {game_state.current_act} Complete! ==='))
-        
         # Check if can advance to next act
-        if game_state.current_act == 3:
+        if game_state.current_act == 4: # this means act3 finish!
             if not game_state.has_all_keys:
                 # No keys - game victory after Act 3
                 self._handle_game_won()
@@ -191,6 +171,7 @@ class GameFlow:
         if isinstance(result, GameStateResult) and result.state == "GAME_LOSE":
             self._handle_game_over()
             return
+        neo_room.leave()
     
     def _select_next_room(self, game_state):
         """
@@ -215,9 +196,6 @@ class GameFlow:
         
         # After execution, get the current room from game_state
         room = game_state.current_room
-        
-        # Advance floor counter
-        game_state.advance_floor()
         
         return room
     

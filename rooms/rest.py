@@ -34,7 +34,7 @@ class RestRoom(Room):
     def enter(self) -> BaseResult:
         """Enter rest room and handle rest options"""
         # Handle Eternal Feather - heal on enter (每5张牌回3血)
-        if _has_relic("EternalFeather"):
+        if _has_relic("EternalFeather", game_state):
             deck = game_state.player.card_manager.get_pile('deck')
             deck_size = len(deck)
             heal_amount = (deck_size // 5) * 3
@@ -67,7 +67,7 @@ class RestRoom(Room):
         """Leave the rest room"""
         super().leave()
         # Handle Ancient Tea Set - add energy next turn
-        if _has_relic("AncientTeaSet"):
+        if _has_relic("AncientTeaSet", game_state):
             # set relic available for next combat
             for relic in game_state.player.relics:
                 if getattr(relic, "idstr", "").lower() == "AncientTeaSet":
@@ -84,7 +84,7 @@ class RestRoom(Room):
             if hasattr(relic, "modify_rest_heal"):
                 heal_amount = relic.modify_rest_heal(heal_amount)
         rest_actions = [HealAction(amount=heal_amount)]
-        if _has_relic("DreamCatcher"):
+        if _has_relic("DreamCatcher", game_state):
             rest_actions.append(
                 ChooseObtainCardAction(
                     total=3,
@@ -100,7 +100,7 @@ class RestRoom(Room):
         ))
 
 
-        can_smith = not _has_relic("FusionHammer")
+        can_smith = not _has_relic("FusionHammer", game_state)
         if can_smith:
             can_smith = False
             deck = game_state.player.card_manager.get_pile('deck')
@@ -122,7 +122,7 @@ class RestRoom(Room):
         #     ))
         
         # Special relic options (Girya, Peace Pipe, Shovel)
-        if _has_relic("Girya"):
+        if _has_relic("Girya", game_state):
             # Check if Girya can still be used
             for relic in game_state.player.relics:
                 if getattr(relic, "idstr", None) == "Girya":
@@ -133,13 +133,13 @@ class RestRoom(Room):
                         ))
                     break
         
-        if _has_relic("PeacePipe"):
+        if _has_relic("PeacePipe", game_state):
             options.append(Option(
                 name=self.local("RestRoom.toke"),
                 actions=[ChooseRemoveCardAction(pile="deck"), LeaveRoomAction(room=self)]
             ))
         
-        if _has_relic("Shovel"):
+        if _has_relic("Shovel", game_state):
             options.append(Option(
                 name=self.local("RestRoom.dig"),
                 actions=[AddRandomRelicAction(rarities=[RarityType.COMMON, RarityType.UNCOMMON, RarityType.RARE]), LeaveRoomAction(room=self)]
@@ -168,7 +168,7 @@ class RestRoom(Room):
             if hasattr(relic, "modify_rest_heal"):
                 heal_amount = relic.modify_rest_heal(heal_amount)
         rest_actions = [HealAction(amount=heal_amount)]
-        if self._has_relic("DreamCatcher"):
+        if self._check_relic("DreamCatcher"):
             rest_actions.append(
                 ChooseObtainCardAction(
                     total=3,
@@ -183,7 +183,7 @@ class RestRoom(Room):
             actions=rest_actions
         ))
 
-        can_smith = not self._has_relic("FusionHammer")
+        can_smith = not self._check_relic("FusionHammer")
         if can_smith:
             can_smith = False
             deck = game_state.player.card_manager.get_pile('deck')
@@ -198,19 +198,19 @@ class RestRoom(Room):
             ))
 
         # Special relic options (Girya, Peace Pipe, Shovel)
-        if self._has_relic("Girya"):
+        if self._check_relic("Girya"):
             options.append(Option(
                 name=self.local("RestRoom.lift"),
                 actions=[TriggerRelicAction(relic_name="Lift"), LeaveRoomAction(room=self)],
             ))
 
-        if self._has_relic("PeacePipe"):
+        if self._check_relic("PeacePipe"):
             options.append(Option(
                 name=self.local("RestRoom.toke"),
                 actions=[ChooseRemoveCardAction(pile="deck"), LeaveRoomAction(room=self)]
             ))
 
-        if self._has_relic("Shovel"):
+        if self._check_relic("Shovel"):
             options.append(Option(
                 name=self.local("RestRoom.dig"),
                 actions=[AddRandomRelicAction(rarities=[RarityType.COMMON, RarityType.UNCOMMON, RarityType.RARE]), LeaveRoomAction(room=self)]
@@ -224,6 +224,6 @@ class RestRoom(Room):
 
         return options
 
-    def _has_relic(self, relic_name: str) -> bool:
+    def _check_relic(self, relic_name: str) -> bool:
         """Check if player has a specific relic."""
-        return _has_relic(relic_name)
+        return _has_relic(relic_name, game_state)

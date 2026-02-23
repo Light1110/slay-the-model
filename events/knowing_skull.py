@@ -38,9 +38,6 @@ class KnowingSkull(Event):
         self.use_count = 0
     
     def trigger(self) -> BaseResult:
-        from actions.reward import AddRandomCardAction as AddRandomCardActionReward
-        from cards.colorless.uncommon import uncommon_cards
-        
         actions = []
         
         # Display event description only on first entry

@@ -111,14 +111,14 @@ class Creature(Localizable):
             
         Returns True if damage was prevented, False otherwise.
         """
-        print(f"[DEBUG] Creature.try_prevent_damage called: amount={amount}, powers={[p.__class__.__name__ for p in self.powers]}")
+        # print(f"[DEBUG] Creature.try_prevent_damage called: amount={amount}, powers={[p.__class__.__name__ for p in self.powers]}")
         for power in list(self.powers):
             if hasattr(power, 'try_prevent_damage'):
-                print(f"[DEBUG] Checking power {power.__class__.__name__} for damage prevention")
+                # print(f"[DEBUG] Checking power {power.__class__.__name__} for damage prevention")
                 if power.try_prevent_damage(amount):
-                    print(f"[DEBUG] Power {power.__class__.__name__} prevented damage!")
+                    # print(f"[DEBUG] Power {power.__class__.__name__} prevented damage!")
                     return True
-        print(f"[DEBUG] No power prevented damage")
+        # print(f"[DEBUG] No power prevented damage")
         return False
 
     def try_prevent_debuff(self) -> bool:
@@ -217,13 +217,13 @@ class Creature(Localizable):
         self.powers.append(power)
 
     def remove_power(self, power_name: str) -> None:
-        print(f"[DEBUG] remove_power called: power_name={power_name}, current powers={[p.name for p in self.powers]}")
+        # print(f"[DEBUG] remove_power called: power_name={power_name}, current powers={[p.name for p in self.powers]}")
         self.powers = [p for p in self.powers if p.name != power_name and p.__class__.__name__ != power_name]
         # Also try to match by removing the "Power" suffix
         import re
         base_name = re.sub(r"Power$", "", power_name)
         self.powers = [p for p in self.powers if p.name != base_name]
-        print(f"[DEBUG] After removal: powers={[p.name for p in self.powers]}")
+        # print(f"[DEBUG] After removal: powers={[p.name for p in self.powers]}")
 
     def get_power(self, power_name: str):
         if not power_name:

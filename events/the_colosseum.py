@@ -33,7 +33,7 @@ class TheColosseum(Event):
         """Only appears on Floor 7+ of Act 2."""
         # Colosseum appears on Floor 7+ of Act 2
         # Note: In original game, this is Floor 7+ regardless of ascension
-        return game_state.current_floor >= 7
+        return game_state.current_act == 2 and game_state.floor_in_act >= 7
     
     def __init__(self):
         super().__init__()

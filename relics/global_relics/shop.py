@@ -268,3 +268,18 @@ class StrikeDummy(Relic):
             if hasattr(card, 'card_id') and 'strike' in card.card_id.lower():
                 return base_damage + 3
         return base_damage
+
+
+@register("relic")
+class PotionBeltShop(Relic):
+    """Gain 2 additional potion slots."""
+    
+    def __init__(self):
+        super().__init__()
+        self.rarity = RarityType.SHOP
+    
+    def on_obtain(self) -> List[Action]:
+        """Increase potion slots by 2."""
+        from engine.game_state import game_state
+        game_state.player.potion_slots += 2
+        return []

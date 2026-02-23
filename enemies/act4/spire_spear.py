@@ -56,10 +56,10 @@ class SpireSpear(Enemy):
         self._turn_number += 1
 
         if self._turn_number == 1:
-            return "Burn Strike"
+            return self.intentions["Burn Strike"]
 
         if self._turn_number >= 2 and (self._turn_number - 2) % 3 == 0:
-            return "Skewer"
+            return self.intentions["Skewer"]
 
         if self._pair_index >= len(self._pair_sequence):
             self._pair_sequence = random.choice(

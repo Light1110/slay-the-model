@@ -60,26 +60,26 @@ class TheMaw(Enemy):
         # First turn always Roar
         if self._last_move is None:
             self._last_move = "Roar"
-            return "Roar"
+            return self.intentions["Roar"]
 
         # Determine next move based on last move
         if self._last_move == "Roar" or self._last_move == "Drool":
             # 50/50 between Slam and Nom Nom
             if random.random() < 0.5:
                 self._last_move = "Slam"
-                return "Slam"
+                return self.intentions["Slam"]
             else:
                 self._last_move = "Nom Nom"
-                return "Nom Nom"
+                return self.intentions["Nom Nom"]
         elif self._last_move == "Nom Nom" or self._last_move == "Slam":
             # 50/50 between Nom Nom and Drool
             if random.random() < 0.5:
                 self._last_move = "Nom Nom"
-                return "Nom Nom"
+                return self.intentions["Nom Nom"]
             else:
                 self._last_move = "Drool"
-                return "Drool"
+                return self.intentions["Drool"]
 
         # Fallback (shouldn't reach here)
         self._last_move = "Slam"
-        return "Slam"
+        return self.intentions["Slam"]

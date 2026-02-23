@@ -93,6 +93,7 @@ class LickIntention(Intention):
     def execute(self) -> List['Action']:
         """Execute Lick: applies Weak to player."""
         from actions.combat import ApplyPowerAction
+        from powers.definitions.weak import WeakPower
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
@@ -100,10 +101,8 @@ class LickIntention(Intention):
         
         return [
             ApplyPowerAction(
-                power="Weak",
-                target=game_state.player,
-                amount=self._weak_amount,
-                duration=2
+                WeakPower(amount=self._weak_amount, duration=2, owner=game_state.player),
+                game_state.player
             )
         ]
 

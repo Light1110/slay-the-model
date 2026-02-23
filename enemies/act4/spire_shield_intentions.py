@@ -6,6 +6,8 @@ from typing import List
 from actions.base import Action
 from actions.combat import ApplyPowerAction, AttackAction, GainBlockAction
 from enemies.intention import Intention
+from powers.definitions.focus import FocusPower
+from powers.definitions.strength import StrengthPower
 
 
 class Bash(Intention):
@@ -33,9 +35,9 @@ class Bash(Intention):
             and getattr(player.orb_manager, "max_orb_slots", 0) > 0
         )
         if has_orb_slot and random.choice([True, False]):
-            actions.append(ApplyPowerAction(power="Focus", target=player, amount=-1))
+            actions.append(ApplyPowerAction(FocusPower(amount=-1, owner=player), player))
         else:
-            actions.append(ApplyPowerAction(power="Strength", target=player, amount=-1))
+            actions.append(ApplyPowerAction(StrengthPower(amount=-1, owner=player), player))
 
         return actions
 

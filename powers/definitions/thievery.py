@@ -22,7 +22,10 @@ class ThieveryPower(Power):
     
     def __init__(self, amount: int = 15, duration: int = -1, owner=None):
         super().__init__(amount=amount, duration=duration, owner=owner)
+        self.name = "Thievery"
         self.stolen_gold = 0  # Track how much gold was stolen
+
+
     
     def on_attack(self, target: Any = None, source: Any = None, 
                    card: Any = None) -> List['Action']:

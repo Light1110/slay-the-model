@@ -7,6 +7,7 @@ from actions.base import Action
 from actions.combat import ApplyPowerAction
 from cards.base import Card
 from entities.creature import Creature
+from powers.definitions.strength import StrengthPower
 from utils.registry import register
 from utils.types import CardType, RarityType, TargetType
 
@@ -34,10 +35,8 @@ class DarkShackles(Card):
             strength_loss = self.get_magic_value("strength_loss")
             # Apply Strength (negative value reduces strength)
             actions.append(ApplyPowerAction(
-                power="Strength",
-                target=target,
-                amount=-strength_loss,
-                duration=1  # Lasts only this turn
+                StrengthPower(amount=-strength_loss, duration=1, owner=target),
+                target
             ))
 
         return actions

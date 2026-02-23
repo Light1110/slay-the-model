@@ -2,7 +2,7 @@
 """
 Display-related actions
 """
-from typing import List, Optional
+from typing import Dict, List, Optional
 import pickle
 import os
 import random
@@ -95,19 +95,31 @@ class SelectAction(Action):
         for i, option in enumerate(self.options):
             print(f"{i+1}. {option.name}")
             
-    def show_choose(self, options_chosen):
+    def _build_selected_options(
+        self,
+        options: List[Option],
+        selected_indices: List[int],
+    ) -> Dict[int, Option]:
+        """Build selected options map with original index as key."""
+        return {
+            idx: options[idx]
+            for idx in selected_indices
+            if 0 <= idx < len(options)
+        }
+
+    def show_choose(self, selected_options: Dict[int, Option]):
         """Print the selected options
         
         Args:
-            options_chosen: List of Option objects that were selected
+            selected_options: Mapping of original index -> selected option
         """
-        if not options_chosen:
+        if not selected_options:
             return
         
         # Print selection header
         print(f"\n{t('ui.selected', default='Selected:')}")
-        for i, option in enumerate(options_chosen, 1):
-            print(f"  {i}. {option.name}")
+        for idx, option in selected_options.items():
+            print(f"  {idx+1}. {option.name}")
         
         
     def execute_human(self) -> 'BaseResult':
@@ -140,7 +152,11 @@ class SelectAction(Action):
             all_actions = []
             
             # Print selected options
-            self.show_choose(options_no_menu)
+            selected_options = self._build_selected_options(
+                options_no_menu,
+                list(range(len(options_no_menu))),
+            )
+            self.show_choose(selected_options)
             
             for option in options_no_menu: # 除了菜单
                 all_actions.extend(option.actions)
@@ -150,12 +166,16 @@ class SelectAction(Action):
         if self.must_select and human_module.get("auto_select", False) \
                 and self.max_select >= len(options_no_menu): # 除了菜单
             all_actions = []
-            selected_options = options_no_menu[:self.max_select]
+            selected_indices = list(range(self.max_select))
+            selected_options = self._build_selected_options(
+                options_no_menu,
+                selected_indices,
+            )
             
             # Print selected options
             self.show_choose(selected_options)
             
-            for option in selected_options:
+            for option in selected_options.values():
                 all_actions.extend(option.actions)
             return MultipleActionsResult(all_actions)
         
@@ -195,7 +215,7 @@ class SelectAction(Action):
                         print(t("ui.invalid_option", default=f"Invalid option: {idx+1}"))
                         break
                 # 去除重复选择
-                valid_indices = list(set(valid_indices))
+                valid_indices = list(dict.fromkeys(valid_indices))
                 
                 if len(valid_indices) != len(selected_indices):
                     continue
@@ -229,7 +249,10 @@ class SelectAction(Action):
                         actual_indices = actual_indices[:actual_max_select]
                         
                         # Print selected options
-                        selected_options = [options[idx] for idx in actual_indices]
+                        selected_options = self._build_selected_options(
+                            options,
+                            actual_indices,
+                        )
                         self.show_choose(selected_options)
                         
                         # 收集动作
@@ -247,7 +270,10 @@ class SelectAction(Action):
                     continue
                 
                 # Print selected options
-                selected_options = [options[idx] for idx in valid_indices]
+                selected_options = self._build_selected_options(
+                    options,
+                    valid_indices,
+                )
                 self.show_choose(selected_options)
                 
                 # 收集所有选择的动作
@@ -299,7 +325,7 @@ class SelectAction(Action):
                 raise ValueError(f"Invalid debug select_type: {select_type}")
             
         # Print selected options
-        selected_options = [options[i] for i in select_idxs]
+        selected_options = self._build_selected_options(options, select_idxs)
         self.show_choose(selected_options)
         
         # 收集前num_to_select个选项的动作

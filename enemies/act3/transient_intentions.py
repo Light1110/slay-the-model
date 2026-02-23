@@ -22,7 +22,7 @@ class TransientAttack(Intention):
             damage = 30 + (current_turn * 10)
         
         return [AttackAction(
-            self.enemy.get_damage(damage),
+            self.enemy.calculate_damage(damage),
             game_state.player,
             self.enemy,
             "attack"

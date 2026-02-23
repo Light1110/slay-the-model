@@ -175,7 +175,6 @@ from .global_relics import (
 from .character.ironclad import (
     BurningBlood,
     RedSkull,
-    PaperPhrog,
     ChampionBelt,
     CharonsAshes,
     MagicFlower,

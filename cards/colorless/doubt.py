@@ -6,6 +6,7 @@ from typing import List
 from actions.base import Action
 from actions.combat import ApplyPowerAction
 from cards.base import Card, COST_UNPLAYABLE
+from powers.definitions.weak import WeakPower
 from utils.registry import register
 from utils.types import CardType, RarityType
 
@@ -28,10 +29,8 @@ class Doubt(Card):
 
         weak_amount = 1
         actions.append(ApplyPowerAction(
-            power="Weak",
-            target=game_state.player,
-            amount=weak_amount,
-            duration=weak_amount,
+            WeakPower(amount=weak_amount, duration=weak_amount, owner=game_state.player),
+            game_state.player
         ))
 
         return actions

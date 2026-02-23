@@ -41,9 +41,9 @@ class BonfireSpirits(Event):
             deck = player.card_manager.get_pile('deck')
             for i, card in enumerate(deck):
                 # Determine reward based on card rarity
-                reward_actions = [RemoveCardAction(card=card)]
+                reward_actions = [RemoveCardAction(card=card, src_pile='deck')]
                 
-                if card.rarity == RarityType.BASIC:
+                if card.rarity == RarityType.STARTER:
                     # Basic: Nothing happens
                     pass
                 elif card.rarity == RarityType.COMMON:
@@ -53,7 +53,7 @@ class BonfireSpirits(Event):
                     # Uncommon: Full heal
                     max_hp = player.max_hp
                     reward_actions.append(HealAction(amount=max_hp))
-                elif card.rarity in (RarityType.RARE, RarityType.LEGENDARY):
+                elif card.rarity in (RarityType.RARE, RarityType.SPECIAL):
                     # Rare/Legendary: +10 Max HP + Full heal
                     reward_actions.append(ModifyMaxHpAction(amount=10))
                     # Full heal after max HP increase

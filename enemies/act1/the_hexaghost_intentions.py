@@ -37,7 +37,7 @@ class DividerIntention(Intention):
         # Calculate damage based on player's HP
         player_hp = game_state.player.hp
         n = player_hp // 12
-        damage = (n + 1) * 6
+        damage = n + 1
 
         return [
             AttackAction(
@@ -57,7 +57,7 @@ class DividerIntention(Intention):
         if game_state and game_state.player:
             player_hp = game_state.player.hp
             n = player_hp // 12
-            damage = (n + 1) * 6
+            damage = n + 1
         else:
             damage = 6
 

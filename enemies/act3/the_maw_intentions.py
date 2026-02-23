@@ -19,8 +19,8 @@ class TheMawRoar(Intention):
         """Execute Roar intention - applies 3 Weak and 3 Frail."""
         from engine.game_state import game_state
         return [
-            ApplyPowerAction(WeakPower(stacks=3, owner=game_state.player), game_state.player),
-            ApplyPowerAction(FrailPower(stacks=3, owner=game_state.player), game_state.player)
+            ApplyPowerAction(WeakPower(amount=3, duration=3, owner=game_state.player), game_state.player),
+            ApplyPowerAction(FrailPower(amount=3, duration=3, owner=game_state.player), game_state.player)
         ]
 
 
@@ -35,7 +35,7 @@ class TheMawSlam(Intention):
         """Execute Slam intention - deals 25 damage."""
         from engine.game_state import game_state
         return [AttackAction(
-            self.enemy.get_damage(self.base_damage),
+            self.enemy.calculate_damage(self.base_damage),
             game_state.player,
             self.enemy,
             "slam"
@@ -55,7 +55,7 @@ class TheMawNomNom(Intention):
         n = (current_turn + 1) // 2  # Round up: (turn + 1) // 2
         damage = 5 * n
         return [AttackAction(
-            self.enemy.get_damage(damage),
+            self.enemy.calculate_damage(damage),
             game_state.player,
             self.enemy,
             "nom_nom"
@@ -71,5 +71,5 @@ class TheMawDrool(Intention):
     def execute(self) -> List:
         """Execute Drool intention - gains 3 Strength."""
         return [
-            ApplyPowerAction(StrengthPower(stacks=3, owner=self.enemy), self.enemy)
+            ApplyPowerAction(StrengthPower(amount=3, owner=self.enemy), self.enemy)
         ]

@@ -33,7 +33,7 @@ class VictoryRoom(Room):
         
         if game_state.current_act == 4:
             self._handle_act4_victory()
-            return GameStateResult(state="WIN")
+            return GameStateResult(state="GAME_WIN")
         
         if game_state.current_act == 3:
             if game_state.has_all_keys:
@@ -41,7 +41,7 @@ class VictoryRoom(Room):
                 return NoneResult()
             else:
                 self._handle_act3_victory()
-                return GameStateResult(state="WIN")
+                return GameStateResult(state="GAME_WIN")
         
         return NoneResult()
     

@@ -53,10 +53,10 @@ class CorruptHeart(Enemy):
         self._turn_number += 1
 
         if self._turn_number == 1:
-            return "Debilitate"
+            return self.intentions["Debilitate"]
 
         if self._turn_number >= 4 and (self._turn_number - 4) % 3 == 0:
-            return "Buff"
+            return self.intentions["Buff"]
 
         if self._pair_index >= len(self._pair_sequence):
             self._pair_sequence = random.choice(

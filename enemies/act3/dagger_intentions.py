@@ -22,7 +22,7 @@ class WoundIntention(Intention):
         game_state.player.card_manager.get_pile("discard_pile").append(Wound())
         
         return [AttackAction(
-            self.enemy.get_damage(self.base_damage),
+            self.enemy.calculate_damage(self.base_damage),
             game_state.player,
             self.enemy,
             "attack"

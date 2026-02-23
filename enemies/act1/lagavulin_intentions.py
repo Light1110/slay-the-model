@@ -67,6 +67,8 @@ class SiphonSoulIntention(Intention):
     def execute(self) -> List['Action']:
         """Execute Siphon Soul: player loses Dexterity, Lagavulin gains Strength."""
         from actions.combat import ApplyPowerAction
+        from powers.definitions.dexterity import DexterityPower
+        from powers.definitions.strength import StrengthPower
         from engine.game_state import game_state
         
         actions = []
@@ -75,20 +77,16 @@ class SiphonSoulIntention(Intention):
             # Player loses Dexterity
             actions.append(
                 ApplyPowerAction(
-                    power="Dexterity",
-                    target=game_state.player,
-                    amount=-self.dex_loss,
-                    duration=-1  # Permanent
+                    DexterityPower(amount=-self.dex_loss, duration=-1, owner=game_state.player),
+                    game_state.player
                 )
             )
         
         # Lagavulin gains Strength
         actions.append(
             ApplyPowerAction(
-                power="strength",
-                target=self.enemy,
-                amount=self.str_gain,
-                duration=-1  # Permanent
+                StrengthPower(amount=self.str_gain, duration=-1, owner=self.enemy),
+                self.enemy
             )
         )
         

@@ -39,7 +39,7 @@ class Reptomancer(Enemy):
         if self._turn_count == 1:
             # Always starts with Spawn Dagger
             self._last_intention = "Spawn Dagger"
-            return "Spawn Dagger"
+            return self.intentions["Spawn Dagger"]
         
         # Equal chance of Snake Strike, Big Bite, Spawn Dagger
         # Cannot use Snake Strike or Big Bite twice in a row

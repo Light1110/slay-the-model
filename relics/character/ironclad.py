@@ -5,6 +5,8 @@ from typing import List
 from actions.base import Action, LambdaAction
 from actions.card import DrawCardsAction
 from actions.combat import GainBlockAction, GainEnergyAction, HealAction, DealDamageAction, ApplyPowerAction
+from powers.definitions.strength import StrengthPower
+from powers.definitions.weak import WeakPower
 # GainGoldAction imported lazily when needed to avoid circular import
 from relics.base import Relic
 from utils.types import RarityType, CardType
@@ -38,14 +40,14 @@ class RedSkull(Relic):
         # Check if HP is already <= 50% at combat start
         if player.hp <= player.max_hp // 2:
             self.strength_applied = True
-            return [ApplyPowerAction("Strength", target=player, amount=3)]
+            return [ApplyPowerAction(StrengthPower(amount=3, owner=player), player)]
         return []
     
     def on_damage_taken(self, damage, source, player, entities) -> List[Action]:
         """Check if HP dropped to 50% or below"""
         if not self.strength_applied and player.hp <= player.max_hp // 2:
             self.strength_applied = True
-            return [ApplyPowerAction("Strength", target=player, amount=3)]
+            return [ApplyPowerAction(StrengthPower(amount=3, owner=player), player)]
         return []
     
     def on_heal(self, heal_amount, player, entities) -> List[Action]:
@@ -55,7 +57,7 @@ class RedSkull(Relic):
             new_hp = min(player.hp + heal_amount, player.max_hp)
             if new_hp > player.max_hp // 2:
                 self.strength_applied = False
-                return [ApplyPowerAction(power="Strength", target=player, amount=-3)]
+                return [ApplyPowerAction(StrengthPower(amount=-3, owner=player), player)]
         return []
         
 
@@ -76,9 +78,9 @@ class ChampionBelt(Relic):
         
         if isinstance(power, VulnerablePower):
             return [
-                ApplyPowerAction(power="Weak", amount=1,
-                                 duration=1, target=target)
+                ApplyPowerAction(WeakPower(amount=1, owner=target), target)
             ]
+
         return []
 
 @register("relic")
@@ -153,12 +155,12 @@ class BrimStone(Relic):
         """Gain 2 Strength for player, 1 Strength for all enemies"""
         from engine.game_state import game_state
         actions = [
-            ApplyPowerAction(power="Strength", target=player, amount=2)
+            ApplyPowerAction(StrengthPower(amount=2, owner=player), player)
         ]
         assert game_state.current_combat is not None
         for enemy in game_state.current_combat.enemies:
             if enemy.hp > 0:
-                actions.append(ApplyPowerAction(power="Strength", target=enemy, amount=1))
+                actions.append(ApplyPowerAction(StrengthPower(amount=1, owner=enemy), enemy))
         return actions
 
 @register("relic")

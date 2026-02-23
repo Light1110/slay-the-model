@@ -6,7 +6,7 @@ from typing import List
 from actions.combat import AttackAction, ApplyPowerAction, AddEnemyAction
 from enemies.act3.dagger import Dagger
 from enemies.intention import Intention
-from powers.base import PowerType
+from powers.definitions.weak import WeakPower
 
 
 class SpawnDaggerIntention(Intention):
@@ -39,7 +39,7 @@ class BigBiteIntention(Intention):
         from engine.game_state import game_state
         
         return [AttackAction(
-            self.enemy.get_damage(self.base_damage),
+            self.enemy.calculate_damage(self.base_damage),
             game_state.player,
             self.enemy,
             "attack"
@@ -61,10 +61,10 @@ class SnakeStrikeIntention(Intention):
         actions = []
         for _ in range(self.base_times):
             actions.append(AttackAction(
-                self.enemy.get_damage(self.base_damage),
+                self.enemy.calculate_damage(self.base_damage),
                 game_state.player,
                 self.enemy,
                 "attack"
             ))
-        actions.append(ApplyPowerAction(PowerType.WEAK, game_state.player, 1, 1))
+        actions.append(ApplyPowerAction(WeakPower(amount=1, owner=game_state.player), game_state.player))
         return actions

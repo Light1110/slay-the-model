@@ -13,13 +13,14 @@ class MockCard:
         from utils.types import CardType
         self.card_type = CardType.ATTACK
 
-class TestPower(Power):
+class MockPower(Power):
+    """Mock power class for testing tick behavior."""
     def __init__(self, duration=2):
         super().__init__(duration=duration)
 
 def test_power_on_turn_end_calls_tick_down():
     """Test that on_turn_end calls tick_down."""
-    power = TestPower(duration=2)
+    power = MockPower(duration=2)
     owner = None
 
     # Call on_turn_end
@@ -29,11 +30,9 @@ def test_power_on_turn_end_calls_tick_down():
     assert power._duration == 1, f"Duration should be decreased from 2 to 1"
     print("Test 1 PASSED: tick_down called in on_turn_end")
 
-    return True
-
 def test_power_tick_decreases_duration():
     """Test that tick method decreases duration."""
-    power = TestPower(duration=2)
+    power = MockPower(duration=2)
 
     # First tick: duration becomes 1, returns False (still > 0)
     should_remove = power.tick()
@@ -46,8 +45,6 @@ def test_power_tick_decreases_duration():
     assert power._duration == 0, f"Duration should be 0 after second tick"
 
     print("Test 2 PASSED: tick decreases duration")
-
-    return True
 
 if __name__ == "__main__":
     try:

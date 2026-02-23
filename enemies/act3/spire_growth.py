@@ -43,7 +43,7 @@ class SpireGrowth(Enemy):
                 self._last_was_constrict = False
                 self._consecutive_quick_tackle = 0
                 self._consecutive_smash += 1
-                return "Smash"
+                return self.intentions["Smash"]
         
         # 50/50 Quick Tackle or Constrict
         if random.random() < 0.5:
@@ -52,18 +52,18 @@ class SpireGrowth(Enemy):
                 self._last_was_constrict = False
                 self._consecutive_smash = 0
                 self._consecutive_quick_tackle += 1
-                return "Quick Tackle"
+                return self.intentions["Quick Tackle"]
             else:
                 # Must use Constrict
                 self._last_was_constrict = True
                 self._consecutive_quick_tackle = 0
                 self._consecutive_smash = 0
-                return "Constrict"
+                return self.intentions["Constrict"]
         else:
             self._last_was_constrict = True
             self._consecutive_quick_tackle = 0
             self._consecutive_smash = 0
-            return "Constrict"
+            return self.intentions["Constrict"]
     
     def _player_has_constricted(self) -> bool:
         """Check if player has Constricted power."""

@@ -1,66 +1,107 @@
+"""Tests for gold reward calculation in combat rooms.
+
+This test file verifies that gold rewards are calculated correctly
+for different room types (normal, elite, boss).
 """
-Unit tests for gold reward randomization (P1-4).
-Tests gold rewards fluctuate based on enemy type.
-"""
-import sys
-sys.path.insert(0, 'D:/game/slay-the-model')
 
-def test_boss_gold_fluctuation():
-    """Test boss gold fluctuates between 95-105."""
-    from rooms.combat import CombatRoom
-    from utils.types import RoomType
+import unittest
+import random
+from unittest.mock import patch, MagicMock
 
-    # Create room without calling init
-    class MockCombatRoom:
-        pass
+from rooms.combat import CombatRoom
+from utils.types import RoomType
 
-    room = MockCombatRoom()
-    room.room_type = RoomType.BOSS
 
-    gold = room._calculate_gold_reward()
-    assert 95 <= gold <= 105
-    print("Test 1 PASSED")
-    return True
+class TestGoldRewardCalculation(unittest.TestCase):
+    """Test cases for gold reward calculation in combat rooms."""
 
-def test_elite_gold_fluctuation():
-    """Test elite gold fluctuates between 25-35."""
-    from rooms.combat import CombatRoom
-    from utils.types import RoomType
+    def setUp(self):
+        """Set up test fixtures."""
+        self.room = CombatRoom()
 
-    class MockCombatRoom:
-        pass
+    def test_normal_room_gold_range(self):
+        """Test that normal combat rooms give 10-20 gold."""
+        self.room.room_type = RoomType.NORMAL
+        gold_values = []
+        for _ in range(100):
+            gold = self.room._calculate_gold_reward()
+            gold_values.append(gold)
+        
+        # All values should be in range
+        for gold in gold_values:
+            self.assertGreaterEqual(gold, 10)
+            self.assertLessEqual(gold, 20)
+        
+        # Should have some variance (not all same value)
+        self.assertGreater(len(set(gold_values)), 1)
 
-    room = MockCombatRoom()
-    room.room_type = RoomType.ELITE
+    def test_elite_room_gold_range(self):
+        """Test that elite combat rooms give 25-35 gold."""
+        self.room.room_type = RoomType.ELITE
+        gold_values = []
+        for _ in range(100):
+            gold = self.room._calculate_gold_reward()
+            gold_values.append(gold)
+        
+        # All values should be in range
+        for gold in gold_values:
+            self.assertGreaterEqual(gold, 25)
+            self.assertLessEqual(gold, 35)
+        
+        # Should have some variance (not all same value)
+        self.assertGreater(len(set(gold_values)), 1)
 
-    gold = room._calculate_gold_reward()
-    assert 25 <= gold <= 35
-    print("Test 2 PASSED")
-    return True
+    def test_boss_room_gold_range(self):
+        """Test that boss combat rooms give 95-105 gold."""
+        self.room.room_type = RoomType.BOSS
+        gold_values = []
+        for _ in range(100):
+            gold = self.room._calculate_gold_reward()
+            gold_values.append(gold)
+        
+        # All values should be in range
+        for gold in gold_values:
+            self.assertGreaterEqual(gold, 95)
+            self.assertLessEqual(gold, 105)
+        
+        # Should have some variance (not all same value)
+        self.assertGreater(len(set(gold_values)), 1)
 
-def test_normal_gold_fluctuation():
-    """Test normal gold fluctuates with random -5 to +5."""
-    from rooms.combat import CombatRoom
-    from utils.types import RoomType
+    def test_gold_reward_is_integer(self):
+        """Test that gold reward is always an integer."""
+        for room_type in [RoomType.NORMAL, RoomType.ELITE, RoomType.BOSS]:
+            self.room.room_type = room_type
+            for _ in range(10):
+                gold = self.room._calculate_gold_reward()
+                self.assertIsInstance(gold, int)
 
-    class MockCombatRoom:
-        pass
+    def test_different_room_types_give_different_gold(self):
+        """Test that different room types give different gold amounts on average."""
+        # Collect gold samples for each room type
+        normal_gold = []
+        elite_gold = []
+        boss_gold = []
+        
+        self.room.room_type = RoomType.NORMAL
+        for _ in range(100):
+            normal_gold.append(self.room._calculate_gold_reward())
+        
+        self.room.room_type = RoomType.ELITE
+        for _ in range(100):
+            elite_gold.append(self.room._calculate_gold_reward())
+        
+        self.room.room_type = RoomType.BOSS
+        for _ in range(100):
+            boss_gold.append(self.room._calculate_gold_reward())
+        
+        # Boss should give more than elite on average
+        self.assertGreater(sum(boss_gold) / len(boss_gold),
+                          sum(elite_gold) / len(elite_gold))
+        
+        # Elite should give more than normal on average
+        self.assertGreater(sum(elite_gold) / len(elite_gold),
+                          sum(normal_gold) / len(normal_gold))
 
-    room = MockCombatRoom()
-    room.room_type = RoomType.NORMAL
-
-    gold = room._calculate_gold_reward()
-    assert 10 <= gold <= 20
-    print("Test 3 PASSED")
-    return True
 
 if __name__ == "__main__":
-    try:
-        test_boss_gold_fluctuation()
-        test_elite_gold_fluctuation()
-        test_normal_gold_fluctuation()
-        print("\n=== All gold fluctuation tests PASSED ===")
-        sys.exit(0)
-    except Exception as e:
-        print(f"FAILED: {e}")
-        sys.exit(1)
+    unittest.main()

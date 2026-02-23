@@ -7,7 +7,8 @@ from typing import Any, List
 from actions.base import Action
 from actions.combat import ApplyPowerAction
 from powers.base import Power, StackType
-from powers.definitions.strength_up import StrengthUpPower  # noqa: F401
+from powers.definitions.strength import StrengthPower
+from powers.definitions.strength_up import StrengthUpPower
 from utils.registry import register
 
 
@@ -36,9 +37,8 @@ class ShiftingPower(Power):
 
         actions: List[Action] = [
             ApplyPowerAction(
-                power="Strength",
-                target=self.owner,
-                amount=-damage,
+                StrengthPower(amount=-damage, owner=self.owner),
+                self.owner
             )
         ]
 
@@ -49,10 +49,8 @@ class ShiftingPower(Power):
         else:
             actions.append(
                 ApplyPowerAction(
-                    power="StrengthUp",
-                    target=self.owner,
-                    amount=damage,
-                    duration=1,
+                    StrengthUpPower(amount=damage, duration=1, owner=self.owner),
+                    self.owner
                 )
             )
 

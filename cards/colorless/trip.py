@@ -7,6 +7,7 @@ from actions.base import Action
 from actions.combat import ApplyPowerAction
 from cards.base import Card
 from entities.creature import Creature
+from powers.definitions.vulnerable import VulnerablePower
 from utils.registry import register
 from utils.types import CardType, RarityType, TargetType
 
@@ -39,19 +40,15 @@ class Trip(Card):
             assert game_state.current_combat is not None
             for enemy in game_state.current_combat.enemies:
                 actions.append(ApplyPowerAction(
-                    power="Vulnerable",
-                    target=enemy,
-                    amount=vuln_amount,
-                    duration=vuln_amount,
+                    VulnerablePower(amount=vuln_amount, duration=vuln_amount, owner=enemy),
+                    enemy
                 ))
         else:
             # Base: Apply to single target
             if targets:
                 actions.append(ApplyPowerAction(
-                    power="Vulnerable",
-                    target=target,
-                    amount=vuln_amount,
-                    duration=vuln_amount,
+                    VulnerablePower(amount=vuln_amount, duration=vuln_amount, owner=target),
+                    target
                 ))
 
         return actions

@@ -88,7 +88,11 @@ class CombatRoom(Room):
     def _handle_victory(self) -> List['Action']:
         """Handle combat victory - add rewards"""
         from engine.game_state import game_state
+        from actions.misc import _has_relic
         actions = []
+        
+        # Display victory message
+        actions.append(DisplayTextAction(text_key="rooms.combat.victory"))
 
         # Increment normal encounter counter and track history (only for normal monsters, not elites/bosses)
         if self.room_type == RoomType.MONSTER:
@@ -108,6 +112,13 @@ class CombatRoom(Room):
                 )
                 actions.extend(elite_actions)
 
+        # Act 3/4 boss combats should not grant combat rewards.
+        if (
+            self.room_type == RoomType.BOSS
+            and game_state.current_act in (3, 4)
+        ):
+            return actions
+
         # Calculate gold reward
         gold_amount = self._calculate_gold_reward()
         if gold_amount > 0:
@@ -115,8 +126,8 @@ class CombatRoom(Room):
 
         # Add card reward (non-boss)
         if self.room_type != RoomType.BOSS:
-            from actions.misc import _has_relic
             reward_options = 1 if _has_relic("Busted Crown", game_state) else 3
+
             
             # Check for PrayerWheel - adds extra card reward for normal enemies
             combat_type_str = "normal" if self.combat.combat_type == CombatType.NORMAL else "elite"
@@ -158,9 +169,6 @@ class CombatRoom(Room):
                 game_state.potion_drop_chance = max(10, game_state.potion_drop_chance - 10)
             else:
                 game_state.potion_drop_chance = min(90, game_state.potion_drop_chance + 10)
-
-        # Display victory message
-        actions.append(DisplayTextAction(text_key="rooms.combat.victory"))
 
         return actions
     

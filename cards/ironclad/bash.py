@@ -7,6 +7,7 @@ from actions.base import Action
 from actions.combat import AttackAction
 from cards.base import Card
 from entities.creature import Creature
+from powers.definitions.vulnerable import VulnerablePower
 from utils.registry import register
 from utils.types import CardType, RarityType
 
@@ -33,8 +34,8 @@ class Bash(Card):
         # Apply Vulnerable to target
         if targets:
             vulnerable_amount = self.get_magic_value("vulnerable")
-            actions.append(ApplyPowerAction(power="Vulnerable", target=target,
-                                            amount=vulnerable_amount,
-                                            duration=vulnerable_amount))
+            actions.append(ApplyPowerAction(
+                VulnerablePower(amount=vulnerable_amount, duration=vulnerable_amount, owner=target),
+                target))
 
         return actions

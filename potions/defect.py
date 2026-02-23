@@ -2,6 +2,7 @@
 from typing import List
 from actions.base import Action, LambdaAction
 from actions.combat import ApplyPowerAction
+from powers.definitions.focus import FocusPower
 from orbs.dark import DarkOrb
 from player.player import Player
 from potions.base import Potion
@@ -21,7 +22,7 @@ class FocusPotion(Potion):
         self._amount = 2  # Sacred Bark doubles to 4
 
     def on_use(self, target) -> List[Action]:
-        return [ApplyPowerAction(power="Focus", target=target, amount=self.amount)]
+        return [ApplyPowerAction(FocusPower(amount=self.amount, owner=target), target)]
 
 # Rare Potions
 @register("potion")

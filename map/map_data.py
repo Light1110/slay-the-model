@@ -1,7 +1,7 @@
 """
 Map data structure containing all nodes for a single act.
 """
-from typing import List
+from typing import List, Optional
 from .map_node import MapNode
 
 
@@ -36,7 +36,7 @@ class MapData:
         """
         self.nodes.append(nodes)
     
-    def get_node(self, floor: int, position: int) -> MapNode:
+    def get_node(self, floor: int, position: int) -> Optional[MapNode]:
         """
         Get a node at the specified floor and position.
         
@@ -45,16 +45,13 @@ class MapData:
             position: The position index on that floor
             
         Returns:
-            The MapNode at the specified location
-            
-        Raises:
-            IndexError: If floor or position is out of range
+            The MapNode at the specified location, or None if not found
         """
         if 0 <= floor < len(self.nodes) and 0 <= position < len(self.nodes[floor]):
             return self.nodes[floor][position]
         return None
     
-    def get_floor(self, floor: int) -> List[MapNode]:
+    def get_floor(self, floor: int) -> Optional[List[MapNode]]:
         """
         Get all nodes on a specific floor.
         
@@ -62,11 +59,13 @@ class MapData:
             floor: The floor number
             
         Returns:
-            List of MapNode objects on that floor
+            List of MapNode objects on that floor, or None if floor doesn't exist
         """
-        return self.nodes[floor]
+        if 0 <= floor < len(self.nodes):
+            return self.nodes[floor]
+        return None
     
-    def get_current_node(self) -> MapNode:
+    def get_current_node(self) -> Optional[MapNode]:
         """Get the current node based on current_floor and current_position."""
         return self.get_node(self.current_floor, self.current_position)
     
@@ -103,8 +102,3 @@ class MapData:
     def floor_count(self) -> int:
         """Get the total number of floors."""
         return len(self.nodes)
-    
-    @property
-    def is_complete(self) -> bool:
-        """Check if the current floor is the boss floor (floor 15)."""
-        return self.current_floor == 15  # Boss is on floor 15 (16th floor)

@@ -20,7 +20,7 @@ from .act2 import (
     SphericGuardian, Centurion, Mystic,
     SnakePlant, Snecko,
     BookOfStabbing, GremlinLeader, Taskmaster,
-    TheCollector, TorchHead, TheChamp,
+    TheCollector, TheChamp,
     BronzeAutomaton, BronzeOrb
 )
 
@@ -79,7 +79,6 @@ __all__ = [
     'GremlinLeader',
     'Taskmaster',
     'TheCollector',
-    'TorchHead',
     'TheChamp',
     
     # Act 2 Boss

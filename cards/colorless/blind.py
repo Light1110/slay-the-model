@@ -7,6 +7,7 @@ from actions.base import Action
 from actions.combat import ApplyPowerAction
 from cards.base import Card
 from entities.creature import Creature
+from powers.definitions.weak import WeakPower
 from utils.registry import register
 from utils.types import CardType, RarityType, TargetType
 
@@ -36,19 +37,15 @@ class Blind(Card):
             assert game_state.current_combat is not None
             for enemy in game_state.current_combat.enemies:
                 actions.append(ApplyPowerAction(
-                    power="Weak",
-                    target=enemy,
-                    amount=weak_amount,
-                    duration=weak_amount,
+                    WeakPower(amount=weak_amount, duration=weak_amount, owner=enemy),
+                    enemy
                 ))
         else:
             # Base: Apply to single target
             if targets:
                 actions.append(ApplyPowerAction(
-                    power="Weak",
-                    target=target,
-                    amount=weak_amount,
-                    duration=weak_amount,
+                    WeakPower(amount=weak_amount, duration=weak_amount, owner=target),
+                    target
                 ))
 
         return actions

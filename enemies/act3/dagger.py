@@ -31,6 +31,6 @@ class Dagger(Enemy):
         self._turn_count += 1
         
         if self._turn_count == 1:
-            return "Wound"
+            return self.intentions["Wound"]
         else:
-            return "Explode"
+            return self.intentions["Explode"]

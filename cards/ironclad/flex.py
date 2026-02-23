@@ -7,6 +7,8 @@ from actions.base import Action
 from actions.combat import ApplyPowerAction
 from cards.base import Card
 from entities.creature import Creature
+from powers.definitions.strength import StrengthPower
+from powers.definitions.strength_down import StrengthDownPower
 from utils.registry import register
 from utils.types import CardType, RarityType
 
@@ -32,7 +34,7 @@ class Flex(Card):
         # Gain temporary Strength
         strength_amount = self.get_magic_value("temp_strength")
         actions.extend([
-            ApplyPowerAction(power="Strength", target=game_state.player, amount=strength_amount),
-            ApplyPowerAction(power="StrengthDown", target=game_state.player, amount=strength_amount, duration=1)  # This power should handle the strength loss at end of turn
+            ApplyPowerAction(StrengthPower(amount=strength_amount, owner=game_state.player), game_state.player),
+            ApplyPowerAction(StrengthDownPower(amount=strength_amount, duration=1, owner=game_state.player), game_state.player)  # This power should handle the strength loss at end of turn
         ])
         return actions

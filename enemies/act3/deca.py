@@ -43,7 +43,7 @@ class Deca(Enemy):
         # Add Artifact 2 at combat start (Artifact 1 on A17+)
         from powers.definitions.artifact import ArtifactPower
         artifact_stacks = 1 if ascension >= 17 else 2
-        self.add_power(ArtifactPower(), artifact_stacks)
+        self.add_power(ArtifactPower(amount=artifact_stacks, owner=self))
         
         # Set plated armor flag for A17+
         self._add_plated_armor = ascension >= 17
@@ -51,10 +51,11 @@ class Deca(Enemy):
     def determine_next_intention(self, floor: int):
         """Determine next intention - alternates between Beam and Square of Protection."""
         if self._use_beam:
-            self.current_intention = self.intentions["Beam"]
+            intention = self.intentions["Beam"]
         else:
-            self.current_intention = self.intentions["Square of Protection"]
+            intention = self.intentions["Square of Protection"]
         self._use_beam = not self._use_beam
+        return intention
     
     def get_hp_for_ascension(self, ascension: int) -> int:
         """Get HP based on ascension level.

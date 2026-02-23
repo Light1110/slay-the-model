@@ -74,10 +74,10 @@ class TimeWarpPower(Power):
             
             # Time Eater gains 1 Strength
             if self.owner:
+                from powers.definitions.strength import StrengthPower
                 actions.append(ApplyPowerAction(
-                    power="Strength",
-                    target=self.owner,
-                    amount=1
+                    StrengthPower(amount=1, owner=self.owner),
+                    self.owner
                 ))
             
             return actions

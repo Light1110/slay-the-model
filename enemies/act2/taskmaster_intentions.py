@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, List
 
 from actions.combat import AttackAction, ApplyPowerAction
 from enemies.intention import Intention
-from powers.base import PowerType
+from powers.definitions.strength import StrengthPower
 
 if TYPE_CHECKING:
     from enemies.act2.taskmaster import Taskmaster
@@ -38,11 +38,7 @@ class ScouringWhip(Intention):
         
         # Asc 3+: Gain 1 Strength
         if game_state.ascension >= 3:
-            actions.append(ApplyPowerAction(
-                power=PowerType.STRENGTH,
-                target=self.enemy,
-                amount=1,
-                duration=-1
-            ))
+            actions.append(ApplyPowerAction(StrengthPower(amount=1, owner=self.enemy), self.enemy))
+
         
         return actions

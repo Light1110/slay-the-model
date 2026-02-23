@@ -7,6 +7,8 @@ from actions.base import Action
 from actions.combat import ApplyPowerAction
 from cards.base import Card
 from entities.creature import Creature
+from powers.definitions.vulnerable import VulnerablePower
+from powers.definitions.weak import WeakPower
 from utils.registry import register
 from utils.types import CardType, RarityType, TargetType
 
@@ -34,11 +36,9 @@ class Shockwave(Card):
         # Apply Vulnerable and Weak to ALL enemies
         for enemy in targets:
             if enemy.hp > 0:
-                actions.append(ApplyPowerAction(target=enemy, power="Vulnerable",
-                                                amount=vulnerable_amount,
-                                                duration=vulnerable_amount))
-                actions.append(ApplyPowerAction(target=enemy, power="Weak",
-                                                amount=weak_amount,
-                                                duration=weak_amount))
+                actions.append(ApplyPowerAction(
+                    VulnerablePower(amount=vulnerable_amount, duration=vulnerable_amount, owner=enemy), enemy))
+                actions.append(ApplyPowerAction(
+                    WeakPower(amount=weak_amount, duration=weak_amount, owner=enemy), enemy))
 
         return actions

@@ -48,7 +48,7 @@ class WomanInBlueEvent(Event):
                 name=LocalStr("events.woman_in_blue.option1"),
                 actions=[
                     LoseGoldAction(amount=20),
-                    AddRandomPotionAction(),
+                    AddRandomPotionAction(character=game_state.player.character),
                 ]
             ))
         
@@ -58,8 +58,8 @@ class WomanInBlueEvent(Event):
                 name=LocalStr("events.woman_in_blue.option2"),
                 actions=[
                     LoseGoldAction(amount=30),
-                    AddRandomPotionAction(),
-                    AddRandomPotionAction(),
+                    AddRandomPotionAction(character=game_state.player.character),
+                    AddRandomPotionAction(character=game_state.player.character),
                 ]
             ))
         
@@ -69,9 +69,9 @@ class WomanInBlueEvent(Event):
                 name=LocalStr("events.woman_in_blue.option3"),
                 actions=[
                     LoseGoldAction(amount=40),
-                    AddRandomPotionAction(),
-                    AddRandomPotionAction(),
-                    AddRandomPotionAction(),
+                    AddRandomPotionAction(character=game_state.player.character),
+                    AddRandomPotionAction(character=game_state.player.character),
+                    AddRandomPotionAction(character=game_state.player.character),
                 ]
             ))
         

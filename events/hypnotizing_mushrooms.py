@@ -24,8 +24,9 @@ class HypnotizingColoredMushrooms(Event):
     
     @classmethod
     def can_appear(cls) -> bool:
-        """Only appears on Floor 7+."""
-        return game_state.current_floor >= 7
+        """Only appears on Floor 7+ within Act 1."""
+        # Use floor_in_act since this is an Act 1-only event
+        return game_state.floor_in_act >= 7
     
     def trigger(self) -> BaseResult:
         actions = []

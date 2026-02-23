@@ -245,31 +245,9 @@ class AddRandomPotionAction(Action):
         self.character = character
     
     def execute(self) -> 'BaseResult':
-        from engine.game_state import game_state
-        from actions.display import SelectAction
-        if game_state.player:
-            potion = get_random_potion(characters=[self.character])
-            if potion:
-                if len(game_state.player.potions) >= game_state.player.potion_limit:
-                    options = [
-                        Option(name=LocalStr("ui.skip_potion_option"), actions=[]),
-                    ]
-                    for index, existing in enumerate(game_state.player.potions):
-                        options.append(
-                            Option(
-                                name=LocalStr("ui.replace_potion_option", name=existing.local("name")),
-                                actions=[ReplacePotionAction(index=index, new_potion=potion)],
-                            )
-                        )
-                    return SingleActionResult(
-                        SelectAction(
-                            title="ui.potion_full_title",
-                            options=options,
-                        )
-                    )
-                added = game_state.player.potions.append(potion)
-                if added:
-                    print(t("ui.received_potion", default=f"Received potion: {potion.idstr}!", name=potion.idstr))
+        potion = get_random_potion(characters=[self.character])
+        if potion:
+            return AddPotionAction(potion=potion).execute()
         return NoneResult()
 
 @register("action")
@@ -287,12 +265,42 @@ class AddPotionAction(Action):
     
     def execute(self) -> 'BaseResult':
         from engine.game_state import game_state
+        from actions.display import SelectAction
         player = game_state.player
         if not player:
+            return NoneResult()
+        if self.potion is None:
             return NoneResult()
         # Sozu: player can no longer obtain potions.
         if any(getattr(relic, "idstr", None) == "Sozu" for relic in player.relics):
             return NoneResult()
+
+        if len(player.potions) >= player.potion_limit:
+            options = [
+                Option(name=LocalStr("ui.skip_potion_option"), actions=[]),
+            ]
+            for index, existing in enumerate(player.potions):
+                options.append(
+                    Option(
+                        name=LocalStr(
+                            "ui.replace_potion_option",
+                            name=existing.local("name"),
+                        ),
+                        actions=[
+                            ReplacePotionAction(
+                                index=index,
+                                new_potion=self.potion,
+                            )
+                        ],
+                    )
+                )
+            return SingleActionResult(
+                SelectAction(
+                    title="ui.potion_full_title",
+                    options=options,
+                )
+            )
+
         added = player.potions.append(self.potion)
         if added:
             print(t("ui.received_potion", default=f"Received potion: {self.potion.idstr}!", name=self.potion.idstr))

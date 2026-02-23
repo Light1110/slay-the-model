@@ -31,14 +31,14 @@ def test_confused_power():
     assert power.name == "Confused"
     assert power.stackable is False
     assert power.is_buff is False
-    assert power.duration == 0
+    assert power.duration == -1  # -1 means permanent
 
     # Add card to hand
     card = MockCard()
     player.card_manager.piles['hand'].append(card)
 
-    # Test on_turn_start returns LambdaAction
-    actions = power.on_turn_start()
+    # Test on_card_draw returns LambdaAction
+    actions = power.on_card_draw(card)
     assert len(actions) == 1, "Should return one LambdaAction"
 
     # Execute LambdaAction to randomize
@@ -48,8 +48,8 @@ def test_confused_power():
     assert 0 <= card._cost <= 3, "Cost should be between 0-3"
 
     print("✓ ConfusedPower unit tests passed!")
-    return True
+    # All tests passed
 
 if __name__ == "__main__":
-    success = test_confused_power()
-    sys.exit(0 if success else 1)
+    test_confused_power()
+    sys.exit(0)

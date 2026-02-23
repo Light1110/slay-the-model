@@ -6,6 +6,11 @@ from typing import List
 from actions.base import Action, LambdaAction
 from actions.card import DrawCardsAction, AddCardAction
 from actions.combat import GainBlockAction, GainEnergyAction, HealAction, DealDamageAction, ApplyPowerAction, ModifyMaxHpAction
+from powers.definitions.strength import StrengthPower
+from powers.definitions.vulnerable import VulnerablePower
+from powers.definitions.thorns import ThornsPower
+from powers.definitions.dexterity import DexterityPower
+from powers.definitions.pen_nib import PenNibPower
 # GainGoldAction imported lazily when needed to avoid circular import
 from relics.base import Relic
 from utils.types import RarityType, CardType
@@ -96,7 +101,7 @@ class Vajra(Relic):
     
     def on_combat_start(self, player, entities) -> List[Action]:
         """Gain 1 Strength at start of combat"""
-        return [ApplyPowerAction(power="Strength", target=player, amount=1)]
+        return [ApplyPowerAction(StrengthPower(amount=1, owner=player), player)]
 
 # New relics to implement
 @register("relic")
@@ -144,10 +149,8 @@ class BagOfMarbles(Relic):
         """Apply Vulnerable to all enemies at start of combat"""
         actions = []
         for enemy in entities:
-            actions.append(ApplyPowerAction(power="Vulnerable",
-                                            target=enemy,
-                                            amount=1,
-                                            duration=1))
+            actions.append(ApplyPowerAction(VulnerablePower(amount=1, owner=enemy), enemy))
+
         return actions
 
 @register("relic")
@@ -172,7 +175,7 @@ class BronzeScales(Relic):
     
     def on_combat_start(self, player, entities) -> List[Action]:
         """Gain 3 Thorns at start of combat"""
-        return [ApplyPowerAction(power="Thorns", target=player, amount=3)]
+        return [ApplyPowerAction(ThornsPower(amount=3, owner=player), player)]
 
 @register("relic")
 class CentennialPuzzle(Relic):
@@ -321,7 +324,7 @@ class OddlySmoothStone(Relic):
     
     def on_combat_start(self, player, entities) -> List[Action]:
         """Gain 1 Dexterity at start of combat"""
-        return [ApplyPowerAction(power="Dexterity", target=player, amount=1)]
+        return [ApplyPowerAction(DexterityPower(amount=1, owner=player), player)]
 
 @register("relic")
 class Omamori(Relic):
@@ -377,7 +380,7 @@ class PenNib(Relic):
             # Check if this is the 10th attack (10, 20, 30, etc.)
             # The 10th attack itself deals double damage
             if self.attacks_played % 10 == 0:
-                return [ApplyPowerAction(power="PenNibPower", target=player, amount=1, duration=1)]
+                return [ApplyPowerAction(PenNibPower(amount=1, owner=player), player)]
         return []
 
 @register("relic")
@@ -450,7 +453,7 @@ class TheBoot(Relic):
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.COMMON
-        self.damage_phase = DamagePhase.CLAMP  # Minimum damage clamping
+        self.damage_phase = DamagePhase.CAPPING  # Minimum damage clamping
     
     def modify_damage_dealt(self, base_damage: int, card=None, target=None) -> int:
         """Increase damage to 5 if it's 4 or less from Attack cards."""

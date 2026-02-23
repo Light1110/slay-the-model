@@ -74,9 +74,7 @@ from . import the_moai_head
 from . import tomb_of_lord_red_mask
 from . import winding_halls
 
-# Legacy imports (keep for backwards compatibility)
-from . import house_of_god
-from . import the_shrine
+# Legacy imports removed - house_of_god and the_shrine no longer exist
 
 __all__ = [
     'Event',
@@ -139,9 +137,6 @@ __all__ = [
     'the_moai_head',
     'tomb_of_lord_red_mask',
     'winding_halls',
-    # Legacy
-    'house_of_god',
-    'the_shrine',
 ]
 
 # Events are automatically registered via the @register_event decorator

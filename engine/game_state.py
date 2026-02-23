@@ -19,7 +19,6 @@ from .combat import Combat
 from player.player_factory import create_player
 
 # Constants for multi-act support
-FLOORS_PER_ACT = 18  # Floors 0-17 per act (0=Neo act1, 16=boss, 17=treasure)
 MAX_ACTS = 4
 
 class GameState:
@@ -106,10 +105,46 @@ class GameState:
         # temp value for select result
         self.last_select_idx = -1
     
+    def _get_floors_in_act(self, act: int) -> int:
+        """
+        Get actual floor count for specified act.
+        
+        Args:
+            act: Act number (1-4)
+            
+        Returns:
+            Number of floors in this act
+        """
+        if act == 4:
+            return 6  # Act 4: 6 floors (0-5)
+        elif act == 3 and self.ascension >= 20:
+            return 19  # Act 3 A20+: 19 floors (0-18)
+        else:
+            return 18  # Default: 18 floors (0-17)
+        
+    def _get_max_floor_in_act(self, act: int) -> int:
+        return self._get_floors_in_act(act) - 1
+    
+    def get_true_floor(self) -> int:
+        """
+        Get absolute floor number across all acts.
+        
+        Calculates the total floor count by summing all previous acts'
+        floor counts plus the current floor within this act.
+        
+        Returns:
+            Absolute floor number (0-indexed)
+        """
+        total = 0
+        for act in range(1, self.current_act):
+            total += self._get_max_floor_in_act(act)
+        total += self.floor_in_act
+        return total
+    
     @property
     def current_floor(self) -> int:
         """Total floor count across all acts (for backward compatibility and display)."""
-        return (self.current_act - 1) * FLOORS_PER_ACT + self.floor_in_act
+        return self.get_true_floor()
 
     @property
     def combat(self) -> Optional[Combat]:
@@ -123,8 +158,17 @@ class GameState:
     @current_floor.setter
     def current_floor(self, value: int):
         """Setter for backward compatibility - derives act and floor_in_act from total."""
-        self.current_act = value // FLOORS_PER_ACT + 1
-        self.floor_in_act = value % FLOORS_PER_ACT
+        # Calculate which act this floor belongs to
+        total = value
+        self.current_act = 1
+        
+        # Subtract each act's floors until we find the right one
+        while total >= self._get_max_floor_in_act(self.current_act):
+            total -= self._get_max_floor_in_act(self.current_act)
+            self.current_act += 1
+        
+        # Remaining floors is floor_in_act
+        self.floor_in_act = total
     
     @property
     def has_all_keys(self) -> bool:
@@ -137,13 +181,12 @@ class GameState:
         
         return has_red and has_blue and has_green
     
-    def advance_floor(self) -> bool:
+    def advance_floor(self):
         """
         Advance to next floor within act.
         Returns True if act completed (reached floor 17, boss treasure).
         """
         self.floor_in_act += 1
-        return self.floor_in_act >= FLOORS_PER_ACT
     
     def advance_act(self) -> bool:
         """
@@ -152,17 +195,17 @@ class GameState:
         Resets act-specific counters and generates new map.
         """
         # Check if can enter act 4
-        if self.current_act == 3:
+        if self.current_act == 4: # this means act3 finish
             if not self.has_all_keys:
                 # No keys - game complete after act 3
                 return True
             # Has keys - continue to act 4
         
-        if self.current_act >= MAX_ACTS:
+        if self.current_act > MAX_ACTS:
             return True  # Game complete after act 4
         
-        self.current_act += 1
-        self.floor_in_act = 0
+        # self.current_act += 1
+        # self.floor_in_act = 0
         
         # Reset act-specific counters
         self.normal_encounters_fought = 0
@@ -171,6 +214,8 @@ class GameState:
         
         # Reset potion drop chance for new act
         self.potion_drop_chance = 40
+        
+        # self.initialize_map() # reset map
         
         return False
     

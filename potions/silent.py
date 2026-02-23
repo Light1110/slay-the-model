@@ -3,6 +3,8 @@ from typing import List
 from actions.base import Action
 from actions.card import AddCardAction
 from actions.combat import ApplyPowerAction
+from powers.definitions.poison import PoisonPower
+from powers.definitions.intangible import IntangiblePower
 from potions.base import Potion
 from utils.types import RarityType
 from utils.random import get_random_card
@@ -21,7 +23,7 @@ class PoisonPotion(Potion):
         self._amount = 6  # Sacred Bark doubles to 12
 
     def on_use(self, target) -> List[Action]:
-        return [ApplyPowerAction(power="Poison", target=target, amount=self.amount, duration=self.amount)]
+        return [ApplyPowerAction(PoisonPower(amount=self.amount, owner=target), target)]
 
 # Uncommon Potions
 @register("potion")
@@ -62,6 +64,5 @@ class GhostInAJar(Potion):
 
     def on_use(self, target) -> List[Action]:
         from engine.game_state import game_state
-        return [ApplyPowerAction(power="Intangible", target=game_state.player,
-                                 amount=self.amount,
-                                 duration=self.amount)]
+        return [ApplyPowerAction(IntangiblePower(amount=self.amount, owner=game_state.player), game_state.player)]
+

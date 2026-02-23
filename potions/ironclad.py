@@ -3,6 +3,7 @@ from typing import List
 from actions.base import Action
 from actions.card import ExhaustCardAction
 from actions.combat import ApplyPowerAction, HealAction
+from powers.definitions.metallicize import MetallicizePower
 from actions.display import SelectAction
 from potions.base import Potion
 from utils.types import RarityType
@@ -76,4 +77,4 @@ class HeartOfIron(Potion):
 
     def on_use(self, target) -> List[Action]:
         from engine.game_state import game_state
-        return [ApplyPowerAction(power="Metallicize", target=game_state.player, amount=self.amount)]
+        return [ApplyPowerAction(MetallicizePower(amount=self.amount, owner=game_state.player), game_state.player)]

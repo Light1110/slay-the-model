@@ -57,7 +57,7 @@ class SquareOfProtection(Intention):
         
         actions = []
         # Apply Block to all enemies
-        for enemy in game_state.enemies:
+        for enemy in game_state.current_combat.enemies:
             if not enemy.is_dead:
                 actions.append(GainBlockAction(
                     block=self.base_block,

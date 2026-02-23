@@ -69,7 +69,7 @@ def test_unknown_basic():
     print()
     print("[OK] Basic unknown room mechanics working")
     print()
-    return results
+    # Test completed
 
 
 def test_tiny_chest():
@@ -135,12 +135,12 @@ def test_juzu_bracelet():
     
     if monster_count > 0:
         print(f"[ERROR] Found {monster_count} Monster rooms with Juzu Bracelet!")
-        return False
+        assert False, f"Found {monster_count} Monster rooms with Juzu Bracelet!"
     
     print()
     print("[OK] Juzu Bracelet preventing Monster rooms")
     print()
-    return True
+    # Test passed
 
 
 def test_deadly_events():

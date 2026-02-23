@@ -20,7 +20,7 @@ class SpikeAttack(Intention):
         if game_state.ascension >= 17:
             damage = 9
         return [AttackAction(
-            self.enemy.get_damage(damage),
+            self.enemy.calculate_damage(damage),
             game_state.player,
             self.enemy,
             "attack"
@@ -36,7 +36,6 @@ class BuffThorns(Intention):
     
     def execute(self) -> List:
         """Execute Buff Thorns intention."""
-        self.enemy.thorns_stacks += self.base_thorns
         return [ApplyPowerAction(
             "thorns", self.enemy, self.base_thorns, -1
         )]

@@ -21,7 +21,25 @@ class _DummyEnemy:
     """Minimal enemy stub for combat initialization tests."""
 
     def __init__(self):
-        self.hp = 10
+        self._max_hp = 10
+        self._hp = 10
+
+    @property
+    def max_hp(self):
+        return self._max_hp
+
+    @max_hp.setter
+    def max_hp(self, value):
+        self._hp += value - self._max_hp
+        self._max_hp = max(1, int(value))
+
+    @property
+    def hp(self):
+        return self._hp
+
+    @hp.setter
+    def hp(self, value):
+        self._hp = max(0, min(self.max_hp, int(value)))
 
     def on_combat_start(self, floor: int = 1):
         return None
@@ -86,3 +104,20 @@ def test_first_turn_draw_only_fills_to_draw_count_when_innate_exists():
 
     # X=1 innate already in hand, Y=5 draw target => draw max(Y-X, 0)=4.
     assert len(player.card_manager.get_pile("hand")) == 5
+
+
+def test_god_mode_sets_all_enemies_to_one_hp():
+    """God mode should force every enemy to 1/1 HP at combat start."""
+    _reset_state_with_deck([_StubCard(), _StubCard()])
+    game_state.config.debug["god_mode"] = True
+    enemies = [_DummyEnemy(), _DummyEnemy()]
+    enemies[0].max_hp = 30
+    enemies[0].hp = 23
+    enemies[1].max_hp = 12
+    enemies[1].hp = 7
+    combat = Combat(enemies=enemies)
+
+    combat._init_combat()
+
+    assert all(enemy.hp == 1 for enemy in enemies)
+    assert all(enemy.max_hp == 1 for enemy in enemies)

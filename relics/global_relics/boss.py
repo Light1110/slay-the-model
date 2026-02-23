@@ -6,6 +6,8 @@ from typing import List
 from actions.base import Action, LambdaAction
 from actions.card import AddCardAction, ChooseRemoveCardAction, DrawCardsAction, TransformCardAction, ChooseTransformAndUpgradeAction
 from actions.combat import GainBlockAction, GainEnergyAction, HealAction, DealDamageAction, ApplyPowerAction
+from powers.definitions.confused import ConfusedPower
+from powers.definitions.strength import StrengthPower
 from cards.colorless.curse_of_the_bell import CurseOfTheBell
 from cards.colorless.wound import Wound
 from relics.base import Relic
@@ -26,7 +28,7 @@ class SneckoEye(Relic):
 
     def on_combat_start(self, player, entities):
         """Start each combat confused"""
-        return [ApplyPowerAction(power="Confused", target=player, amount=0)]
+        return [ApplyPowerAction(ConfusedPower(amount=0, owner=player), player)]
     
     def on_player_turn_start(self, player, entities):
         """Draw 2 additional cards at start of turn"""
@@ -246,11 +248,8 @@ class PhilosophersStone(Relic):
         assert game_state.current_combat is not None
         for enemy in game_state.current_combat.enemies:
             if enemy.hp > 0:
-                actions.append(ApplyPowerAction(
-                    power="Strength",
-                    target=enemy,
-                    amount=1
-                ))
+                actions.append(ApplyPowerAction(StrengthPower(amount=1, owner=enemy), enemy))
+
         return actions
 
 @register("relic")

@@ -16,7 +16,6 @@ from enemies.act2.spheric_guardian import SphericGuardian
 from enemies.act2.taskmaster import Taskmaster
 from enemies.act2.the_champ import TheChamp
 from enemies.act2.the_collector import TheCollector
-from enemies.act2.torch_head import TorchHead
 from utils.types import EnemyType
 
 class TestAct2Monsters(unittest.TestCase):
@@ -83,10 +82,6 @@ class TestAct2Monsters(unittest.TestCase):
     def test_the_collector_is_elite(self):
         m = TheCollector()
         self.assertEqual(m.enemy_type, EnemyType.ELITE)
-
-    def test_torch_head_hp(self):
-        m = TorchHead()
-        self.assertGreaterEqual(m.hp, 20)
 
 if __name__ == '__main__':
     unittest.main()

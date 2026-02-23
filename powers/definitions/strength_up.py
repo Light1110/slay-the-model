@@ -23,13 +23,14 @@ class StrengthUpPower(Power):
         super().__init__(amount=amount, duration=duration, owner=owner)
 
     def on_turn_end(self) -> List[Action]:
+        from powers.definitions.strength import StrengthPower
+        
         actions: List[Action] = []
         if self.owner and self.amount:
             actions.append(
                 ApplyPowerAction(
-                    power="Strength",
-                    target=self.owner,
-                    amount=self.amount,
+                    StrengthPower(amount=self.amount, owner=self.owner),
+                    self.owner
                 )
             )
         self.duration = 0

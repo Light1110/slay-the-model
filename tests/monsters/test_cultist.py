@@ -47,11 +47,11 @@ class TestCultist(unittest.TestCase):
         
         # Check intentions are registered
         self.assertIn("ritual", cultist.intentions)
-        self.assertIn("cultist_attack", cultist.intentions)
+        self.assertIn("attack", cultist.intentions)
         
         # Check intention types
         self.assertIsInstance(cultist.intentions["ritual"], CultistRitualIntention)
-        self.assertIsInstance(cultist.intentions["cultist_attack"], CultistAttackIntention)
+        self.assertIsInstance(cultist.intentions["attack"], CultistAttackIntention)
 
     def test_cultist_hp_in_range(self):
         """Test Cultist HP is always within expected range"""

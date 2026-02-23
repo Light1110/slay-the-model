@@ -21,7 +21,7 @@ def test_draw_count_property():
 
     print("Test 1-2 PASSED: Player draw_count property")
 
-    return True
+    # Test passed
 
 if __name__ == "__main__":
     try:

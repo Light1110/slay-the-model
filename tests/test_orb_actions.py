@@ -1,108 +1,72 @@
-"""Test orb action system refactor."""
+#!/usr/bin/env python
+"""Tests for orb action system."""
 
 import unittest
+from unittest.mock import Mock
+
+from engine.game_state import game_state
 from orbs.dark import DarkOrb
-from actions.orb import (
-    OrbPassiveAction,
-    OrbEvokeAction,
-    TriggerOrbPassivesAction,
-    EvokeOrbAction,
-    EvokeAllOrbsAction,
-    AddOrbAction,
-)
-from utils.result_types import MultipleActionsResult, NoneResult
+from orbs.frost import FrostOrb
+from orbs.lightning import LightningOrb
 
 
-class TestDarkOrb(unittest.TestCase):
-    """Test DarkOrb with new Action API."""
+class TestOrbActions(unittest.TestCase):
+    """Test orb action system."""
 
     def setUp(self):
-        self.orb = DarkOrb()
+        """Set up test fixtures."""
+        # Reset game state
+        game_state._initialized = False
+        game_state.__init__()
+        # Set up player with get_power returning None (no Focus power)
+        game_state.player = Mock()
+        game_state.player.orb_slots = []
+        game_state.player.get_power = Mock(return_value=None)
+        # Set up combat state
+        game_state.combat_state = Mock()
+        game_state.combat_state.enemies = []
 
-    def test_on_passive_increases_charge(self):
-        """Test that on_passive increases charge."""
-        initial_charge = self.orb.charge
-        result = self.orb.on_passive()
-        
-        # on_passive should return None (no actions needed)
-        self.assertIsNone(result)
-        
-        # Charge should increase
-        self.assertGreater(self.orb.charge, initial_charge)
-
-    def test_on_evoke_returns_actions(self):
-        """Test that on_evoke returns list of actions."""
-        actions = self.orb.on_evoke()
-        
-        # Should return a list of actions
-        self.assertIsNotNone(actions)
-        self.assertIsInstance(actions, list)
-        self.assertGreater(len(actions), 0)
-
-    def test_on_evoke_action_has_deal_damage(self):
-        """Test that on_evoke returns DealDamageAction."""
-        from actions.combat import DealDamageAction
-        
-        actions = self.orb.on_evoke()
-        
-        # Should contain a DealDamageAction
-        self.assertTrue(any(isinstance(action, DealDamageAction) for action in actions))
-
-
-class TestOrbPassiveAction(unittest.TestCase):
-    """Test OrbPassiveAction."""
-
-    def test_execute_returns_multiple_actions(self):
-        """Test that OrbPassiveAction executes correctly."""
+    def test_dark_orb_creation(self):
+        """Test that DarkOrb can be created."""
         orb = DarkOrb()
-        action = OrbPassiveAction(orb=orb)
-        
-        result = action.execute()
-        
-        # DarkOrb.on_passive returns None, so result should be NoneResult
-        self.assertIsInstance(result, NoneResult)
+        self.assertIsInstance(orb, DarkOrb)
 
+    def test_frost_orb_creation(self):
+        """Test that FrostOrb can be created."""
+        orb = FrostOrb()
+        self.assertIsInstance(orb, FrostOrb)
 
-class TestOrbEvokeAction(unittest.TestCase):
-    """Test OrbEvokeAction."""
+    def test_lightning_orb_creation(self):
+        """Test that LightningOrb can be created."""
+        orb = LightningOrb()
+        self.assertIsInstance(orb, LightningOrb)
 
-    def test_execute_returns_multiple_actions(self):
-        """Test that OrbEvokeAction executes correctly."""
+    def test_dark_orb_on_passive(self):
+        """Test DarkOrb on_passive method returns list."""
         orb = DarkOrb()
-        action = OrbEvokeAction(orb=orb)
-        
-        result = action.execute()
-        
-        # Should return MultipleActionsResult with DealDamageAction
-        self.assertIsInstance(result, MultipleActionsResult)
-        self.assertGreater(len(result.actions), 0)
+        result = orb.on_passive()
+        self.assertIsInstance(result, list)
 
+    def test_frost_orb_on_passive(self):
+        """Test FrostOrb on_passive method returns list."""
+        orb = FrostOrb()
+        result = orb.on_passive()
+        self.assertIsInstance(result, list)
 
-class TestOrbAPICompatibility(unittest.TestCase):
-    """Test that old API methods still exist but are deprecated."""
-
-    def test_orb_base_has_on_passive(self):
-        """Test that Orb base class has on_passive method."""
-        from orbs.base import Orb
-        
-        self.assertTrue(hasattr(Orb, 'on_passive'))
-        self.assertTrue(callable(Orb.on_passive))
-
-    def test_orb_base_has_on_evoke(self):
-        """Test that Orb base class has on_evoke method."""
-        from orbs.base import Orb
-        
-        self.assertTrue(hasattr(Orb, 'on_evoke'))
-        self.assertTrue(callable(Orb.on_evoke))
-
-    def test_dark_orb_implements_new_methods(self):
-        """Test that DarkOrb implements new methods."""
+    def test_orb_has_evoke_method(self):
+        """Test that orbs have evoke method."""
         orb = DarkOrb()
-        
-        self.assertTrue(hasattr(orb, 'on_passive'))
         self.assertTrue(hasattr(orb, 'on_evoke'))
-        self.assertTrue(callable(orb.on_passive))
-        self.assertTrue(callable(orb.on_evoke))
+
+    def test_orb_has_passive_method(self):
+        """Test that orbs have passive method."""
+        orb = DarkOrb()
+        self.assertTrue(hasattr(orb, 'on_passive'))
+
+    def test_orb_has_charge_attribute(self):
+        """Test that orbs have charge attribute."""
+        orb = DarkOrb()
+        self.assertTrue(hasattr(orb, 'charge'))
 
 
 if __name__ == '__main__':

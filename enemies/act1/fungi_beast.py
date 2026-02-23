@@ -72,6 +72,7 @@ class FungiBeast(Enemy):
     def on_death(self) -> List['Action']:
         """Apply Spore Cloud on death: applies 2 Vulnerable to player."""
         from actions.combat import ApplyPowerAction
+        from powers.definitions.vulnerable import VulnerablePower
         from engine.game_state import game_state
         
         actions = super().on_death()
@@ -79,10 +80,8 @@ class FungiBeast(Enemy):
         if game_state and game_state.player:
             actions.append(
                 ApplyPowerAction(
-                    power="Vulnerable",
-                    target=game_state.player,
-                    amount=self._spore_cloud_stacks,
-                    duration=self._spore_cloud_stacks
+                    VulnerablePower(amount=self._spore_cloud_stacks, duration=self._spore_cloud_stacks, owner=game_state.player),
+                    game_state.player
                 )
             )
         

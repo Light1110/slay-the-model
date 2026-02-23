@@ -62,7 +62,6 @@ class MapManager:
             RoomType.ELITE: 0,        # Starts at 20% (only with deadly_events, floor 6+), +20% per non-elite visit
         }
         
-        # todo: use relic's own counter
         self._tiny_chest_counter = 0
         self.relic_effects = {}
         
@@ -71,6 +70,10 @@ class MapManager:
             'tiny_chest': False,
             'juzu_bracelet': False,
         }
+        
+        # Store floor counts per act for accurate true floor calculation
+        # This is populated when maps are generated for each act
+        self._act_floor_counts = {}
     
     def set_relic_effect(self, effect_name: str, enabled: bool) -> None:
         """
@@ -85,13 +88,16 @@ class MapManager:
     
     def generate_map(self) -> MapData:
         """
-        Generate a complete map for the act.
+        Generate a complete map for act.
         
         Returns:
-            MapData containing the generated map
+            MapData containing generated map
         """
         # Generate floor structure (number of nodes per floor)
         floor_sizes = self._generate_floor_structure()
+        
+        # Store floor count for this act (needed for accurate true floor display)
+        self._act_floor_counts[self.act_id] = len(floor_sizes)
         
         # Generate nodes with connections
         nodes_with_connections = self._generate_nodes_with_connections(floor_sizes)
@@ -169,11 +175,13 @@ class MapManager:
         nodes: List[List[MapNode]] = []
         
         # Create nodes floor by floor
-        for floor, size in enumerate(floor_sizes):
+        act_start_floor = self._get_act_start_floor(self.act_id)
+        for floor_in_act, size in enumerate(floor_sizes):
+            true_floor = act_start_floor + floor_in_act
             floor_nodes = []
             for position in range(size):
                 # Default room type, will be reassigned later
-                node = MapNode(floor, position, RoomType.MONSTER)
+                node = MapNode(true_floor, position, RoomType.MONSTER)
                 floor_nodes.append(node)
             nodes.append(floor_nodes)
         
@@ -386,13 +394,15 @@ class MapManager:
         Returns:
             Room instance for the target node
         """
-        node = self.map_data.get_node(floor, position)
+        act_start_floor = self._get_act_start_floor(self.act_id)
+        floor_in_act = floor - act_start_floor
+        node = self.map_data.get_node(floor_in_act, position)
         
         # Create room instance based on room type
         room = self._create_room_instance(node.room_type)
         
         # Update current position
-        self.map_data.set_current_position(floor, position)
+        self.map_data.set_current_position(floor_in_act, position)
         
         return room
     
@@ -471,38 +481,103 @@ class MapManager:
             # Fallback to EventRoom for unknown types
             return EventRoom()
     
+    def _get_floor_counts_for_acts(self) -> Dict[int, int]:
+        """
+        Get floor counts for all acts.
+        
+        For acts that haven't been generated yet, estimate based on ascension.
+        
+        Returns:
+            Dict mapping act_id -> floor_count
+        """
+        from engine.game_state import game_state
+        
+        # Start with actual floor counts from generated maps
+        floor_counts = self._act_floor_counts.copy()
+        
+        # Fill in missing acts with estimates based on ascension
+        # Only estimate for acts before current act (future acts not yet generated)
+        for act_id in range(1, game_state.current_act + 1):
+            if act_id not in floor_counts:
+                # Estimate floor count based on act and ascension
+                if act_id == 3 and game_state.ascension >= 20:
+                    floor_counts[act_id] = 19
+                elif act_id == 4:
+                    floor_counts[act_id] = 6
+                else:
+                    floor_counts[act_id] = 18  # Default for acts 1-2 and normal act 3
+        
+        return floor_counts
+    
+    def _get_max_floor_for_acts(self) -> Dict[int, int]:
+        """
+        Get maximum floor number for each act.
+        
+        Since floors are 0-indexed, max floor = floor_count - 1.
+        
+        Returns:
+            Dict mapping act_id -> max_floor_number
+        """
+        floor_counts = self._get_floor_counts_for_acts()
+        return {act_id: count - 1 for act_id, count in floor_counts.items()}
+    
+    def _get_act_start_floor(self, act_id: int) -> int:
+        """
+        Calculate the true floor number where an act starts.
+        
+        Sums up all floors from previous acts.
+        
+        Args:
+            act_id: The act number (1-4)
+            
+        Returns:
+            The true floor number where this act begins
+        """
+        floor_counts = self._get_max_floor_for_acts()
+        
+        # Sum all floors from acts before this one
+        start_floor = 0
+        for prev_act in range(1, act_id):
+            start_floor += floor_counts.get(prev_act, 18)
+        
+        return start_floor
+    
     def display_map_for_human(self):
         """
-        Display the map in a human-friendly format.
+        Display to map in a human-friendly format.
         
         Design principles:
         - Fixed node width: [?M] (4 chars) for consistent alignment
         - Each node shows outgoing connections below: / (left), | (center), \\ (right)
         - Max 3 outgoing and 3 incoming connections per node
         """
+        from engine.game_state import game_state
+        
         print("\n" + "="*60)
-        # Calculate act number based on current floor
-        # Act 1: floors 0-16, Act 2: floors 17-33, Act 3: floors 34+
-        current_floor = self.map_data.current_floor
-        if current_floor < 17:
-            act_num = 1
-        elif current_floor < 34:
-            act_num = 2
-        else:
-            act_num = 3
-        print(f"MAP VIEW - Act {act_num}")
+        # Use true_floor from game_state for accurate display across acts
+        current_floor = game_state.current_floor
+        act_num = game_state.current_act
+        print(f"MAP VIEW - Act {act_num} (Floor {current_floor})")
         print("="*60)
+        
+        # Debug: show internal state
+        act_start_floor = self._get_act_start_floor(self.act_id)
+        print(f"DEBUG: self.act_id={self.act_id}, act_start_floor={act_start_floor}")
+        print(f"DEBUG: self._act_floor_counts={self._act_floor_counts}")
+        print(f"DEBUG: current_floor={current_floor}, floor_in_act={game_state.floor_in_act}")
         
         # Get available moves
         available_moves = self.get_available_moves()
         available_positions = {(node.floor, node.position) for node in available_moves}
         
         # Get current position
-        current_floor = self.map_data.current_floor
         current_position = self.map_data.current_position
         
         # Get visited nodes (historical path taken)
-        visited_positions = set(self.map_data.visited_path)
+        visited_positions = {
+            (act_start_floor + floor_in_act, pos)
+            for floor_in_act, pos in self.map_data.visited_path
+        }
         
         # Legend
         print("\nLegend:")
@@ -511,6 +586,9 @@ class MapManager:
         print("  *=Current   >=Available   ^=Visited")
         print("  Connections: /=left  |=center  \\=right")
         print()
+        
+        # Calculate true floor starting point for this act
+        act_start_floor = self._get_act_start_floor(self.act_id)
         
         # Display map floor by floor
         for floor in range(len(self.map_data.nodes)):
@@ -522,19 +600,22 @@ class MapManager:
             num_srcs = len(floor_nodes)
             num_dests = len(next_floor_nodes)
             
+            # Calculate true floor for display
+            true_floor = act_start_floor + floor
+            
             # Display floor nodes with fixed width (5 chars total)
             # Format: [ M ] normal, [*M ] current, [>M ] available, [^M ] visited
-            line = f"Floor {floor:2d}: "
+            line = f"Floor {true_floor:2d}: "
             for pos, node in enumerate(floor_nodes):
                 symbol = self._get_room_symbol(node.room_type)
                 
-                if floor == current_floor and pos == current_position:
+                if true_floor == current_floor and pos == current_position:
                     # Current position: [*M ]
                     node_str = f"[*{symbol} ]"
-                elif (floor, pos) in available_positions:
+                elif (true_floor, pos) in available_positions:
                     # Available: [>M ]
                     node_str = f"[>{symbol} ]"
-                elif (floor, pos) in visited_positions:
+                elif (true_floor, pos) in visited_positions:
                     # Visited: [^M ] - shows visited status and room type
                     node_str = f"[^{symbol} ]"
                 else:
@@ -618,25 +699,32 @@ class MapManager:
             Dict containing:
             - current_floor: Current floor number
             - current_position: Current position index
-            - map_ascii: ASCII representation of the map
+            - map_ascii: ASCII representation of map
             - map_json: Structured JSON data
             - available_moves: List of available next moves with metadata
         """
+        from engine.game_state import game_state
+        
         available_moves = self.get_available_moves()
         
-        # Get current position
-        current_floor = self.map_data.current_floor
+        # Get current position - use true_floor for accurate display
+        current_floor = game_state.current_floor
         current_position = self.map_data.current_position
         
         # Get visited nodes (historical path taken)
         visited_positions = set(self.map_data.visited_path)
         
+        # Calculate true floor starting point for this act
+        act_start_floor = self._get_act_start_floor(self.act_id)
+        
         # Generate available moves data
         available_moves_data = []
         for idx, node in enumerate(available_moves):
+            # Use true floor for AI-friendly display
+            true_floor = node.floor
             available_moves_data.append({
                 "index": idx,
-                "floor": node.floor,
+                "floor": true_floor,
                 "position": node.position,
                 "room_type": node.room_type.value,
                 "risk_level": self._get_risk_level(node.room_type),
@@ -715,22 +803,30 @@ class MapManager:
             available_positions: Set of (floor, position) tuples that are available
             
         Returns:
-            ASCII string representation of the map
+            ASCII string representation of map
         """
+        from engine.game_state import game_state
+        
+        # Calculate true floor starting point for this act
+        act_start_floor = self._get_act_start_floor(self.act_id)
+        
         if available_positions is None:
             available_moves = self.get_available_moves()
+            # Convert to true floor numbers for consistent comparison
             available_positions = {(node.floor, node.position) for node in available_moves}
-        
+
         lines = []
         
-        current_floor = self.map_data.current_floor
+        # Get act-level floor (0-17 within current act)
+        current_floor_act = self.map_data.current_floor
         current_position = self.map_data.current_position
         
-        # Get visited positions
+        # Get visited positions (use true floor numbers)
         visited_positions = set()
-        for floor in range(current_floor):
+        for floor in range(current_floor_act):
             for pos in range(len(self.map_data.nodes[floor])):
-                visited_positions.add((floor, pos))
+                true_floor = act_start_floor + floor
+                visited_positions.add((true_floor, pos))
         
         # Display map floor by floor
         for floor in range(len(self.map_data.nodes)):
@@ -738,18 +834,22 @@ class MapManager:
             if not floor_nodes:
                 continue
             
+            # Calculate true floor number for display
+            true_floor = act_start_floor + floor
+            
             # Display floor nodes
-            line = f"Floor {floor:2d}: "
+            line = f"Floor {true_floor:2d}: "
             for pos, node in enumerate(floor_nodes):
                 # Determine symbol and prefix
                 symbol = self._get_room_symbol(node.room_type)
                 prefix = ""
                 
-                if floor == current_floor and pos == current_position:
+                # Use act-level floor for position comparison
+                if floor == current_floor_act and pos == current_position:
                     prefix = "*"
-                elif (floor, pos) in available_positions:
+                elif (true_floor, pos) in available_positions:
                     prefix = ">"
-                elif (floor, pos) in visited_positions:
+                elif (true_floor, pos) in visited_positions:
                     symbol = "X"
                 
                 line += f"[{prefix}{symbol}] "

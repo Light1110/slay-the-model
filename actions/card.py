@@ -1,5 +1,6 @@
 from actions.base import Action
 from typing import Optional, Union, List, TYPE_CHECKING
+from actions.combat import ModifyMaxHpAction
 from actions.display import SelectAction
 from localization import LocalStr, t
 from utils.option import Option
@@ -1126,6 +1127,71 @@ class UpgradeRandomCardAction(Action):
             return SingleActionResult(actions[0])
         else:
             return MultipleActionsResult(actions)
+
+
+@register("action")
+class TransformRandomCardAction(Action):
+    """Transform a random card from player's deck.
+
+    Required:
+        count (int): Number of cards to transform
+
+    Optional:
+        card_type (str): Type of cards to choose from (Attack/Skill/Power)
+    """
+    def __init__(self, count: int = 1, card_type: Optional[str] = None):
+        self.count = count
+        self.card_type = card_type
+
+    def execute(self) -> 'BaseResult':
+        """Execute: transform random cards from deck"""
+        from engine.game_state import game_state
+        if not game_state.player:
+            return NoneResult()
+
+        from utils.types import CardType
+
+        # Get deck
+        deck = game_state.player.card_manager.get_pile('deck')
+
+        if not deck:
+            return NoneResult()
+
+        # Filter cards by type (if specified)
+        cards_to_choose = []
+        for card in deck:
+            if self.card_type is not None:
+                # Match card type
+                if self.card_type == "Attack" and card.card_type != CardType.ATTACK:
+                    continue
+                elif self.card_type == "Skill" and card.card_type != CardType.SKILL:
+                    continue
+                elif self.card_type == "Power" and card.card_type != CardType.POWER:
+                    continue
+
+            cards_to_choose.append(card)
+
+        if not cards_to_choose:
+            print(t("ui.no_cards_to_transform", default="No cards to transform found"))
+            return NoneResult()
+
+        # If requesting more than available, reduce to available
+        actual_count = min(self.count, len(cards_to_choose))
+
+        # Randomly select cards to transform
+        import random
+        cards_to_transform = random.sample(cards_to_choose, actual_count)
+
+        # Create transform actions for all selected cards
+        actions = []
+        for card in cards_to_transform:
+            actions.append(TransformCardAction(card=card, pile='deck'))
+
+        if len(actions) == 1:
+            return SingleActionResult(actions[0])
+        else:
+            return MultipleActionsResult(actions)
+
 
 @register("action")
 class TransformAndUpgradeCardAction(Action):

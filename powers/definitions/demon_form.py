@@ -29,13 +29,13 @@ class DemonFormPower(Power):
         """Gain Strength at end of turn."""
         from actions.combat import ApplyPowerAction
         from engine.game_state import game_state
+        from powers.definitions.strength import StrengthPower
 
         actions = []
         if game_state.player:
             actions.append(ApplyPowerAction(
-                power="Strength",
-                target=game_state.player,
-                amount=self.amount
+                StrengthPower(amount=self.amount, owner=game_state.player),
+                game_state.player
             ))
 
         return actions

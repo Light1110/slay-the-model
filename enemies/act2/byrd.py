@@ -42,8 +42,8 @@ class Byrd(Enemy):
     def determine_next_intention(self, floor: int = 1):
         """Determine next intention based on flying state and history."""
         # Check if still flying (has flying power with amount > 0)
-        flying_power = self.get_power("flying")
-        self._is_flying = flying_power is not None and flying_power > 0
+        flying_power = self.get_power("Flying")
+        self._is_flying = flying_power is not None and flying_power.amount > 0
         
         if self._is_flying:
             return self._determine_flying_intention()

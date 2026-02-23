@@ -1,6 +1,6 @@
 """Awakened One - Act 3 Boss."""
 import random
-from typing import Optional
+from typing import List, Optional
 
 from enemies.act3.awakened_one_intentions import (
     Slash,
@@ -81,25 +81,26 @@ class AwakenedOne(Enemy):
         """
         return self._phase == 2 and self.hp <= 0
 
-    def on_damage_taken(self):
+    def on_damage_taken(self, damage: int, source=None, card=None,
+                        damage_type=None) -> List['Action']:
         """Check for phase transition."""
-        super().on_damage_taken()
         # Trigger rebirth when HP reaches 0 in phase 1
         if self._phase == 1 and self.hp <= 0:
             self.hp = 0  # Keep at 0, rebirth will heal
             self.current_intention = self.intentions["Rebirth"]
+        return super().on_damage_taken(damage, source, card, damage_type)
     
     def determine_next_intention(self, floor: int) -> Optional[str]:
         """Determine the next intention based on AI pattern."""
         # If rebirth is queued, use it
         if self.current_intention and self.current_intention.name == "Rebirth":
-            return "Rebirth"
+            return self.intentions["Rebirth"]
         
         # Phase 1 pattern
         if self._phase == 1:
             # First turn: always Slash
             if not self.history_intentions:
-                return "Slash"
+                return self.intentions["Slash"]
             
             # Count consecutive uses
             slash_count = 0
@@ -118,16 +119,16 @@ class AwakenedOne(Enemy):
                 roll = random.random()
                 if roll < 0.70:  # 70% Slash
                     if slash_count < 2:  # Not 3x in a row
-                        return "Slash"
+                        return self.intentions["Slash"]
                 else:  # 25% Soul Strike
                     if soul_strike_count < 1:  # Not 2x in a row
-                        return "Soul Strike"
+                        return self.intentions["Soul Strike"]
         
         # Phase 2 pattern
         else:
             # First turn of phase 2: always Dark Echo
             if not self.history_intentions or self.history_intentions[-1] == "Rebirth":
-                return "Dark Echo"
+                return self.intentions["Dark Echo"]
             
             # Count consecutive uses
             tackle_count = 0
@@ -146,7 +147,7 @@ class AwakenedOne(Enemy):
                 roll = random.random()
                 if roll < 0.50:  # 50% Tackle
                     if tackle_count < 2:  # Not 3x in a row
-                        return "Tackle"
+                        return self.intentions["Tackle"]
                 else:  # 50% Sludge
                     if sludge_count < 2:  # Not 3x in a row
-                        return "Sludge"
+                        return self.intentions["Sludge"]

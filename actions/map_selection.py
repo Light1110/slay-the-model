@@ -185,7 +185,7 @@ class SelectMapNodeAction(Action):
             node: The MapNode for this move
             
         Returns:
-            Localizable string for the option name
+            Localizable string for option name
         """
         # Use localization key for room type
         room_type_key = f"ui.room_type.{node.room_type.value}"
@@ -193,11 +193,15 @@ class SelectMapNodeAction(Action):
         # Build a descriptive option name
         # Format: "Act X - Floor Y, Position Z - RoomType"
         from engine.game_state import game_state
+        
+        # node.floor is already true floor
+        true_floor = node.floor
+        
         floor_pos_text = t(
             "ui.floor_position",
             default="Act {act} - Floor {floor}, Position {position}",
             act=game_state.current_act,
-            floor=node.floor,
+            floor=true_floor,
             position=node.position
         )
         room_type_text = t(room_type_key, default=node.room_type.value)

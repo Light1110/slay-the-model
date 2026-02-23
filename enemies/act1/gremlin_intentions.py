@@ -30,6 +30,7 @@ class FatGremlinSmashIntention(Intention):
     
     def execute(self) -> List:
         """Deal damage and apply Weak to player."""
+        from powers.definitions.weak import WeakPower
         from engine.game_state import game_state
         return [
             AttackAction(
@@ -39,10 +40,8 @@ class FatGremlinSmashIntention(Intention):
                 damage_type="attack",
             ),
             ApplyPowerAction(
-                power="Weak",
-                target=game_state.player,
-                amount=1,
-                duration=-1,
+                WeakPower(amount=1, duration=-1, owner=game_state.player),
+                game_state.player
             ),
         ]
 

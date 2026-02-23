@@ -48,7 +48,6 @@ def test_map_generation():
             print(f"Floor {floor}: (empty)")
     
     print()
-    return map_data, manager
 
 
 def test_path_selection(manager):

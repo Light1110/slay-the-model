@@ -5,7 +5,10 @@ from typing import TYPE_CHECKING, List
 
 from actions.combat import AttackAction, GainBlockAction, ApplyPowerAction
 from enemies.intention import Intention
-from powers.base import PowerType
+from powers.definitions.strength import StrengthPower
+from powers.definitions.weak import WeakPower
+from powers.definitions.vulnerable import VulnerablePower
+from powers.definitions.frail import FrailPower
 
 if TYPE_CHECKING:
     from enemies.act2.the_collector import TheCollector
@@ -84,12 +87,8 @@ class Buff(Intention):
         # Apply strength to all enemies
         for enemy in enemies:
             if enemy.is_alive:
-                actions.append(ApplyPowerAction(
-                    power=PowerType.STRENGTH,
-                    target=enemy,
-                    amount=self.base_strength_gain,
-                    duration=-1
-                ))
+                actions.append(ApplyPowerAction(StrengthPower(amount=self.base_strength_gain, owner=enemy), enemy))
+
         
         # Gain block for self
         actions.append(GainBlockAction(
@@ -115,28 +114,16 @@ class MegaDebuff(Intention):
         player = game_state.player
         
         # Apply 3 Weak
-        actions.append(ApplyPowerAction(
-            power=PowerType.WEAK,
-            target=player,
-            amount=self.base_amount,
-            duration=self.base_amount
-        ))
+        actions.append(ApplyPowerAction(WeakPower(amount=self.base_amount, owner=player), player))
+
         
         # Apply 3 Vulnerable
-        actions.append(ApplyPowerAction(
-            power=PowerType.VULNERABLE,
-            target=player,
-            amount=self.base_amount,
-            duration=self.base_amount
-        ))
+        actions.append(ApplyPowerAction(VulnerablePower(amount=self.base_amount, owner=player), player))
+
         
         # Apply 3 Frail
-        actions.append(ApplyPowerAction(
-            power=PowerType.FRAIL,
-            target=player,
-            amount=self.base_amount,
-            duration=self.base_amount
-        ))
+        actions.append(ApplyPowerAction(FrailPower(amount=self.base_amount, owner=player), player))
+
         
         return actions
 

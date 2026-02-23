@@ -22,7 +22,7 @@ class CircleOfPower(Intention):
         
         actions = []
         # Apply Strength to all enemies
-        for enemy in game_state.enemies:
+        for enemy in game_state.current_combat.enemies:
             if not enemy.is_dead:
                 actions.append(ApplyPowerAction(
                     power="strength",

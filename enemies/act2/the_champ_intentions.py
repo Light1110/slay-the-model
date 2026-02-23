@@ -5,7 +5,10 @@ from typing import TYPE_CHECKING, List
 
 from actions.combat import AttackAction, GainBlockAction, ApplyPowerAction
 from enemies.intention import Intention
-from powers.base import PowerType
+from powers.definitions.strength import StrengthPower
+from powers.definitions.frail import FrailPower
+from powers.definitions.vulnerable import VulnerablePower
+from powers.definitions.weak import WeakPower
 
 if TYPE_CHECKING:
     from enemies.act2.the_champ import TheChamp
@@ -54,20 +57,12 @@ class FaceSlap(Intention):
         ))
         
         # Apply Frail
-        actions.append(ApplyPowerAction(
-            power=PowerType.FRAIL,
-            target=player,
-            amount=self.base_amount,
-            duration=self.base_amount
-        ))
+        actions.append(ApplyPowerAction(FrailPower(amount=self.base_amount, owner=player), player))
+
         
         # Apply Vulnerable
-        actions.append(ApplyPowerAction(
-            power=PowerType.VULNERABLE,
-            target=player,
-            amount=self.base_amount,
-            duration=self.base_amount
-        ))
+        actions.append(ApplyPowerAction(VulnerablePower(amount=self.base_amount, owner=player), player))
+
         
         return actions
 
@@ -112,12 +107,8 @@ class Gloat(Intention):
     
     def execute(self) -> List:
         """Execute gloat - gain strength."""
-        return [ApplyPowerAction(
-            power=PowerType.STRENGTH,
-            target=self.enemy,
-            amount=self.base_strength_gain,
-            duration=-1
-        )]
+        return [ApplyPowerAction(StrengthPower(amount=self.base_strength_gain, owner=self.enemy), self.enemy)]
+
 
 
 class Taunt(Intention):
@@ -135,20 +126,12 @@ class Taunt(Intention):
         player = game_state.player
         
         # Apply Weak
-        actions.append(ApplyPowerAction(
-            power=PowerType.WEAK,
-            target=player,
-            amount=self.base_amount,
-            duration=self.base_amount
-        ))
+        actions.append(ApplyPowerAction(WeakPower(amount=self.base_amount, owner=player), player))
+
         
         # Apply Vulnerable
-        actions.append(ApplyPowerAction(
-            power=PowerType.VULNERABLE,
-            target=player,
-            amount=self.base_amount,
-            duration=self.base_amount
-        ))
+        actions.append(ApplyPowerAction(VulnerablePower(amount=self.base_amount, owner=player), player))
+
         
         return actions
 
@@ -175,12 +158,8 @@ class Anger(Intention):
                 self.enemy.powers.remove(debuff)
         
         # Gain strength
-        actions.append(ApplyPowerAction(
-            power=PowerType.STRENGTH,
-            target=self.enemy,
-            amount=self.base_strength_gain,
-            duration=-1
-        ))
+        actions.append(ApplyPowerAction(StrengthPower(amount=self.base_strength_gain, owner=self.enemy), self.enemy))
+
         
         return actions
 

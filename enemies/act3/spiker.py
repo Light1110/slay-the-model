@@ -28,7 +28,7 @@ class Spiker(Enemy):
         self.add_intention(SpikeAttack(self))
         self.add_intention(BuffThorns(self))
     
-    def determine_next_intention(self, floor: int) -> Optional[str]:
+    def determine_next_intention(self, floor: int):
         """Determine next intention based on pattern."""
         self._turn_count += 1
         
@@ -39,19 +39,19 @@ class Spiker(Enemy):
         if self._buff_thorns_count >= 6:
             # Must use Attack
             self._last_was_attack = True
-            return "Attack"
+            return self.intentions["Attack"]
         
         if self._last_was_attack:
             # Can only use Buff Thorns
             self._last_was_attack = False
             self._buff_thorns_count += 1
-            return "Buff Thorns"
+            return self.intentions["Buff Thorns"]
         
         # 50/50 choice
         if random.random() < 0.5:
             self._last_was_attack = True
-            return "Attack"
+            return self.intentions["Attack"]
         else:
             self._last_was_attack = False
             self._buff_thorns_count += 1
-            return "Buff Thorns"
+            return self.intentions["Buff Thorns"]

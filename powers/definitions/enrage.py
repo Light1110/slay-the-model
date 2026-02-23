@@ -28,6 +28,7 @@ class EnragePower(Power):
     def on_card_play(self, card, player, entities) -> List[Action]:
         """Trigger when player plays a card."""
         from utils.types import CardType
+        from powers.definitions.strength import StrengthPower
         
         actions = []
         
@@ -35,10 +36,8 @@ class EnragePower(Power):
         if hasattr(card, 'card_type') and card.card_type == CardType.SKILL:
             actions.append(
                 ApplyPowerAction(
-                    power="strength",
-                    target=self.owner,
-                    amount=self.amount,
-                    duration=self.duration
+                    StrengthPower(amount=self.amount, duration=self.duration, owner=self.owner),
+                    self.owner
                 )
             )
         

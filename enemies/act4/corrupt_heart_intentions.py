@@ -6,6 +6,11 @@ from typing import List
 from actions.base import Action, LambdaAction
 from actions.card import AddCardAction
 from actions.combat import ApplyPowerAction, AttackAction
+from powers.definitions.vulnerable import VulnerablePower
+from powers.definitions.weak import WeakPower
+from powers.definitions.frail import FrailPower
+from powers.definitions.strength import StrengthPower
+from powers.definitions.artifact import ArtifactPower
 from cards.colorless.burn import Burn
 from cards.colorless.dazed import Dazed
 from cards.colorless.slimed import Slimed
@@ -28,12 +33,9 @@ class Debilitate(Intention):
         player = game_state.player
 
         actions: List[Action] = [
-            ApplyPowerAction(power="Vulnerable", target=player,
-                             amount=2, duration=2),
-            ApplyPowerAction(power="Weak", target=player,
-                             amount=2, duration=2),
-            ApplyPowerAction(power="Frail", target=player,
-                             amount=2, duration=2),
+            ApplyPowerAction(VulnerablePower(amount=2, duration=2, owner=player), player),
+            ApplyPowerAction(WeakPower(amount=2, duration=2, owner=player), player),
+            ApplyPowerAction(FrailPower(amount=2, duration=2, owner=player), player),
         ]
 
         for status_cls in (Burn, Dazed, Slimed, Void, Wound):
@@ -102,19 +104,19 @@ class BuffHeart(Intention):
 
         actions: List[Action] = [
             LambdaAction(func=self._remove_negative_strength),
-            ApplyPowerAction(power="Strength", target=self.enemy, amount=2),
+            ApplyPowerAction(StrengthPower(amount=2, owner=self.enemy), self.enemy),
         ]
 
         if buff_count == 1:
-            actions.append(ApplyPowerAction(power="Artifact", target=self.enemy, amount=1))
+            actions.append(ApplyPowerAction(ArtifactPower(amount=1, owner=self.enemy), self.enemy))
         elif buff_count == 2:
             actions.append(LambdaAction(func=self._add_beat_of_death))
         elif buff_count == 3:
             actions.append(LambdaAction(func=self._add_painful_stabs))
         elif buff_count == 4:
-            actions.append(ApplyPowerAction(power="Strength", target=self.enemy, amount=10))
+            actions.append(ApplyPowerAction(StrengthPower(amount=10, owner=self.enemy), self.enemy))
         elif buff_count == 5:
-            actions.append(ApplyPowerAction(power="Strength", target=self.enemy, amount=50))
+            actions.append(ApplyPowerAction(StrengthPower(amount=50, owner=self.enemy), self.enemy))
 
         return actions
 

@@ -49,18 +49,16 @@ class HexIntention(Intention):
         """Execute Hex: applies Hex to player."""
         from actions.combat import ApplyPowerAction
         from engine.game_state import game_state
+        from powers.definitions.hex import HexPower
+
         
         if not game_state or not game_state.player:
             return []
         
         return [
-            ApplyPowerAction(
-                power="hex",
-                target=game_state.player,
-                amount=1,
-                duration=-1
-            )
+            ApplyPowerAction(HexPower(amount=1, owner=game_state.player), game_state.player)
         ]
+
 
 
 class DebilitateIntention(Intention):
@@ -75,7 +73,9 @@ class DebilitateIntention(Intention):
         """Execute Debilitate: deals damage and applies Vulnerable."""
         from actions.combat import AttackAction, ApplyPowerAction
         from engine.game_state import game_state
-        
+        from powers.definitions.vulnerable import VulnerablePower
+
+
         if not game_state or not game_state.player:
             return []
         
@@ -86,12 +86,8 @@ class DebilitateIntention(Intention):
                 source=self.enemy,
                 damage_type="attack",
             ),
-            ApplyPowerAction(
-                power="vulnerable",
-                target=game_state.player,
-                amount=self.vulnerable_stacks,
-                duration=1
-            )
+            ApplyPowerAction(VulnerablePower(amount=self.vulnerable_stacks, owner=game_state.player), game_state.player)
+
         ]
 
 
@@ -107,26 +103,23 @@ class DrainIntention(Intention):
         """Execute Drain: applies Weak and gains Strength."""
         from actions.combat import ApplyPowerAction
         from engine.game_state import game_state
-        
+        from powers.definitions.strength import StrengthPower
+        from powers.definitions.weak import WeakPower
+
+
         actions = [
-            ApplyPowerAction(
-                power="strength",
-                target=self.enemy,
-                amount=self.strength_gain,
-                duration=-1
-            )
+            ApplyPowerAction(StrengthPower(amount=self.strength_gain, owner=self.enemy), self.enemy)
         ]
+
+
         
         if game_state and game_state.player:
             actions.append(
-                ApplyPowerAction(
-                    power="weak",
-                    target=game_state.player,
-                    amount=self.weak_stacks,
-                    duration=1
-                )
+                ApplyPowerAction(WeakPower(amount=self.weak_stacks, owner=game_state.player), game_state.player)
             )
-        
+
+
+
         return actions
 
 

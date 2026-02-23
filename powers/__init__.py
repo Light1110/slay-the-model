@@ -24,7 +24,6 @@ from powers.definitions import (
     RupturePower,
     EnragePower,
     BattleTranceDrawPower,
-    SentinelPower,
     BufferPower,
     PenNibPower,
 )
@@ -52,7 +51,6 @@ __all__ = [
     "RupturePower",
     "EnragePower",
     "BattleTranceDrawPower",
-    "SentinelPower",
     "BufferPower",
     "PenNibPower",
 ]

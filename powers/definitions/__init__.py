@@ -46,6 +46,14 @@ from powers.definitions.enrage import EnragePower
 from powers.definitions.entangled import EntangledPower
 from powers.definitions.curiosity import CuriosityPower
 from powers.definitions.draw_reduction import DrawReductionPower
+from powers.definitions.flying import FlyingPower
+from powers.definitions.hex import HexPower
+from powers.definitions.focus import FocusPower
+from powers.definitions.strength_up import StrengthUpPower
+from powers.definitions.fading import FadingPower
+from powers.definitions.shifting import ShiftingPower
+from powers.definitions.beat_of_death import BeatOfDeathPower
+from powers.definitions.painful_stabs import PainfulStabsPower
  
 __all__ = [
     "StrengthPower",
@@ -97,11 +105,9 @@ __all__ = [
     "ShiftingPower",
     "BeatOfDeathPower",
     "PainfulStabsPower",
+    "FlyingPower",
+    "FocusPower",
+    "HexPower",
 ]
-from powers.definitions.strength_up import StrengthUpPower
-from powers.definitions.fading import FadingPower
-from powers.definitions.shifting import ShiftingPower
-from powers.definitions.beat_of_death import BeatOfDeathPower
-from powers.definitions.painful_stabs import PainfulStabsPower
 
 

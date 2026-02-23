@@ -59,7 +59,7 @@ def test_map_generation():
     print()
     print("[OK] Map created successfully")
     print()
-    return map_data
+    # Test passed
 
 
 def test_navigation():

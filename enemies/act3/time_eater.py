@@ -45,9 +45,9 @@ class TimeEater(Enemy):
         from powers.definitions.time_warp import TimeWarpPower
         self.add_power(TimeWarpPower(amount=1, owner=self))
     
-    def on_damage_taken(self):
+    def on_damage_taken(self, damage: int, source=None, card=None, damage_type=None):
         """Check if Haste should be triggered next turn."""
-        super().on_damage_taken()
+        super().on_damage_taken(damage, source, card, damage_type)
         if not self._haste_used and self.hp <= self.max_hp // 2:
             # Set flag to trigger Haste next turn instead of immediately
             self._haste_triggered = True
@@ -58,13 +58,13 @@ class TimeEater(Enemy):
         # If Haste was triggered by damage, use Haste next turn
         if self._haste_triggered:
             self._haste_triggered = False  # Reset flag
-            return "Haste"
+            return self.intentions["Haste"]
         
         # If HP below half and Haste not used, use Haste
         if not self._haste_used and self.hp <= self.max_hp // 2:
             self._haste_used = True
             self._haste_triggered = False
-            return "Haste"
+            return self.intentions["Haste"]
         
         # Get last move for constraint checking
         last_move = self.history_intentions[-1] if self.history_intentions else None
@@ -89,10 +89,10 @@ class TimeEater(Enemy):
             roll = random.random()
             if roll < 0.45:  # 45% Reverberate
                 if reverberate_count < 2:  # Not 3x in a row
-                    return "Reverberate"
+                    return self.intentions["Reverberate"]
             elif roll < 0.80:  # 35% Head Slam
                 if head_slam_count < 1:  # Not 2x in a row
-                    return "Head Slam"
+                    return self.intentions["Head Slam"]
             else:  # 20% Ripple
                 if ripple_count < 1:  # Not 2x in a row
-                    return "Ripple"
+                    return self.intentions["Ripple"]

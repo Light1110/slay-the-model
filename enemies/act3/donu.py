@@ -37,15 +37,16 @@ class Donu(Enemy):
         
         # Add Artifact 2 at combat start
         from powers.definitions.artifact import ArtifactPower
-        self.add_power(ArtifactPower(), 2)
+        self.add_power(ArtifactPower(amount=2, owner=self))
     
     def determine_next_intention(self, floor: int):
         """Determine next intention - alternates between Circle of Power and Beam."""
         if self._use_circle_of_power:
-            self.current_intention = self.intentions["Circle of Power"]
+            intention = self.intentions["Circle of Power"]
         else:
-            self.current_intention = self.intentions["Beam"]
+            intention = self.intentions["Beam"]
         self._use_circle_of_power = not self._use_circle_of_power
+        return intention
     
     def get_hp_for_ascension(self, ascension: int) -> int:
         """Get HP based on ascension level.

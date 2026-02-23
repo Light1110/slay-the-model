@@ -40,4 +40,4 @@ class Transient(Enemy):
     def determine_next_intention(self, floor: int) -> Optional[str]:
         """Determine next intention - always Attack."""
         self._turn_count += 1
-        return "Attack"
+        return self.intentions["Attack"]

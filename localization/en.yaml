@@ -44,6 +44,15 @@ ui:
   draw_cards: "Draw {count} cards"
   choose_random_card_to_add: "Choose a random card to add to your deck"
 
+ui:
+  choose_cards_to_upgrade: "Choose a card to upgrade"
+  choose_cards_to_transform: "Choose a card to transform"
+  choose_cards_to_remove: "Choose a card to remove"
+  skip_potion_option: "Skip"
+  replace_potion_option: "Replace {name}"
+  potion_full_title: "Select a potion to swap"
+  combat_enter: "=== Combat Begins ==="
+
 blessing:
   title: "Choose blessings"
   upgrade_card_option: "Upgrade a card"
@@ -86,6 +95,272 @@ events:
     description: "You discover an abandoned laboratory filled with strange potions."
     search: "Search the lab"
     leave: "Leave"
+
+  # Act 1 Events
+  big_fish:
+    title: "Big Fish"
+    description: "You encounter a massive fisherman offering a meal."
+    eat: "Eat the fish (Heal 5 HP)"
+    dont_eat: "Don't eat"
+    leave: "Leave"
+  the_cleric:
+    title: "The Cleric"
+    description: "A holy figure offers to heal your wounds."
+    heal: "Heal (Heal 25% HP, costs 50 Gold)"
+    no_gold: "Not enough gold"
+    leave: "Leave"
+  hypnotizing_mushrooms:
+    title: "Hypnotizing Mushrooms"
+    description: "Strange mushrooms glow with an alluring light."
+    eat: "Eat a mushroom"
+    ignore: "Ignore them"
+    leave: "Leave"
+  dead_adventurer:
+    title: "Dead Adventurer"
+    description: "You find the corpse of a fallen adventurer."
+    loot: "Loot the body"
+    leave: "Leave the body"
+  golden_idol:
+    title: "Golden Idol"
+    description: "A golden idol sits on a pedestal. Taking it looks dangerous."
+    take: "Take the idol"
+    leave: "Leave it"
+  scrap_ooze:
+    title: "Scrap Ooze"
+    description: "A puddle of ooze is consuming scrap metal."
+    feed: "Feed it scrap"
+    leave: "Leave it alone"
+  living_wall:
+    title: "Living Wall"
+    description: "A wall of living flesh blocks your path."
+    break_through: "Break through"
+    climb: "Climb over"
+    leave: "Look for another path"
+  wing_statue:
+    title: "Wing Statue"
+    description: "A statue with wings stands before you."
+    pray: "Pray to the statue"
+    desecrate: "Desecrate the statue"
+    leave: "Leave it alone"
+  the_ssssserpent:
+    title: "The Ssssserpent"
+    description: "A serpent offers you a deal."
+    accept: "Accept the deal"
+    decline: "Decline"
+    leave: "Leave"
+  shining_light:
+    title: "Shining Light"
+    description: "A brilliant light shines from above."
+    approach: "Approach the light"
+    leave: "Stay away"
+  world_of_goop:
+    title: "World of Goop"
+    description: "The floor is covered in sticky goop."
+    wade: "Wade through"
+    leave: "Find another way"
+
+  # Act 2 Events
+  knowing_skull:
+    title: "Knowing Skull"
+    description: "A skull that claims to know everything offers answers."
+    ask: "Ask a question (costs HP)"
+    leave: "Leave"
+  the_colosseum:
+    title: "The Colosseum"
+    description: "You enter an ancient fighting arena."
+    fight: "Fight for glory"
+    decline: "Decline"
+    leave: "Leave"
+  woman_in_blue:
+    title: "Woman in Blue"
+    description: "A mysterious woman offers her services."
+    accept: "Accept her offer"
+    decline: "Decline"
+    leave: "Leave"
+  ancient_writing:
+    title: "Ancient Writing"
+    description: "Ancient writing covers the walls."
+    read: "Read the writing"
+    ignore: "Ignore it"
+    leave: "Leave"
+  face_trader:
+    title: "Face Trader"
+    description: "A strange merchant who deals in faces."
+    trade: "Trade your face"
+    decline: "Decline"
+    leave: "Leave"
+  we_meet_again:
+    title: "We Meet Again"
+    description: "Someone from your past appears."
+    greet: "Greet them"
+    ignore: "Ignore them"
+    leave: "Leave"
+  mysterious_sphere:
+    title: "Mysterious Sphere"
+    description: "A floating sphere pulses with energy."
+    touch: "Touch the sphere"
+    leave: "Leave it alone"
+  mind_bloom:
+    title: "Mind Bloom"
+    description: "A beautiful flower blooms before you."
+    take: "Take the flower"
+    leave: "Leave it"
+  designer_in_spire:
+    title: "Designer in Spire"
+    description: "A being claims to have designed the Spire."
+    listen: "Listen to them"
+    leave: "Leave"
+  nloth:
+    title: "N'loth"
+    description: "A hungry creature demands a sacrifice."
+    sacrifice: "Sacrifice a relic"
+    refuse: "Refuse"
+    leave: "Leave"
+  masked_bandits:
+    title: "Masked Bandits"
+    description: "Bandits in masks block your path."
+    fight: "Fight them"
+    pay: "Pay them off"
+    flee: "Flee"
+  council_of_ghosts:
+    title: "Council of Ghosts"
+    description: "Ghosts gather to judge the living."
+    plead: "Plead your case"
+    challenge: "Challenge them"
+    leave: "Leave"
+  cursed_tome:
+    title: "Cursed Tome"
+    description: "An ancient tome radiates malevolent energy."
+    read: "Read the tome"
+    leave: "Leave it alone"
+  the_nest:
+    title: "The Nest"
+    description: "A nest of creatures blocks your path."
+    fight: "Fight through"
+    sneak: "Sneak past"
+    leave: "Find another way"
+  the_mausoleum:
+    title: "The Mausoleum"
+    description: "An ancient tomb lies before you."
+    enter: "Enter the tomb"
+    leave: "Leave"
+  the_joust:
+    title: "The Joust"
+    description: "A knight challenges you to a joust."
+    accept: "Accept the challenge"
+    decline: "Decline"
+    leave: "Leave"
+  old_beggar:
+    title: "Old Beggar"
+    description: "A beggar asks for gold."
+    give: "Give gold"
+    refuse: "Refuse"
+    leave: "Leave"
+  augmenter:
+    title: "Augmenter"
+    description: "A machine offers to augment your body."
+    accept: "Accept augmentation"
+    decline: "Decline"
+    leave: "Leave"
+  forgotten_altar:
+    title: "Forgotten Altar"
+    description: "An ancient altar stands covered in dust."
+    pray: "Pray at the altar"
+    desecrate: "Desecrate the altar"
+    leave: "Leave it"
+  vampires:
+    title: "Vampires"
+    description: "Vampires offer you eternal life."
+    accept: "Accept their offer"
+    decline: "Decline"
+    leave: "Leave"
+
+  # Act 3 Events
+  sensory_stone:
+    title: "Sensory Stone"
+    description: "A stone that heightens your senses."
+    touch: "Touch the stone"
+    leave: "Leave it alone"
+  secret_portal:
+    title: "Secret Portal"
+    description: "A mysterious portal shimmers before you."
+    enter: "Enter the portal"
+    leave: "Leave it alone"
+  falling:
+    title: "Falling"
+    description: "The floor crumbles beneath you!"
+    grab: "Grab the ledge"
+    fall: "Let yourself fall"
+  wheel_of_change:
+    title: "Wheel of Change"
+    description: "A wheel of fortune spins before you."
+    spin: "Spin the wheel"
+    leave: "Leave"
+
+  # Shrine Events
+  divine_fountain:
+    title: "Divine Fountain"
+    description: "A fountain of pure water grants blessings."
+    drink: "Drink from the fountain"
+    leave: "Leave"
+  duplicator:
+    title: "Duplicator"
+    description: "A machine that can duplicate cards."
+    duplicate: "Duplicate a card (costs 50 Gold)"
+    no_gold: "Not enough gold"
+    leave: "Leave"
+  transmogrifier:
+    title: "Transmogrifier"
+    description: "A machine that can transform cards."
+    transform: "Transform a card"
+    leave: "Leave"
+  purifier:
+    title: "Purifier"
+    description: "A shrine that can remove curses."
+    purify: "Remove a curse"
+    leave: "Leave"
+  golden_shrine:
+    title: "Golden Shrine"
+    description: "A shrine covered in gold."
+    pray: "Pray at the shrine"
+    desecrate: "Desecrate the shrine"
+    leave: "Leave"
+  the_library:
+    title: "The Library"
+    description: "An ancient library filled with knowledge."
+    read: "Read a book"
+    leave: "Leave"
+  the_moai_head:
+    title: "The Moai Head"
+    description: "A massive stone head blocks your path."
+    talk: "Talk to it"
+    leave: "Leave"
+  winding_halls:
+    title: "Winding Halls"
+    description: "Twisted passages lead in all directions."
+    explore: "Explore carefully"
+    rush: "Rush through"
+    leave: "Turn back"
+  tomb_of_lord_red_mask:
+    title: "Tomb of Lord Red Mask"
+    description: "The tomb of a legendary thief."
+    search: "Search the tomb"
+    leave: "Leave"
+  ominous_forge:
+    title: "Ominous Forge"
+    description: "A forge that burns with dark flames."
+    forge: "Forge a card"
+    leave: "Leave"
+  match_and_keep:
+    title: "Match and Keep"
+    description: "A game of memory with rewards."
+    play: "Play the game"
+    leave: "Leave"
+  a_note_for_yourself:
+    title: "A Note for Yourself"
+    description: "You find a note you wrote to yourself."
+    read: "Read the note"
+    leave: "Leave it"
 
 combat:
   title: "Combat"
@@ -907,6 +1182,51 @@ enemies:
         name: "Entangle"
         description: "Apply 1 Entangle to you."
   
+  AcidSlimeL:
+    name: "Acid Slime (L)"
+    intentions:
+      corrosive_spit:
+        name: "Corrosive Spit"
+        description: "Deal {damage} damage. Add {cards} Slimed cards to your discard pile."
+      lick:
+        name: "Lick"
+        description: "Apply {amount} Weak to you."
+      tackle:
+        name: "Tackle"
+        description: "Deal {damage} damage."
+      split:
+        name: "Split"
+        description: "Split into two smaller slimes."
+  
+  AcidSlimeM:
+    name: "Acid Slime (M)"
+    intentions:
+      corrosive_spit:
+        name: "Corrosive Spit"
+        description: "Deal {damage} damage. Add {cards} Slimed cards to your discard pile."
+      lick:
+        name: "Lick"
+        description: "Apply {amount} Weak to you."
+      tackle:
+        name: "Tackle"
+        description: "Deal {damage} damage."
+      split:
+        name: "Split"
+        description: "Split into two smaller slimes."
+  
+  AcidSlimeS:
+    name: "Acid Slime (S)"
+    intentions:
+      corrosive_spit:
+        name: "Corrosive Spit"
+        description: "Deal {damage} damage. Add {cards} Slimed cards to your discard pile."
+      lick:
+        name: "Lick"
+        description: "Apply {amount} Weak to you."
+      tackle:
+        name: "Tackle"
+        description: "Deal {damage} damage."
+  
   SpikeSlime:
     name: "Spike Slime"
     intentions:
@@ -1211,3 +1531,141 @@ rooms:
       remove_card: "Remove a card ({price} gold)"
       leave: "Leave"
 
+
+
+potions:
+  # Ironclad potions
+  BloodPotion:
+    name: "Blood Potion"
+    description: "Heal for {heal}% of your max HP."
+  Elixir:
+    name: "Elixir"
+    description: "Exhaust all cards in your hand."
+  HeartOfIron:
+    name: "Heart of Iron"
+    description: "Gain {strength} Strength."
+
+  # Silent potions
+  PoisonPotion:
+    name: "Poison Potion"
+    description: "Apply {magic_number} Poison."
+  CunningPotion:
+    name: "Cunning Potion"
+    description: "Gain {block} Block."
+  GhostInAJar:
+    name: "Ghost in a Jar"
+    description: "Gain 1 Intangible."
+
+  # Defect potions
+  FocusPotion:
+    name: "Focus Potion"
+    description: "Gain {magic_number} Focus."
+  EssenceOfDarkness:
+    name: "Essence of Darkness"
+    description: "Channel {amount} Dark Orbs."
+  PotionOfCapacity:
+    name: "Potion of Capacity"
+    description: "Gain {amount} Orb slots."
+
+  # Watcher potions
+  BottledMiracle:
+    name: "Bottled Miracle"
+    description: "Add 2 Miracles to your hand."
+  StancePotion:
+    name: "Stance Potion"
+    description: "Enter a stance of your choice."
+  Ambrosia:
+    name: "Ambrosia"
+    description: "Gain 1 Intangible, lose 1 HP at end of turn."
+
+  # Global potions (usable by all characters)
+  AttackPotion:
+    name: "Attack Potion"
+    description: "Add a random Attack card to your hand. It costs 0 this turn."
+  BlockPotion:
+    name: "Block Potion"
+    description: "Gain {block} Block."
+  ColorlessPotion:
+    name: "Colorless Potion"
+    description: "Add a random Colorless card to your hand. It costs 0 this turn."
+  DexterityPotion:
+    name: "Dexterity Potion"
+    description: "Gain {magic_number} Dexterity."
+  EnergyPotion:
+    name: "Energy Potion"
+    description: "Gain {energy_gain} Energy."
+  ExplosivePotion:
+    name: "Explosive Potion"
+    description: "Deal {damage} damage to all enemies."
+  FearPotion:
+    name: "Fear Potion"
+    description: "Apply {magic_number} Vulnerable to all enemies."
+  FirePotion:
+    name: "Fire Potion"
+    description: "Deal {damage} damage."
+  FlexPotion:
+    name: "Flex Potion"
+    description: "Gain {strength} Strength this turn."
+  PowerPotion:
+    name: "Power Potion"
+    description: "Add a random Power card to your hand. It costs 0 this turn."
+  SkillPotion:
+    name: "Skill Potion"
+    description: "Add a random Skill card to your hand. It costs 0 this turn."
+  SpeedPotion:
+    name: "Speed Potion"
+    description: "Gain {dexterity} Dexterity this turn."
+  StrengthPotion:
+    name: "Strength Potion"
+    description: "Gain {magic_number} Strength."
+  SwiftPotion:
+    name: "Swift Potion"
+    description: "Draw {amount} cards."
+  WeakPotion:
+    name: "Weak Potion"
+    description: "Apply {magic_number} Weak to an enemy."
+  AncientPotion:
+    name: "Ancient Potion"
+    description: "Gain 1 Artifact."
+  BlessingOfTheForge:
+    name: "Blessing of the Forge"
+    description: "Upgrade a card in your hand."
+  DistilledChaos:
+    name: "Distilled Chaos"
+    description: "Play {amount} random cards from your draw pile."
+  DuplicationPotion:
+    name: "Duplication Potion"
+    description: "Duplicate a card in your hand this combat."
+  EssenceOfSteel:
+    name: "Essence of Steel"
+    description: "Gain {block} Block."
+  GamblersBrew:
+    name: "Gambler's Brew"
+    description: "Draw {amount} cards, then discard {amount} cards."
+  LiquidBronze:
+    name: "Liquid Bronze"
+    description: "Gain {plated_armor} Plated Armor."
+  LiquidMemories:
+    name: "Liquid Memories"
+    description: "Return a card from your discard pile to your hand."
+  RegenPotion:
+    name: "Regen Potion"
+    description: "Gain {regeneration} Regeneration."
+  SmokeBomb:
+    name: "Smoke Bomb"
+    description: "Escape from a non-boss combat."
+  FairyInABottle:
+    name: "Fairy in a Bottle"
+    description: "When you would die, heal to {heal}% HP instead."
+  FruitJuice:
+    name: "Fruit Juice"
+    description: "Gain {max_hp} Max HP."
+  SneckoOil:
+    name: "Snecko Oil"
+    description: "Gain {energy} Energy. Confused for {turns} turns."
+  CultistPotion:
+    name: "Cultist Potion"
+    description: "Gain {strength} Strength."
+  EntropicBrew:
+    name: "Entropic Brew"
+    description: "Add 3 random potions to your inventory."

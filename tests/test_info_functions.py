@@ -37,6 +37,7 @@ power_base_module = importlib.util.module_from_spec(spec)
 sys.modules['powers.base'] = power_base_module
 spec.loader.exec_module(power_base_module)
 Power = power_base_module.Power
+StackType = power_base_module.StackType
 
 # Import utils.types separately
 spec = importlib.util.spec_from_file_location(
@@ -121,6 +122,8 @@ class TestPowerInfo(unittest.TestCase):
         
         class TestBuff(Power):
             is_buff = True
+            # Use BOTH to show both amount and duration
+            stack_type = StackType.BOTH
         
         power = TestBuff(amount=5, duration=3)
         info = power.info()
@@ -141,6 +144,8 @@ class TestPowerInfo(unittest.TestCase):
         
         class TestDebuff(Power):
             is_buff = False
+            # Use BOTH to show both amount and duration
+            stack_type = StackType.BOTH
         
         power = TestDebuff(amount=2, duration=5)
         info = power.info()
@@ -154,11 +159,14 @@ class TestPowerInfo(unittest.TestCase):
         
         class TestPermanent(Power):
             is_buff = True
+            # Use BOTH to show both amount and duration
+            stack_type = StackType.BOTH
         
         power = TestPermanent(amount=10, duration=-1)
         info = power.info()
         
         self.assertIn("Amount: 10", str(info))
+        # Permanent is represented as -1 in the info string
         self.assertIn("Duration: Permanent", str(info))
 
 

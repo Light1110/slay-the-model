@@ -52,7 +52,7 @@ class JawWorm(Enemy):
                 strength = 3
                 block = 6
             
-            self.add_power(StrengthPower(stacks=strength, owner=self))
+            self.add_power(StrengthPower(amount=strength, owner=self))
             self.gain_block(block)
     
     def determine_next_intention(self, floor: int = 1):

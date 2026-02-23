@@ -36,7 +36,7 @@ class WrithingMass(Enemy):
         self.add_intention(BlockAttackMass(self))
         self.add_intention(ParasiteIntention(self))
     
-    def determine_next_intention(self, floor: int) -> Optional[str]:
+    def determine_next_intention(self, floor: int):
         """Determine next intention based on pattern."""
         self._turn_count += 1
         
@@ -44,7 +44,7 @@ class WrithingMass(Enemy):
             # First turn: equal chance of Multi Hit, Big Hit, or Debuff Attack
             choice = random.choice(["Multi Hit", "Big Hit", "Debuff Attack"])
             self._last_intention = choice
-            return choice
+            return self.intentions[choice]
         
         # After first turn:
         # Parasite 10%, Block Attack 30%, Debuff Attack 30%, Big Hit 30%
@@ -53,19 +53,19 @@ class WrithingMass(Enemy):
         if roll < 0.1:  # 10% Parasite
             if self._last_intention != "Parasite":
                 self._last_intention = "Parasite"
-                return "Parasite"
+                return self.intentions["Parasite"]
         elif roll < 0.4:  # 30% Block Attack
             if self._last_intention != "Block Attack":
                 self._last_intention = "Block Attack"
-                return "Block Attack"
+                return self.intentions["Block Attack"]
         elif roll < 0.7:  # 30% Debuff Attack
             if self._last_intention != "Debuff Attack":
                 self._last_intention = "Debuff Attack"
-                return "Debuff Attack"
+                return self.intentions["Debuff Attack"]
         else:  # 30% Big Hit
             if self._last_intention != "Big Hit":
                 self._last_intention = "Big Hit"
-                return "Big Hit"
+                return self.intentions["Big Hit"]
         
         # If we hit a repeat, try again with a different option
         available = ["Multi Hit", "Debuff Attack", "Big Hit", "Block Attack"]
@@ -73,7 +73,7 @@ class WrithingMass(Enemy):
             available.remove(self._last_intention)
         choice = random.choice(available)
         self._last_intention = choice
-        return choice
+        return self.intentions[choice]
     
     def on_combat_start(self, floor: int = 1) -> None:
         """Called when combat starts.

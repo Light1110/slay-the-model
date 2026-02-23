@@ -95,7 +95,7 @@ class SpireShield(Enemy):
         self._turn_number += 1
 
         if self._turn_number >= 3 and self._turn_number % 3 == 0:
-            return "Smash"
+            return self.intentions["Smash"]
 
         if self._pair_index >= len(self._pair_sequence):
             self._pair_sequence = random.choice(

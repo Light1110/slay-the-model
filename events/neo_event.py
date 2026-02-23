@@ -17,7 +17,7 @@ from utils.types import CardType, RarityType
 
 @register_event(
     event_id="neo_blessing",
-    floors='all',
+    acts='shared',
     weight=0,  # Neo event is special, never randomly selected
     is_unique=False
 )

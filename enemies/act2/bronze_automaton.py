@@ -46,7 +46,7 @@ class BronzeAutomaton(Enemy):
         self._first_turn = True
         # Add Artifact 3 at combat start
         from powers.definitions.artifact import ArtifactPower
-        self.add_power(ArtifactPower(), 3)
+        self.add_power(ArtifactPower(amount=3, owner=self))
         self.current_intention = self.intentions["Spawn Orbs"]
 
     def determine_next_intention(self, floor: int):

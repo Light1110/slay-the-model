@@ -8,6 +8,7 @@ from actions.card import AddCardAction
 from actions.combat import ApplyPowerAction, AttackAction
 from cards.colorless.burn import Burn
 from enemies.intention import Intention
+from powers.definitions.strength import StrengthPower
 from utils.types import PilePosType
 
 
@@ -102,7 +103,7 @@ class Piercer(Intention):
                     if enemy.is_alive:
                         actions.append(
                             ApplyPowerAction(
-                                power="Strength", target=enemy, amount=2
+                                StrengthPower(amount=2, owner=enemy), enemy
                             )
                         )
 

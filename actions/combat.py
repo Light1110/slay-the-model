@@ -352,7 +352,7 @@ class DealDamageAction(Action):
         from enemies.base import Enemy
         if isinstance(self.target, Enemy) and self.target.is_dead():
             if not self.target.is_minion:
-                if self.card is not None:
+                if self.card is not None and hasattr(self.card, 'on_fatal'):
                     actions_to_return.extend(self.card.on_fatal())
             # Print enemy kill notification (for all enemies including minions)
             print(t("combat.enemy_killed", default="Enemy {target_name} has been defeated!", target_name=target_name))
@@ -755,8 +755,7 @@ class ApplyPowerAction(Action):
                 if not power_class:
                     power_class = get_registered("power", f"{self.power.capitalize()}Power")
             if not power_class:
-                print(f"Power {self.power} not found")
-                return NoneResult()
+                raise ValueError(f"Power {self.power} not found")
             # Create power instance
             power_instance = power_class(amount=self.amount, duration=self.duration)
         else:
