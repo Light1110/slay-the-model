@@ -2,14 +2,15 @@ import random
 from typing import List, Optional
 from actions.base import Action
 from entities.creature import Creature
-from localization import Localizable
-from utils.types import RarityType
+from localization import Localizable, t
+from utils.types import RarityType, TargetType
 
 class Potion(Localizable):
     localization_prefix = "potions"
     rarity = RarityType.COMMON
     category = "Global"
     can_be_used_actively = True  # Default: can be used actively, override if passive only
+    target_type = TargetType.SELF  # Default: targets the player
 
     def __init__(self):
         self._amount= 0
@@ -22,8 +23,15 @@ class Potion(Localizable):
             return self._amount * 2
         return self._amount
 
-    def on_use(self, target: Creature) -> List[Action]:
-        """Base use method to be overridden by specific potions"""
+    def on_use(self, targets: List[Creature]) -> List[Action]:
+        """Base use method to be overridden by specific potions.
+        
+        Args:
+            targets: List of resolved targets (single or multiple based on target_type)
+        
+        Returns:
+            List of actions to execute
+        """
         return []
     
     def info(self):
@@ -34,8 +42,8 @@ class Potion(Localizable):
         PotionName
         Description text
         """
-        result = self.local("name") + f"\nRarity: {self.rarity.name.title()}"
+        result = self.local("name") + f"\n{t('ui.rarity_label', 'Rarity: {rarity}', rarity=self.rarity.name.title())}"
         if hasattr(self, 'category') and self.category:
-            result += f"\nCategory: {self.category}"
+            result += f"\n{t('ui.category_label', 'Category: {category}', category=self.category)}"
         result += "\n" + self.local("description")
         return result

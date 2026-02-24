@@ -21,8 +21,8 @@ class FocusPotion(Potion):
         super().__init__()
         self._amount = 2  # Sacred Bark doubles to 4
 
-    def on_use(self, target) -> List[Action]:
-        return [ApplyPowerAction(FocusPower(amount=self.amount, owner=target), target)]
+    def on_use(self, targets) -> List[Action]:
+        return [ApplyPowerAction(FocusPower(amount=self.amount, owner=targets[0]), targets[0])]
 
 # Rare Potions
 @register("potion")
@@ -36,7 +36,7 @@ class EssenceOfDarkness(Potion):
         super().__init__()
         self._amount = 1  # Sacred Bark doubles to 2 (dark orbs per slot)
 
-    def on_use(self, target) -> List[Action]:
+    def on_use(self, targets) -> List[Action]:
         from engine.game_state import game_state
         # Channel Dark orbs for each orb slot
         return [LambdaAction(func=lambda: [game_state.player.orb_manager.add_orb(orb=DarkOrb()) \
@@ -54,7 +54,7 @@ class PotionOfCapacity(Potion):
         super().__init__()
         self._amount = 3  # Sacred Bark doubles to 6
 
-    def on_use(self, target) -> List[Action]:
+    def on_use(self, targets) -> List[Action]:
         # Gain orb slots
-        assert isinstance(target, Player), "Potion of Capacity can only be used by the player"
-        return [LambdaAction(func=lambda: setattr(target.orb_manager, "max_slots", target.orb_manager.max_orb_slots + self.amount))]
+        assert isinstance(targets[0], Player), "Potion of Capacity can only be used by the player"
+        return [LambdaAction(func=lambda: setattr(targets[0].orb_manager, "max_slots", targets[0].orb_manager.max_orb_slots + self.amount))]

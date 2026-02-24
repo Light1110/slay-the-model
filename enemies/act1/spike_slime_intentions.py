@@ -18,6 +18,7 @@ class LickIntention(Intention):
     def __init__(self, enemy: 'Enemy'):
         super().__init__("lick", enemy)
         self._frail_amount = 2
+        self.base_amount = 2  # For description variable {amount}
     
     def execute(self) -> List['Action']:
         """Execute Lick: applies 2 Frail to player."""

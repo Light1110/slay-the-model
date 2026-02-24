@@ -22,7 +22,7 @@ class BloodPotion(Potion):
         super().__init__()
         self._amount = 20  # Sacred Bark doubles to 40 (percentage)
 
-    def on_use(self, target) -> List[Action]:
+    def on_use(self, targets) -> List[Action]:
         from engine.game_state import game_state
         from actions.combat import HealAction
         # Calculate heal amount as percentage of max HP
@@ -40,7 +40,7 @@ class Elixir(Potion):
     def __init__(self):
         super().__init__()
 
-    def on_use(self, target) -> List[Action]:
+    def on_use(self, targets) -> List[Action]:
         from actions.card import ExhaustCardAction
         from actions.display import SelectAction
         from engine.game_state import game_state
@@ -75,6 +75,6 @@ class HeartOfIron(Potion):
         super().__init__()
         self._amount = 6  # Sacred Bark doubles to 12
 
-    def on_use(self, target) -> List[Action]:
+    def on_use(self, targets) -> List[Action]:
         from engine.game_state import game_state
         return [ApplyPowerAction(MetallicizePower(amount=self.amount, owner=game_state.player), game_state.player)]

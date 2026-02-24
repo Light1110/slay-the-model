@@ -25,11 +25,17 @@ class DualWield(Card):
     def on_play(self, targets: List[Creature] = []) -> List[Action]:
         target = targets[0] if targets else None
         from engine.game_state import game_state
+        from utils.types import CardType
 
         actions = super().on_play(targets)
 
         # Choose a card in hand and add a copy
+        # Dual Wield can only copy Attack or Power cards, not Skill cards
         if game_state.player.card_manager.get_pile("hand"):
-            actions.append(ChooseCopyCardAction(pile="hand", copies=1))
+            actions.append(ChooseCopyCardAction(
+                pile="hand", 
+                copies=1, 
+                card_types=[CardType.ATTACK, CardType.POWER]
+            ))
 
         return actions

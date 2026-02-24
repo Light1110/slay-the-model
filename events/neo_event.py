@@ -65,7 +65,7 @@ class NeoEvent(Event):
                 actions=[ModifyMaxHpAction(amount=max_hp_small_increase)]
             ),
             Option(
-                name=LocalStr("blessing.random_common_relic_option"),
+                name=LocalStr("blessing.neow_option"),
                 actions=[AddRelicAction(relic="Neow's Blessing")]
             )
         ]

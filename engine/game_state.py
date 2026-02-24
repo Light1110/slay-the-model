@@ -94,6 +94,12 @@ class GameState:
         
         # Current combat (None when not in combat)
         self.current_combat: Optional[Combat] = None
+        # AI Decision Engine (initialized if in AI mode with valid config)
+        self.decision_engine = None
+        if self.config.mode == "ai" and self.config.ai.get("api_key"):
+            from ai.ai_interface import LLMDecisionEngine
+            self.decision_engine = LLMDecisionEngine(self.config.ai, debug=True)
+        
         
         # game setup
         if self.config.seed == -1:

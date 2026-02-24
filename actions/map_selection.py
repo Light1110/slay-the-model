@@ -63,15 +63,12 @@ class SelectMapNodeAction(Action):
     - AI mode: Calls the AI decision engine to choose a move
     """
     
-    def __init__(self, ai_engine=None):
+    def __init__(self):
         """
         Initialize map selection action.
-        
-        Args:
-            ai_engine: Optional AI decision engine instance. If None and in AI mode,
-                      a default MockAIDecisionEngine will be created.
         """
-        self.ai_engine = ai_engine
+        pass
+        
     
     def execute(self) -> 'BaseResult':
         """
@@ -92,16 +89,9 @@ class SelectMapNodeAction(Action):
             tui_print("\nNo available moves. You've reached end of act!")
             return NoneResult()
 
-        # Check game mode and handle accordingly
-        if game_state.config.mode == "ai":
-            # AI mode: Call AI decision engine and execute via action
-            choice_index = self._make_ai_decision(map_manager)
-            return self._execute_move_via_action(available_moves[choice_index])
-        else:
-            # Human mode: Display map and present options via SelectAction
-            return self._make_human_decision(map_manager, available_moves)
+        return self._make_decision(map_manager, available_moves)
     
-    def _make_human_decision(self, map_manager, available_moves: List):
+    def _make_decision(self, map_manager, available_moves: List):
         """
         Make decision in human mode by displaying options via SelectAction.
         
@@ -136,6 +126,9 @@ class SelectMapNodeAction(Action):
             # Create option with this action
             option = Option(option_name, [move_action])
             options.append(option)
+            
+        # todo: 在 ai 模式下，获取额外的上下文
+        # get_map_context_for_ai
         
         # Return SelectAction to be added to caller's action_queue
         select_action = SelectAction(
@@ -143,49 +136,6 @@ class SelectMapNodeAction(Action):
             options=options
         )
         return SingleActionResult(select_action)
-
-    def _execute_move_via_action(self, node: MapNode) -> 'BaseResult':
-        """
-        Execute move to selected node by creating MoveToMapNodeAction.
-
-        This is used in AI mode where decision is made immediately.
-
-        Args:
-            node: The MapNode to move to
-        """
-        # Create MoveToMapNodeAction to return
-        move_action = MoveToMapNodeAction(node.floor, node.position)
-        return SingleActionResult(move_action)
-    
-    def _make_ai_decision(self, map_manager) -> int:
-        """
-        Make decision in AI mode by calling AI decision engine.
-
-        Args:
-            map_manager: The MapManager instance
-
-        Returns:
-            int: Index of selected move
-        """
-        # Import AI tools
-        from ai_tools.map_tools import get_map_context_for_ai
-        from engine.game_state import game_state
-
-        # Get map context for AI
-        map_context = get_map_context_for_ai(map_manager)
-
-        # Get or create AI engine
-        if self.ai_engine is None:
-            # Use MockAIDecisionEngine with default strategy
-            from ai.ai_interface import MockAIDecisionEngine
-            debug = game_state.config.get('debug', False)
-            ai_strategy = game_state.config.get('ai_strategy', 'first')
-            self.ai_engine = MockAIDecisionEngine(strategy=ai_strategy, debug=debug)
-
-        # Get AI decision
-        choice_index = self.ai_engine.make_map_decision(map_context)
-
-        return choice_index
     
     def _get_move_option_name(self, node: MapNode) -> BaseLocalStr:
         """

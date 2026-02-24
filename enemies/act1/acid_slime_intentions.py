@@ -34,6 +34,7 @@ class CorrosiveSpitIntention(Intention):
         else:
             self.base_damage = 7
             self._slimed_count = 1
+        self.base_cards = self._slimed_count  # For description variable {cards}
     
     def execute(self) -> List['Action']:
         """Execute Corrosive Spit: deals damage and adds Slimed cards."""

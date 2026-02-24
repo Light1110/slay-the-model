@@ -23,7 +23,7 @@ class BottledMiracle(Potion):
         super().__init__()
         self._amount = 2  # Sacred Bark doubles to 4
 
-    def on_use(self, target) -> List[Action]:
+    def on_use(self, targets) -> List[Action]:
         from actions.card import AddCardAction
         from utils.random import get_random_card
         
@@ -47,21 +47,21 @@ class StancePotion(Potion):
     def __init__(self):
         super().__init__()
 
-    def on_use(self, target) -> List[Action]:
+    def on_use(self, targets) -> List[Action]:
         # Let player choose between Calm and Wrath
-        if not isinstance(target, Player):
+        if not isinstance(targets[0], Player):
             return []
         options = [
             Option(
                 name=LocalStr("stance.calm"),
-                actions=[LambdaAction(func=lambda: target.status_manager.change_to_status(StatusType.CALM))]
+                actions=[LambdaAction(func=lambda: targets[0].status_manager.change_to_status(StatusType.CALM))]
             ),
             Option(
                 name=LocalStr("stance.wrath"),
-                actions=[LambdaAction(func=lambda: target.status_manager.change_to_status(StatusType.WRATH))]
+                actions=[LambdaAction(func=lambda: targets[0].status_manager.change_to_status(StatusType.WRATH))]
             )
         ]
-        return [SelectAction(options=options, prompt=LocalStr("stance.choose_stance"))]
+        return [SelectAction(options=options, title=LocalStr("stance.choose_stance"))]
 
 # Rare Potions
 @register("potion")
@@ -74,8 +74,8 @@ class Ambrosia(Potion):
     def __init__(self):
         super().__init__()
 
-    def on_use(self, target) -> List[Action]:
+    def on_use(self, targets) -> List[Action]:
         # Enter Divinity stance
-        assert isinstance(target, Player), "Ambrosia can only be used by the player"
-        target.status_manager.change_to_status(StatusType.DIVINITY)
+        assert isinstance(targets[0], Player), "Ambrosia can only be used by the player"
+        targets[0].status_manager.change_to_status(StatusType.DIVINITY)
         return []

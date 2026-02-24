@@ -158,7 +158,7 @@ class ChooseBossRelicAction(Action):
             })
         
         return SingleActionResult(SelectAction(
-            prompt="Choose a boss relic:",
+            title="Choose a boss relic:",
             options=options
         ))
 

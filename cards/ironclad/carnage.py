@@ -9,7 +9,7 @@ from utils.types import CardType, RarityType
 
 @register("card")
 class Carnage(Card):
-    """Deal massive damage to all enemies"""
+    """Deal massive damage to enemy"""
 
     card_type = CardType.ATTACK
     rarity = RarityType.UNCOMMON

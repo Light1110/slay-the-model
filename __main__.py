@@ -7,10 +7,10 @@ import sys
 import os
 
 # Fix Windows console encoding BEFORE any imports that might print
-if sys.platform == 'win32':
-    import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# if sys.platform == 'win32':
+#     import io
+#     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+#     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
 import argparse
 from engine.game_flow import GameFlow
@@ -72,6 +72,12 @@ def run_tui_mode():
         
         # Create and run the TUI app
         app = SlayTheModelApp()
+        
+        # Set AI mode based on config (mode is 'ai' or 'debug' for non-human modes)
+        mode = game_state.config.mode
+        is_ai_mode = mode in ('ai', 'debug')
+        app.set_ai_mode(is_ai_mode)
+        
         app.run()
         
     except ImportError as e:

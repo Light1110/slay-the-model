@@ -79,7 +79,7 @@ class BonfireSpirits(Event):
         ]
         
         actions.append(SelectAction(
-            title=LocalStr('events.bonfire_spirits.title'),
+            title=LocalStr('events.bonfire_spirits.offer'),
             options=options
         ))
         

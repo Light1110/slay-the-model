@@ -16,7 +16,13 @@ class GameConfig:
                 "show_menu_option": True,
             },
             "ai": {
-                # todo: AI-specific settings will be added here
+                "api_key": os.environ.get("OPENAI_API_KEY", ""),
+                "api_base": "https://api.openai.com/v1",
+                "model": "gpt-4o",
+                "stream": False,
+                "temperature": 0.7,
+                "max_tokens": 2048,
+                "timeout": 60,
             },
             "debug": {
                 "select_type": "random",

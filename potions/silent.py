@@ -6,7 +6,7 @@ from actions.combat import ApplyPowerAction
 from powers.definitions.poison import PoisonPower
 from powers.definitions.intangible import IntangiblePower
 from potions.base import Potion
-from utils.types import RarityType
+from utils.types import RarityType, TargetType
 from utils.random import get_random_card
 from utils.registry import get_registered_instance, register
 
@@ -17,13 +17,13 @@ class PoisonPotion(Potion):
     rarity = RarityType.COMMON
     category = "Silent"
     name = "Poison Potion"
-
+    target_type = TargetType.ENEMY_SELECT
     def __init__(self):
         super().__init__()
         self._amount = 6  # Sacred Bark doubles to 12
 
-    def on_use(self, target) -> List[Action]:
-        return [ApplyPowerAction(PoisonPower(amount=self.amount, owner=target), target)]
+    def on_use(self, targets) -> List[Action]:
+        return [ApplyPowerAction(PoisonPower(amount=self.amount, owner=targets[0]), targets[0])]
 
 # Uncommon Potions
 @register("potion")
@@ -37,7 +37,7 @@ class CunningPotion(Potion):
         super().__init__()
         self._amount = 3  # Sacred Bark doubles to 6
 
-    def on_use(self, target) -> List[Action]:
+    def on_use(self, targets) -> List[Action]:
         from actions.card import AddCardAction
         from utils.random import get_random_card
         
@@ -62,7 +62,7 @@ class GhostInAJar(Potion):
         super().__init__()
         self._amount = 1  # Sacred Bark doubles to 2
 
-    def on_use(self, target) -> List[Action]:
+    def on_use(self, targets) -> List[Action]:
         from engine.game_state import game_state
         return [ApplyPowerAction(IntangiblePower(amount=self.amount, owner=game_state.player), game_state.player)]
 

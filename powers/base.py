@@ -5,7 +5,7 @@ Powers modify creature stats, damage calculations, and combat flow.
 from enum import Enum, auto
 from typing import List, Optional, Any
 from actions.base import Action
-from localization import Localizable
+from localization import Localizable, t
 from utils.types import TargetType
 from utils.damage_phase import DamagePhase
 
@@ -226,22 +226,22 @@ class Power(Localizable):
         - BOTH, MULTI_INSTANCE: 同时显示 amount 和 duration
         - PRESENCE: 都不显示
         """
-        power_type = "Buff" if self.is_buff else "Debuff"
+        power_type = t('ui.buff', 'Buff') if self.is_buff else t('ui.debuff', 'Debuff')
         name = self.local("name")
         description = self.local("description")
         
         # 根据 StackType 决定显示内容
         if self.stack_type == StackType.INTENSITY:
             # 只打印 amount
-            return f"{name} (Type: {power_type}, Amount: {self.amount})\n{description}"
+            return f"{name} ({t('ui.type_label', 'Type: {type}', type=power_type)}, {t('ui.amount_label', 'Amount: {amount}', amount=self.amount)})\n{description}"
         elif self.stack_type in (StackType.DURATION, StackType.LINKED):
             # 只打印 duration
-            duration_str = "Permanent" if self.duration == -1 else str(self.duration)
-            return f"{name} (Type: {power_type}, Duration: {duration_str})\n{description}"
+            duration_str = t('ui.permanent', 'Permanent') if self.duration == -1 else str(self.duration)
+            return f"{name} ({t('ui.type_label', 'Type: {type}', type=power_type)}, {t('ui.duration_label', 'Duration: {duration}', duration=duration_str)})\n{description}"
         elif self.stack_type in (StackType.BOTH, StackType.MULTI_INSTANCE):
             # 都打印
-            duration_str = "Permanent" if self.duration == -1 else str(self.duration)
-            return f"{name} (Type: {power_type}, Duration: {duration_str}, Amount: {self.amount})\n{description}"
+            duration_str = t('ui.permanent', 'Permanent') if self.duration == -1 else str(self.duration)
+            return f"{name} ({t('ui.type_label', 'Type: {type}', type=power_type)}, {t('ui.duration_label', 'Duration: {duration}', duration=duration_str)}, {t('ui.amount_label', 'Amount: {amount}', amount=self.amount)})\n{description}"
         else:  # PRESENCE
             # 都不打印
-            return f"{name} (Type: {power_type})\n{description}"
+            return f"{name} ({t('ui.type_label', 'Type: {type}', type=power_type)})\n{description}"

@@ -75,5 +75,9 @@ class Intention(ABC, Localizable):
         if self.base_amount > 0:
             variables['amount'] = self.base_amount
         
+        # 卡牌数量 (用于 Corrosive Spit 等意图)
+        if hasattr(self, 'base_cards') and self.base_cards > 0:
+            variables['cards'] = self.base_cards
+        
         # 返回带变量的LocalStr对象
         return self.local("description", **variables)

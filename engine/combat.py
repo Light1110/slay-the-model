@@ -191,7 +191,7 @@ class Combat(Localizable):
         
         actions.append(SelectAction(
             options=options,
-            prompt=LocalStr("combat.choose_action")
+            title=LocalStr("combat.choose_action")
         ))
             
         game_state.action_queue.add_actions(actions)
@@ -536,7 +536,7 @@ class Combat(Localizable):
             game_state.player.block = 0
 
         # Draw cards
-        draw_count = game_state.player.draw_count  # todo: modified by relics/powers
+        draw_count = game_state.player.draw_count  # modified by relics/powers
         
         # Check for DrawReductionPower - reduce draw count
         draw_reduction = 0

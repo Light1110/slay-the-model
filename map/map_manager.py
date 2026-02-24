@@ -891,7 +891,14 @@ class MapManager:
         return "\n".join(lines)
 
     def get_map_text_for_human(self) -> str:
-        """Get map text block for TUI display panel (no printing)."""
+        """
+        Get map text block for TUI display panel (no printing).
+        
+        Design principles (same as display_map_for_human):
+        - Fixed node width: [?M] (4 chars) for consistent alignment
+        - Each node shows outgoing connections below: / (left), | (center), \\ (right)
+        - Max 3 outgoing and 3 incoming connections per node
+        """
         from engine.game_state import game_state
 
         current_floor = game_state.current_floor
@@ -899,21 +906,134 @@ class MapManager:
         available_moves = self.get_available_moves()
         available_positions = {(node.floor, node.position) for node in available_moves}
 
-        lines = [
-            "=" * 60,
-            f"MAP VIEW - Act {act_num} (Floor {current_floor})",
-            "=" * 60,
-            "",
-            "Legend:",
-            "  [M]=Monster  [E]=Elite  [$]=Merchant  [?]=Event",
-            "  [R]=Rest     [T]=Treasure  [B]=Boss  [N]=Neo",
-            "  *=Current   >=Available   X=Visited",
-            "",
-            self._format_map_ascii(available_positions),
-            "",
-            "=" * 60,
-        ]
-        return "\n".join(lines)
+        # Get current position
+        current_position = self.map_data.current_position
+
+        # Get visited nodes (historical path taken)
+        act_start_floor = self._get_act_start_floor(self.act_id)
+        visited_positions = {
+            (act_start_floor + floor_in_act, pos)
+            for floor_in_act, pos in self.map_data.visited_path
+        }
+
+        lines = []
+        lines.append("=" * 60)
+        lines.append(f"MAP VIEW - Act {act_num} (Floor {current_floor})")
+        lines.append("=" * 60)
+        
+        # Legend
+        lines.append("")
+        lines.append("Legend:")
+        lines.append("  [M]=Monster  [E]=Elite  [$]=Merchant  [?]=Event")
+        lines.append("  [R]=Rest     [T]=Treasure  [B]=Boss  [N]=Neo")
+        lines.append("  *=Current   >=Available   ^=Visited")
+        lines.append("  Connections: /=left  |=center  \\=right")
+        lines.append("")
+
+        # Display map floor by floor
+        for floor in range(len(self.map_data.nodes)):
+            floor_nodes = self.map_data.nodes[floor]
+            if not floor_nodes:
+                continue
+
+            next_floor_nodes = self.map_data.nodes[floor + 1] if floor + 1 < len(self.map_data.nodes) else []
+            num_srcs = len(floor_nodes)
+            num_dests = len(next_floor_nodes)
+
+            # Calculate true floor for display
+            true_floor = act_start_floor + floor
+
+            # Display floor nodes with fixed width (5 chars total)
+            # Format: [ M ] normal, [*M ] current, [>M ] available, [^M ] visited
+            line = f"Floor {true_floor:2d}: "
+            for pos, node in enumerate(floor_nodes):
+                symbol = self._get_room_symbol(node.room_type)
+
+                if true_floor == current_floor and pos == current_position:
+                    # Current position: [*M ]
+                    node_str = f"[*{symbol} ]"
+                elif (true_floor, pos) in available_positions:
+                    # Available: [>M ]
+                    node_str = f"[>{symbol} ]"
+                elif (true_floor, pos) in visited_positions:
+                    # Visited: [^M ] - shows visited status and room type
+                    node_str = f"[^{symbol} ]"
+                else:
+                    # Normal unvisited: [ M ]
+                    node_str = f"[ {symbol} ]"
+
+                line += node_str
+
+            lines.append(line)
+
+            # Display connection lines to next floor
+            if next_floor_nodes:
+                # Build connection display: 5 chars per source node
+                # Position connectors to align with the room symbol (position 2 in [?M ])
+                conn_line = "           "  # Match "Floor XX: " prefix
+
+                for src_idx, src_node in enumerate(floor_nodes):
+                    if not src_node.connections_up:
+                        # No connections - add empty space (5 chars)
+                        conn_line += "     "
+                        continue
+
+                    # Determine which directions this node connects to
+                    # based on relative positions
+                    connects_left = False
+                    connects_center = False
+                    connects_right = False
+
+                    for dest_pos in src_node.connections_up:
+                        # Find the array index for this destination
+                        dest_idx = None
+                        for i, n in enumerate(next_floor_nodes):
+                            if n.position == dest_pos:
+                                dest_idx = i
+                                break
+
+                        if dest_idx is not None:
+                            # Calculate relative position
+                            src_rel = src_idx / max(num_srcs - 1, 1) if num_srcs > 1 else 0.5
+                            dest_rel = dest_idx / max(num_dests - 1, 1) if num_dests > 1 else 0.5
+
+                            diff = dest_rel - src_rel
+                            if diff < -0.15:
+                                connects_left = True
+                            elif diff > 0.15:
+                                connects_right = True
+                            else:
+                                connects_center = True
+
+                    # Build connection display for this node (5 chars)
+                    # Connectors at positions 1-3 to align with room symbol
+                    if connects_left and connects_center and connects_right:
+                        conn_line += "/|\\  "
+                    elif connects_left and connects_center:
+                        conn_line += "/|   "
+                    elif connects_center and connects_right:
+                        conn_line += " |\\  "
+                    elif connects_left and connects_right:
+                        conn_line += "/ \\  "
+                    elif connects_left:
+                        conn_line += "/    "
+                    elif connects_center:
+                        conn_line += " |   "
+                    elif connects_right:
+                        conn_line += "  \\  "
+                    else:
+                        conn_line += "     "
+
+                # Only add connection line if there are actual connections
+                if any(c != " " for c in conn_line[11:]):
+                    lines.append(conn_line)
+
+        lines.append("")
+        lines.append("=" * 60)
+        
+        # Escape square brackets for Rich/Textual markup
+        # Rich treats [...] as markup tags, so we need to escape them
+        return "\n".join(lines).replace("[", "\\[")
 
     def _resolve_unknown_type(self, floor: int) -> RoomType:
         """

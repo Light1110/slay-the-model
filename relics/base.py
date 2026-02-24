@@ -1,6 +1,6 @@
 from typing import List, Optional, Tuple
 from actions.base import Action
-from localization import Localizable
+from localization import Localizable, t
 from utils.types import RarityType
 from utils.damage_phase import DamagePhase
 
@@ -306,4 +306,4 @@ class Relic(Localizable):
         RelicName (Rarity: Common)
         Description text
         """
-        return self.local("name") + f" (Rarity: {self.rarity.value})\n" + self.local("description")
+        return self.local("name") + f" ({t('ui.rarity_label', 'Rarity: {rarity}', rarity=self.rarity.value)})\n" + self.local("description")

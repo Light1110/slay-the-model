@@ -8,8 +8,9 @@ import re
 from typing import Optional, List, Dict, Any, Callable
 
 from textual.app import App, ComposeResult
-from textual.containers import Horizontal, Vertical, Container
+from textual.containers import Horizontal, Vertical, Container, VerticalScroll
 from textual.widgets import Header, Footer, Static, RichLog, Button, SelectionList, Input
+from textual.widget import Widget
 from textual.reactive import reactive
 from textual.screen import Screen
 from rich.text import Text
@@ -19,11 +20,15 @@ from rich.console import Console
 from . import set_app, get_app
 
 
-class DisplayPanel(Static):
-    """Left panel: Shows game state (player info + room content)."""
+class DisplayPanel(Widget):
+    """Left panel: Shows game state (player info + room content).
     
-    content = reactive("")
-    player_info = reactive("")
+    Uses Widget base class instead of Static to properly support scrolling.
+    The actual content is rendered via an inner Static widget.
+    """
+    
+    panel_content: reactive[str] = reactive("")
+    player_info: reactive[str] = reactive("")
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -42,7 +47,10 @@ class DisplayPanel(Static):
             if len(player.relics) > 5:
                 relics_str += f" (+{len(player.relics) - 5})"
         
-        self.player_info = f"{hp_bar}\n{energy_str} | {gold_str} | {floor_str}\n{relics_str}"
+        # Deck info
+        # deck_str = f"Deck: {len(player.deck)} cards"
+        
+        self.player_info = f"\n{hp_bar}\n{energy_str} | {gold_str} | {floor_str}\n{relics_str}"
         self._refresh_display()
     
     def _make_hp_bar(self, hp: int, max_hp: int, width: int = 20) -> str:
@@ -53,7 +61,7 @@ class DisplayPanel(Static):
     
     def update_content(self, content: str):
         """Replace main content area."""
-        self.content = content or ""
+        self.panel_content = content or ""
         self._refresh_display()
     
     def _refresh_display(self):
@@ -62,19 +70,29 @@ class DisplayPanel(Static):
         if self.player_info:
             lines.append(self.player_info)
             lines.append("─" * 40)
-        if self.content:
-            lines.append(self.content)
-        self.update("\n".join(lines))
+        if self.panel_content:
+            lines.append(self.panel_content)
+        # Update the inner Static widget, not self
+        try:
+            content_widget = self.query_one("#display-content", Static)
+            content_widget.update("\n".join(lines))
+        except Exception:
+            pass  # Widget not yet mounted
     
     def compose(self) -> ComposeResult:
-        yield Static("", id="display-content")
+        # markup=False prevents bracket interpretation issues
+        yield Static("", id="display-content", markup=False)
 
 
-class SelectionPanel(Static):
-    """Middle panel: Shows current selection options."""
+class SelectionPanel(Widget):
+    """Middle panel: Shows current selection options.
     
-    options = reactive([])
-    title = reactive("")
+    Uses Widget base class instead of Static to properly support scrolling.
+    The actual content is rendered via inner Static widget.
+    """
+    
+    options: reactive[List[Any]] = reactive([])
+    title: reactive[str] = reactive("")
     selected_callback: Optional[Callable[[Any], None]] = None
     
     def __init__(self, *args, **kwargs):
@@ -83,9 +101,20 @@ class SelectionPanel(Static):
         self._selection_future: Optional[concurrent.futures.Future[list[int]]] = None
         self._max_select = 1
         self._must_select = True
+        self._is_ai_mode = False  # Track if running in AI mode
+    
+    def set_ai_mode(self, is_ai: bool):
+        """Set whether the app is running in AI mode."""
+        self._is_ai_mode = is_ai
+        # Update input visibility
+        try:
+            input_widget = self.query_one("#selection-input", Input)
+            input_widget.set_class(is_ai, "hidden")
+        except Exception:
+            pass
     
     def compose(self) -> ComposeResult:
-        yield Static("[dim]Waiting...[/dim]", id="selection-content")
+        yield Static("[dim]Waiting...[/dim]", id="selection-content")  # Needs markup for colors
         yield Input(placeholder="Enter selection", id="selection-input")
     
     def set_selection(
@@ -233,6 +262,37 @@ class SelectionPanel(Static):
 
 
     
+    def show_thinking(self, message: str):
+        """Show AI thinking message in selection panel while preserving title and options."""
+        lines = []
+        if self.title:
+            lines.append(f"[bold]{self.title}[/bold]")
+            lines.append("")
+        
+        # Show options (preserved)
+        for i, opt in enumerate(self._options_data):
+            name = str(opt.name) if hasattr(opt, 'name') else str(opt)
+            lines.append(f"  [cyan]{i + 1}.[/cyan] {name}")
+        
+        lines.append("")
+        
+        # Show thinking message after options
+        lines.append(f"[yellow]{message}[/yellow]")
+        
+        lines.append("")
+        if self._must_select:
+            required = len(self._options_data) if self._max_select == -1 else self._max_select
+            lines.append(
+                f"[dim]Waiting for AI... ({required} selection(s) needed)[/dim]"
+            )
+        else:
+            max_select = len(self._options_data) if self._max_select == -1 else self._max_select
+            lines.append(
+                f"[dim]Waiting for AI... (up to {max_select} selection(s))[/dim]"
+            )
+        
+        self.query_one("#selection-content", Static).update("\n".join(lines))
+    
     def clear(self):
         """Clear selection panel."""
         self.title = ""
@@ -243,6 +303,7 @@ class SelectionPanel(Static):
         selection_input = self.query_one("#selection-input", Input)
         selection_input.value = ""
         selection_input.placeholder = "Enter selection"
+
 
 
 class OutputPanel(RichLog):
@@ -282,11 +343,11 @@ class MainScreen(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         with Horizontal(id="main-container"):
-            with Container(id="display-panel-container"):
+            with VerticalScroll(id="display-panel-container"):
                 yield DisplayPanel(id="display-panel")
-            with Container(id="selection-panel-container"):
+            with VerticalScroll(id="selection-panel-container"):
                 yield SelectionPanel(id="selection-panel")
-            with Container(id="output-panel-container"):
+            with VerticalScroll(id="output-panel-container"):
                 yield OutputPanel(id="output-panel")
         yield Footer()
     
@@ -319,11 +380,27 @@ class SlayTheModelApp(App):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._is_ai_mode = False  # Track if running in AI mode
     
     def on_mount(self):
         """Set up app on mount."""
         set_app(self)
         self.push_screen("main")
+        # Apply AI mode if it was set before screen was ready
+        if self._is_ai_mode:
+            self.call_later(self._apply_ai_mode)
+    
+    def set_ai_mode(self, is_ai: bool):
+        """Set whether the app is running in AI mode."""
+        self._is_ai_mode = is_ai
+    
+    def _apply_ai_mode(self):
+        """Apply AI mode to selection panel after screen is ready."""
+        try:
+            panel = self.get_selection_panel()
+            panel.set_ai_mode(self._is_ai_mode)
+        except Exception:
+            pass
     
     def start_game(self):
         """Start game loop in worker thread. Called by MainScreen when ready."""
@@ -489,43 +566,43 @@ class SlayTheModelApp(App):
         if msg_type in ("error", "reward", "debug"):
             return False
 
-        # Suppress map ASCII dumps and map debug lines (map is shown in display panel).
-        if text.startswith("MAP VIEW - Act"):
-            return True
-        if text.startswith("Legend:") or text.startswith("Connections:"):
-            return True
-        if text.startswith("DEBUG: self.act_id=") or text.startswith("DEBUG: self._act_floor_counts="):
-            return True
-        if text.startswith("DEBUG: current_floor="):
-            return True
-        if re.match(r"^Floor\s+\d+:", text):
-            return True
-        if set(text).issubset(set(" /|\\")) and text:
-            return True
+        # # Suppress map ASCII dumps and map debug lines (map is shown in display panel).
+        # if text.startswith("MAP VIEW - Act"):
+        #     return True
+        # if text.startswith("Legend:") or text.startswith("Connections:"):
+        #     return True
+        # if text.startswith("DEBUG: self.act_id=") or text.startswith("DEBUG: self._act_floor_counts="):
+        #     return True
+        # if text.startswith("DEBUG: current_floor="):
+        #     return True
+        # if re.match(r"^Floor\s+\d+:", text):
+        #     return True
+        # if set(text).issubset(set(" /|\\")) and text:
+        #     return True
 
-        # Suppress combat state snapshot spam (now shown in display panel).
-        if text.startswith("--- Combat Status ---"):
-            return True
-        if text.startswith("=== Player Turn") or text.startswith("=== Enemy Turn"):
-            return True
-        if text.startswith("Hand ("):
-            return True
-        if text.startswith("Draw Pile") or text.startswith("Discard Pile"):
-            return True
-        if text.startswith("=== Enemies ==="):
-            return True
-        if text.startswith("Powers:"):
-            return True
-        if re.match(r"^\s*\[\d+\]\s+", text):
-            return True
-        if text_lower.startswith("hp:") and "/" in text and "damage" not in text_lower:
-            return True
-        if text_lower.startswith("block:"):
-            return True
-        if text_lower.startswith("energy:") and "/" in text:
-            return True
-        if text_lower.startswith("intention:"):
-            return True
+        # # Suppress combat state snapshot spam (now shown in display panel).
+        # if text.startswith("--- Combat Status ---"):
+        #     return True
+        # if text.startswith("=== Player Turn") or text.startswith("=== Enemy Turn"):
+        #     return True
+        # if text.startswith("Hand ("):
+        #     return True
+        # if text.startswith("Draw Pile") or text.startswith("Discard Pile"):
+        #     return True
+        # if text.startswith("=== Enemies ==="):
+        #     return True
+        # if text.startswith("Powers:"):
+        #     return True
+        # if re.match(r"^\s*\[\d+\]\s+", text):
+        #     return True
+        # if text_lower.startswith("hp:") and "/" in text and "damage" not in text_lower:
+        #     return True
+        # if text_lower.startswith("block:"):
+        #     return True
+        # if text_lower.startswith("energy:") and "/" in text:
+        #     return True
+        # if text_lower.startswith("intention:"):
+        #     return True
 
         return False
     

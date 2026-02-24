@@ -387,7 +387,7 @@ class ChooseRemoveCardAction(Action):
         cards_in_pile = card_manager.get_pile(pile)
 
         for card in cards_in_pile:
-            option = card.display_name
+            option = card.info() # card.display_name
             options.append(
                 Option(
                     name = option,
@@ -437,7 +437,7 @@ class ChooseTransformCardAction(Action):
         cards_in_pile = card_manager.get_pile(pile)
 
         for card in cards_in_pile:
-            option = card.display_name
+            option = card.info() # card.display_name
             options.append(
                 Option(
                     name = option,
@@ -487,7 +487,7 @@ class ChooseUpgradeCardAction(Action):
         for card in cards_in_pile:
             if not card.can_upgrade():
                 continue
-            option = card.display_name
+            option = card.info() # card.display_name
             options.append(
                 Option(
                     name = option,
@@ -537,7 +537,7 @@ class ChooseExhaustCardAction(Action):
         for card in cards_in_pile:
             if not card.can_upgrade():
                 continue
-            option = card.display_name
+            option = card.info() # card.display_name
             options.append(
                 Option(
                     name = option,
@@ -603,7 +603,7 @@ class ChooseAddRandomCardAction(Action):
             # * 设置临时能量
             if self.temp_cost is not None:
                 random_card.temp_cost = self.temp_cost
-            option = random_card.display_name
+            option = random_card.info() # random_card.display_name
             options.append(
                 Option(
                     name = option,
@@ -764,7 +764,7 @@ class ChooseReplaceCardAction(Action):
         from actions.display import SelectAction
         hand = game_state.player.card_manager.get_pile('hand')
         for card in hand:
-            option_name = card.display_name
+            option_name = card.info() # card.display_name
             options.append(
                 Option(
                     name = option_name,
@@ -825,7 +825,7 @@ class ChooseMoveCardAction(Action):
             cards_in_pile = final_pile
 
         for card in cards_in_pile:
-            option = card.display_name
+            option = card.info() # card.display_name
             options.append(
                 Option(
                     name = option,
@@ -854,11 +854,12 @@ class ChooseCopyCardAction(Action):
         copies (int): Number of copies to make
 
     Optional:
-        None
+        card_types (List[CardType]): List of allowed card types. If None, all types are allowed.
     """
-    def __init__(self, pile: str = 'hand', copies: int = 1):
+    def __init__(self, pile: str = 'hand', copies: int = 1, card_types: Optional[List['CardType']] = None):
         self.pile = pile
         self.copies = copies
+        self.card_types = card_types
 
     def execute(self) -> 'BaseResult':
         from engine.game_state import game_state
@@ -867,6 +868,7 @@ class ChooseCopyCardAction(Action):
 
         pile = self.pile
         copies = self.copies
+        card_types = self.card_types
 
         card_manager = game_state.player.card_manager
         from actions.display import SelectAction
@@ -875,7 +877,12 @@ class ChooseCopyCardAction(Action):
         cards_in_pile = card_manager.get_pile(pile)
 
         for card in cards_in_pile:
-            option = card.display_name
+            # Filter by card types if specified
+            if card_types is not None:
+                if card.card_type not in card_types:
+                    continue
+                
+            option = card.info() # card.display_name
             options.append(
                 Option(
                     name = option,
@@ -893,7 +900,7 @@ class ChooseCopyCardAction(Action):
             max_select = copies,
             must_select = True
         )
-        return SingleActionResult(select_action)  
+        return SingleActionResult(select_action)
 
 @register("action")
 class MoveCardAction(Action):
@@ -1268,7 +1275,7 @@ class ChooseTransformAndUpgradeAction(Action):
         cards_in_pile = card_manager.get_pile(pile)
 
         for card in cards_in_pile:
-            option = card.display_name
+            option = card.info() # card.display_name
             options.append(
                 Option(
                     name = option,
@@ -1349,7 +1356,7 @@ class ChooseObtainCardAction(Action):
                     if hook and hook(random_card, self.pile) and random_card.can_upgrade():
                         random_card.upgrade()
             selected_card_ids.append(random_card.idstr)  # Track to avoid duplicates in next iteration
-            option = random_card.display_name
+            option = random_card.info() # random_card.display_name
             options.append(
                 Option(
                     name = option,

@@ -7,8 +7,9 @@ from actions.base import Action, LambdaAction
 from actions.card import DrawCardsAction
 from actions.combat import GainBlockAction, GainEnergyAction, HealAction, DealDamageAction, ApplyPowerAction, ModifyMaxHpAction
 # GainGoldAction imported lazily when needed to avoid circular import
+from actions.misc import BottledCardSelectAction
 from relics.base import Relic
-from utils.types import RarityType, CardType
+from utils.types import RarityType, CardType, PilePosType
 from utils.registry import register
 from utils.damage_phase import DamagePhase
 
@@ -58,7 +59,20 @@ class BottledFlame(Relic):
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
-        self.selected_card = None  # Set on pickup (not implemented yet)
+        self.selected_card = None
+
+    def on_obtain(self) -> List[Action]:
+        """Choose an Attack card when this relic is obtained."""
+        return [BottledCardSelectAction(self, CardType.ATTACK)]
+
+    def on_combat_start(self, player, entities) -> List[Action]:
+        """Add selected card to hand at start of combat."""
+        if self.selected_card:
+            # Add a copy of selected card to hand
+            from actions.card import AddCardAction
+            return [AddCardAction(card=self.selected_card, dest_pile='hand', position=PilePosType.TOP)]
+        return []
+
 
 @register("relic")
 class BottledLightning(Relic):
@@ -69,6 +83,19 @@ class BottledLightning(Relic):
         self.rarity = RarityType.UNCOMMON
         self.selected_card = None
 
+    def on_obtain(self) -> List[Action]:
+        """Choose a Skill card when this relic is obtained."""
+        return [BottledCardSelectAction(self, CardType.SKILL)]
+
+    def on_combat_start(self, player, entities) -> List[Action]:
+        """Add selected card to hand at start of combat."""
+        if self.selected_card:
+            # Add a copy of selected card to hand
+            from actions.card import AddCardAction
+            return [AddCardAction(card=self.selected_card, dest_pile='hand', position=PilePosType.TOP)]
+        return []
+
+
 @register("relic")
 class BottledTornado(Relic):
     """Upon pick up, choose a Power. Start each combat with this Card in your hand."""
@@ -77,6 +104,19 @@ class BottledTornado(Relic):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
         self.selected_card = None
+
+    def on_obtain(self) -> List[Action]:
+        """Choose a Power card when this relic is obtained."""
+        return [BottledCardSelectAction(self, CardType.POWER)]
+
+    def on_combat_start(self, player, entities) -> List[Action]:
+        """Add selected card to hand at start of combat."""
+        if self.selected_card:
+            # Add a copy of selected card to hand
+            from actions.card import AddCardAction
+            return [AddCardAction(card=self.selected_card, dest_pile='hand', position=PilePosType.TOP)]
+        return []
+
 
 @register("relic")
 class DarkstonePeriapt(Relic):
@@ -103,7 +143,7 @@ class EternalFeather(Relic):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
     
-    # This hook into rest events
+    # This hooks into rest events
 
 @register("relic")
 class FrozenEgg(Relic):
@@ -138,6 +178,7 @@ class GremlinHorn(Relic):
             ]
         return []
 
+
 @register("relic")
 class InkBottle(Relic):
     """Whenever you play 10 cards, draw 1 Card."""
@@ -154,6 +195,7 @@ class InkBottle(Relic):
             self.cards_played = 0
             return [DrawCardsAction(count=1)]
         return []
+
 
 @register("relic")
 class Kunai(Relic):
@@ -176,6 +218,7 @@ class Kunai(Relic):
             if self.attacks_played_this_turn == 3:
                 return [ApplyPowerAction(power="Dexterity", target=player, amount=1)]
         return []
+
 
 @register("relic")
 class LetterOpener(Relic):
@@ -202,6 +245,7 @@ class LetterOpener(Relic):
                 return actions
         return []
 
+
 @register("relic")
 class Matryoshka(Relic):
     """The next 2 Chests you open contain 2 Relics."""
@@ -212,7 +256,7 @@ class Matryoshka(Relic):
         self.chests_to_spawn = 2
 
     def on_chest_open(self, chest_type: str = None) -> List[Action]:
-        """Grant an extra relic from the next two non-boss chests."""
+        """Grant an extra relic from next two non-boss chests."""
         if chest_type == "boss" or self.chests_to_spawn <= 0:
             return []
         from actions.reward import AddRandomRelicAction
@@ -270,6 +314,7 @@ class MeatOnBone(Relic):
             return [HealAction(amount=12)]
         return []
 
+
 @register("relic")
 class MercuryHourglass(Relic):
     """At the start of your turn, deal 3 damage to ALL enemies."""
@@ -284,6 +329,7 @@ class MercuryHourglass(Relic):
         for enemy in entities:
             actions.append(DealDamageAction(damage=3, target=enemy))
         return actions
+
 
 @register("relic")
 class MoltenEgg(Relic):
@@ -320,6 +366,7 @@ class MummifiedHand(Relic):
                 target_card.temp_cost = 0
         return []
 
+
 @register("relic")
 class NinjaScroll(Relic):
     """Start each combat with 3 Shivs in hand."""
@@ -353,9 +400,10 @@ class OrnamentalFan(Relic):
                 return [GainBlockAction(block=4, target=player)]
         return []
 
+
 @register("relic")
 class Pantograph(Relic):
-    """At start of Boss combats, heal 25 HP."""
+    """At the start of Boss combats, heal 25 HP."""
     
     def __init__(self):
         super().__init__()
@@ -370,6 +418,7 @@ class Pantograph(Relic):
             if game_state.current_combat.combat_type != CombatType.NORMAL:
                 return [ApplyPowerAction(power="Regeneration", target=player, amount=25, duration=1)]
         return []
+
 
 @register("relic")
 class PaperKrane(Relic):
@@ -421,6 +470,7 @@ class Pear(Relic):
     def on_obtain(self) -> List[Action]:
         return [ModifyMaxHpAction(amount=10)]
 
+
 @register("relic")
 class QuestionCard(Relic):
     """On future Card Reward screens you have 1 additional Card to choose from."""
@@ -457,6 +507,7 @@ class SelfFormingClay(Relic):
             return [GainBlockAction(block=block, target=player)]
         return []
 
+
 @register("relic")
 class Shuriken(Relic):
     """Every time you play 3 Attacks in a single turn, gain 1 Strength."""
@@ -478,6 +529,7 @@ class Shuriken(Relic):
             if self.attacks_played_this_turn == 3:
                 return [ApplyPowerAction(power="Strength", target=player, amount=1)]
         return []
+
 
 @register("relic")
 class SingingBowl(Relic):
@@ -528,6 +580,7 @@ class Sundial(Relic):
             return [GainEnergyAction(energy=2)]
         return []
 
+
 @register("relic")
 class TheCourier(Relic):
     """The merchant no longer runs out of Cards, Relics, or Potions and his prices are reduced by 20%."""
@@ -572,4 +625,3 @@ class WhiteBeastStatue(Relic):
     def forces_potion_drop(self) -> bool:
         """Always drop potion rewards after combat."""
         return True
-

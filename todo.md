@@ -27,8 +27,19 @@ Smoke Bomb cannot be used while Surrounded
 [] 检查游戏能够成功运行
    1. 执行 run_games.ps1，如果10个结果文件中有任何一个出现Error，都对bug进行修复，重新跑脚本，直到10个程序都不报错。
    2. 执行所有现存的测试脚本，如果报错，先根据测试的对象，重新写一个测试文件。重新测试后，如果还是出错，再对测试对象代码和测试脚本代码进行分析，尝试修复游戏机制中存在的问题。直到所有测试代码100% pass。
-[] 战斗界面美观化
+[-] 战斗界面美观化
 [] 接入ai接口进行测试
+    1. 扩展SelectAction，多接受一个context字段，用于ai可能需要的上下文
+    2. 在config中，在ai下增加字段，包含api key and 模型网站
+    3. 在ai/ai_interface下新建一个类，用于大模型的DecisionEngine。
+    4. 在game_state中，如果是ai模式，则新建这样一个DecisionEngine的对象，用api key and model 初始化
+    5. 在SelecAction中，如果是ai模式，就把prompt+context+title+options拼接起来，调用decision engine的函数，进一步发给大模型
+    6. 大模型返回结果后，可能需要后处理，把结果处理为序号列表的形式，返回给SelectAction。后面步骤一致
+
+    几个实现上的疑问：
+    1. 大模型可能 有/无 思维链功能，怎么把 thinking 和 answer 区分开？
+    2. 和大模型的连接，可能 有/无 流式功能，两种情况下，实现是否不同？
+
 todo 完善进阶功能
 todo 钥匙获取以及是否随心模式
 
@@ -59,3 +70,7 @@ The chances for Ascension 12+ are:
 [x] resolve_potential_damage中，攻击计算的modify，需要增加类别（可以用枚举）：加算->乘算->限定。最后一种目前没有，指的是像IntangiblePower一样，把所有伤害降到一点。而对于每一个阶段，都是先能力后遗物，即：能力加算->遗物加算->能力乘算->...
 
 [-] 把StartFightAction的enemies，类型改为 List[Enemy] （更新所有引用）
+
+
+1. tui模式下，三个panel区域，要做到可以通过鼠标滚轮滑动，来浏览超出范围之外的内容
+2. tui模式下, display_panel，地图显示有问题。须和map_manager.py下display_map_for_human实现一致（但不要打印debug）

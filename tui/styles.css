@@ -12,44 +12,51 @@ Screen {
 
 #display-panel-container {
     width: 2fr;
-    height: 100%;
+    height: 1fr;
     border: solid $primary;
     padding: 1;
+    overflow-y: auto;
 }
 
 #selection-panel-container {
     width: 2fr;
-    height: 100%;
+    height: 1fr;
     border: solid $secondary;
     padding: 1;
+    overflow-y: auto;
 }
 
 #output-panel-container {
     width: 2fr;
-    height: 100%;
+    height: 1fr;
     border: solid $accent;
     padding: 1;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 #display-panel {
-    height: 100%;
+    height: auto;         /* Critical: lets content grow beyond panel height */
     width: 100%;
-    overflow-y: auto;
-    padding: 1;
+}
+
+#display-content {
+    height: auto;         /* Must be auto, not 1fr or fixed */
+    width: 100%;
 }
 
 #selection-panel {
-    height: 100%;
+    height: auto;         /* Critical: lets content grow beyond panel height */
     width: 100%;
-    overflow-y: auto;
-    padding: 1;
+}
+
+#selection-content {
+    height: auto;         /* Must be auto, not 1fr or fixed */
+    width: 100%;
 }
 
 #output-panel {
-    height: 100%;
+    height: auto;         /* Critical: lets content grow beyond panel height */
     width: 100%;
-    overflow-y: scroll;
 }
 
 Header {
@@ -77,4 +84,9 @@ Footer {
 
 .-dark-mode #output-panel-container {
     border: solid $accent-darken-1;
+}
+
+/* Hidden class for AI mode */
+.hidden {
+    display: none;
 }

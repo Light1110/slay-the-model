@@ -638,7 +638,7 @@ class PlayCardBHAction(Action):
         # Print card played for player feedback
         from localization import t
         card_name = self.card.display_name.resolve() if hasattr(self.card, 'display_name') else str(self.card)
-        print(t('combat.play_card').format(card=card_name))
+        print(t('combat.play_card', card=card_name))
 
         # Remove card from hand
         from actions.card import DiscardCardAction, ExhaustCardAction
@@ -914,65 +914,63 @@ class LoseMaxHPAction(Action):
 
 @register("action")
 class UsePotionAction(Action):
-    """Action to use a potion on a target"""
+    """Resolve target and prepare potion usage.
+    
+    Required:
+        potion (Potion): Potion to use
+    
+    Optional:
+        target (Creature): Explicit target (skips target resolution)
+    """
     
     def __init__(self, potion, target=None):
         self.potion = potion
         self.target = target
     
     def execute(self) -> 'BaseResult':
-        """Execute potion effect with dynamic target selection and BackAttack transfer."""
+        """Resolve targets and delegate to UsePotionBHAction."""
         from engine.game_state import game_state
-        from utils.result_types import MultipleActionsResult
-        from actions.display import SelectAction, Option
+        from utils.combat import resolve_target
         
-        # Dynamic target selection for combat situations
-        if self.target is None:
-            self.target = game_state.player
+        if self.target is not None:
+            # Explicit single target provided
+            targets = [self.target]
+        else:
+            # Resolve targets from potion's target_type
+            targets = resolve_target(self.potion.target_type)
         
-        # If in combat with multiple enemies, allow targeting selection
-        if (hasattr(game_state, 'current_combat') and 
-            game_state.current_combat is not None):
-            
-            alive_enemies = [e for e in game_state.current_combat.enemies if e.hp > 0]
-            
-            if len(alive_enemies) > 1:
-                # Create options for each enemy + player
-                from localization import LocalStr
-                options = []
-                
-                # Add player option
-                player_name = getattr(game_state.player, 'name', 'Player')
-                options.append(Option(
-                    name=LocalStr(f"[{player_name}]"),
-                    actions=[UsePotionAction(potion=self.potion, target=game_state.player)]
-                ))
-                
-                # Add enemy options
-                for enemy in alive_enemies:
-                    enemy_name = getattr(enemy, 'name', 'Enemy')
-                    options.append(Option(
-                        name=LocalStr(f"[Enemy] {enemy_name}"),
-                        actions=[UsePotionAction(potion=self.potion, target=enemy)]
-                    ))
-                
-                return SelectAction(
-                    options=options,
-                    prompt=LocalStr("Select potion target")
-                )
+        return SingleActionResult(UsePotionBHAction(potion=self.potion, targets=targets))
+
+
+@register("action")
+class UsePotionBHAction(Action):
+    """Execute potion effect on resolved targets.
+    
+    Required:
+        potion (Potion): Potion to use
+        targets (List[Creature]): Resolved target list
+    """
+    
+    def __init__(self, potion, targets: List[Creature]):
+        self.potion = potion
+        self.targets = targets
+    
+    def execute(self) -> 'BaseResult':
+        """Execute potion effect with BackAttack transfer and relic hooks."""
+        from engine.game_state import game_state
+        from localization import LocalStr
         
-        # Now self.target is determined - check BackAttack transfer
-        from engine.back_attack_manager import BackAttackManager
-        manager = BackAttackManager()
-        
-        # If targeting an enemy (not player), check for BackAttack transfer
-        if (self.target != game_state.player and 
-            hasattr(self.target, 'has_power') and 
-            self.target.has_power("Back Attack")):
-            manager.maybe_transfer_on_target(self.target)
+        # BackAttack transfer: check first enemy target
+        if self.targets:
+            from enemies.base import Enemy
+            first_target = self.targets[0]
+            if isinstance(first_target, Enemy):
+                from engine.back_attack_manager import BackAttackManager
+                manager = BackAttackManager()
+                manager.maybe_transfer_on_target(first_target)
         
         # Get actions from potion's on_use method
-        actions = self.potion.on_use(self.target)
+        actions = self.potion.on_use(self.targets)
 
         # Trigger relic callbacks for potion use (e.g., ToyOrnithopter).
         relic_actions = []
@@ -991,14 +989,14 @@ class UsePotionAction(Action):
         if self.potion in game_state.player.potions:
             game_state.player.potions.remove(self.potion)
         
-        from localization import LocalStr
-        # Get proper target name
-        target_name = getattr(self.target, 'name', None)
-        if target_name is None:
-            target_name = getattr(self.target, 'character', 'Unknown')
-        if isinstance(target_name, LocalStr):
-            target_name = target_name.resolve()
-        print(f"Used potion: {self.potion.name} on {target_name}")
+        # Print usage info
+        target_names = []
+        for t in self.targets:
+            name = getattr(t, 'name', None) or getattr(t, 'character', 'Unknown')
+            if isinstance(name, LocalStr):
+                name = name.resolve()
+            target_names.append(str(name))
+        print(f"Used potion: {self.potion.name} on {', '.join(target_names)}")
 
         all_actions = []
         if actions:

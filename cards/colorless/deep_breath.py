@@ -31,6 +31,6 @@ class DeepBreath(Card):
         actions = super().on_play(targets)
 
         # Shuffle discard pile into draw pile
-        actions.append(ShuffleAction())
-
+        actions.insert(0, ShuffleAction())
+        
         return actions

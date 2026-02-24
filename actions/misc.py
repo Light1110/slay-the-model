@@ -3,7 +3,7 @@ Miscellaneous actions (room, shop, treasure).
 """
 import random
 from typing import Optional
-from actions.base import Action
+from actions.base import Action, LambdaAction
 from actions.card import AddCardAction
 from actions.display import SelectAction
 from actions.reward import AddRelicAction, AddGoldAction, AddRandomPotionAction
@@ -361,3 +361,72 @@ class SkipToBossAction(Action):
         game_state.skip_to_boss = True
         tui_print("[Event] Skipping to boss!")
         return NoneResult()
+
+@register("action")
+class BottledCardSelectAction(Action):
+    """Select a card from deck to bottle with a relic.
+    
+    Required:
+        relic (Relic): The relic that will store the selected card
+        card_type (CardType): Type of card to select (ATTACK, SKILL, or POWER)
+    """
+    
+    def __init__(self, relic, card_type):
+        self.relic = relic
+        self.card_type = card_type
+    
+    def execute(self):
+        from engine.game_state import game_state
+        from actions.display import SelectAction
+        from utils.option import Option
+        from utils.result_types import SingleActionResult
+        from utils.random import get_random_card
+        from localization import LocalStr
+        
+        # Get all cards from deck
+        card_manager = game_state.player.card_manager
+        deck = card_manager.get_pile('deck')
+        
+        # Filter by card type
+        cards_to_choose = []
+        for card in deck:
+            if hasattr(card, 'card_type') and card.card_type == self.card_type:
+                cards_to_choose.append(card)
+        
+        # Show random cards of chosen type as options
+        # This matches original game behavior where you choose from a pool
+        namespace = game_state.player.namespace if game_state.player else None
+        
+        options = []
+        selected_card_ids = []
+        for _ in range(3):
+            random_card = get_random_card(
+                namespaces=[namespace] if namespace else None,
+                card_types=[self.card_type],
+                exclude_card_ids=selected_card_ids
+            )
+            if random_card:
+                selected_card_ids.append(random_card.idstr)
+                # Create a LambdaAction that will set the card when executed
+                set_card_action = LambdaAction(
+                    func=lambda c=random_card: setattr(self.relic, 'selected_card', c)
+                )
+                options.append(
+                    Option(
+                        name=random_card.display_name,
+                        actions=[set_card_action]
+                    )
+                )
+        
+        if not options:
+            print(f"No cards of type {self.card_type} available")
+            from utils.result_types import NoneResult
+            return NoneResult()
+        
+        select_action = SelectAction(
+            title=LocalStr("ui.choose_card_to_bottle", default="Choose a card to bottle"),
+            options=options,
+            max_select=1,
+            must_select=True
+        )
+        return SingleActionResult(select_action)

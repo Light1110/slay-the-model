@@ -99,8 +99,8 @@ class GameFlow:
             if is_tui_mode():
                 app = get_app()
                 if app:
-                    room_info = f"Room: {cur_room.local('name')}"
-                    app.update_display_content(room_info)
+                    from tui.handlers.display_handler import DisplayHandler
+                    DisplayHandler(app).display_room(cur_room, game_state)
             
             # Check for game end conditions
             if isinstance(result, GameStateResult):

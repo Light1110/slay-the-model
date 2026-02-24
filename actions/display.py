@@ -81,9 +81,14 @@ class SelectAction(Action):
           * 可提前停止选择
     """
 
-    def __init__(self, title : BaseLocalStr = None, options : List[Option] = None, max_select: int = 1, must_select: bool = True, prompt: BaseLocalStr = None):
+    def __init__(self, title : BaseLocalStr = None, options : List[Option] = None, max_select: int = 1, must_select: bool = True, context: Dict = None):
         # Support both 'title' and 'prompt' for backward compatibility
-        self.title = title if title is not None else prompt
+        self.title = title
+        self.options = options if options is not None else []
+        self.max_select = max_select
+        self.must_select = must_select
+        self.context = context or {}
+        self.has_menu = False
         self.options = options if options is not None else []
         self.max_select = max_select
         self.must_select = must_select
@@ -427,17 +432,141 @@ class SelectAction(Action):
                 print(t("ui.invalid_input", default="Invalid input format. Use comma-separated numbers."))
         
     def execute_ai(self) -> 'BaseResult':
-        ai_module = get_game_state().config.get("ai")
-        options = self.options.copy()
-        # 如果不是必须选满，允许用户提前停止选择
-        if not self.must_select:
-            # 插入到第一个位置，方便用户输入0停止选择
-            options.insert(0, Option(name=LocalStr("ui.stop_selection", default="Stop selection"), actions=[]))
-            
-        self.show_info()
-        # todo: 和human模式基本一致，但把input改为调用接口，获得返回数据
-        return NoneResult()
+        """AI mode selection using LLM Decision Engine."""
+        from engine.game_state import game_state
         
+        from ai.context_builder import AIContextBuilder
+        engine = game_state.decision_engine
+        if engine is None:
+            # No decision engine - cannot make decision
+            return NoneResult()
+        
+        options = self.options.copy()
+        
+        # Add stop option if not must_select
+        if not self.must_select:
+            options.insert(0, Option(name=LocalStr("ui.stop_selection", default="Stop selection"), actions=[]))
+        
+        self.show_info()
+        
+        # Get TUI app for showing thinking message
+        app = _get_tui_app()
+        
+        # Show "AI thinking" message in selection panel if TUI is available
+        if app:
+            selection_panel = app.get_selection_panel()
+            if selection_panel:
+                thinking_msg = t("ai.ai_thinking", default="AI 正在思考中...")
+                selection_panel.show_thinking(thinking_msg)
+        
+        # Build option descriptions
+        option_texts = []
+        for opt in options:
+            desc = getattr(opt, 'description', None) or getattr(opt, 'name', None) or str(opt)
+            option_texts.append(str(desc))
+        
+        # Call AI decision engine
+        actual_max_select = self.max_select if self.max_select != -1 else len(options)
+        
+        # Check if engine supports thinking output
+        thinking_result = None
+        if hasattr(engine, 'make_decision_with_thinking'):
+            # Use the version that returns thinking
+            selected_indices, thinking_result = engine.make_decision_with_thinking(
+                title=str(self.title),
+                options=option_texts,
+                context={"game_state": AIContextBuilder.build_context(game_state)},
+                max_select=actual_max_select,
+            )
+        else:
+            selected_indices = engine.make_decision(
+                title=str(self.title),
+                options=option_texts,
+                context={"game_state": AIContextBuilder.build_context(game_state)},
+                max_select=actual_max_select,
+            )
+        
+        # Show thinking and answer in output panel (TUI) or stdout (no-TUI)
+        if thinking_result or (hasattr(engine, 'client') and hasattr(engine, '_last_answer')):
+            # Get the answer from the engine if available
+            answer_text = getattr(engine, '_last_answer', None)
+            
+            if app:
+                # TUI mode: show in output panel
+                output_panel = app.get_output_panel()
+                if output_panel:
+                    finished_msg = t("ai.ai_thinking_finished", default="AI 思考完成")
+                    output_panel.add_combat_message(f"\n{finished_msg}")
+                    
+                    # Show thinking content (full content)
+                    if thinking_result and len(thinking_result) > 0:
+                        thinking_header = t("ai.thinking_header", default="=== AI 思考过程 ===")
+                        output_panel.add_state_message(thinking_header)
+                        # Split by newlines and add each line
+                        for line in thinking_result.split('\n'):
+                            if line.strip():
+                                output_panel.add_state_message(f"  {line}")
+                    
+                    # Show answer content
+                    if answer_text and len(answer_text) > 0:
+                        answer_header = t("ai.answer_header", default="=== AI 回答 ===")
+                        output_panel.add_combat_message(answer_header)
+                        for line in answer_text.split('\n'):
+                            if line.strip():
+                                output_panel.add_combat_message(f"  {line}")
+            else:
+                # no-TUI mode: print to stdout
+                finished_msg = t("ai.ai_thinking_finished", default="AI 思考完成")
+                print(f"\n{finished_msg}")
+                
+                # Show thinking content (full content)
+                if thinking_result and len(thinking_result) > 0:
+                    thinking_header = t("ai.thinking_header", default="=== AI 思考过程 ===")
+                    print(thinking_header)
+                    for line in thinking_result.split('\n'):
+                        if line.strip():
+                            print(f"  {line}")
+                
+                # Show answer content
+                if answer_text and len(answer_text) > 0:
+                    answer_header = t("ai.answer_header", default="=== AI 回答 ===")
+                    print(answer_header)
+                    for line in answer_text.split('\n'):
+                        if line.strip():
+                            print(f"  {line}")
+        
+        if not selected_indices:
+            # AI returned no valid selection
+            return NoneResult()
+        
+        # Handle stop option (index 0 when must_select=False)
+        if not self.must_select and 0 in selected_indices:
+            return NoneResult()
+        
+        # Print selected options
+        selected_options = self._build_selected_options(options, selected_indices)
+        self.show_choose(selected_options)
+        
+        # Collect actions
+        selected_actions = []
+        for idx in selected_indices:
+            if 0 <= idx < len(options):
+                selected_actions.extend(options[idx].actions)
+        
+        return MultipleActionsResult(selected_actions)
+
+
+
+
+
+
+
+
+
+
+
+    
+
     def execute_debug(self) -> 'BaseResult':
         debug_module = get_game_state().config.get("debug")
         
