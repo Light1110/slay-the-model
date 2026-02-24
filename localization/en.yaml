@@ -449,11 +449,9 @@ cards:
       name: Body Slam
       description: Deal damage equal to your Block.
 
-      upgrade_description: Deal damage equal to your Block. Costs 0.
     Carnage:
       name: Carnage
       description: Deal {damage} damage. Ethereal.
-      upgrade_description: Deal {damage} damage.
 
     Bludgeon:
       name: Bludgeon
@@ -461,8 +459,8 @@ cards:
 
     LimitBreak:
       name: Limit Break
-      description: Double your Strength.
-      upgrade_description: Double your Strength. Costs 0.
+      description: Double your Strength. Exhaust,
+      upgrade_description: Double your Strength.
     Pummel:
       name: Pummel
       description: Deal {damage} damage {attack_times} times.
@@ -519,11 +517,9 @@ cards:
     Corruption:
       name: Corruption
       description: Skills cost 0. Whenever you play a Skill, Exhaust it.
-      upgrade_description: Skills cost 0. Whenever you play a Skill, Exhaust it. Costs 2.
     DarkEmbrace:
       name: Dark Embrace
       description: Whenever a card is Exhausted, draw 1 card.
-      upgrade_description: Whenever a card is Exhausted, draw 1 card. Costs 1.
     DemonForm:
       name: Demon Form
       description: At the end of your turn, gain {magic.strength} Strength.
@@ -547,7 +543,6 @@ cards:
     Entrench:
       name: Entrench
       description: Double your current Block.
-      upgrade_description: Double your current Block. Costs 0.
     Evolve:
       name: Evolve
       description: Whenever you draw a Status card, draw {draw} card(s).
@@ -555,7 +550,6 @@ cards:
     Exhume:
       name: Exhume
       description: Choose a card from your Exhaust pile and put it into your hand. Exhaust.
-      upgrade_description: Choose a card from your Exhaust pile and put it into your hand.
     Feed:
       name: Feed
       description: Deal {damage} damage. If Fatal, gain {magic.max_hp} Max HP.
@@ -583,7 +577,6 @@ cards:
     Havoc:
       name: Havoc
       description: Play the top card of your draw pile and Exhaust it.
-      upgrade_description: Play the top card of your draw pile and Exhaust it. Costs 0.
     Headbutt:
       name: Headbutt
       description: Deal {damage} damage. Put a card from your discard pile on top of your draw pile.
@@ -655,7 +648,6 @@ cards:
     SeeingRed:
       name: Seeing Red
       description: Gain {energy_gain} Energy. Exhaust.
-      upgrade_description: Gain {energy_gain} Energy. Exhaust. Costs 0.
     Sentinel:
       name: Sentinel
       description: Gain {block} Block. If this card is Exhausted, gain {magic.energy} Energy.
@@ -740,7 +732,6 @@ cards:
     Apotheosis:
       name: Apotheosis
       description: Upgrade ALL cards in your hand this combat. Exhaust.
-      upgrade_description: Upgrade ALL cards in your hand this combat. Exhaust. Costs 1.
     Apparition:
       name: Apparition
       description: Ethereal. Gain 1 Intangible. Exhaust.
@@ -807,7 +798,7 @@ cards:
     Forethought:
       name: Forethought
       description: Put an Attack from your hand on the bottom of your draw pile. It costs 0 until played.
-      upgrade_description: Put a card from your hand on the bottom of your draw pile. It costs 0 until played.
+      upgrade_description: Put any cards from your hand on the bottom of your draw pile. It costs 0 until played.
     GoodInstincts:
       name: Good Instincts
       description: Gain {block} Block.
@@ -826,7 +817,6 @@ cards:
     Magnetism:
       name: Magnetism
       description: At the start of your turn, add a random colorless card to your hand.
-      upgrade_description: At the start of your turn, add a random colorless card to your hand. Costs 1.
     MasterOfStrategy:
       name: Master of Strategy
       description: Draw {draw} cards. Exhaust.
@@ -838,7 +828,6 @@ cards:
     MindBlast:
       name: Mind Blast
       description: Deal damage equal to the number of cards in your draw pile. Innate.
-      upgrade_description: Deal damage equal to the number of cards in your draw pile. Innate. Costs 1.
     Necronomicurse:
       name: Necronomicurse
       description: Unplayable. Irremovable.
@@ -1735,18 +1724,6 @@ enemies:
       tackle:
         name: Tackle
         description: Deal {damage} damage.
-  SpikeSlime:
-    name: Spike Slime
-    intentions:
-      lick:
-        name: Lick
-        description: Apply {amount} Frail to you.
-      flame_tackle:
-        name: Flame Tackle
-        description: Deal {damage} damage. Add 2 Slimed to your discard pile.
-      split:
-        name: Split
-        description: Split into two smaller slimes.
   SpikeSlimeM:
     name: Spike Slime (M)
     intentions:
@@ -1814,8 +1791,6 @@ enemies:
       divider:
         name: Divider
         description: Deal {damage} damage {attack_times} times.
-  Louse:
-    name: Louse
   Lagavulin:
     name: Lagavulin
     intentions:
@@ -2270,6 +2245,120 @@ enemies:
       debuff:
         name: Debuff
         description: Apply {stacks} Weak and Vulnerable
+  TorchHead:
+    name: Torch Head
+    intentions:
+      tackle:
+        name: Tackle
+        description: Deal {damage} damage
+  Mugger:
+    name: Mugger
+    intentions:
+      mug:
+        name: Mug
+        description: Deal {damage} damage and steal {gold} gold
+      lunge:
+        name: Lunge
+        description: Deal {damage} damage
+      smoke_bomb:
+        name: Smoke Bomb
+        description: Gain {block} Block and escape next turn
+      escape:
+        name: Escape
+        description: Escape from combat
+  SphericGuardian:
+    name: Spheric Guardian
+    intentions:
+      activate:
+        name: Activate
+        description: Gain {block} Block
+      debuff_attack:
+        name: Debuff
+        description: Apply {stacks} Frail
+      slam:
+        name: Slam
+        description: Deal {damage} damage
+  SnakePlant:
+    name: Snake Plant
+    intentions:
+      thorns:
+        name: Thorns
+        description: Gain {block} Block
+      chomp:
+        name: Chomp
+        description: Deal {damage} damage
+  GremlinLeader:
+    name: Gremlin Leader
+    intentions:
+      rally:
+        name: Rally
+        description: Summon Gremlins
+      attack:
+        name: Attack
+        description: Deal {damage} damage
+  Taskmaster:
+    name: Taskmaster
+    intentions:
+      scythe:
+        name: Scythe
+        description: Deal {damage} damage
+      attack:
+        name: Attack
+        description: Deal {damage} damage
+      protect:
+        name: Protect
+        description: Gain {block} Block
+  BronzeAutomaton:
+    name: Bronze Automaton
+    intentions:
+      hyperbeam:
+        name: Hyperbeam
+        description: Deal {damage} damage to ALL enemies
+      stasis:
+        name: Stasis
+        description: Gain {block} Block
+      bronze_orb:
+        name: Bronze Orb
+        description: Spawn a Bronze Orb
+      attack:
+        name: Attack
+        description: Deal {damage} damage
+  BronzeOrb:
+    name: Bronze Orb
+    intentions:
+      stasis:
+        name: Stasis
+        description: Gain {block} Block
+      hyperbeam:
+        name: Hyperbeam
+        description: Deal {damage} damage to ALL enemies
+      attack:
+        name: Attack
+        description: Deal {damage} damage
+  WrithingMass:
+    name: Writhing Mass
+    intentions:
+      whim:
+        name: Whim
+        description: Deal {damage} damage
+      slam:
+        name: Slam
+        description: Deal {damage} damage
+      multi_slam:
+        name: Multi Slam
+        description: Deal {damage} damage {count} times
+      debuff:
+        name: Debuff
+        description: Apply {stacks} Vulnerable and Weak
+  Dagger:
+    name: Dagger
+    intentions:
+      wound:
+        name: Wound
+        description: Deal {damage} damage and shuffle Wound into discard
+      explode:
+        name: Explode
+        description: Deal {damage} damage
 rooms:
   combat:
     victory: Victory! All enemies defeated!

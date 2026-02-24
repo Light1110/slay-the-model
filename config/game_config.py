@@ -25,6 +25,7 @@ class GameConfig:
                 "timeout": 60,
             },
             "debug": {
+                "print": False,
                 "select_type": "random",
                 "god_mode": False,
             },

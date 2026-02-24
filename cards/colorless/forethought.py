@@ -13,7 +13,9 @@ from utils.types import CardType, PilePosType, RarityType
 
 @register("card")
 class Forethought(Card):
-    """Put card(s) to bottom of draw pile, costs 0 until played"""
+    """Put card(s) to bottom of draw pile, costs 0 until played
+    Upgrade: can select any hand cards to xxx
+    """
 
     card_type = CardType.SKILL
     rarity = RarityType.UNCOMMON

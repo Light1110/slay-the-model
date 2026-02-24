@@ -1487,7 +1487,7 @@ enemies:
         name: 生长
         description: 获得 {strength_gain} 点力量。
   RedLouse:
-    name: 虱虫
+    name: 红虱虫
     intentions:
       bite:
         name: 撕咬
@@ -1495,57 +1495,261 @@ enemies:
       grow:
         name: 生长
         description: 获得 {strength_gain} 点力量。
-  Louse:
-    name: 虱虫
+  GreenLouse:
+    name: 绿虱虫
     intentions:
       bite:
         name: 撕咬
         description: 造成 {damage} 点伤害。
-      grow:
-        name: 生长
-        description: 获得 {strength_gain} 点力量。
-  Slaver:
-    name: 抢劫的
+      spit_web:
+        name: 吐丝
+        description: 对你施加 1 层虚弱。
+  BlueSlaver:
+    name: 蓝奴隶主
     intentions:
-      slash:
-        name: 砍击
+      stab:
+        name: 刺击
         description: 造成 {damage} 点伤害。
-  SlimeM:
-    name: 小史莱姆
+      rake:
+        name: 耙击
+        description: 造成 {damage} 点伤害。对你施加 1 层虚弱。
+  RedSlaver:
+    name: 红奴隶主
     intentions:
+      stab:
+        name: 刺击
+        description: 造成 {damage} 点伤害。
+      scrape:
+        name: 刮击
+        description: 造成 {damage} 点伤害。
+      entangle:
+        name: 纠缠
+        description: 对你施加 1 层纠缠。
+  AcidSlimeL:
+    name: 酸液史莱姆 (大)
+    intentions:
+      corrosive_spit:
+        name: 腐蚀唾液
+        description: 造成 {damage} 点伤害。将 {cards} 张粘液牌加入弃牌堆。
+      lick:
+        name: 舔舐
+        description: 对你施加 {amount} 层虚弱。
       tackle:
         name: 冲撞
         description: 造成 {damage} 点伤害。
-      lick:
-        name: 舔舐
-        description: 施加 {weak} 层虚弱。
-      divide:
-        name: 分裂
-        description: 分裂成两个小史莱姆。
-  SlimeL:
-    name: 大史莱姆
-    intentions:
-      tackle:
-        name: 冲撞
-        description: 造成 {damage} 点伤害。
-      lick:
-        name: 舔舐
-        description: 施加 {amount} 层虚弱。
-      divide:
-        name: 分裂
-        description: 分裂成两个小史莱姆。
-  SlimeS:
-    name: 巨型史莱姆
-    intentions:
-      tackle:
-        name: 冲撞
-        description: 造成 {damage} 点伤害。
-      lick:
-        name: 舔舐
-        description: 施加 {amount} 层虚弱。
       split:
         name: 分裂
-        description: 分裂成两个大史莱姆。
+        description: 分裂成两个较小的史莱姆。
+  AcidSlimeM:
+    name: 酸液史莱姆 (中)
+    intentions:
+      corrosive_spit:
+        name: 腐蚀唾液
+        description: 造成 {damage} 点伤害。将 {cards} 张粘液牌加入弃牌堆。
+      lick:
+        name: 舔舐
+        description: 对你施加 {amount} 层虚弱。
+      tackle:
+        name: 冲撞
+        description: 造成 {damage} 点伤害。
+      split:
+        name: 分裂
+        description: 分裂成两个较小的史莱姆。
+  AcidSlimeS:
+    name: 酸液史莱姆 (小)
+    intentions:
+      corrosive_spit:
+        name: 腐蚀唾液
+        description: 造成 {damage} 点伤害。将 {cards} 张粘液牌加入弃牌堆。
+      lick:
+        name: 舔舐
+        description: 对你施加 {amount} 层虚弱。
+      tackle:
+        name: 冲撞
+        description: 造成 {damage} 点伤害。
+  SpikeSlimeM:
+    name: 尖刺史莱姆 (中)
+    intentions:
+      lick:
+        name: 舔舐
+        description: 对你施加 {amount} 层脆弱。
+      flame_tackle:
+        name: 火焰冲撞
+        description: 造成 {damage} 点伤害。将 2 张粘液牌加入弃牌堆。
+      split:
+        name: 分裂
+        description: 分裂成两个较小的史莱姆。
+      tackle:
+        description: 造成 {damage} 点伤害
+  SpikeSlimeS:
+    name: 尖刺史莱姆 (小)
+    intentions:
+      lick:
+        name: 舔舐
+        description: 对你施加 {amount} 层脆弱。
+      flame_tackle:
+        name: 火焰冲撞
+        description: 造成 {damage} 点伤害。将 2 张粘液牌加入弃牌堆。
+      tackle:
+        description: 造成 {damage} 点伤害
+  Spiker:
+    name: 尖刺机
+    intentions:
+      spike_attack:
+        name: 尖刺攻击
+        description: 造成 {damage} 点伤害。
+      buff_thorns:
+        name: 强化尖刺
+        description: 获得 {amount} 层尖刺。
+      attack:
+        description: 造成 {damage} 点伤害
+      spike:
+        description: 施加 {stacks} 层尖刺
+  Repulsor:
+    name: 反冲机
+    intentions:
+      repulsor_attack:
+        name: 攻击
+        description: 造成 {damage} 点伤害。
+      repulsor_debuff:
+        name: 减益
+        description: 施加 1 届虚弱和 1 层脆弱。
+      attack:
+        description: 造成 {damage} 点伤害并施加 {debuff} 层虚弱
+      push:
+        description: 将手牌推回抽牌堆
+  Exploder:
+    name: 爆炸机
+    intentions:
+      explode:
+        name: 爆炸
+        description: 即将爆炸！
+      exploder_attack:
+        name: 攻击
+        description: 造成 {damage} 点伤害。
+      attack:
+        description: 造成 {damage} 点伤害
+  TheMaw:
+    name: 巨口
+    intentions:
+      roar:
+        name: 咆哮
+        description: 施加 3 层虚弱和 3 层脆弱。
+      slam:
+        name: 猛击
+        description: 造成 {damage} 点伤害。
+      nom_nom:
+        name: 吞噬
+        description: 造成 {damage} 点伤害。
+      drool:
+        name: 流口水
+        description: 获得 3 点力量。
+  BookOfStabbing:
+    name: 扎人的书
+    intentions:
+      multi_stab:
+        name: 多重刺击
+        description: 造成 {damage} 点伤害 X 次
+      stab:
+        name: 刺击
+        description: 造成 {damage} 点伤害
+  Byrd:
+    name: 异鸟
+    intentions:
+      peck:
+        name: 啄击
+        description: 造成 {damage} 点伤害 X 次
+      headbutt:
+        name: 头槌
+        description: 造成 {damage} 点伤害
+      fly:
+        name: 飞行
+        description: 起飞
+      swoop:
+        name: 俯冲
+        description: 造成 {damage} 点伤害
+  Centurion:
+    name: 百夫长
+    intentions:
+      slash:
+        name: 斩击
+        description: 造成 {damage} 点伤害
+      fury:
+        name: 狂暴
+        description: 造成 {damage} 点伤害 X 次
+      defend:
+        name: 防御
+        description: 获得 {block} 点格挡
+  Chosen:
+    name: 被拣选者
+    intentions:
+      poke:
+        name: 戳刺
+        description: 造成 {damage} 点伤害
+      hex:
+        name: 诅咒
+        description: 施加诅咒
+      decrepify:
+        name: 衰弱
+        description: 施加 {stacks} 层虚弱
+  Mystic:
+    name: 神秘术士
+    intentions:
+      attack:
+        name: 攻击
+        description: 造成 {damage} 点伤害
+      heal:
+        name: 治疗
+        description: 为盟友恢复 {heal} 点生命值
+      buff:
+        name: 强化
+        description: 强化盟友
+  OrbWalker:
+    name: 圆球行者
+    intentions:
+      laser:
+        name: 激光
+        description: 造成 {damage} 点伤害
+      spawn:
+        name: 生成
+        description: 生成一个球
+  ShelledParasite:
+    name: 带壳寄生怪
+    intentions:
+      double_strike:
+        name: 双重打击
+        description: 造成 {damage} 点伤害两次
+      life_suck:
+        name: 吸取生命
+        description: 造成 {damage} 点伤害并恢复 {heal} 点生命值
+      sleep:
+        name: 睡眠
+        description: 无所作为
+      shell:
+        name: 壳
+        description: 获得 {block} 点格挡
+  Snecko:
+    name: 异蛇
+    intentions:
+      bite:
+        name: 咬击
+        description: 造成 {damage} 点伤害
+      perplexing_glare:
+        name: 迷惑凝视
+        description: 施加混乱
+  TheCollector:
+    name: 收藏家
+    intentions:
+      attack:
+        name: 攻击
+        description: 造成 {damage} 点伤害
+      spawn:
+        name: 召唤
+        description: 召唤火把
+      debuff:
+        name: 减益
+        description: 施加 {stacks} 层虚弱和易伤
+
   TheGuardian:
     name: 守护者
     intentions:
@@ -1571,7 +1775,7 @@ enemies:
         name: 双子重击
         description: 造成 {damage} 点伤害两次。
   SlimeBoss:
-    name: 史莱姆 Boss
+    name: 史莱姆老大
     intentions:
       goop_pray:
         name: 粘液祈求
@@ -1604,7 +1808,7 @@ enemies:
         name: 地狱火
         description: 造成 {damage} 点伤害。消耗你手牌和弃牌堆中的所有燃烧。
   Lagavulin:
-    name: 拉加维林
+    name: 乐加维林
     intentions:
       sleep:
         name: 睡眠
@@ -1619,7 +1823,7 @@ enemies:
         name: 吸取灵魂
         description: 你失去 {amount} 点敏捷。拉加维林获得 {amount} 点力量。
   GremlinNob:
-    name: 格林姆领主
+    name: 地精大块头
     intentions:
       bellow:
         name: 吼叫
@@ -1631,7 +1835,7 @@ enemies:
         name: 蛮牛冲锋
         description: 造成 {damage} 点伤害。
   Sentry:
-    name: 哨兵
+    name: 哨卫
     intentions:
       bolt:
         name: 闪电
@@ -1640,25 +1844,25 @@ enemies:
         name: 光束
         description: 造成 {damage} 点伤害。
   FatGremlin:
-    name: 胖格林姆
+    name: 胖地精
     intentions:
       fat_gremlin_smash:
         name: 猛击
         description: 造成 {damage} 点伤害。施加 1 层虚弱。
   SneakyGremlin:
-    name: 鬼鬼格林姆
+    name: 卑鄙地精
     intentions:
       sneaky_gremlin_stab:
         name: 偷袭
         description: 造成 {damage} 点伤害。
   MadGremlin:
-    name: 疯狂格林姆
+    name: 火大地精
     intentions:
       mad_gremlin_scratch:
         name: 抓挠
         description: 造成 {damage} 点伤害。
   ShieldGremlin:
-    name: 盾牌格林姆
+    name: 持盾地精
     intentions:
       shield_gremlin_protect:
         name: 保护
@@ -1667,7 +1871,7 @@ enemies:
         name: 重击
         description: 造成 {damage} 点伤害。
   GremlinWizard:
-    name: 格林姆术士
+    name: 地精法师
     intentions:
       gremlin_wizard_charge:
         name: 充能
@@ -1676,7 +1880,7 @@ enemies:
         name: 终极轰炸
         description: 造成 {damage} 点伤害。
   Looter:
-    name: 盗宝者
+    name: 抢劫的
     intentions:
       mug:
         name: 抢劫
@@ -1691,7 +1895,7 @@ enemies:
         name: 逃跑
         description: 带着偷来的金币逃跑。
   TheChamp:
-    name: 冠军
+    name: 第一勇士
     intentions:
       heavy_slash:
         name: 重斩
@@ -1715,7 +1919,7 @@ enemies:
         name: 处决
         description: 造成 {damage} 点伤害两次。
   Donu:
-    name: 多努
+    name: 甜圈
     intentions:
       Circle of Power:
         name: 力量圆环
@@ -1727,7 +1931,7 @@ enemies:
         name: 防护方阵
         description: 所有敌人获得 {block} 点格挡。
   Deca:
-    name: 迪卡
+    name: 八体
     intentions:
       Beam:
         name: 光束
@@ -1776,7 +1980,7 @@ enemies:
         description: 造成 {damage} 点伤害。
 
   GiantHead:
-    name: 巨首
+    name: 大脑袋
     intentions:
       Nod:
         name: 点头
@@ -1792,7 +1996,7 @@ enemies:
         description: 正在倒数...
 
   Nemesis:
-    name: 复仇者
+    name: 天罚
     intentions:
       Attack:
         name: 攻击
@@ -1808,7 +2012,7 @@ enemies:
         description: 变得虚无缥缈。
 
   Reptomancer:
-    name: 蛇法师
+    name: 拜蛇术士
     intentions:
       SnakeStrike:
         name: 蛇击
@@ -1821,7 +2025,7 @@ enemies:
         description: 召唤匕首。
 
   SpireGrowth:
-    name: 尖塔增生
+    name: 塔内增生组织
     intentions:
       Attack:
         name: 攻击
@@ -1834,7 +2038,7 @@ enemies:
         description: 获得 1 点力量。
 
   Transient:
-    name: 临时
+    name: 倏忽魔
     intentions:
       Attack:
         name: 攻击
@@ -1844,7 +2048,7 @@ enemies:
         description: 逐渐消失...
 
   Darkling:
-    name: 黑暗雏鸟
+    name: 小黑
     intentions:
       Nip:
         name: 轻咬
@@ -1887,7 +2091,7 @@ enemies:
         description: 造成 {damage} 点伤害。
 
   CorruptHeart:
-    name: 尖塔之心
+    name: 腐化之心
     intentions:
       BloodShot:
         name: 血弹
@@ -1903,7 +2107,132 @@ enemies:
         description: 造成 {damage} 点伤害。
       Invincible:
         name: 无敌
-        description: 每回合受到的伤害不能超过 200 点。
+  SpikeSlimeL:
+    name: 尖刺史莱姆 (大)
+    intentions:
+      lick:
+        name: 舔舐
+        description: 施加 {debuff} 层脆弱
+      split:
+        name: 分裂
+        description: 分裂成 2 个尖刺史莱姆 (中)
+      tackle:
+        name: 冲撞
+        description: 造成 {damage} 点伤害
+  TorchHead:
+    name: 火把头
+    intentions:
+      tackle:
+        name: 冲撞
+        description: 造成 {damage} 点伤害
+  Mugger:
+    name: 打劫的
+    intentions:
+      mug:
+        name: 抢劫
+        description: 造成 {damage} 点伤害并偷走 {gold} 金币
+      lunge:
+        name: 猛扑
+        description: 造成 {damage} 点伤害
+      smoke_bomb:
+        name: 烟雾弹
+        description: 获得 {block} 点格挡并下回合逃跑
+      escape:
+        name: 逃跑
+        description: 逃离战斗
+  SphericGuardian:
+    name: 圆球守护者
+    intentions:
+      activate:
+        name: 激活
+        description: 获得 {block} 点格挡
+      debuff_attack:
+        name: 减益
+        description: 施加 {stacks} 层脆弱
+      slam:
+        name: 猛击
+        description: 造成 {damage} 点伤害
+  SnakePlant:
+    name: 蛇花
+    intentions:
+      thorns:
+        name: 荆棘
+        description: 获得 {block} 点格挡
+      chomp:
+        name: 猛咬
+        description: 造成 {damage} 点伤害
+  GremlinLeader:
+    name: 地精首领
+    intentions:
+      rally:
+        name: 召集
+        description: 召唤格林姆
+      attack:
+        name: 攻击
+        description: 造成 {damage} 点伤害
+  Taskmaster:
+    name: 奴隶头子
+    intentions:
+      scythe:
+        name: 镰刀
+        description: 造成 {damage} 点伤害
+      attack:
+        name: 攻击
+        description: 造成 {damage} 点伤害
+      protect:
+        name: 保护
+        description: 获得 {block} 点格挡
+  BronzeAutomaton:
+    name: 铜质机械人偶
+    intentions:
+      hyperbeam:
+        name: 超级光束
+        description: 对所有敌人造成 {damage} 点伤害
+      stasis:
+        name: 停滞
+        description: 获得 {block} 点格挡
+      bronze_orb:
+        name: 青铜球
+        description: 生成一个青铜球
+      attack:
+        name: 攻击
+        description: 造成 {damage} 点伤害
+  BronzeOrb:
+    name: 铜球
+    intentions:
+      stasis:
+        name: 停滞
+        description: 获得 {block} 点格挡
+      hyperbeam:
+        name: 超级光束
+        description: 对所有敌人造成 {damage} 点伤害
+      attack:
+        name: 攻击
+        description: 造成 {damage} 点伤害
+  WrithingMass:
+    name: 扭曲团块
+    intentions:
+      whim:
+        name: 随意
+        description: 造成 {damage} 点伤害
+      slam:
+        name: 猛击
+        description: 造成 {damage} 点伤害
+      multi_slam:
+        name: 多重猛击
+        description: 造成 {damage} 点伤害 {count} 次
+      debuff:
+        name: 减益
+        description: 施加 {stacks} 层易伤和虚弱
+  Dagger:
+    name: 匕首
+    intentions:
+      wound:
+        name: 创伤
+        description: 造成 {damage} 点伤害并洗入创伤牌
+      explode:
+        name: 爆炸
+        description: 造成 {damage} 点伤害
 
 ai:
   decision_system_prompt: |

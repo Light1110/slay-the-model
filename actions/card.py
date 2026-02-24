@@ -794,13 +794,14 @@ class ChooseMoveCardAction(Action):
         filter_card_type (CardType)
 
     Optional:
-        None
+        position (PilePosType): Position in destination pile (TOP or BOTTOM), default TOP
     """
-    def __init__(self, src: str, dst: str, amount: int = 1, filter_card_type: Optional[CardType] = None):
+    def __init__(self, src: str, dst: str, amount: int = 1, filter_card_type: Optional[CardType] = None, position: PilePosType = PilePosType.TOP):
         self.src = src
         self.dst = dst
         self.amount = amount
         self.filter_card_type = filter_card_type
+        self.position = position
 
     def execute(self) -> 'BaseResult':
         from engine.game_state import game_state
@@ -830,7 +831,7 @@ class ChooseMoveCardAction(Action):
                 Option(
                     name = option,
                     actions = [
-                        MoveCardAction(card=card, src_pile=src_pile, dst_pile=dst_pile),
+                        MoveCardAction(card=card, src_pile=src_pile, dst_pile=dst_pile, position=self.position),
                     ]
                 )
             )
@@ -912,19 +913,20 @@ class MoveCardAction(Action):
         dst_pile (str): Destination pile name
 
     Optional:
-        None
+        position (PilePosType): Position in destination pile (TOP or BOTTOM), default TOP
     """
-    def __init__(self, card, src_pile: str, dst_pile: str):
+    def __init__(self, card, src_pile: str, dst_pile: str, position: PilePosType = PilePosType.TOP):
         self.card = card
         self.src_pile = src_pile
         self.dst_pile = dst_pile
+        self.position = position
 
     def execute(self) -> 'BaseResult':
         from engine.game_state import game_state
         if self.card and game_state.player:
             if hasattr(game_state.player, "card_manager"):
                 game_state.player.card_manager.remove_from_pile(self.card, self.src_pile)
-                game_state.player.card_manager.add_to_pile(self.card, self.dst_pile, pos=PilePosType.TOP)
+                game_state.player.card_manager.add_to_pile(self.card, self.dst_pile, pos=self.position)
         return NoneResult()
 
 @register("action")

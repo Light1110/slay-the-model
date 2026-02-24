@@ -1,4 +1,4 @@
-mode: human # human | ai | debug
+mode: debug # human | ai | debug
 language: zh
 seed: 1
 character: Ironclad
@@ -19,5 +19,6 @@ ai:
   timeout: 60
 
 debug:
+  print: False
   select_type: random
-  god_mode: False  # If True, set all enemies to 1 HP at combat start
+  god_mode: True  # If True, set all enemies to 1 HP at combat start
