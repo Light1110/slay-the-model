@@ -421,8 +421,8 @@ cards:
 
     PommelStrike:
       name: Pommel Strike
-      description: Deal {damage} damage. Draw {draw} card.
-      upgrade_description: Deal {damage} damage. Draw {draw} cards.
+      description: Deal {damage} damage. Draw {draw} cards.
+
     HeavyBlade:
       name: Heavy Blade
       description: Deal {damage} damage. Strength affects this {magic.strength_mult}
@@ -452,7 +452,8 @@ cards:
       upgrade_description: Deal damage equal to your Block. Costs 0.
     Carnage:
       name: Carnage
-      description: Deal {damage} damage to ALL enemies.
+      description: Deal {damage} damage. Ethereal.
+      upgrade_description: Deal {damage} damage.
 
     Bludgeon:
       name: Bludgeon
