@@ -30,6 +30,6 @@ class Immolate(Card):
 
         # Add Burn status to discard pile
         from cards.colorless import Burn
-        actions.append(AddCardAction(card=Burn(), dest_pile="discard"))
+        actions.append(AddCardAction(card=Burn(), dest_pile="discard_pile"))
 
         return actions

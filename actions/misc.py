@@ -112,7 +112,7 @@ class BuyItemAction(Action):
         game_state.player.gold -= final_price
 
         if self.shop_item.item_type == "card":
-            AddCardAction(card=self.shop_item.item, dest_pile="discard", source="shop").execute()
+            AddCardAction(card=self.shop_item.item, dest_pile="deck", source="shop").execute()
         elif self.shop_item.item_type == "relic":
             AddRelicByNameAction(relic_id=self.shop_item.item.idstr).execute()
         elif self.shop_item.item_type == "potion":

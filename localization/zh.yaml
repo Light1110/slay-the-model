@@ -925,6 +925,9 @@ cards:
       description: 无法打出。固有。
 
 powers:
+  EnragePower:
+    name: 激怒
+    description: 当玩家打出技能牌时，获得 {amount} 点力量。
   StrengthPower:
     name: 力量
     description: 攻击伤害增加 {amount} 点。

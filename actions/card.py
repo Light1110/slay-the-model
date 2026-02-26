@@ -46,6 +46,9 @@ class AddCardAction(Action):
     Optional:
         source (str): Source of card ("reward", "enemy", etc.)
         position (PilePosType): Position in pile (TOP or BOTTOM), default TOP
+        
+    Warning:
+        This action doesn't copy the card
     """
     def __init__(self, card, dest_pile: str = None, source: str = None, position: PilePosType = PilePosType.TOP, chance: float = 1.0):
         self.card = card

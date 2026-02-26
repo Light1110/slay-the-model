@@ -24,4 +24,4 @@ class Anger(Card):
     upgrade_damage = 8
 
     def on_play(self, targets: List[Creature] = []) -> List[Action]:
-        return super().on_play(targets) + [AddCardAction(card=self, dest_pile="discard_pile")]
+        return super().on_play(targets) + [AddCardAction(card=self.copy(), dest_pile="discard_pile")]

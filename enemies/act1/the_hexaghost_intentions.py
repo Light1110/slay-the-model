@@ -105,7 +105,7 @@ class SearIntention(Intention):
                     if getattr(self.enemy, '_used_inferno', False):
                         if hasattr(burn, 'upgrade'):
                             burn.upgrade()
-                    actions.append(AddCardAction(card=burn, dest_pile="discard"))
+                    actions.append(AddCardAction(card=burn, dest_pile="discard_pile"))
         except Exception:
             raise ValueError("Cannot Get Burn Card!")
         
@@ -202,7 +202,7 @@ class InfernoIntention(Intention):
                     burn = BurnCard()
                     if hasattr(burn, 'upgrade'):
                         burn.upgrade()
-                    actions.append(AddCardAction(card=burn, dest_pile="discard"))
+                    actions.append(AddCardAction(card=burn, dest_pile="discard_pile"))
         except Exception:
             pass
         

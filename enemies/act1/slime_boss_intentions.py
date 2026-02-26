@@ -27,7 +27,7 @@ class GoopSprayIntention(Intention):
             SlimedCard = get_registered("card", "Slimed")
             if SlimedCard:
                 for _ in range(self._slimed_count):
-                    actions.append(AddCardAction(card=SlimedCard(), dest_pile="discard"))
+                    actions.append(AddCardAction(card=SlimedCard(), dest_pile="discard_pile"))
         except Exception:
             pass
         

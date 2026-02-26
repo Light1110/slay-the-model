@@ -48,7 +48,7 @@ class TriBurn(Intention):
             actions.append(AddCardAction(
                 card=Burn(),
                 target=game_state.player,
-                dest_pile="discard"
+                dest_pile="discard_pile"
             ))
         return actions
 
