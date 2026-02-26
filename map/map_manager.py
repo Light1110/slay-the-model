@@ -312,23 +312,48 @@ class MapManager:
                 else:
                     node.room_type = self._get_random_room_type()
     
+    # Define fixed floor types for normal acts (1 or 2)
+    FIXED_FLOOR_TYPES = {
+        0: RoomType.NEO,
+        1: RoomType.MONSTER,
+        9: RoomType.TREASURE,
+        15: RoomType.REST,
+        16: RoomType.BOSS,
+        17: RoomType.TREASURE,
+    }
+    
+    def _is_fixed_floor(self, floor: int) -> bool:
+        """Check if a floor has a fixed room type."""
+        return floor in self.FIXED_FLOOR_TYPES
+    
+    def _get_fixed_room_type(self, floor: int) -> Optional[RoomType]:
+        """Get the fixed room type for a floor, or None if not fixed."""
+        return self.FIXED_FLOOR_TYPES.get(floor)
+    
     def _assign_normal_act_rooms(self, nodes: List[List[MapNode]]):
         """
         Assign rooms for normal acts (1 or 2) with all constraints.
         
         Algorithm:
-        1. Calculate total room counts based on probabilities
-        2. Assign fixed floors (1=M, 9=T, 15=R)
+        1. Assign fixed floors first (they are immutable)
+        2. Calculate room counts for remaining floors
         3. Assign remaining floors respecting all constraints
         """
         total_floors = len(nodes)
         
-        # Step 1: Calculate room counts based on probabilities
-        room_counts = self._calculate_room_counts(total_floors, nodes)
+        # Step 1: Assign fixed floors FIRST and make them immutable
+        for floor in range(total_floors):
+            fixed_type = self._get_fixed_room_type(floor)
+            if fixed_type:
+                for node in nodes[floor]:
+                    node.room_type = fixed_type
         
-        # Step 2: Create a list of all rooms with their constraints
+        # Step 2: Create a list of only non-fixed rooms for assignment
         rooms_data = []
         for floor in range(total_floors):
+            # Skip fixed floors entirely
+            if self._is_fixed_floor(floor):
+                continue
             for pos, node in enumerate(nodes[floor]):
                 rooms_data.append({
                     'floor': floor,
@@ -337,8 +362,8 @@ class MapManager:
                     'floor_size': len(nodes[floor])
                 })
         
-        # Step 3: Assign fixed floors first
-        self._assign_fixed_floors(rooms_data, room_counts, nodes)
+        # Step 3: Calculate room counts for non-fixed floors only
+        room_counts = self._calculate_room_counts(total_floors, nodes)
         
         # Step 4: Assign remaining rooms with constraints
         self._assign_remaining_rooms(rooms_data, room_counts, nodes)
@@ -421,31 +446,20 @@ class MapManager:
     
     def _assign_remaining_rooms(self, rooms_data: List[Dict], room_counts: Dict[RoomType, int], nodes: List[List[MapNode]]):
         """
-        Assign room types to remaining unassigned nodes respecting all constraints.
+        Assign room types to non-fixed floor nodes respecting all constraints.
+        
+        Note: This method only receives rooms_data for non-fixed floors.
+        Fixed floors are already assigned in _assign_normal_act_rooms and are not passed here.
         
         Constraints:
-        1. No elite/rest in first 5 floors (floors 0-4, already fixed for 0-1)
+        1. No elite/rest in first 5 floors (floors 2-4, since 0-1 are fixed)
         2. No rest on floor 14
         3. No consecutive elite/rest/shop rooms between adjacent floors
         4. Floor 8 rooms have diverse types (for floor 9 treasure)
         5. No duplicate room types within same floor
         """
-        # Separate into fixed and remaining
-        unassigned = [r for r in rooms_data if not r['assigned']]
-        
-        print(f"DEBUG: Total rooms_data={len(rooms_data)}, unassigned={len(unassigned)}")
-        
-        # DEBUG: Check if fixed floors are marked as assigned
-        fixed_floors = [0, 1, 9, 15, 16, 17]
-        for fixed_floor in fixed_floors:
-            floor_rooms = [r for r in rooms_data if r['floor'] == fixed_floor]
-            if floor_rooms:
-                assigned_status = [r.get('assigned', False) for r in floor_rooms]
-                room_types = [r['node'].room_type for r in floor_rooms]
-                print(f"DEBUG: Floor {fixed_floor} - assigned={all(assigned_status)}, types={[t.value for t in room_types]}")
-        
-        # DEBUG: Check if fixed floors are in unassigned list
-        print(f"DEBUG: Floors in unassigned list: {sorted(set([r['floor'] for r in unassigned]))}")
+        # All rooms in rooms_data are unassigned (fixed floors are already excluded)
+        unassigned = rooms_data
         
         # Sort by floor to ensure lower floors get assigned first
         unassigned.sort(key=lambda x: x['floor'])

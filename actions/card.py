@@ -478,13 +478,15 @@ class ChooseUpgradeCardAction(Action):
     Required:
         pile (str): Card location ('deck' or 'hand')
         amount (int): Amount of cards to upgrade (-1 to upgrade all)
+        exclude_cards (List[Card])
         
     Optional:
         None
     """
-    def __init__(self, pile: str = 'hand', amount: int = 1):
+    def __init__(self, pile: str = 'hand', amount: int = 1, exclude_cards: List[Card] = []):
         self.pile = pile
         self.amount = amount
+        self.exclude_cards = exclude_cards
     
     def execute(self) -> 'BaseResult':
         from engine.game_state import game_state
@@ -501,6 +503,8 @@ class ChooseUpgradeCardAction(Action):
 
         for card in cards_in_pile:
             if not card.can_upgrade():
+                continue
+            if card in self.exclude_cards:
                 continue
             
             # 创建副本并升级，以获取升级后的信息

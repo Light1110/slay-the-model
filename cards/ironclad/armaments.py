@@ -31,6 +31,8 @@ class Armaments(Card):
 
         # Upgrade a card in hand
         upgrade_amount = self.get_magic_value("upgrade_hand")
-        actions.append(ChooseUpgradeCardAction(pile="hand", amount=upgrade_amount))
+        # 武装选择升级的卡，应当不包括自身
+        # 修改方案：给ChooseUpgradeCardAction 增加新的字段：exclude_cards (List[Card])
+        actions.append(ChooseUpgradeCardAction(pile="hand", amount=upgrade_amount, exclude_cards=[self]))
 
         return actions
