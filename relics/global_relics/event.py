@@ -103,7 +103,12 @@ class MutagenicStrength(Relic):
         from actions.combat import RemovePowerAction
         # Remove all gained Strength (would need to track amount gained)
         # Simplified: remove 3 Strength
-        return [ApplyPowerAction(power="Strength", target=player, amount=-3)]
+        from engine.game_state import game_state
+        assert game_state.current_combat is not None
+        if game_state.current_combat.combat_state.combat_turn == 1:
+            return [ApplyPowerAction(power="Strength", target=player, amount=-3)]
+        else:
+            return []
 
 @register("relic")
 class Necronomicon(Relic):
