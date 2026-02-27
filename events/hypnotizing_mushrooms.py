@@ -45,8 +45,12 @@ class HypnotizingColoredMushrooms(Event):
             Option(
                 name=LocalStr('events.hypnotizing_mushrooms.stomp'),
                 actions=[
-                    StartFightAction(enemies=fungi_beasts),
-                    AddRelicAction(relic=OddMushroom())
+                    StartFightAction(
+                        enemies=fungi_beasts,
+                        victory_actions=[
+                            AddRelicAction(relic=OddMushroom())
+                        ]
+                    )
                 ]
             ),
             Option(

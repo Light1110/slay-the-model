@@ -19,17 +19,17 @@ class Purify(Card):
     rarity = RarityType.UNCOMMON
 
     base_cost = 0
-    base_magic = {"exhaust_amount": 3}
+    base_magic = {"cards": 3}
     base_exhaust = True
 
-    upgrade_magic = {"exhaust_amount": 5}
+    upgrade_magic = {"cards": 5}
 
     def on_play(self, targets: List[Creature] = []) -> List[Action]:
         target = targets[0] if targets else None
         actions = super().on_play(targets)
 
         # Exhaust up to N cards
-        exhaust_amount = self.get_magic_value("exhaust_amount")
+        exhaust_amount = self.get_magic_value("cards")
         actions.append(ChooseExhaustCardAction(
             pile="hand",
             amount=exhaust_amount

@@ -870,6 +870,8 @@ class TriggerRelicAction(Action):
         return NoneResult()
 
 
+from utils.types import CombatType
+
 @register("action")
 class StartFightAction(Action):
     """Start a fight with specified enemies
@@ -878,10 +880,14 @@ class StartFightAction(Action):
         enemies (List[Enemy]): List of Enemy instances to fight
     
     Optional:
-        None
+        combat_type (CombatType): Type of combat (Normal/Elite/Boss)
+        victory_actions (List[Action]): Actions to execute after combat victory
     """
-    def __init__(self, enemies: List['Enemy']):
+    def __init__(self, enemies: List['Enemy'], combat_type: CombatType = CombatType.NORMAL, 
+                 victory_actions: List[Action] = None):
         self.enemies = enemies
+        self.combat_type = combat_type
+        self.victory_actions = victory_actions or []
     
     def execute(self) -> 'BaseResult':
         """Start combat with the specified enemies"""
@@ -892,11 +898,23 @@ class StartFightAction(Action):
             return NoneResult()
         
         # Start combat with enemy instances directly
-        combat = Combat(game_state.player, self.enemies)
-        game_state.current_combat = combat
-        # todo: 检查：是不是没有combat.start??
+        combat = Combat(enemies=self.enemies, combat_type=self.combat_type)
+        result = combat.start()
         
-        return NoneResult()
+        # Handle combat result
+        if result.state == "COMBAT_WIN":
+            # Execute victory actions
+            for action in self.victory_actions:
+                game_state.action_queue.add_action(action)
+            game_state.execute_all_actions()
+            return NoneResult()
+        elif result.state == "GAME_LOSE":
+            return result
+        elif result.state == "COMBAT_ESCAPE":
+            # Player escaped, no victory rewards
+            return NoneResult()
+        
+        return result
 
 @register("action")
 class LoseMaxHPAction(Action):

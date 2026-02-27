@@ -487,8 +487,30 @@ class SelectAction(Action):
                 thinking_msg = t("ai.ai_thinking", default="AI 正在思考中...")
                 selection_panel.show_thinking(thinking_msg)
             
-            # Use non-streaming method for TUI (TUI has its own display mechanism)
-            if hasattr(engine, 'make_decision_with_thinking'):
+            # Create streaming callback for TUI mode
+            def tui_streaming_callback(chunk_type: str, content: str):
+                """Callback for streaming output in TUI mode."""
+                if selection_panel:
+                    # Use call_from_thread to safely update UI from async context
+                    app.call_from_thread(
+                        selection_panel.update_streaming_content,
+                        chunk_type,
+                        content
+                    )
+            
+            # Use streaming method if available and stream mode is enabled
+            if is_stream_mode and hasattr(engine, 'make_decision_with_streaming'):
+                selected_indices, thinking_result = engine.make_decision_with_streaming(
+                    title=str(self.title),
+                    options=option_texts,
+                    context={"game_state": AIContextBuilder.build_context(game_state)},
+                    max_select=actual_max_select,
+                    streaming_callback=tui_streaming_callback,
+                )
+                # Stop streaming mode after completion
+                if selection_panel:
+                    app.call_from_thread(selection_panel.stop_streaming)
+            elif hasattr(engine, 'make_decision_with_thinking'):
                 selected_indices, thinking_result = engine.make_decision_with_thinking(
                     title=str(self.title),
                     options=option_texts,

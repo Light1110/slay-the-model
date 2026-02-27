@@ -11,8 +11,8 @@ class GameConfig:
             "character": "Ironclad",
             "ascension": 0,
             "select_overflow": "truncate",
+            "auto_select": False,  # Auto select for all modes (human, ai, debug)
             "human": {
-                "auto_select": False,
                 "show_menu_option": True,
             },
             "ai": {
@@ -45,6 +45,7 @@ class GameConfig:
         self.character = defaults["character"]
         self.ascension = defaults["ascension"]
         self.select_overflow = defaults["select_overflow"]
+        self.auto_select = defaults["auto_select"]
         self.human = defaults["human"]
         self.ai = defaults["ai"]
         self.debug = defaults["debug"]

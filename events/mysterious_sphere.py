@@ -37,10 +37,14 @@ class MysteriousSphere(Event):
             Option(
                 name=LocalStr('events.mysterious_sphere.open_sphere'),
                 actions=[
-                    StartFightAction(enemies=orb_walkers),
-                    AddRandomRelicAction(rarity='rare'),
-                    AddGoldAction(amount=random.randint(45, 55)),
-                    AddRandomCardAction()
+                    StartFightAction(
+                        enemies=orb_walkers,
+                        victory_actions=[
+                            AddRandomRelicAction(rarity='rare'),
+                            AddGoldAction(amount=random.randint(45, 55)),
+                            AddRandomCardAction()
+                        ]
+                    )
                 ]
             ),
             Option(

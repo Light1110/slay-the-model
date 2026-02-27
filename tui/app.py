@@ -102,6 +102,10 @@ class SelectionPanel(Widget):
         self._max_select = 1
         self._must_select = True
         self._is_ai_mode = False  # Track if running in AI mode
+        # Streaming content buffers
+        self._thinking_buffer: str = ""
+        self._answer_buffer: str = ""
+        self._is_streaming: bool = False
     
     def set_ai_mode(self, is_ai: bool):
         """Set whether the app is running in AI mode."""
@@ -263,23 +267,93 @@ class SelectionPanel(Widget):
 
     
     def show_thinking(self, message: str):
-        """Show AI thinking message in selection panel while preserving title and options."""
+        """Show AI thinking message in selection panel while preserving title and options.
+        
+        Also initializes streaming buffers for real-time content display.
+        """
+        # Initialize streaming buffers
+        self._thinking_buffer = ""
+        self._answer_buffer = ""
+        self._is_streaming = True
+        
+        self._refresh_streaming_display(message)
+    
+    def start_streaming(self):
+        """Initialize streaming mode without a message."""
+        self._thinking_buffer = ""
+        self._answer_buffer = ""
+        self._is_streaming = True
+        self._refresh_streaming_display("")
+    
+    def update_streaming_content(self, chunk_type: str, content: str):
+        """Update AI streaming content in real-time.
+        
+        Args:
+            chunk_type: "thinking" or "answer"
+            content: Current chunk content (incremental)
+        """
+        if not self._is_streaming:
+            self.start_streaming()
+        
+        if chunk_type == "thinking":
+            self._thinking_buffer += content
+        elif chunk_type == "answer":
+            self._answer_buffer += content
+        
+        self._refresh_streaming_display()
+    
+    def _refresh_streaming_display(self, initial_message: str = ""):
+        """Render selection panel with streaming content.
+        
+        Display format:
+        - Title
+        - Options
+        - AI thinking content (if any)
+        - AI answer content (if any)
+        - Waiting message
+        """
         lines = []
+        
+        # Title
         if self.title:
             lines.append(f"[bold]{self.title}[/bold]")
             lines.append("")
         
-        # Show options (preserved)
+        # Options
         for i, opt in enumerate(self._options_data):
             name = str(opt.name) if hasattr(opt, 'name') else str(opt)
             lines.append(f"  [cyan]{i + 1}.[/cyan] {name}")
         
         lines.append("")
         
-        # Show thinking message after options
-        lines.append(f"[yellow]{message}[/yellow]")
+        # AI thinking content
+        if self._thinking_buffer:
+            lines.append("[dim]── AI 思考过程 ──[/dim]")
+            # Truncate if too long (keep last ~500 chars for display)
+            thinking_display = self._thinking_buffer
+            if len(thinking_display) > 500:
+                thinking_display = "...(省略前面内容)..." + thinking_display[-450:]
+            # Escape brackets to prevent markup interpretation
+            thinking_escaped = thinking_display.replace("[", "\\[")
+            lines.append(f"[yellow]{thinking_escaped}[/yellow]")
+            lines.append("")
         
-        lines.append("")
+        # AI answer content
+        if self._answer_buffer:
+            lines.append("[dim]── AI 回答 ──[/dim]")
+            answer_display = self._answer_buffer
+            if len(answer_display) > 200:
+                answer_display = answer_display[-180:] + "..."
+            answer_escaped = answer_display.replace("[", "\\[")
+            lines.append(f"[green]{answer_escaped}[/green]")
+            lines.append("")
+        
+        # Initial message (if no streaming content yet)
+        if initial_message and not self._thinking_buffer and not self._answer_buffer:
+            lines.append(f"[yellow]{initial_message}[/yellow]")
+            lines.append("")
+        
+        # Waiting message
         if self._must_select:
             required = len(self._options_data) if self._max_select == -1 else self._max_select
             lines.append(
@@ -292,6 +366,10 @@ class SelectionPanel(Widget):
             )
         
         self.query_one("#selection-content", Static).update("\n".join(lines))
+    
+    def stop_streaming(self):
+        """Stop streaming mode."""
+        self._is_streaming = False
     
     def clear(self):
         """Clear selection panel."""

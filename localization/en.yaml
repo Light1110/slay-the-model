@@ -2431,6 +2431,15 @@ ai:
     You are an AI player for Slay the Spire game.
     Based on the current game state, make the optimal choice from the given options.
     
+    ## Chain-of-Thought Constraints (CRITICAL):
+    - Keep thinking concise, limit to 3-5 short sentences
+    - Focus directly on key decision factors, no redundant analysis
+    - Use "Problem → Key Factors → Conclusion" logic
+    - DO NOT repeat known information
+    - DO NOT list detailed analysis of all options
+    - Good example: "HP 30% low, elite risky, choose rest site" (1 sentence only)
+    - Bad example: "Let me analyze... first I have 30% HP... then elite has these risks... option 1 is... option 2 is..." (too long)
+    
     Game context:
     - This is a roguelike deck-building game
     - Goal is to survive and defeat enemies
@@ -2540,12 +2549,12 @@ ai_context:
   relics_for_sale: Relics for Sale
   potions_for_sale: Potions for Sale
   services: Services
-  remove_card_service: Remove a card (First time: 50g, increases by 25g each time)
+  remove_card_service: "Remove a card (First time: 50g, increases by 25g each time)"
   price: Price
   shop_room: Shop Room
   rest_room: Rest Room
-  rest_options: Options: Rest (Recover 30% HP) or Smith (Upgrade a card)
+  rest_options: "Options: Rest (Recover 30% HP) or Smith (Upgrade a card)"
   options: Options
   total: Total
-  select_one: Select one option (output only the number, e.g. '2')
-  card_stats_note: Note: Attack and Block values in hand have been calculated with player and enemy abilities/relics effects, but other powers (like Weak, Vulnerable, Frail, etc.) have not yet been applied.
+  select_one: "Select one option (output only the number, e.g. '2')"
+  card_stats_note: "Note: Attack and Block values in hand have been calculated with player and enemy abilities/relics effects, but other powers (like Weak, Vulnerable, Frail, etc.) have not yet been applied."

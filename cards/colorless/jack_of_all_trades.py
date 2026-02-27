@@ -19,17 +19,17 @@ class JackOfAllTrades(Card):
     rarity = RarityType.UNCOMMON
 
     base_cost = 0
-    base_magic = {"add_count": 1}
+    base_magic = {"cards": 1}
     base_exhaust = True
 
-    upgrade_magic = {"add_count": 2}
+    upgrade_magic = {"cards": 2}
 
     def on_play(self, targets: List[Creature] = []) -> List[Action]:
         target = targets[0] if targets else None
         actions = super().on_play(targets)
 
         # Add random colorless card(s)
-        add_count = self.get_magic_value("add_count")
+        add_count = self.get_magic_value("cards")
         for _ in range(add_count):
             actions.append(AddRandomCardAction(
                 pile="hand",

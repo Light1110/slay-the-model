@@ -61,11 +61,16 @@ class TheColosseum(Event):
                 slavers.append(red_slaver_class())
             
             # Initial state: Show Fight and Leave options
+            # First fight has no rewards, just sets first_fight_done = True after victory
             options.append(Option(
                 name=LocalStr('events.the_colosseum.fight'),
                 actions=[
-                    LambdaAction(lambda: setattr(self, 'first_fight_done', True)),
-                    StartFightAction(enemies=slavers)
+                    StartFightAction(
+                        enemies=slavers,
+                        victory_actions=[
+                            LambdaAction(lambda: setattr(self, 'first_fight_done', True))
+                        ]
+                    )
                 ]
             ))
             # Leave option - end event immediately
@@ -85,16 +90,21 @@ class TheColosseum(Event):
                 second_fight_enemies.append(gremlin_nob_class())
             
             # After first fight won: Show Victory and Cowardice options
+            # Second fight gives big rewards on victory
             options.extend([
                 Option(
                     name=LocalStr('events.the_colosseum.victory'),
                     actions=[
-                        StartFightAction(enemies=second_fight_enemies),
-                        AddGoldAction(amount=100),
-                        AddRandomRelicAction(rarity='rare'),
-                        AddRandomRelicAction(rarity='uncommon'),
-                        AddRandomCardAction(),
-                        LambdaAction(lambda: self.end_event())
+                        StartFightAction(
+                            enemies=second_fight_enemies,
+                            victory_actions=[
+                                AddGoldAction(amount=100),
+                                AddRandomRelicAction(rarity='rare'),
+                                AddRandomRelicAction(rarity='uncommon'),
+                                AddRandomCardAction(),
+                                LambdaAction(lambda: self.end_event())
+                            ]
+                        )
                     ]
                 ),
                 Option(

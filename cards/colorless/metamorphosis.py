@@ -19,10 +19,10 @@ class Metamorphosis(Card):
     rarity = RarityType.RARE
 
     base_cost = 2
-    base_magic = {"card_count": 3}
+    base_magic = {"cards": 3}
     base_exhaust = True
 
-    upgrade_magic = {"card_count": 5}
+    upgrade_magic = {"cards": 5}
 
     def on_play(self, targets: List[Creature] = []) -> List[Action]:
         target = targets[0] if targets else None
@@ -31,7 +31,7 @@ class Metamorphosis(Card):
         actions = super().on_play(targets)
 
         # Shuffle random Attacks into draw pile
-        card_count = self.get_magic_value("card_count")
+        card_count = self.get_magic_value("cards")
 
         for _ in range(card_count):
             actions.append(AddRandomCardAction(

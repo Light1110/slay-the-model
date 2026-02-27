@@ -50,10 +50,14 @@ class MindBloom(Event):
             Option(
                 name=LocalStr('events.mind_bloom.i_am_war'),
                 actions=[
-                    StartFightAction(enemies=boss_enemies),
-                    AddRandomRelicAction(rarity='rare'),
-                    AddGoldAction(amount=war_gold),
-                    AddRandomCardAction()
+                    StartFightAction(
+                        enemies=boss_enemies,
+                        victory_actions=[
+                            AddRandomRelicAction(rarity='rare'),
+                            AddGoldAction(amount=war_gold),
+                            AddRandomCardAction()
+                        ]
+                    )
                 ]
             ),
             Option(

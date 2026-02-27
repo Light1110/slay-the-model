@@ -50,8 +50,10 @@ class MaskedBandits(Event):
             Option(
                 name=LocalStr('events.masked_bandits.fight'),
                 actions=[
-                    StartFightAction(enemies=bandits),
-                    AddRelicAction(relic=RedMask()),
+                    StartFightAction(
+                        enemies=bandits,
+                        victory_actions=[AddRelicAction(relic=RedMask())]
+                    )
                 ]
             )
         ]

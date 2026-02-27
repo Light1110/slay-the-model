@@ -483,7 +483,7 @@ class ChooseUpgradeCardAction(Action):
     Optional:
         None
     """
-    def __init__(self, pile: str = 'hand', amount: int = 1, exclude_cards: List[Card] = []):
+    def __init__(self, pile: str = 'hand', amount: int = 1, exclude_cards: List['Card'] = []):
         self.pile = pile
         self.amount = amount
         self.exclude_cards = exclude_cards
