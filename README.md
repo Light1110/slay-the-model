@@ -242,7 +242,7 @@ python __main__.py --no-tui
 
 本项目使用 Vibe Coding 方式开发，主要工具：
 
-- **IDE**: VS Code + OpenEncode
+- **IDE**: VS Code + Opencode
 - **模型**: GLM-5（架构设计）+ Codex-5.3（代码实现）
 
 #### 开发经验

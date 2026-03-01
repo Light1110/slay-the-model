@@ -242,7 +242,7 @@ The framework provides clear state/action interfaces, easy to integrate with RL 
 
 This project is developed using Vibe Coding, with main tools:
 
-- **IDE**: VS Code + OpenEncode
+- **IDE**: VS Code + Opencode
 - **Models**: GLM-5 (architecture design) + Codex-5.3 (code implementation)
 
 #### Development Experience
