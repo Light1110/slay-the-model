@@ -101,9 +101,41 @@ class BuyItemAction(Action):
         # Track gold spent for MawBank relic
         gold_spent = 0
         from engine.game_state import game_state
+        from actions.card import ChooseRemoveCardAction
+        from tui.print_utils import tui_print
+        from localization import t
+        
         if not game_state:
             return NoneResult()
 
+        # 处理删牌服务
+        if self.shop_item.item_type == "card_removal":
+            # 删牌服务：需要扣金币（价格由 ShopRoom 构建菜单时确定）
+            final_price = getattr(self.shop_item, "base_price", 0)
+            assert game_state.player.gold >= final_price
+            gold_spent = final_price
+            game_state.player.gold -= final_price
+            
+            # 触发删牌选择
+            ChooseRemoveCardAction(pile='deck').execute()
+            
+            # 标记删牌已使用
+            if hasattr(game_state, 'current_room') and hasattr(game_state.current_room, 'card_removal_used'):
+                game_state.current_room.card_removal_used = True
+                # 增加下次删牌价格（SmilingMask除外）
+                if not _has_relic("SmilingMask", game_state):
+                    if hasattr(game_state.current_room, 'card_removal_price'):
+                        game_state.current_room.card_removal_price += 25
+            
+            tui_print(t("ui.shop_removed_card", default="Removed a card from deck"))
+
+            # MawBank effect: track gold spent
+            if _has_relic("MawBank", game_state):
+                game_state.gold_spent_in_shop = getattr(game_state, "gold_spent_in_shop", 0) + gold_spent
+            
+            return NoneResult()
+
+        # 处理普通购买（卡牌、遗物、药剂）
         ascension = getattr(game_state, "ascension_level", 0) if game_state else 0
         final_price = self.shop_item.get_final_price_with_modifiers(ascension, game_state)
 

@@ -5,6 +5,7 @@ ui:
   upgrade_comparison_separator: "\n=== After Upgrade ==="
   choose_cards_to_transform: Choose a card to transform
   choose_cards_to_remove: Choose a card to remove
+  shop_removed_card: Removed {card} from deck for {price} gold
   skip_potion_option: Skip
   replace_potion_option: Replace {name}
   potion_full_title: Select a potion to swap

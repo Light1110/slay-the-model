@@ -416,19 +416,22 @@ Having both this and MembershipCard.png Membership Card will reduce prices by a 
         options = []
         ascension = getattr(game_state, 'ascension_level', 0)
 
-        # Card removal service
+        # Card removal service - 包装成 ShopItem 并使用 BuyItemAction
         if not self.card_removal_used:
-            # Use card_removal_price as base, then apply modifiers
+            # 计算最终价格
             price = self.card_removal_price
             if _has_relic("SmilingMask", game_state):
                 price = 50
             elif _has_relic("MembershipCard", game_state):
                 price = int(price * 0.5)
-            # Only show card removal option if player has enough gold
+            
+            # 只有金币足够时才显示
             if not game_state.player or game_state.player.gold >= price:
+                # 创建一个特殊的 ShopItem 表示删牌服务
+                removal_item = ShopItem("card_removal", None, price)
                 options.append(Option(
                     name=self.local("remove_card", price=price),
-                    actions=[ChooseRemoveCardAction(pile='hand')]
+                    actions=[BuyItemAction(removal_item, -1)]  # 使用 -1 表示删牌服务
                 ))
 
         # Purchase options for each item
