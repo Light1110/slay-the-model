@@ -1,6 +1,6 @@
 """Structured runtime messages for passive, post-fact reactions."""
 from dataclasses import dataclass
-from typing import Optional, TYPE_CHECKING, Any, List
+from typing import ClassVar, Optional, TYPE_CHECKING, Any, List
 
 if TYPE_CHECKING:
     from cards.base import Card
@@ -11,6 +11,8 @@ if TYPE_CHECKING:
 @dataclass(frozen=True)
 class GameMessage:
     """Base class for emitted runtime facts."""
+
+    uses_explicit_subscription_contracts: ClassVar[bool] = True
 
 
 @dataclass(frozen=True)
@@ -217,3 +219,29 @@ class CreatureDiedMessage(GameMessage):
     source: Any = None
     card: Optional["Card"] = None
     damage_type: str = "direct"
+
+
+EXPLICIT_SUBSCRIPTION_MESSAGE_TYPES = (
+    AttackPerformedMessage,
+    BlockGainedMessage,
+    CardAddedToPileMessage,
+    CardDiscardedMessage,
+    CardDrawnMessage,
+    CardExhaustedMessage,
+    CardPlayedMessage,
+    CombatEndedMessage,
+    CombatStartedMessage,
+    CreatureDiedMessage,
+    DamageResolvedMessage,
+    EliteVictoryMessage,
+    GoldGainedMessage,
+    HealedMessage,
+    HpLostMessage,
+    PlayerTurnEndedMessage,
+    PlayerTurnStartedMessage,
+    PotionUsedMessage,
+    PowerAppliedMessage,
+    RelicObtainedMessage,
+    ShuffleMessage,
+    ShopEnteredMessage,
+)
