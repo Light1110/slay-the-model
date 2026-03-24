@@ -940,6 +940,9 @@ powers:
   BufferPower:
     name: Buffer
     description: Prevents the next {amount} times you would lose HP.
+  ArtifactPower:
+    name: Artifact
+    description: Negates the next {amount} debuff(s).
   CurlUpPower:
     name: Curl Up
     description: On damage, gains {amount} Block.
