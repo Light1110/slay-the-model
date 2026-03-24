@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Any, Callable, Iterable, List, Type
 
-from engine.message_contracts import subscription_parameter_names, validate_subscription
+from engine.message_contracts import subscription_parameter_names, validate_bound_subscription, validate_subscription
 
 
 class MessagePriority(Enum):
@@ -68,4 +68,5 @@ def iter_bound_subscribers(participant: Any, message: Any) -> Iterable[tuple[int
             bound_method = getattr(participant, name)
             for spec in specs:
                 if isinstance(message, spec.message_type):
+                    validate_bound_subscription(bound_method, spec.message_type, name)
                     yield (_PRIORITY_ORDER[spec.priority], name, bound_method, spec)

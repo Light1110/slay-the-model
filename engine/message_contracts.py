@@ -46,9 +46,8 @@ def subscription_parameter_names(func: Callable, *, bound: bool) -> ParameterNam
         if parameter.kind not in (
             inspect.Parameter.POSITIONAL_ONLY,
             inspect.Parameter.POSITIONAL_OR_KEYWORD,
-            inspect.Parameter.KEYWORD_ONLY,
         ):
-            raise TypeError("Subscriber signatures may not use *args or **kwargs")
+            raise TypeError("Subscriber signatures may only use positional parameters")
         names.append(parameter.name)
     if not bound and names and names[0] in {"self", "cls"}:
         names = names[1:]
@@ -136,7 +135,6 @@ _POWER = lambda _bound_method, message: message.power
 _DAMAGE_TYPE = lambda _bound_method, message: message.damage_type
 _ENTITIES_FROM_STATE = lambda _bound_method, _message: alive_entities_from_game_state()
 _ENTITIES_FROM_MESSAGE = lambda _bound_method, message: message.entities
-_OWNER_OR_TARGET = lambda _bound_method, message: message.owner if hasattr(message, "owner") else message.target
 
 
 def _subscriber(bound_method: Callable):
@@ -353,8 +351,28 @@ def _build_contracts() -> dict[type[GameMessage], MessageContract]:
                         _target_has_subscriber_power,
                     ),
                     _VARIANT(
+                        ("amount", "source", "card", "player", "damage_type"),
+                        _bind(_AMOUNT, _SOURCE, _CARD, _damage_took_player, _DAMAGE_TYPE),
+                        _target_has_subscriber_power,
+                    ),
+                    _VARIANT(
                         ("damage", "source", "card", "damage_type"),
                         _bind(_AMOUNT, _SOURCE, _CARD, _DAMAGE_TYPE),
+                        _subscriber_is_target,
+                    ),
+                    _VARIANT(
+                        ("amount", "source", "card", "damage_type"),
+                        _bind(_AMOUNT, _SOURCE, _CARD, _DAMAGE_TYPE),
+                        _subscriber_is_target,
+                    ),
+                    _VARIANT(
+                        ("damage",),
+                        _bind(_AMOUNT),
+                        _subscriber_is_target,
+                    ),
+                    _VARIANT(
+                        ("amount",),
+                        _bind(_AMOUNT),
                         _subscriber_is_target,
                     ),
                     _VARIANT(
@@ -446,17 +464,29 @@ def validate_subscription(
     return contract.supports(param_names, method_name=method_name)
 
 
-def invoke_subscription_contract(bound_method: Callable, message: GameMessage):
+def validate_bound_subscription(bound_method: Callable, message_type: type[GameMessage], method_name: str) -> ParameterNames:
+    param_names = subscription_parameter_names(bound_method, bound=True)
+    if not validate_subscription(message_type, param_names, method_name=method_name):
+        joined_names = ", ".join(param_names)
+        raise TypeError(
+            f"Unsupported subscription signature for {message_type.__name__}: "
+            f"{method_name}({joined_names})"
+        )
+    return param_names
+
+
+def invoke_subscription_contract(bound_method: Callable, message: GameMessage, method_name: str | None = None):
     """Invoke a subscriber using its explicit message contract."""
     contract = _MESSAGE_CONTRACTS.get(type(message))
     if contract is None:
         return None
-    method_name = getattr(bound_method, "__name__", None)
-    param_names = subscription_parameter_names(bound_method, bound=True)
-    for variant in contract.variants_for(method_name):
+    resolved_method_name = method_name or getattr(bound_method, "__name__", None)
+    param_names = validate_bound_subscription(bound_method, type(message), resolved_method_name)
+    for variant in contract.variants_for(resolved_method_name):
         if variant.param_names != param_names:
             continue
         if not variant.applies(bound_method, message):
             continue
         return variant.invoke(bound_method, message)
     return None
+

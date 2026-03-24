@@ -1,6 +1,8 @@
 from actions.combat import GainBlockAction
 from cards.base import Card
 from enemies.act1.cultist import Cultist
+from enemies.act1.lagavulin import Lagavulin
+from enemies.act2.the_champ import TheChamp
 from enemies.base import Enemy
 from engine.messages import (
     AttackPerformedMessage,
@@ -30,6 +32,7 @@ from relics.base import Relic
 from tests.test_combat_utils import create_test_helper
 from utils.types import PilePosType
 from entities.creature import Creature
+import types
 
 
 class _CombatStartRelic(Relic):
@@ -605,3 +608,38 @@ def test_play_and_attack_messages_use_class_level_subscription_metadata():
         "GainBlockAction",
     ]
     assert [type(action).__name__ for action in attack_actions] == ["GainBlockAction"]
+
+
+def test_damage_resolved_dispatches_to_lagavulin_override():
+    lagavulin = Lagavulin(start_awake=False)
+    source = _ReactionCreature()
+    bus = MessageBus()
+
+    bus.publish(
+        DamageResolvedMessage(amount=7, target=lagavulin, source=source, card=None, damage_type="attack"),
+        participants=[lagavulin],
+    )
+
+    assert lagavulin.is_sleeping is False
+    assert lagavulin.is_stunned is True
+    assert lagavulin.turns_without_damage == 0
+
+
+def test_damage_resolved_dispatches_to_the_champ_override_signature():
+    champ = TheChamp()
+    champ.hp = champ.max_hp // 2
+    champ.hook_fired = False
+
+    def wrapped_on_damage_taken(self, damage: int):
+        self.hook_fired = True
+        return TheChamp.on_damage_taken(self, damage)
+
+    champ.on_damage_taken = types.MethodType(wrapped_on_damage_taken, champ)
+    bus = MessageBus()
+
+    bus.publish(
+        DamageResolvedMessage(amount=9, target=champ, source=None, card=None, damage_type="attack"),
+        participants=[champ],
+    )
+
+    assert champ.hook_fired is True
