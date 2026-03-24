@@ -2,6 +2,15 @@
 
 from typing import List, Optional, TYPE_CHECKING, Any
 
+from engine.messages import (
+    BlockGainedMessage,
+    CreatureDiedMessage,
+    DamageResolvedMessage,
+    HealedMessage,
+    HpLostMessage,
+    PowerAppliedMessage,
+)
+from engine.subscriptions import MessagePriority, subscribe
 from localization import Localizable
 
 if TYPE_CHECKING:
@@ -56,12 +65,20 @@ class Creature(Localizable):
     def hp(self, value: int) -> None:
         self._hp = max(0, min(self.max_hp, int(value)))
 
+    @property
+    def strength(self) -> int:
+        """Backward-compatible aggregate Strength value."""
+        total = 0
+        for power in self.powers:
+            power_name = getattr(power, "name", "")
+            if power_name == "Strength" or power.__class__.__name__ == "StrengthPower":
+                total += int(getattr(power, "amount", 0) or 0)
+        return total
+
     def take_damage(self, amount: int, source=None, card=None, damage_type: str = "direct") -> int:
         """Take damage after block absorption. Returns actual damage dealt to HP."""
-        # Defensive: handle case where amount is accidentally a list
         if isinstance(amount, list):
-            print(f"[WARNING] take_damage received list instead of int: {amount}, taking first element")
-            amount = amount[0] if amount else 0
+            raise TypeError("take_damage expects int, got list")
         if amount <= 0:
             return 0
         
@@ -148,30 +165,14 @@ class Creature(Localizable):
             return None
         self.block += amount
 
+    @subscribe(DamageResolvedMessage, priority=MessagePriority.REACTION)
     def on_damage_taken(self, damage: int, source=None, card=None, damage_type=None):
-        """Called when creature takes damage.
-        
-        Triggers power on_damage_taken hooks.
-        
-        Args:
-            damage: Amount of damage taken
-            source: Source of the damage (optional)
-            card: Card that caused damage (optional)
-            damage_type: Type of damage (optional)
-            
-        Returns:
-            List of actions to queue (may be empty)
+        """Legacy compatibility hook for subclasses.
+
+        Runtime power reactions are handled by message publication in the damage
+        action path. Subclasses may still override this hook for local behavior.
         """
-        actions = []
-        
-        # Call on_damage_taken on all powers
-        for power in self.powers[:]:  # Copy list to allow modification during iteration
-            if hasattr(power, 'on_damage_taken') and callable(power.on_damage_taken):
-                result = power.on_damage_taken(damage, source=source, card=card, damage_type=damage_type)
-                if result:
-                    actions.extend(result)
-        
-        return actions
+        return []
 
     def add_power(self, power) -> None:
         """Add a power to this creature with correct stacking semantics."""
@@ -238,6 +239,7 @@ class Creature(Localizable):
         """Check if this creature has a specific power"""
         return self.get_power(power_name) is not None
 
+    @subscribe(CreatureDiedMessage, priority=MessagePriority.REACTION)
     def on_death(self) -> List['Action']:
         """Called when creature dies. Subclasses can override to return actions.
         
@@ -246,18 +248,7 @@ class Creature(Localizable):
         """
         return []
 
-    def on_max_hp_changed(self, old_max: int, new_max: int) -> List['Action']:
-        """Called when creature's max HP changes.
-        
-        Args:
-            old_max: Previous max HP value
-            new_max: New max HP value
-            
-        Returns:
-            List of actions to queue after max HP change
-        """
-        return []
-
+    @subscribe(HealedMessage, priority=MessagePriority.REACTION)
     def on_heal(self, amount: int) -> List['Action']:
         """Called when creature heals.
         
@@ -269,30 +260,16 @@ class Creature(Localizable):
         """
         return []
 
+    @subscribe(HpLostMessage, priority=MessagePriority.REACTION)
     def on_lose_hp(self, amount: int, source=None, card=None) -> List['Action']:
-        """Called when creature loses HP.
-        
-        Triggers power on_lose_hp hooks.
-        
-        Args:
-            amount: Amount of HP lost
-            source: Source of the HP loss
-            card: Card that caused HP loss (if applicable)
-            
-        Returns:
-            List of actions to queue after losing HP
-        """
-        actions = []
-        
-        # Call on_lose_hp on all powers
-        for power in self.powers[:]:  # Copy list to allow modification during iteration
-            if hasattr(power, 'on_lose_hp') and callable(power.on_lose_hp):
-                result = power.on_lose_hp(amount, source=source, card=card)
-                if result:
-                    actions.extend(result)
-        
-        return actions
+        """Legacy compatibility hook for subclasses.
 
+        Runtime HP-loss reactions are handled by message publication in the
+        lose-HP action path. Subclasses may still override this hook.
+        """
+        return []
+
+    @subscribe(DamageResolvedMessage, priority=MessagePriority.REACTION)
     def on_damage_dealt(self, damage: int, target=None, card=None, damage_type: str = "direct") -> List['Action']:
         """Called when this creature deals damage.
         
@@ -307,6 +284,7 @@ class Creature(Localizable):
         """
         return []
 
+    @subscribe(BlockGainedMessage, priority=MessagePriority.REACTION)
     def on_gain_block(self, amount: int, source=None, card=None) -> List['Action']:
         """Called when this creature gains block.
         
@@ -320,24 +298,11 @@ class Creature(Localizable):
         """
         return []
 
+    @subscribe(PowerAppliedMessage, priority=MessagePriority.REACTION)
     def on_power_added(self, power) -> List['Action']:
-        """Called when a power is added to this creature.
-        
-        Triggers on_power_added hooks on all existing powers.
-        
-        Args:
-            power: The power being added
-            
-        Returns:
-            List of actions to queue after power is added
+        """Legacy compatibility hook for subclasses.
+
+        Runtime power-added reactions are handled by message publication in the
+        power application path. Subclasses may still override this hook.
         """
-        actions = []
-        
-        # Call on_power_added on all existing powers
-        for existing_power in self.powers[:]:  # Copy list to allow modification during iteration
-            if hasattr(existing_power, 'on_power_added') and callable(existing_power.on_power_added):
-                result = existing_power.on_power_added(power)
-                if result:
-                    actions.extend(result)
-        
-        return actions
+        return []

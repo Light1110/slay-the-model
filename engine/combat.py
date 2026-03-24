@@ -1,20 +1,26 @@
-"""
+﻿"""
 Combat logic class - independent from rooms.
 Can be triggered by CombatRoom or Events.
 Uses global action queue for action management.
 """
 from collections import Counter
 from typing import List
-from tui.print_utils import tui_print
+from engine.runtime_events import emit_text as tui_print
 from actions.base import Action
 from actions.card import DiscardCardAction
 from actions.combat import EndTurnAction
-from actions.display import DisplayTextAction, SelectAction
+from actions.display import DisplayTextAction, InputRequestAction
 from enemies.base import Enemy
 from utils.option import Option
 from utils.result_types import BaseResult, GameStateResult, NoneResult
 from utils.types import CombatType
 from localization import LocalStr, Localizable, t
+from engine.messages import (
+    CombatEndedMessage,
+    CombatStartedMessage,
+    PlayerTurnEndedMessage,
+    PlayerTurnStartedMessage,
+)
 
 class Combat(Localizable):
     """
@@ -58,6 +64,16 @@ class Combat(Localizable):
         # Localization
         self.localization_prefix = "combat"
 
+    def _message_participants(self, enemies=None, include_hand=False, hand=None):
+        from engine.game_state import game_state
+
+        alive_enemies = enemies if enemies is not None else [e for e in self.enemies if e.hp > 0]
+        return game_state.message_participants(
+            enemies=alive_enemies,
+            include_hand=include_hand,
+            hand=hand,
+        )
+
     def start(self) -> GameStateResult:
         """
         Start combat execution.
@@ -74,63 +90,71 @@ class Combat(Localizable):
         game_state.action_queue.add_action(DisplayTextAction(
             text_key="combat.enter"
         ))
-        game_state.execute_all_actions()
+        game_state.drive_actions()
+
+        self.combat_state.current_phase = "player_start"
 
         while True:
-            # Execute player phase
-            result = self.execute_player_phase()
+            result = self._execute_next_phase()
             if isinstance(result, GameStateResult) and result.state in ("COMBAT_WIN", "GAME_LOSE", "COMBAT_ESCAPE"):
-                break
+                return result
 
-            # Execute enemy phase
-            result = self.execute_enemy_phase()
-            if isinstance(result, GameStateResult) and result.state in ("COMBAT_WIN", "GAME_LOSE", "COMBAT_ESCAPE"):
-                break
+    def _execute_next_phase(self) -> BaseResult:
+        """Advance combat by exactly one explicit phase transition."""
+        phase = self.combat_state.current_phase
 
-        return result
+        if phase == "player_start":
+            return self._execute_player_start_phase()
+        if phase == "player_action":
+            return self._execute_player_action_phase()
+        if phase == "player_end":
+            return self._execute_player_end_phase()
+        if phase == "enemy_action":
+            return self.execute_enemy_phase()
+        if phase == "enemy_end":
+            self.combat_state.current_phase = "player_start"
+            return NoneResult()
 
-    def execute_player_phase(self) -> BaseResult:
-        """
-        Execute player phase.
+        raise ValueError(f"Unknown combat phase: {phase}")
 
-        Returns:
-            GameStateResult if combat ends, NoneResult otherwise
-        """
+    def _execute_player_start_phase(self) -> BaseResult:
+        """Resolve start-of-turn effects, then hand off to player action phase."""
         from engine.game_state import game_state
 
-        # Start player phase: gain energy, draw cards, trigger start-of-turn effects
         self._start_player_turn()
-
-        # Execute draw cards and start-of-turn effects immediately
-        # This ensures hand is populated before building player actions
-        result = game_state.execute_all_actions()
+        result = game_state.drive_actions()
         if isinstance(result, GameStateResult) and result.state in ("COMBAT_WIN", "GAME_LOSE", "COMBAT_ESCAPE"):
             return result
 
-        # Check for combat end (e.g., all enemies dead from start-of-turn effects)
         result = self._check_combat_end()
         if isinstance(result, GameStateResult):
             return result
 
-        # Player action phase - wait for player to play cards, use potions, or end turn
         self.combat_state.current_phase = "player_action"
+        return NoneResult()
 
-        while self.combat_state.current_phase == "player_action":
-            self._print_combat_state()
-            
-            self._build_player_action()
+    def _execute_player_action_phase(self) -> BaseResult:
+        """Issue exactly one player decision request and resolve it."""
+        from engine.game_state import game_state
 
-            result = game_state.execute_all_actions()
-            
-            if isinstance(result, GameStateResult) and result.state in ("COMBAT_WIN", "GAME_LOSE", "COMBAT_ESCAPE"):
-                return result
-            
-            # Check for combat end (e.g., all enemies dead from card damage)
-            result = self._check_combat_end()
-            if isinstance(result, GameStateResult):
-                return result
+        self._print_combat_state()
+        self._build_player_action()
 
-        # End player phase: trigger end-of-turn effects, discard hand
+        result = game_state.drive_actions()
+        if isinstance(result, GameStateResult) and result.state in ("COMBAT_WIN", "GAME_LOSE", "COMBAT_ESCAPE"):
+            return result
+
+        result = self._check_combat_end()
+        if isinstance(result, GameStateResult):
+            return result
+
+        if self.combat_state.current_phase == "player_action":
+            return NoneResult()
+
+        return self._end_player_phase()
+
+    def _execute_player_end_phase(self) -> BaseResult:
+        """Compatibility hook for explicit player end phase progression."""
         return self._end_player_phase()
     
     def _build_player_action(self):
@@ -159,7 +183,7 @@ class Combat(Localizable):
 
         actions.append(DisplayTextAction(text_key="combat.display"))
         
-        # 2. Build SelectAction for cards in hand
+        # 2. Build InputRequestAction for cards in hand
         hand = game_state.player.card_manager.get_pile("hand")
         options: List[Option] = []
         for card in hand:
@@ -173,7 +197,7 @@ class Combat(Localizable):
                     actions=[PlayCardAction(card=card)]
                 ))
         
-        # 3. Build SelectAction for potions
+        # 3. Build InputRequestAction for potions
         from actions.combat import UsePotionAction
         for potion in game_state.player.potions:
             if potion.can_be_used_actively:
@@ -188,7 +212,7 @@ class Combat(Localizable):
             actions=[EndTurnAction()]
         ))
         
-        actions.append(SelectAction(
+        actions.append(InputRequestAction(
             options=options,
             title=LocalStr("combat.choose_action")
         ))
@@ -284,7 +308,7 @@ class Combat(Localizable):
             has_runic_dome = any(r.__class__.__name__ == "RunicDome" for r in game_state.player.relics)
             if enemy.current_intention and not has_runic_dome:
                 intention = enemy.current_intention
-                intention_text = intention.description.resolve()
+                intention_text = self._safe_intention_text(intention)
                 tui_print(f"  {t('ui.intention', default='Intention')}: {intention_text}")
         
         tui_print()  # Empty line for readability
@@ -299,31 +323,28 @@ class Combat(Localizable):
         from engine.game_state import game_state
 
          # Trigger end-of-turn effects
-        # relics - powers - cards in hand
-        for relic in game_state.player.relics:
-            game_state.action_queue.add_actions(relic.on_player_turn_end(
-                player=game_state.player,
-                entities=[e for e in self.enemies if e.hp > 0]
-            ))
-        # Process player powers: call on_turn_end and remove expired ones
-        # tui_print(f"[DEBUG] End of player turn - current powers: {[p.name for p in game_state.player.powers]}")
+        alive_enemies = [e for e in self.enemies if e.hp > 0]
+        hand = game_state.player.card_manager.get_pile("hand")
+        game_state.action_queue.add_actions(
+            game_state.publish_message(
+                PlayerTurnEndedMessage(
+                    owner=game_state.player,
+                    enemies=alive_enemies,
+                    hand_cards=list(hand),
+                ),
+                participants=self._message_participants(alive_enemies, include_hand=True, hand=list(hand)),
+            )
+        )
+
+        # Process player powers: remove expired ones after the turn-end hooks have ticked durations.
         powers_to_remove = []
         for power in game_state.player.powers:
-            game_state.action_queue.add_actions(power.on_turn_end())
-            # tui_print(f"[DEBUG] Power {power.name}: duration={power.duration}")
-            # Check if power should be removed (duration reached 0)
             if power.duration == 0:
                 powers_to_remove.append(power.name)
-                # tui_print(f"[DEBUG] Marking power {power.name} for removal")
         
         # Remove expired powers
         for power_name in powers_to_remove:
             game_state.player.remove_power(power_name)
-        # tui_print(f"[DEBUG] After power removal - current powers: {[p.name for p in game_state.player.powers]}")
-        
-        hand = game_state.player.card_manager.get_pile("hand")
-        for card in hand:
-            game_state.action_queue.add_actions(card.on_player_turn_end())
 
         # Discard hand (cards in hand are shuffled into discard pile)
         # RunicPyramid: At the end of your turn, you no longer discard your hand.
@@ -337,7 +358,11 @@ class Combat(Localizable):
         # Reset player block
         game_state.player.block = 0
 
-        return game_state.execute_all_actions()
+        result = game_state.drive_actions()
+        if isinstance(result, GameStateResult):
+            return result
+        self.combat_state.current_phase = "enemy_action"
+        return result
 
     def execute_enemy_phase(self) -> BaseResult:
         """
@@ -355,8 +380,6 @@ class Combat(Localizable):
         # DEBUG: Print combat state at start of enemy phase
         # _debug_print_combat_state("ENEMY_PHASE_START", self.enemies)
 
-        self.combat_state.current_phase = "enemy_action"
-
         # For each alive enemy, execute actions
         for enemy in self.enemies:
             if not enemy.is_dead():
@@ -368,18 +391,8 @@ class Combat(Localizable):
                 # Print enemy intention before executing (hidden if player has RunicDome)
                 has_runic_dome = any(r.__class__.__name__ == "RunicDome" for r in game_state.player.relics)
                 if not has_runic_dome:
-                    enemy_name_raw = enemy.local("name").resolve() if hasattr(enemy, 'local') else 'Enemy'
-                    # Extract readable name from localization key (e.g., "Cultist" from "enemies.Cultist.name")
-                    if enemy_name_raw.startswith("enemies."):
-                        enemy_name = enemy_name_raw.split(".")[1] if len(enemy_name_raw.split(".")) > 1 else enemy_name_raw
-                    else:
-                        enemy_name = enemy_name_raw
-                    intent_desc_raw = enemy.current_intention.description.resolve() if hasattr(enemy, 'current_intention') and hasattr(enemy.current_intention, 'description') else ''
-                    # Extract readable description from localization key
-                    if intent_desc_raw.startswith("enemies."):
-                        intent_desc = intent_desc_raw.split(".")[-1] if "." in intent_desc_raw else intent_desc_raw
-                    else:
-                        intent_desc = intent_desc_raw
+                    enemy_name = self._safe_localized_name(enemy)
+                    intent_desc = self._safe_intention_text(enemy.current_intention)
                     if intent_desc:
                         tui_print(f">> {t('combat.enemy_intends', default='Enemy')} [{enemy_name}] {t('combat.intends_to', default='intends to')}: {intent_desc}")
                 game_state.action_queue.add_actions(enemy.execute_intention())
@@ -387,7 +400,11 @@ class Combat(Localizable):
         # Process enemy turn-end effects (tick down power durations)
         self._end_enemy_phase()
 
-        return game_state.execute_all_actions()
+        result = game_state.drive_actions()
+        if isinstance(result, GameStateResult):
+            return result
+        self.combat_state.current_phase = "enemy_end"
+        return result
     
     def _end_enemy_phase(self):
         """Process end of enemy turn - tick down enemy power durations."""
@@ -405,6 +422,24 @@ class Combat(Localizable):
                 # Remove power if duration reached 0
                 if power.duration == 0:
                     enemy.remove_power(power.name)
+
+    @staticmethod
+    def _safe_localized_name(localizable) -> str:
+        """Resolve a localized name, falling back to readable identifiers."""
+        resolved = localizable.local("name").resolve() if hasattr(localizable, "local") else ""
+        if resolved and not resolved.startswith(("enemies.", "powers.")):
+            return resolved
+        return getattr(localizable, "name", None) or localizable.__class__.__name__
+
+    @staticmethod
+    def _safe_intention_text(intention) -> str:
+        """Resolve an intention description, falling back to the intention name."""
+        if not intention:
+            return ""
+        resolved = intention.description.resolve()
+        if resolved and not resolved.startswith("enemies.") and resolved != "description":
+            return resolved
+        return getattr(intention, "name", "Unknown Intention")
     
     def _remove_dead_enemies(self):
         """Remove dead enemies from the list"""
@@ -425,22 +460,19 @@ class Combat(Localizable):
         
         # Check if all enemies are dead
         if not self.enemies or all(e.is_dead() for e in self.enemies):
-            # Trigger on_combat_end for relics
-            for relic in game_state.player.relics:
-                game_state.action_queue.add_actions(relic.on_combat_end(
-                    player=game_state.player,
-                    entities=[e for e in self.enemies if e.hp > 0]
-                ))
-            
-            # Trigger on_combat_end for player powers
-            for power in game_state.player.powers:
-                game_state.action_queue.add_actions(power.on_combat_end(
-                    owner=game_state.player,
-                    entities=[e for e in self.enemies if e.hp > 0]
-                ))
+            alive_enemies = [e for e in self.enemies if e.hp > 0]
+            game_state.action_queue.add_actions(
+                game_state.publish_message(
+                    CombatEndedMessage(
+                        owner=game_state.player,
+                        enemies=alive_enemies,
+                    ),
+                    participants=self._message_participants(alive_enemies),
+                )
+            )
             
             # Execute all queued actions before returning
-            game_state.execute_all_actions()
+            game_state.drive_actions()
             
             return GameStateResult("COMBAT_WIN")
         
@@ -473,16 +505,17 @@ class Combat(Localizable):
         # Clear player powers at start of each combat (powers don't persist between combats)
         game_state.player.powers = []
         
-        # Trigger combat start effects (relics)
-        for relic in game_state.player.relics:
-            game_state.action_queue.add_actions(relic.on_combat_start(
-                player=game_state.player,
-                entities=[e for e in self.enemies if e.hp > 0]
-            ))
-        
-        # Trigger combat start effects for enemies
-        for enemy in self.enemies:
-            enemy.on_combat_start(floor=game_state.current_floor)
+        alive_enemies = [e for e in self.enemies if e.hp > 0]
+        game_state.action_queue.add_actions(
+            game_state.publish_message(
+                CombatStartedMessage(
+                    owner=game_state.player,
+                    enemies=alive_enemies,
+                    floor=game_state.current_floor,
+                ),
+                participants=self._message_participants(alive_enemies),
+            )
+        )
         
         # God mode: set all enemies to 1 HP if enabled
         god_mode_enabled = game_state.config.get("debug.god_mode", False)
@@ -579,11 +612,14 @@ class Combat(Localizable):
         self.combat_state.combat_turn += 1
         self.combat_state.current_phase = "player_action"
         
-        # relics - powers
-        for relic in game_state.player.relics:
-            game_state.action_queue.add_actions(relic.on_player_turn_start(game_state.player, [e for e in self.enemies if e.hp > 0]))
-        for power in game_state.player.powers:
-            game_state.action_queue.add_actions(power.on_turn_start())
-        # enemies
-        for enemy in self.enemies:
-            enemy.on_player_turn_start()
+        alive_enemies = [e for e in self.enemies if e.hp > 0]
+        game_state.action_queue.add_actions(
+            game_state.publish_message(
+                PlayerTurnStartedMessage(
+                    owner=game_state.player,
+                    enemies=alive_enemies,
+                ),
+                participants=self._message_participants(alive_enemies),
+            )
+        )
+

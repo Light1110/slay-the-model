@@ -26,6 +26,8 @@ from player.character_config import register_character
     orb_slots=1,
     potion_limit=3,
     draw_count=5,
+    playable=False,
+    unplayable_reason="Character 'Silent' is not playable yet: starter cards are unavailable",
 )
 class SilentConfig:
     """Silent character configuration.

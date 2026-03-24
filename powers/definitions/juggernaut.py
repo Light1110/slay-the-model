@@ -35,6 +35,10 @@ class JuggernautPower(Power):
 
         if game_state.current_combat:
             enemy = resolve_target(target_type=TargetType.ENEMY_RANDOM)
+            if isinstance(enemy, list):
+                enemy = enemy[0] if enemy else None
+            if enemy is None:
+                return actions
             actions.append(DealDamageAction(
                 damage=self.amount,
                 target=enemy,

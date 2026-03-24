@@ -25,11 +25,31 @@ from utils.result_types import (
 )
 
 # Import commonly used actions
-from actions.display import DisplayTextAction, SelectAction
-from actions.card import RemoveCardAction, ShuffleAction
+from actions.display import DisplayTextAction, InputRequestAction
+from actions.card import (
+    AddRandomCardAction,
+    ChooseExhaustCardAction,
+    ChooseMoveCardAction,
+    ChooseRemoveCardAction,
+    ChooseReplaceCardAction,
+    ChooseTransformCardAction,
+    ChooseUpgradeCardAction,
+    CopyCardAction,
+    DrawCardsAction,
+    ExhaustCardAction,
+    ExhaustRandomCardAction,
+    MoveCardAction,
+    RemoveCardAction,
+    ReplaceCardAction,
+    ShuffleAction,
+    TransformCardAction,
+    UpgradeAllCardsAction,
+    UpgradeCardAction,
+)
 # Note: BuyItemAction, OpenChestAction, LeaveRoomAction imported from actions.misc
 # directly in modules that need them to avoid circular import with relics package
 from actions.combat import TriggerRelicAction
+from actions.combat import ApplyPowerAction, AttackAction, DealDamageAction, HealAction, UsePotionAction
 from actions.game_over import GameOverAction
 
 # Note: Orb actions are imported on-demand to avoid circular imports
@@ -47,7 +67,7 @@ __all__ = [
     'GameStateResult',
 
     # Display actions
-    'DisplayTextAction', 'SelectAction',
+    'DisplayTextAction', 'InputRequestAction',
 
      # Card actions
      'RemoveCardAction',
@@ -73,4 +93,13 @@ __all__ = [
     'ExhaustRandomCardAction',
     'ChooseMoveCardAction',
     'ShuffleAction',
+
+    # Combat actions
+    'ApplyPowerAction',
+    'AttackAction',
+    'DealDamageAction',
+    'HealAction',
+    'TriggerRelicAction',
+    'UsePotionAction',
 ]
+

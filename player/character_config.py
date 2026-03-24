@@ -4,7 +4,7 @@ Character configuration system for extensible character definitions.
 Provides CharacterConfig class and @register_character decorator
 to define character-specific stats, starting deck, and relics.
 """
-from typing import List, Dict, Type, Optional, Callable
+from typing import List, Dict, Optional, Callable
 from dataclasses import dataclass
 
 
@@ -23,6 +23,8 @@ class CharacterConfig:
         deck: List of card IDs for starting deck
         starting_relics: List of relic IDs for starting relics
         draw_count: Base draw count per turn (default 5)
+        playable: Whether the character should be exposed as a playable choice
+        unplayable_reason: Explicit reason when a registered character is not yet playable
     """
     name: str
     display_name: str
@@ -34,6 +36,8 @@ class CharacterConfig:
     orb_slots: int = 1
     potion_limit: int = 3
     draw_count: int = 5
+    playable: bool = True
+    unplayable_reason: Optional[str] = None
 
 
 # Global registry for character configurations
@@ -51,6 +55,8 @@ def register_character(
     orb_slots: int = 1,
     potion_limit: int = 3,
     draw_count: int = 5,
+    playable: bool = True,
+    unplayable_reason: Optional[str] = None,
 ) -> Callable:
     """Decorator to register a character configuration.
 
@@ -78,6 +84,8 @@ def register_character(
         orb_slots: Number of orb slots
         potion_limit: Potion slot limit
         draw_count: Base draw count per turn
+        playable: Whether the character should be listed as playable
+        unplayable_reason: Explicit reason when a character is registered but not playable
 
     Returns:
         Decorator function
@@ -94,6 +102,8 @@ def register_character(
             orb_slots=orb_slots,
             potion_limit=potion_limit,
             draw_count=draw_count,
+            playable=playable,
+            unplayable_reason=unplayable_reason,
         )
         _character_registry[name] = config
         cls.config = config
@@ -111,26 +121,29 @@ def get_character_config(name: str) -> Optional[CharacterConfig]:
     Returns:
         CharacterConfig if found, None otherwise
     """
-    # Try exact match first
     if name in _character_registry:
         return _character_registry[name]
-    
-    # Try case-insensitive match
+
     name_lower = name.lower()
     for key, config in _character_registry.items():
         if key.lower() == name_lower:
             return config
-    
+
     return None
 
 
-def list_characters() -> List[str]:
-    """List all registered character names.
+def list_characters(playable_only: bool = False) -> List[str]:
+    """List registered character names.
+
+    Args:
+        playable_only: When True, return only playable character names.
 
     Returns:
         List of character names
     """
-    return list(_character_registry.keys())
+    if not playable_only:
+        return list(_character_registry.keys())
+    return [name for name, config in _character_registry.items() if config.playable]
 
 
 # Register Ironclad character

@@ -5,6 +5,8 @@ from typing import Any, Dict, List, Optional
 from actions.base import Action, LambdaAction
 from actions.combat import AttackAction
 from entities.creature import Creature
+from engine.messages import CardDiscardedMessage, CardDrawnMessage, CardPlayedMessage, DamageResolvedMessage, PlayerTurnEndedMessage
+from engine.subscriptions import MessagePriority, subscribe
 # 延迟导入以避免循环导入
 def get_game_state():
     from engine.game_state import game_state
@@ -412,10 +414,12 @@ class Card(Localizable):
         except ImportError:
             return []
 
+    @subscribe(CardDiscardedMessage, priority=MessagePriority.CARD)
     def on_discard(self):
         """卡牌被弃置时触发，默认返回 Action 列表。"""
         return []
 
+    @subscribe(CardDrawnMessage, priority=MessagePriority.CARD)
     def on_draw(self):
         """卡牌被抽到时触发，默认返回 Action 列表。"""
         return []
@@ -424,6 +428,11 @@ class Card(Localizable):
         """卡牌被消耗（放逐）时触发，默认返回 Action 列表。"""
         return []
     
+    @subscribe(CardPlayedMessage, priority=MessagePriority.REACTION)
+    def on_card_play(self, card, player, entities) -> List[Action]:
+        """Called when another card is played while this card is active."""
+        return []
+
     def on_player_turn_start(self):
         """
         卡牌在回合开始时触发。
@@ -431,8 +440,19 @@ class Card(Localizable):
         """
         return [LambdaAction(lambda: setattr(self, 'temp_cost', None))]
     
+    @subscribe(PlayerTurnEndedMessage, priority=MessagePriority.CARD)
     def on_player_turn_end(self):
         """卡牌在回合结束时触发，默认返回 Action 列表。"""
+        return []
+
+    @subscribe(DamageResolvedMessage, priority=MessagePriority.REACTION)
+    def on_damage_dealt(self, damage: int, target=None, card=None, damage_type: str = "direct") -> List[Action]:
+        """Called when this card deals damage."""
+        return []
+
+    @subscribe(DamageResolvedMessage, priority=MessagePriority.REACTION)
+    def on_fatal(self, damage: int, target=None, card=None, damage_type: str = "direct") -> List[Action]:
+        """Called when this card delivers a killing blow."""
         return []
 
     def can_play(self, ignore_energy=False) -> tuple[bool, Optional[str]]:
