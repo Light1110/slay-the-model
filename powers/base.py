@@ -5,6 +5,22 @@ Powers modify creature stats, damage calculations, and combat flow.
 from enum import Enum, auto
 from typing import List, Optional, Any
 from actions.base import Action
+from engine.messages import (
+    AttackPerformedMessage,
+    BlockGainedMessage,
+    CardExhaustedMessage,
+    CardPlayedMessage,
+    CardDiscardedMessage,
+    CardDrawnMessage,
+    CombatEndedMessage,
+    DamageResolvedMessage,
+    HealedMessage,
+    HpLostMessage,
+    PlayerTurnEndedMessage,
+    PlayerTurnStartedMessage,
+    PowerAppliedMessage,
+)
+from engine.subscriptions import MessagePriority, subscribe
 from localization import Localizable, LocalStr, has_translation, t
 from utils.types import TargetType
 from utils.damage_phase import DamagePhase
@@ -151,6 +167,7 @@ class Power(Localizable):
             return self.duration <= 0
         return False
     
+    @subscribe(PlayerTurnStartedMessage, priority=MessagePriority.PLAYER_POWER)
     def on_turn_start(self) -> List[Action]:
         """Called at start of turn.
         
@@ -159,6 +176,7 @@ class Power(Localizable):
         """
         return []
     
+    @subscribe(PlayerTurnEndedMessage, priority=MessagePriority.PLAYER_POWER)
     def on_turn_end(self) -> List[Action]:
         """Called at end of turn."""
         # tick_down should be called by on_turn_end - decrease duration
@@ -166,6 +184,7 @@ class Power(Localizable):
         
         return [] # todo: Whether to remove power that duration == 0?
     
+    @subscribe(CardPlayedMessage, priority=MessagePriority.REACTION)
     def on_card_play(self, card, player, entities) -> List[Action]:
         """Called when a card is played.
         
@@ -173,7 +192,13 @@ class Power(Localizable):
             List of actions to execute after card is played
         """
         return []
+
+    @subscribe(CardPlayedMessage, priority=MessagePriority.REACTION)
+    def on_play_card(self, card, player, entities) -> List[Action]:
+        """Compatibility alias for card-play triggers."""
+        return []
     
+    @subscribe(DamageResolvedMessage, priority=MessagePriority.REACTION)
     def on_damage_dealt(self, damage: int, target: Any, source: Any = None, card: Any = None) -> List[Action]:
         """Called when damage is dealt.
         
@@ -188,6 +213,7 @@ class Power(Localizable):
         """
         return []
     
+    @subscribe(AttackPerformedMessage, priority=MessagePriority.REACTION)
     def on_attack(self, target: Any, source: Any = None, card: Any = None) -> List[Action]:
         """Called when an attack is performed (before damage calculation).
         
@@ -205,6 +231,7 @@ class Power(Localizable):
         """
         return []
     
+    @subscribe(DamageResolvedMessage, priority=MessagePriority.REACTION)
     def on_damage_taken(self, damage: int, source: Any = None, card: Any = None, 
                        player: Any = None, damage_type: str = "direct") -> List[Action]:
         """Called when damage is taken.
@@ -221,6 +248,7 @@ class Power(Localizable):
         """
         return []
     
+    @subscribe(BlockGainedMessage, priority=MessagePriority.REACTION)
     def on_gain_block(self, amount: int, player: Any = None, source: Any = None, card: Any = None) -> List[Action]:
         """Called when block is gained.
         
@@ -229,6 +257,7 @@ class Power(Localizable):
         """
         return []
     
+    @subscribe(HpLostMessage, priority=MessagePriority.REACTION)
     def on_lose_hp(self, amount: int, source: Any = None, card: Any = None) -> List[Action]:
         """Called when HP is lost (not from damage).
         
@@ -245,6 +274,7 @@ class Power(Localizable):
         """
         return []
     
+    @subscribe(CardDrawnMessage, priority=MessagePriority.PLAYER_POWER)
     def on_card_draw(self, card: Any) -> List[Action]:
         """Called when a card is drawn.
         
@@ -255,7 +285,33 @@ class Power(Localizable):
             List of actions to execute when card is drawn
         """
         return []
+
+    @subscribe(CardDrawnMessage, priority=MessagePriority.PLAYER_POWER)
+    def on_draw_card(self, card: Any, player: Any, entities: List[Any]) -> List[Action]:
+        """Called when a card is drawn, with full combat context."""
+        return []
+
+    @subscribe(CardExhaustedMessage, priority=MessagePriority.REACTION)
+    def on_card_exhausted(self, card: Any, owner: Any, source_pile: str | None = None) -> List[Action]:
+        """Called when a card is exhausted."""
+        return []
+
+    @subscribe(PowerAppliedMessage, priority=MessagePriority.REACTION)
+    def on_power_added(self, power, source=None) -> List[Action]:
+        """Called when a power is applied."""
+        return []
+
+    @subscribe(HealedMessage, priority=MessagePriority.REACTION)
+    def on_heal(self, amount: int, player: Any = None, entities: List[Any] | None = None) -> List[Action]:
+        """Called when healing occurs."""
+        return []
+
+    @subscribe(CardDiscardedMessage, priority=MessagePriority.PLAYER_POWER)
+    def on_discard(self, card: Any) -> List[Action]:
+        """Called when a card is discarded."""
+        return []
     
+    @subscribe(CombatEndedMessage, priority=MessagePriority.PLAYER_POWER)
     def on_combat_end(self, owner, entities) -> List[Action]:
         """Called at end of combat.
         

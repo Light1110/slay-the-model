@@ -38,8 +38,5 @@ class Feed(Card):
             "max_hp",
             get_magic_value(self, "max_health_gain"),
         )
-        actions.append(ModifyMaxHpAction(
-            target=game_state.player,
-            amount=max_hp_gain
-        ))
+        actions.append(ModifyMaxHpAction(amount=max_hp_gain))
         return actions

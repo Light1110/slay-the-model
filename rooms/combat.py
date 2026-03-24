@@ -88,6 +88,7 @@ class CombatRoom(Room):
     def _handle_victory(self) -> List['Action']:
         """Handle combat victory - add rewards"""
         from engine.game_state import game_state
+        from engine.messages import EliteVictoryMessage
         from actions.misc import _has_relic
         actions = []
         
@@ -104,13 +105,17 @@ class CombatRoom(Room):
         if self.room_type == RoomType.ELITE:
             if self.encounter_name:
                 game_state.elite_history.append(self.encounter_name)
-            # Trigger elite victory hooks for relics (e.g., BlackStar)
-            for relic in game_state.player.relics:
-                elite_actions = relic.on_elite_victory(
-                    player=game_state.player,
-                    entities=[]
+            actions.extend(
+                game_state.publish_message(
+                    EliteVictoryMessage(
+                        owner=game_state.player,
+                        room=self,
+                        encounter_name=self.encounter_name,
+                        entities=[],
+                    ),
+                    participants=list(game_state.player.relics),
                 )
-                actions.extend(elite_actions)
+            )
 
         # Act 3/4 boss combats should not grant combat rewards.
         if (

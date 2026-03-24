@@ -4,6 +4,8 @@ from typing import Any, Tuple, Dict, List, Optional, TYPE_CHECKING
 import random
 
 from entities.creature import Creature
+from engine.messages import CombatStartedMessage, PlayerTurnStartedMessage
+from engine.subscriptions import MessagePriority, subscribe
 from localization import BaseLocalStr
 from utils.registry import register
 from utils.types import EnemyType
@@ -152,6 +154,7 @@ class Enemy(Creature):
         actions = self.current_intention.execute()
         return actions
     
+    @subscribe(CombatStartedMessage, priority=MessagePriority.ENEMY)
     def on_combat_start(self, floor: int = 1) -> None:
         """Called when combat starts.
         
@@ -162,6 +165,7 @@ class Enemy(Creature):
         selection = self.determine_next_intention(floor)
         self.current_intention = self._resolve_next_intention(selection)
     
+    @subscribe(PlayerTurnStartedMessage, priority=MessagePriority.ENEMY)
     def on_player_turn_start(self) -> None:
         """Called at the start of player's turn.
         

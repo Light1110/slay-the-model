@@ -72,20 +72,15 @@ class ShopRoom(Room):
     
     def enter(self) -> BaseResult:
         """Enter shop room and return the initial shop actions."""
+        from engine.messages import ShopEnteredMessage
+
         actions = [DisplayTextAction(text_key="rooms.ShopRoom.enter")]
-
-        entry_bonus_actions = []
-
-        # MealTicket: heal 15 HP on shop entry.
-        for relic in game_state.player.relics:
-            if getattr(relic, "idstr", None) == "MealTicket" and hasattr(relic, "on_shop_enter"):
-                result = relic.on_shop_enter(player=game_state.player, entities=[])
-                if result:
-                    entry_bonus_actions.extend(
-                        result if isinstance(result, list) else [result]
-                    )
-        
-        actions.extend(entry_bonus_actions)
+        actions.extend(
+            game_state.publish_message(
+                ShopEnteredMessage(owner=game_state.player, room=self, entities=[]),
+                participants=list(game_state.player.relics),
+            )
+        )
         actions.append(self._build_shop_menu())
         return MultipleActionsResult(actions)
     

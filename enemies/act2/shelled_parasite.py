@@ -43,8 +43,18 @@ class ShelledParasite(Enemy):
     
     def on_damage_taken(self, damage: int, source=None, card=None, damage_type: str = "direct"):
         """Check if Plated Armor is broken."""
-        from entities.creature import Creature
-        result = Creature.on_damage_taken(self, damage, source, card, damage_type)
+        result = []
+        for power in self.powers[:]:
+            if power.name == "Plated Armor" and hasattr(power, "on_damage_taken"):
+                power_actions = power.on_damage_taken(
+                    damage,
+                    source=source,
+                    card=card,
+                    damage_type=damage_type,
+                )
+                if power_actions:
+                    result.extend(power_actions)
+                break
         
         # Check if Plated Armor is broken (amount == 0 or power removed)
         if not self._has_been_stunned:

@@ -34,22 +34,10 @@ class ModifyMaxHpAction(Action):
 
     def execute(self) -> 'BaseResult':
         from engine.game_state import game_state
-        actions_to_return = []
         
         if game_state.player:
-            old_max = game_state.player.max_hp
             game_state.player.max_hp += self.amount
-            new_max = game_state.player.max_hp
-            
-            # Trigger on_max_hp_changed hook
-            actions = game_state.player.on_max_hp_changed(old_max, new_max)
-            if actions:
-                actions_to_return.extend(actions)
-            
             print(t("ui.max_hp_changed", default=f"Max HP changed by {self.amount}!", amount=self.amount))
-        
-        if actions_to_return:
-            return MultipleActionsResult(actions_to_return)
         return NoneResult()
 
 
@@ -119,6 +107,7 @@ class HealAction(Action):
 
     def execute(self) -> 'BaseResult':
         from engine.game_state import game_state
+        from engine.messages import HealedMessage
         actions_to_return = []
 
         # Default to player if no target specified
@@ -144,28 +133,25 @@ class HealAction(Action):
                         heal_amount = power.modify_heal(heal_amount)
             heal_amount = max(0, int(heal_amount))
 
-            # Trigger on_heal hook
-            actions = heal_target.on_heal(heal_amount)
-            if actions:
-                actions_to_return.extend(actions)
-
-            # Trigger relic on_heal hooks (only for player)
-            if heal_target == game_state.player:
-                for relic in game_state.player.relics:
-                    if hasattr(relic, "on_heal"):
-                        relic_actions = relic.on_heal(
-                            heal_amount=heal_amount,
-                            player=game_state.player,
-                            entities=game_state.current_combat.enemies if game_state.current_combat else [],
-                        )
-                        if relic_actions:
-                            actions_to_return.extend(relic_actions)
-
             # Actually heal (only numerical changes)
             old_hp = heal_target.hp
             heal_target.hp = min(heal_target.hp + heal_amount, heal_target.max_hp)
             healed = heal_target.hp - old_hp
             print(t("ui.healed", default=f"Healed for {healed} HP.", amount=healed))
+            participants = [heal_target]
+            if heal_target == game_state.player:
+                participants.extend(list(game_state.player.relics))
+            message_actions = game_state.publish_message(
+                HealedMessage(
+                    target=heal_target,
+                    amount=healed,
+                    previous_hp=old_hp,
+                    new_hp=heal_target.hp,
+                    source=self,
+                ),
+                participants=participants,
+            )
+            actions_to_return.extend(message_actions)
 
         if actions_to_return:
             return MultipleActionsResult(actions_to_return)
@@ -194,6 +180,7 @@ class LoseHPAction(Action):
 
     def execute(self) -> 'BaseResult':
         from engine.game_state import game_state
+        from engine.messages import HpLostMessage
         actions_to_return = []
 
         # Default to player if no target specified
@@ -211,16 +198,23 @@ class LoseHPAction(Action):
                 print(t("ui.hp_loss_prevented", default=f"HP loss prevented.", amount=hp_loss))
                 return NoneResult()
 
-            # Trigger on_lose_hp hook with card and source info
-            actions = lose_target.on_lose_hp(hp_loss, source=self.source, card=self.card)
-            if actions:
-                actions_to_return.extend(actions)
-
             # Actually lose HP (only numerical changes)
             old_hp = lose_target.hp
             lose_target.hp -= hp_loss
             lost = old_hp - lose_target.hp
             print(t("ui.lost_hp", default=f"Lost {lost} HP.", amount=lost))
+            participants = [*list(getattr(lose_target, "powers", [])), lose_target]
+            actions_to_return.extend(
+                game_state.publish_message(
+                    HpLostMessage(
+                        target=lose_target,
+                        amount=lost,
+                        source=self.source,
+                        card=self.card,
+                    ),
+                    participants=participants,
+                )
+            )
 
         if actions_to_return:
             return MultipleActionsResult(actions_to_return)
@@ -258,6 +252,7 @@ class DealDamageAction(Action):
 
     def execute(self) -> 'BaseResult':
         from engine.game_state import game_state
+        from engine.messages import CreatureDiedMessage, DamageResolvedMessage
         from utils.dynamic_values import resolve_potential_damage
         actions_to_return = []
 
@@ -304,27 +299,6 @@ class DealDamageAction(Action):
             damage_type=self.damage_type
         )
 
-        # Trigger target's on_damage_taken hook.
-        # Keep backward compatibility with older enemy signatures.
-        if damage_dealt > 0:
-            try:
-                target_actions = self.target.on_damage_taken(
-                    damage_dealt,
-                    source=self.source,
-                    card=self.card,
-                    damage_type=self.damage_type
-                )
-            except TypeError:
-                try:
-                    target_actions = self.target.on_damage_taken(
-                        damage_dealt,
-                        source=self.source
-                    )
-                except TypeError:
-                    target_actions = self.target.on_damage_taken(damage_dealt)
-            if target_actions:
-                actions_to_return.extend(target_actions)
-        
         # Print damage dealt
         from localization import t, LocalStr
         target_name = getattr(self.target, 'name', None)
@@ -337,55 +311,45 @@ class DealDamageAction(Action):
             target_name = target_name.resolve()
         print(t("combat.deal_damage_enemy", default="Deal {amount} damage to {target_name}!", amount=damage_dealt, target_name=target_name))
 
-        # Trigger source's on_damage_dealt hook before dealing damage
-        if self.source:
-            source_actions = self.source.on_damage_dealt(
-                damage_dealt,
-                target=self.target,
-                card=self.card,
-                damage_type=self.damage_type
+        participants = [*list(getattr(self.target, "powers", [])), self.target]
+        if self.source is not None:
+            participants.append(self.source)
+        if self.card is not None:
+            participants.append(self.card)
+        player = getattr(game_state, "player", None)
+        if player is not None:
+            participants.extend(list(player.relics))
+
+        actions_to_return.extend(
+            game_state.publish_message(
+                DamageResolvedMessage(
+                    amount=damage_dealt,
+                    target=self.target,
+                    source=self.source,
+                    card=self.card,
+                    damage_type=self.damage_type,
+                ),
+                participants=participants,
             )
-            if source_actions:
-                actions_to_return.extend(source_actions)
-        
-        # Trigger card's on_damage_dealt
-        if self.card and hasattr(self.card, 'on_damage_dealt'):
-            card_actions = self.card.on_damage_dealt(
-                damage_dealt,
-                target=self.target,
-                card=self.card,
-                damage_type=self.damage_type
-            )
-            if card_actions:
-                actions_to_return.extend(card_actions)
-                
-        # Trigger on_fatal - check if target is an enemy and NOT a minion
-        # Minions (summoned enemies) should not trigger on_fatal effects
+        )
+
+        # Death is still determined here, but follow-up hooks move through the message bus.
         from enemies.base import Enemy
         if isinstance(self.target, Enemy) and self.target.is_dead():
-            if not self.target.is_minion:
-                if self.card is not None and hasattr(self.card, 'on_fatal'):
-                    actions_to_return.extend(self.card.on_fatal())
             # Print enemy kill notification (for all enemies including minions)
             print(t("combat.enemy_killed", default="Enemy {target_name} has been defeated!", target_name=target_name))
-
-        # Trigger relic hooks (on_damage_dealt)
-        for relic in game_state.player.relics:
-            if hasattr(relic, "on_damage_dealt"):
-                actions = relic.on_damage_dealt(
-                    damage=damage_dealt,
-                    target=self.target,
-                    player=game_state.player,
-                    entities=game_state.current_combat.enemies if game_state.current_combat else [],
-                )
-                if actions:
-                    actions_to_return.extend(actions)
-
-        # Check if target died from this damage and return death actions
         if self.target.is_dead():
-            death_actions = self.target.on_death()
-            if death_actions:
-                actions_to_return.extend(death_actions)
+            actions_to_return.extend(
+                game_state.publish_message(
+                    CreatureDiedMessage(
+                        creature=self.target,
+                        source=self.source,
+                        card=self.card,
+                        damage_type=self.damage_type,
+                    ),
+                    participants=[self.target],
+                )
+            )
 
         if actions_to_return:
             return MultipleActionsResult(actions_to_return)
@@ -417,24 +381,24 @@ class AttackAction(Action):
         self.source = source
         
     def execute(self) -> 'BaseResult':
+        from engine.game_state import game_state
+        from engine.messages import AttackPerformedMessage
         # NOTE: Do NOT pre-resolve damage here!
         # DealDamageAction will call resolve_potential_damage itself.
         # Pre-resolving would cause double modifier application.
         
         actions_to_return = []
-        
-        # Trigger on_attack hooks for source's powers (e.g., ThieveryPower)
-        # This is called before damage is dealt, allowing effects that trigger on attack
-        if self.source and hasattr(self.source, 'powers'):
-            for power in self.source.powers:
-                if hasattr(power, 'on_attack'):
-                    power_actions = power.on_attack(
-                        target=self.target,
-                        source=self.source,
-                        card=self.card
-                    )
-                    if power_actions:
-                        actions_to_return.extend(power_actions)
+        actions_to_return.extend(
+            game_state.publish_message(
+                AttackPerformedMessage(
+                    target=self.target,
+                    source=self.source,
+                    card=self.card,
+                    damage_type=self.damage_type,
+                ),
+                participants=list(getattr(self.source, "powers", [])) if self.source is not None else [],
+            )
+        )
         
         # Create DealDamageAction with RAW damage - it will resolve internally
         damage_action = DealDamageAction(self.damage, 
@@ -469,32 +433,11 @@ class GainBlockAction(Action):
 
     def execute(self) -> 'BaseResult':
         from engine.game_state import game_state
+        from engine.messages import BlockGainedMessage
         actions_to_return = []
 
         # Resolve callable block values first
         block_amount = self.block() if callable(self.block) else self.block
-
-        # Trigger target's on_gain_block hook
-        if self.target:
-            actions = self.target.on_gain_block(
-                block_amount,
-                source=self.source,
-                card=self.card
-            )
-            if actions:
-                actions_to_return.extend(actions)
-
-        # Trigger power hooks for on_gain_block (pass resolved int amount)
-        for power in list(self.target.powers):
-            if hasattr(power, "on_gain_block"):
-                power_actions = power.on_gain_block(
-                    block_amount,
-                    player=self.target,
-                    source=self.source,
-                    card=self.card
-                )
-                if power_actions:
-                    actions_to_return.extend(power_actions)
 
         # Actually gain block (Creature.gain_block only handles numerical changes)
         self.target.gain_block(block_amount, source=self.source, card=self.card)
@@ -503,6 +446,17 @@ class GainBlockAction(Action):
         target_name = getattr(self.target, 'name', getattr(self.target, 'character', 'Creature'))
         target_name = _localize_character_name(target_name)
         print(t('combat.gain_block').format(source=target_name, amount=block_amount))
+        actions_to_return.extend(
+            game_state.publish_message(
+                BlockGainedMessage(
+                    target=self.target,
+                    amount=block_amount,
+                    source=self.source,
+                    card=self.card,
+                ),
+                participants=[self.target, *list(getattr(self.target, "powers", []))],
+            )
+        )
 
         if actions_to_return:
             return MultipleActionsResult(actions_to_return)
@@ -626,6 +580,7 @@ class PlayCardBHAction(Action):
         
     def execute(self) -> 'BaseResult':
         from engine.game_state import game_state
+        from engine.messages import CardPlayedMessage
         from cards.base import COST_X
         from utils.types import CardType
         player = game_state.player
@@ -654,22 +609,22 @@ class PlayCardBHAction(Action):
         # 1. Trigger card's on_play
         actions.extend(self.card.on_play(targets=self.targets))
         
-        # 2. Trigger powers
-        for power in player.powers:
-            if hasattr(power, 'on_play_card'):
-                actions.extend(power.on_play_card())
-        for enemy in enemies:
-            for power in enemy.powers:
-                # Check both on_play_card and on_card_play hooks
-                if hasattr(power, 'on_play_card'):
-                    actions.extend(power.on_play_card())
-                if hasattr(power, 'on_card_play'):
-                    actions.extend(power.on_card_play(self.card, player, enemies))
-        
-        # 3. Trigger relics
-        for relic in player.relics:
-            if hasattr(relic, 'on_play_card'):
-                actions.extend(relic.on_play_card())
+        actions.extend(
+            game_state.publish_message(
+                CardPlayedMessage(
+                    card=self.card,
+                    owner=player,
+                    targets=self.targets,
+                    enemies=enemies,
+                ),
+                participants=[
+                    *list(getattr(player, "powers", [])),
+                    *[power for enemy in enemies for power in list(getattr(enemy, "powers", []))],
+                    *list(getattr(player, "relics", [])),
+                    *list(player.card_manager.get_pile("hand")),
+                ],
+            )
+        )
 
         # Update turn tracking
         game_state.current_combat.combat_state.turn_cards_played += 1
@@ -786,6 +741,7 @@ class ApplyPowerAction(Action):
         """Apply the power to the target creature"""
         from utils.registry import get_registered
         from engine.game_state import game_state
+        from engine.messages import PowerAppliedMessage
         from powers.base import Power
         
         if not self.target:
@@ -807,8 +763,11 @@ class ApplyPowerAction(Action):
                 raise ValueError(f"Power {self.power} not found")
             # Create power instance
             power_instance = power_class(amount=self.amount, duration=self.duration)
-        elif isinstance(self.power, type) and issubclass(self.power, Power):
-            power_instance = self.power(amount=self.amount, duration=self.duration)
+        elif isinstance(self.power, type):
+            try:
+                power_instance = self.power(amount=self.amount, duration=self.duration)
+            except TypeError:
+                power_instance = self.power(amount=self.amount, duration=self.duration, owner=self.target)
         else:
             # Already a Power instance
             power_instance = self.power
@@ -824,9 +783,6 @@ class ApplyPowerAction(Action):
                         print(f"[{relic.__class__.__name__}] Prevented {power_name_lower} from being applied!")
                         return NoneResult()
 
-        # Trigger on_power_added hook before adding
-        actions = self.target.on_power_added(power_instance)
-
         # Check if this is a debuff and target has Artifact to block it
         if not getattr(power_instance, 'is_buff', True):
             if self.target.try_prevent_debuff():
@@ -835,6 +791,24 @@ class ApplyPowerAction(Action):
 
         # Apply the power to the target (only numerical changes)
         self.target.add_power(power_instance)
+        target_powers = list(getattr(self.target, "powers", []))
+        participants = list(target_powers)
+        if game_state.player:
+            participants.extend(list(getattr(game_state.player, "relics", [])))
+            owner_powers = [
+                power for power in list(getattr(game_state.player, "powers", []))
+                if power not in target_powers
+            ]
+            participants.extend(owner_powers)
+        actions = game_state.publish_message(
+            PowerAppliedMessage(
+                power=power_instance,
+                target=self.target,
+                owner=game_state.player,
+                entities=game_state.current_combat.enemies if game_state.current_combat else [],
+            ),
+            participants=participants,
+        )
         
         if actions:
             return MultipleActionsResult(actions)
@@ -1048,6 +1022,7 @@ class UsePotionBHAction(Action):
     def execute(self) -> 'BaseResult':
         """Execute potion effect with BackAttack transfer and relic hooks."""
         from engine.game_state import game_state
+        from engine.messages import PotionUsedMessage
         from localization import LocalStr
         
         # BackAttack transfer: check first enemy target
@@ -1061,19 +1036,6 @@ class UsePotionBHAction(Action):
         
         # Get actions from potion's on_use method
         actions = self.potion.on_use(self.targets)
-
-        # Trigger relic callbacks for potion use (e.g., ToyOrnithopter).
-        relic_actions = []
-        for relic in list(game_state.player.relics):
-            if not hasattr(relic, "on_use_potion"):
-                continue
-            result = relic.on_use_potion(
-                potion=self.potion,
-                player=game_state.player,
-                entities=game_state.current_combat.enemies if game_state.current_combat else [],
-            )
-            if result:
-                relic_actions.extend(result if isinstance(result, list) else [result])
 
         # Remove potion from player's inventory
         if self.potion in game_state.player.potions:
@@ -1092,6 +1054,16 @@ class UsePotionBHAction(Action):
         all_actions = []
         if actions:
             all_actions.extend(actions if isinstance(actions, list) else [actions])
-        all_actions.extend(relic_actions)
+        all_actions.extend(
+            game_state.publish_message(
+                PotionUsedMessage(
+                    potion=self.potion,
+                    owner=game_state.player,
+                    targets=self.targets,
+                    entities=game_state.current_combat.enemies if game_state.current_combat else [],
+                ),
+                participants=list(game_state.player.relics),
+            )
+        )
 
         return MultipleActionsResult(all_actions)

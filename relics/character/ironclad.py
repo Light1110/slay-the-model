@@ -91,15 +91,16 @@ class CharonsAshes(Relic):
         super().__init__()
         self.rarity = RarityType.RARE
 
-    def on_card_exhaust(self, card, player, entities):
-        """When a card is exhausted, deal 3 damage to all enemies"""
+    def on_card_exhausted(self, card, owner, source_pile=None):
         from engine.game_state import game_state
-        actions = []
-        assert game_state.current_combat is not None
-        for enemy in game_state.current_combat.enemies:
-            if enemy.hp > 0:
-                actions.append(DealDamageAction(damage=3, target=enemy))
-        return actions
+
+        if owner is not game_state.player or not game_state.current_combat:
+            return []
+        return [
+            DealDamageAction(damage=3, target=enemy)
+            for enemy in list(game_state.current_combat.enemies)
+            if not enemy.is_dead()
+        ]
 
 @register("relic")
 class MagicFlower(Relic):

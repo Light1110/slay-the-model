@@ -15,6 +15,12 @@ from utils.option import Option
 from utils.result_types import BaseResult, GameStateResult, NoneResult
 from utils.types import CombatType
 from localization import LocalStr, Localizable, t
+from engine.messages import (
+    CombatEndedMessage,
+    CombatStartedMessage,
+    PlayerTurnEndedMessage,
+    PlayerTurnStartedMessage,
+)
 
 class Combat(Localizable):
     """
@@ -57,6 +63,18 @@ class Combat(Localizable):
         
         # Localization
         self.localization_prefix = "combat"
+
+    def _message_participants(self, enemies=None):
+        from engine.game_state import game_state
+
+        alive_enemies = enemies if enemies is not None else [e for e in self.enemies if e.hp > 0]
+        participants = [game_state.player]
+        participants.extend(list(getattr(game_state.player, "relics", [])))
+        participants.extend(list(getattr(game_state.player, "powers", [])))
+        participants.extend(alive_enemies)
+        for enemy in alive_enemies:
+            participants.extend(list(getattr(enemy, "powers", [])))
+        return participants
 
     def start(self) -> GameStateResult:
         """
@@ -307,31 +325,28 @@ class Combat(Localizable):
         from engine.game_state import game_state
 
          # Trigger end-of-turn effects
-        # relics - powers - cards in hand
-        for relic in game_state.player.relics:
-            game_state.action_queue.add_actions(relic.on_player_turn_end(
-                player=game_state.player,
-                entities=[e for e in self.enemies if e.hp > 0]
-            ))
-        # Process player powers: call on_turn_end and remove expired ones
-        # tui_print(f"[DEBUG] End of player turn - current powers: {[p.name for p in game_state.player.powers]}")
+        alive_enemies = [e for e in self.enemies if e.hp > 0]
+        hand = game_state.player.card_manager.get_pile("hand")
+        game_state.action_queue.add_actions(
+            game_state.publish_message(
+                PlayerTurnEndedMessage(
+                    owner=game_state.player,
+                    enemies=alive_enemies,
+                    hand_cards=list(hand),
+                ),
+                participants=self._message_participants(alive_enemies) + list(hand),
+            )
+        )
+
+        # Process player powers: remove expired ones after the turn-end hooks have ticked durations.
         powers_to_remove = []
         for power in game_state.player.powers:
-            game_state.action_queue.add_actions(power.on_turn_end())
-            # tui_print(f"[DEBUG] Power {power.name}: duration={power.duration}")
-            # Check if power should be removed (duration reached 0)
             if power.duration == 0:
                 powers_to_remove.append(power.name)
-                # tui_print(f"[DEBUG] Marking power {power.name} for removal")
         
         # Remove expired powers
         for power_name in powers_to_remove:
             game_state.player.remove_power(power_name)
-        # tui_print(f"[DEBUG] After power removal - current powers: {[p.name for p in game_state.player.powers]}")
-        
-        hand = game_state.player.card_manager.get_pile("hand")
-        for card in hand:
-            game_state.action_queue.add_actions(card.on_player_turn_end())
 
         # Discard hand (cards in hand are shuffled into discard pile)
         # RunicPyramid: At the end of your turn, you no longer discard your hand.
@@ -447,19 +462,16 @@ class Combat(Localizable):
         
         # Check if all enemies are dead
         if not self.enemies or all(e.is_dead() for e in self.enemies):
-            # Trigger on_combat_end for relics
-            for relic in game_state.player.relics:
-                game_state.action_queue.add_actions(relic.on_combat_end(
-                    player=game_state.player,
-                    entities=[e for e in self.enemies if e.hp > 0]
-                ))
-            
-            # Trigger on_combat_end for player powers
-            for power in game_state.player.powers:
-                game_state.action_queue.add_actions(power.on_combat_end(
-                    owner=game_state.player,
-                    entities=[e for e in self.enemies if e.hp > 0]
-                ))
+            alive_enemies = [e for e in self.enemies if e.hp > 0]
+            game_state.action_queue.add_actions(
+                game_state.publish_message(
+                    CombatEndedMessage(
+                        owner=game_state.player,
+                        enemies=alive_enemies,
+                    ),
+                    participants=self._message_participants(alive_enemies),
+                )
+            )
             
             # Execute all queued actions before returning
             game_state.drive_actions()
@@ -495,16 +507,17 @@ class Combat(Localizable):
         # Clear player powers at start of each combat (powers don't persist between combats)
         game_state.player.powers = []
         
-        # Trigger combat start effects (relics)
-        for relic in game_state.player.relics:
-            game_state.action_queue.add_actions(relic.on_combat_start(
-                player=game_state.player,
-                entities=[e for e in self.enemies if e.hp > 0]
-            ))
-        
-        # Trigger combat start effects for enemies
-        for enemy in self.enemies:
-            enemy.on_combat_start(floor=game_state.current_floor)
+        alive_enemies = [e for e in self.enemies if e.hp > 0]
+        game_state.action_queue.add_actions(
+            game_state.publish_message(
+                CombatStartedMessage(
+                    owner=game_state.player,
+                    enemies=alive_enemies,
+                    floor=game_state.current_floor,
+                ),
+                participants=self._message_participants(alive_enemies),
+            )
+        )
         
         # God mode: set all enemies to 1 HP if enabled
         god_mode_enabled = game_state.config.get("debug.god_mode", False)
@@ -601,11 +614,13 @@ class Combat(Localizable):
         self.combat_state.combat_turn += 1
         self.combat_state.current_phase = "player_action"
         
-        # relics - powers
-        for relic in game_state.player.relics:
-            game_state.action_queue.add_actions(relic.on_player_turn_start(game_state.player, [e for e in self.enemies if e.hp > 0]))
-        for power in game_state.player.powers:
-            game_state.action_queue.add_actions(power.on_turn_start())
-        # enemies
-        for enemy in self.enemies:
-            enemy.on_player_turn_start()
+        alive_enemies = [e for e in self.enemies if e.hp > 0]
+        game_state.action_queue.add_actions(
+            game_state.publish_message(
+                PlayerTurnStartedMessage(
+                    owner=game_state.player,
+                    enemies=alive_enemies,
+                ),
+                participants=self._message_participants(alive_enemies),
+            )
+        )

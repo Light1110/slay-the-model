@@ -10,6 +10,7 @@ import random as rd
 from typing import List, Optional
 
 from engine.input_protocol import InputRequest, InputSubmission
+from engine.message_bus import MessageBus
 from utils.result_types import BaseResult, GameStateResult
 from config.game_config import GameConfig
 import os
@@ -93,6 +94,7 @@ class GameState:
         # Global action queue - shared across all rooms and events
         from actions.base import ActionQueue
         self.action_queue = ActionQueue()
+        self.message_bus = MessageBus()
         
         # Current combat (None when not in combat)
         self.current_combat: Optional[Combat] = None
@@ -112,6 +114,10 @@ class GameState:
         
         # temp value for select result
         self.last_select_idx = -1
+
+    def publish_message(self, message, participants: Optional[List] = None) -> List:
+        """Publish a runtime message and return follow-up actions."""
+        return self.message_bus.publish(message, participants=participants)
     
     def _get_floors_in_act(self, act: int) -> int:
         """

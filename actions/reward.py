@@ -13,6 +13,24 @@ from utils.types import RarityType
 if TYPE_CHECKING:
     from relics.base import Relic
 
+
+def _handle_obtained_relic(relic: "Relic"):
+    from engine.game_state import game_state
+    from engine.messages import RelicObtainedMessage
+
+    if not relic or not game_state.player:
+        return
+
+    game_state.player.relics.append(relic)
+    game_state.obtained_relics.add(relic.idstr)
+    tui_print(t("ui.received_relic", default=f"Received relic: {relic.idstr}!", name=relic.idstr))
+    game_state.action_queue.add_actions(
+        game_state.publish_message(
+            RelicObtainedMessage(owner=game_state.player, relic=relic),
+            participants=[relic],
+        )
+    )
+
 # Reward actions
 @register("action")
 class AddRelicAction(Action):
@@ -28,16 +46,7 @@ class AddRelicAction(Action):
         """Execute: add relic to player"""
         from engine.game_state import game_state
         if self.relic and game_state.player:
-            game_state.player.relics.append(self.relic)
-            # Track relic as obtained (even if removed later)
-            game_state.obtained_relics.add(self.relic.idstr)
-            tui_print(t("ui.received_relic", default=f"Received relic: {self.relic.idstr}!", name=self.relic.idstr))
-            # Trigger on_obtain hook so relic-specific pickup effects fire (e.g., Astrolabe, Orrery, Tiny House)
-            if hasattr(self.relic, "on_obtain"):
-                actions = self.relic.on_obtain()
-                if actions:
-                    for action in actions:
-                        game_state.action_queue.add_action(action)
+            _handle_obtained_relic(self.relic)
         return NoneResult()
             
 @register("action")
@@ -56,16 +65,7 @@ class AddRelicByNameAction(Action):
         if self.relic_id and game_state.player:
             relic = get_registered_instance("relic", self.relic_id)
             if relic:
-                game_state.player.relics.append(relic)
-                # Track relic as obtained (even if removed later)
-                game_state.obtained_relics.add(relic.idstr)
-                tui_print(t("ui.received_relic", default=f"Received relic: {relic.idstr}!", name=relic.idstr))
-                # Trigger on_obtain hook so relic-specific pickup effects fire (e.g., Astrolabe, Orrery)
-                if hasattr(relic, "on_obtain"):
-                    actions = relic.on_obtain()
-                    if actions:
-                        for action in actions:
-                            game_state.action_queue.add_action(action)
+                _handle_obtained_relic(relic)
         return NoneResult()
 @register("action")
 class AddRandomRelicAction(Action):
@@ -115,10 +115,7 @@ class AddRandomRelicAction(Action):
                 exclude=self.exclude_relics,
             )
             if relic:
-                game_state.player.relics.append(relic)
-                # Track relic as obtained (even if removed later)
-                game_state.obtained_relics.add(relic.idstr)
-                tui_print(t("ui.received_relic", default=f"Received relic: {relic.idstr}!", name=relic.idstr))
+                _handle_obtained_relic(relic)
         return NoneResult()
             
 @register("action")
@@ -213,6 +210,7 @@ class AddGoldAction(Action):
     def execute(self) -> 'BaseResult':
         import random
         from engine.game_state import game_state
+        from engine.messages import GoldGainedMessage
         if game_state.player:
             if random.random() < self.chance:
                 # Ectoplasm: block all gold gain.
@@ -227,12 +225,15 @@ class AddGoldAction(Action):
                 
                 game_state.player.gold += modified_amount
                 tui_print(t("rewards.gold", default="Gained {amount} gold", amount=modified_amount))
-                
-                # Trigger on_gold_gained for relics like BloodyIdol
-                for relic in game_state.player.relics:
-                    actions = relic.on_gold_gained(modified_amount, game_state.player)
-                    for action in actions:
-                        action.execute()
+                actions = game_state.publish_message(
+                    GoldGainedMessage(
+                        owner=game_state.player,
+                        amount=modified_amount,
+                    ),
+                    participants=list(game_state.player.relics),
+                )
+                if actions:
+                    return MultipleActionsResult(actions)
             else:
                 tui_print(t("rewards.gold_fail", default="Failed to gain gold", chance=self.chance))
         return NoneResult()

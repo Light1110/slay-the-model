@@ -72,6 +72,8 @@ class AddCardAction(Action):
     def execute(self) -> 'BaseResult':
         import random
         from engine.game_state import game_state
+        from engine.messages import CardDrawnMessage
+        from engine.messages import CardAddedToPileMessage
         from utils.types import CardType
 
         # Check probability if chance < 1.0
@@ -117,24 +119,18 @@ class AddCardAction(Action):
                 
                 # todo: 改为事件系统
                 # Ceramic Fish: whenever a card is added to deck, gain 9 gold.
-                if target_pile in ("deck"):
-                    from actions.reward import AddGoldAction
-                    if any(
-                        getattr(relic, "idstr", None) == "CeramicFish"
-                        for relic in game_state.player.relics
-                    ):
-                        AddGoldAction(amount=9).execute()
-                    for relic in list(game_state.player.relics):
-                        hook = getattr(relic, "on_card_added", None)
-                        if not hook:
-                            continue
-                        result = hook(self.card, target_pile)
-                        if not result:
-                            continue
-                        if isinstance(result, list):
-                            follow_up_actions.extend(result)
-                        else:
-                            follow_up_actions.append(result)
+                follow_up_actions.extend(
+                    game_state.publish_message(
+                        CardAddedToPileMessage(
+                            card=self.card,
+                            owner=game_state.player,
+                            dest_pile=target_pile,
+                            source=self.source,
+                            position=self.position,
+                        ),
+                        participants=list(game_state.player.relics),
+                    )
+                )
                 # Only show [Reward] for actual rewards, use appropriate prefix for others
                 # Localize pile name
                 pile_name = t(f'combat.{target_pile}', default=target_pile)
@@ -147,8 +143,7 @@ class AddCardAction(Action):
                 else:
                     print(f"[{self.source.title()}] {t('combat.card_added', default='Added')} {self.card.display_name.resolve()} {t('combat.to_pile', default='to')} {pile_name}")
                 if follow_up_actions:
-                    for action in follow_up_actions:
-                        action.execute()
+                    return MultipleActionsResult(follow_up_actions)
         return NoneResult()
                 
 @register("action")
@@ -198,34 +193,29 @@ class ExhaustCardAction(Action):
 
     def execute(self) -> 'BaseResult':
         from engine.game_state import game_state
+        from engine.messages import CardExhaustedMessage
         if self.card and game_state.player and hasattr(game_state.player, "card_manager"):
             # Actually exhaust card
             exhausted = game_state.player.card_manager.exhaust(self.card, src=self.source_pile)
             
             # Trigger card's on_exhaust method
             card_actions = self.card.on_exhaust() if hasattr(self.card, 'on_exhaust') else []
-            
-            # todo: 改为事件系统
-            # Trigger on_exhaust powers before exhausting
-            power_actions = []
-            for power in list(game_state.player.powers):
-                if hasattr(power, "on_exhaust"):
-                    result = power.on_exhaust()
-                    if result:
-                        power_actions.extend(result if isinstance(result, list) else [result])
-            
-            relic_actions = []
-            for relic in list(game_state.player.relics):
-                if hasattr(relic, "on_card_exhaust"):
-                    result = relic.on_card_exhaust(
-                        card=self.card,
-                        player=game_state.player,
-                        entities=game_state.current_combat.enemies if game_state.current_combat else []
-                    )
-                    if result:
-                        relic_actions.extend(result if isinstance(result, list) else [result])
 
-            return MultipleActionsResult(card_actions + power_actions + relic_actions)
+            message_actions = []
+            if exhausted:
+                message_actions = game_state.publish_message(
+                    CardExhaustedMessage(
+                        card=self.card,
+                        owner=game_state.player,
+                        source_pile=self.source_pile,
+                    ),
+                    participants=[
+                        *list(getattr(game_state.player, "powers", [])),
+                        *list(getattr(game_state.player, "relics", [])),
+                    ],
+                )
+
+            return MultipleActionsResult(card_actions + message_actions)
 
         return NoneResult()
     
@@ -245,6 +235,7 @@ class DiscardCardAction(Action):
 
     def execute(self) -> 'BaseResult':
         from engine.game_state import game_state
+        from engine.messages import CardDiscardedMessage
         if self.card and game_state.player and hasattr(game_state.player, "card_manager"):
             # Find source pile if not specified
             if self.source_pile is None:
@@ -253,19 +244,17 @@ class DiscardCardAction(Action):
             # Actually discard card
             discarded = game_state.player.card_manager.discard(self.card, src=self.source_pile)
             
-            # Trigger on_discard powers before discarding
-            power_actions = []
-            if hasattr(game_state.player, 'powers'):
-                for power in list(game_state.player.powers):
-                    if hasattr(power, "on_discard"):
-                        result = power.on_discard(self.card)
-                        if result:
-                            power_actions.extend(result if isinstance(result, list) else [result])
-                    
-            # Trigger card's on_discard method
-            card_actions = self.card.on_discard() if hasattr(self.card, 'on_discard') else []
-            
-            return MultipleActionsResult(card_actions + power_actions)
+            if discarded:
+                actions = game_state.publish_message(
+                    CardDiscardedMessage(
+                        card=self.card,
+                        owner=game_state.player,
+                        source_pile=self.source_pile,
+                    ),
+                    participants=[self.card, *list(game_state.player.powers), *list(game_state.player.relics)],
+                )
+                if actions:
+                    return MultipleActionsResult(actions)
         return NoneResult()
 
 @register("action")
@@ -756,6 +745,7 @@ class DrawCardsAction(Action):
 
     def execute(self) -> 'BaseResult':
         from engine.game_state import game_state
+        from engine.messages import CardDrawnMessage
 
         if game_state.player and hasattr(game_state.player, "card_manager"):
             # Handle callable count (dynamic card draw amounts)
@@ -766,24 +756,22 @@ class DrawCardsAction(Action):
             # Note: Draw message is now printed in CombatState._print_combat_state()
             # after "Player Turn" header for better display order
             
-            # Trigger on_card_draw powers for each drawn card
-            power_actions = []
+            message_actions = []
             for card in cards:
-                if hasattr(game_state.player, 'powers'):
-                    for power in list(game_state.player.powers):
-                        if hasattr(power, "on_card_draw"):
-                            result = power.on_card_draw(card)
-                            if result:
-                                power_actions.extend(result if isinstance(result, list) else [result])
-                
-                # Also trigger card's on_draw method
-                card_actions = card.on_draw() if hasattr(card, 'on_draw') else []
-                power_actions.extend(card_actions)
+                message_actions.extend(
+                    game_state.publish_message(
+                        CardDrawnMessage(
+                            card=card,
+                            owner=game_state.player,
+                        ),
+                        participants=[card, *list(game_state.player.powers), *list(game_state.player.relics)],
+                    )
+                )
             
             # If there are any actions from powers/card callbacks, queue them
-            if power_actions:
+            if message_actions:
                 from utils.result_types import MultipleActionsResult
-                return MultipleActionsResult(power_actions)
+                return MultipleActionsResult(message_actions)
             
             return NoneResult()
 
@@ -1164,6 +1152,7 @@ class ExhaustRandomCardAction(Action):
 
     def execute(self) -> 'BaseResult':
         from engine.game_state import game_state
+        from engine.messages import ShuffleMessage
         import random
 
         if not game_state.player:
@@ -1193,6 +1182,7 @@ class ShuffleAction(Action):
     def execute(self):
         """Execute shuffle: move all cards from hand/discard to draw pile and shuffle."""
         from engine.game_state import game_state
+        from engine.messages import ShuffleMessage
         import random
 
         if not game_state.player or not hasattr(game_state.player, "card_manager"):
@@ -1214,14 +1204,10 @@ class ShuffleAction(Action):
         draw_cards = card_manager.get_pile("draw_pile")
         random.shuffle(draw_cards)
         
-        # Trigger on_shuffle relics
-        relic_actions = []
-        if hasattr(game_state.player, 'relics'):
-            for relic in list(game_state.player.relics):
-                if hasattr(relic, "on_shuffle"):
-                    result = relic.on_shuffle()
-                    if result:
-                        relic_actions.extend(result if isinstance(result, list) else [result])
+        relic_actions = game_state.publish_message(
+            ShuffleMessage(owner=game_state.player),
+            participants=list(game_state.player.relics),
+        )
         
         # If there are any actions from relic callbacks, queue them
         if relic_actions:
