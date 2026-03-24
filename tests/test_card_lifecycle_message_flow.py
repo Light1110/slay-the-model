@@ -14,6 +14,17 @@ from tests.test_combat_utils import create_test_helper
 from utils.result_types import MultipleActionsResult, SingleActionResult
 
 
+def test_card_actions_import_from_actions_card_surface():
+    from actions import card as card_surface
+    from actions.card_choice import ChooseMoveCardAction
+    from actions.card_lifecycle import DrawCardsAction as LifecycleDrawCardsAction
+    from actions.card_lifecycle import ExhaustCardAction as LifecycleExhaustCardAction
+
+    assert card_surface.DrawCardsAction is LifecycleDrawCardsAction
+    assert card_surface.ExhaustCardAction is LifecycleExhaustCardAction
+    assert card_surface.ChooseMoveCardAction is ChooseMoveCardAction
+
+
 def _execute_result(result):
     if result is None:
         return

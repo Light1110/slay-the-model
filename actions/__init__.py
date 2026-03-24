@@ -26,7 +26,26 @@ from utils.result_types import (
 
 # Import commonly used actions
 from actions.display import DisplayTextAction, InputRequestAction
-from actions.card import RemoveCardAction, ShuffleAction
+from actions.card import (
+    AddRandomCardAction,
+    ChooseExhaustCardAction,
+    ChooseMoveCardAction,
+    ChooseRemoveCardAction,
+    ChooseReplaceCardAction,
+    ChooseTransformCardAction,
+    ChooseUpgradeCardAction,
+    CopyCardAction,
+    DrawCardsAction,
+    ExhaustCardAction,
+    ExhaustRandomCardAction,
+    MoveCardAction,
+    RemoveCardAction,
+    ReplaceCardAction,
+    ShuffleAction,
+    TransformCardAction,
+    UpgradeAllCardsAction,
+    UpgradeCardAction,
+)
 # Note: BuyItemAction, OpenChestAction, LeaveRoomAction imported from actions.misc
 # directly in modules that need them to avoid circular import with relics package
 from actions.combat import TriggerRelicAction
