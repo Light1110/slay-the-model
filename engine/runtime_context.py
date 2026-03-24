@@ -4,6 +4,9 @@ from typing import List, Optional
 from engine.input_protocol import InputRequest, InputSubmission
 
 
+NO_OVERRIDE = object()
+
+
 class RuntimeContext:
     """Shared runtime helpers for participant assembly and input resolution."""
 
@@ -38,21 +41,18 @@ class RuntimeContext:
     def _call_game_state_override(self, hook_name, *args, **kwargs):
         """Call an overridden GameState hook when one is present."""
         if self.game_state is None:
-            return None
+            return NO_OVERRIDE
 
         bound = getattr(self.game_state, hook_name, None)
         if bound is None:
-            return None
+            return NO_OVERRIDE
 
-        try:
-            from engine.game_state import GameState
-            default_impl = getattr(GameState, hook_name, None)
-        except Exception:
-            default_impl = None
+        from engine.game_state import _GAME_STATE_RUNTIME_HOOK_WRAPPERS
 
+        default_impl = _GAME_STATE_RUNTIME_HOOK_WRAPPERS.get(hook_name)
         target_impl = getattr(bound, "__func__", bound)
         if default_impl is not None and target_impl is default_impl:
-            return None
+            return NO_OVERRIDE
 
         return bound(*args, **kwargs)
 
@@ -87,28 +87,28 @@ class RuntimeContext:
             return InputSubmission([])
 
         if self.config.auto_select and len(options) == 1:
-            return self._build_submission(options, [0])
+            return self.default_build_submission(options, [0])
 
         mode = self.config.mode
         if mode == "ai":
             selected_indices = self._call_game_state_override("_resolve_ai_selection", request)
-            if selected_indices is None:
-                selected_indices = self._resolve_ai_selection(request)
+            if selected_indices is NO_OVERRIDE:
+                selected_indices = self.default_resolve_ai_selection(request)
         elif mode == "debug":
             selected_indices = self._call_game_state_override("_resolve_debug_selection", request)
-            if selected_indices is None:
-                selected_indices = self._resolve_debug_selection(request)
+            if selected_indices is NO_OVERRIDE:
+                selected_indices = self.default_resolve_debug_selection(request)
         else:
             selected_indices = self._call_game_state_override("_resolve_human_selection", request)
-            if selected_indices is None:
-                selected_indices = self._resolve_human_selection(request)
+            if selected_indices is NO_OVERRIDE:
+                selected_indices = self.default_resolve_human_selection(request)
 
         submission = self._call_game_state_override("_build_submission", options, selected_indices)
-        if submission is not None:
-            return submission
-        return self._build_submission(options, selected_indices)
+        if submission is NO_OVERRIDE:
+            submission = self.default_build_submission(options, selected_indices)
+        return submission
 
-    def _augment_human_options(self, request: InputRequest) -> List:
+    def default_augment_human_options(self, request: InputRequest) -> List:
         """Add human-only helper options such as the in-run menu."""
         options = list(request.options or [])
         show_menu = bool(self.config.human.get("show_menu_option", False))
@@ -127,15 +127,15 @@ class RuntimeContext:
         )
         return options
 
-    def _resolve_human_selection(self, request: InputRequest) -> List[int]:
+    def default_resolve_human_selection(self, request: InputRequest) -> List[int]:
         """Resolve a selection request from CLI or TUI human input."""
         from localization import t
         from tui import get_app, is_tui_mode
         from tui.print_utils import tui_print
 
         options = self._call_game_state_override("_augment_human_options", request)
-        if options is None:
-            options = self._augment_human_options(request)
+        if options is NO_OVERRIDE:
+            options = self.default_augment_human_options(request)
         title = t(str(request.title), default=str(request.title)) if isinstance(request.title, str) else str(request.title or "")
 
         if is_tui_mode():
@@ -168,8 +168,8 @@ class RuntimeContext:
                 max_select=request.max_select,
                 must_select=request.must_select,
             )
-            if parsed is None:
-                parsed = self._parse_selection_input(
+            if parsed is NO_OVERRIDE:
+                parsed = self.default_parse_selection_input(
                     raw_input=raw,
                     option_count=len(options),
                     max_select=request.max_select,
@@ -179,7 +179,7 @@ class RuntimeContext:
                 request.options = options
                 return parsed
 
-    def _resolve_ai_selection(self, request: InputRequest) -> List[int]:
+    def default_resolve_ai_selection(self, request: InputRequest) -> List[int]:
         """Resolve a selection request through the configured AI decision engine."""
         from tui import get_app, is_tui_mode
 
@@ -189,9 +189,9 @@ class RuntimeContext:
 
         if self.decision_engine is None:
             selected_indices = self._call_game_state_override("_resolve_debug_selection", request)
-            if selected_indices is not None:
-                return selected_indices
-            return self._resolve_debug_selection(request)
+            if selected_indices is NO_OVERRIDE:
+                selected_indices = self.default_resolve_debug_selection(request)
+            return selected_indices
 
         title = str(request.title or "")
         option_text = [str(option.name) for option in options]
@@ -226,7 +226,7 @@ class RuntimeContext:
 
         return self.decision_engine.make_decision(title, option_text, context, max_select)
 
-    def _resolve_debug_selection(self, request: InputRequest) -> List[int]:
+    def default_resolve_debug_selection(self, request: InputRequest) -> List[int]:
         """Resolve a request automatically in debug mode."""
         options = list(request.options or [])
         if not options:
@@ -248,8 +248,8 @@ class RuntimeContext:
             options,
             actual_max_select,
         )
-        if heuristic_selection is None:
-            heuristic_selection = self._resolve_debug_selection_with_heuristics(
+        if heuristic_selection is NO_OVERRIDE:
+            heuristic_selection = self.default_resolve_debug_selection_with_heuristics(
                 options,
                 actual_max_select,
             )
@@ -259,7 +259,7 @@ class RuntimeContext:
         sample_size = min(actual_max_select, len(options))
         return sorted(rd.sample(range(len(options)), sample_size))
 
-    def _resolve_debug_selection_with_heuristics(
+    def default_resolve_debug_selection_with_heuristics(
         self,
         options: List,
         actual_max_select: int,
@@ -271,8 +271,8 @@ class RuntimeContext:
         scored = []
         for idx, option in enumerate(options):
             score = self._call_game_state_override("_score_debug_option", option)
-            if score is None:
-                score = self._score_debug_option(option)
+            if score is NO_OVERRIDE:
+                score = self.default_score_debug_option(option)
             scored.append((score, idx))
 
         if not scored:
@@ -285,7 +285,7 @@ class RuntimeContext:
         best_indices = [idx for score, idx in scored if score == best_score]
         return [best_indices[0]]
 
-    def _score_debug_option(self, option) -> int:
+    def default_score_debug_option(self, option) -> int:
         """Heuristic score for debug auto-selection in combat."""
         from actions.combat import EndTurnAction, PlayCardAction, UsePotionAction
         from utils.types import CardType
@@ -317,7 +317,7 @@ class RuntimeContext:
 
         return score
 
-    def _parse_selection_input(
+    def default_parse_selection_input(
         self,
         raw_input: str,
         option_count: int,
@@ -379,7 +379,7 @@ class RuntimeContext:
 
         return indices
 
-    def _build_submission(self, options: List, selected_indices: List[int]) -> InputSubmission:
+    def default_build_submission(self, options: List, selected_indices: List[int]) -> InputSubmission:
         """Turn selected option indices into an actionable submission."""
         from actions.display import build_selected_options, show_selected_options
 

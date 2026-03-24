@@ -112,3 +112,30 @@ def test_drive_actions_resolves_input_request_in_debug_mode():
     assert isinstance(result, NoneResult)
     assert executed == ["picked"]
     assert game_state.action_queue.is_empty()
+
+
+def test_parse_selection_input_override_can_return_none(monkeypatch):
+    gs = GameState()
+    gs.config.mode = "manual"
+
+    calls = []
+    responses = iter(["first", "second"])
+
+    def fake_parse(self, raw_input, option_count, max_select, must_select):
+        calls.append((raw_input, option_count, max_select, must_select))
+        if raw_input == "first":
+            return None
+        return [0]
+
+    monkeypatch.setattr(GameState, "_parse_selection_input", fake_parse)
+    monkeypatch.setattr("builtins.input", lambda _prompt: next(responses))
+
+    submission = gs.resolve_input_request(
+        InputRequest(
+            options=[Option(name="Only", actions=[LambdaAction(lambda: None)])],
+            max_select=1,
+        )
+    )
+
+    assert len(submission.actions) == 1
+    assert calls == [("first", 2, 1, True), ("second", 2, 1, True)]

@@ -313,59 +313,95 @@ class GameState:
 
             return result if result is not None else NoneResult()
 
-    def resolve_input_request(self, request: InputRequest) -> InputSubmission:
-        """Resolve one declarative input request based on the configured mode."""
-        return self.runtime_context.resolve_input_request(request)
 
-    def _augment_human_options(self, request: InputRequest) -> List:
-        """Backward-compatible wrapper around runtime selection helpers."""
-        return self.runtime_context._augment_human_options(request)
+# Runtime selection helpers live on RuntimeContext. GameState keeps thin wrappers
+# assigned below so existing override and monkeypatch points still work.
 
-    def _resolve_human_selection(self, request: InputRequest) -> List[int]:
-        """Backward-compatible wrapper around runtime selection helpers."""
-        return self.runtime_context._resolve_human_selection(request)
 
-    def _resolve_ai_selection(self, request: InputRequest) -> List[int]:
-        """Backward-compatible wrapper around runtime selection helpers."""
-        return self.runtime_context._resolve_ai_selection(request)
+def _resolve_input_request_wrapper(self, request: InputRequest) -> InputSubmission:
+    """Resolve one declarative input request based on the configured mode."""
+    return self.runtime_context.resolve_input_request(request)
 
-    def _resolve_debug_selection(self, request: InputRequest) -> List[int]:
-        """Backward-compatible wrapper around runtime selection helpers."""
-        return self.runtime_context._resolve_debug_selection(request)
 
-    def _resolve_debug_selection_with_heuristics(
-        self,
-        options: List,
-        actual_max_select: int,
-    ) -> Optional[List[int]]:
-        """Backward-compatible wrapper around runtime selection helpers."""
-        return self.runtime_context._resolve_debug_selection_with_heuristics(
-            options,
-            actual_max_select,
-        )
+def _augment_human_options_wrapper(self, request: InputRequest) -> List:
+    """Backward-compatible wrapper around runtime selection helpers."""
+    return self.runtime_context.default_augment_human_options(request)
 
-    def _score_debug_option(self, option) -> int:
-        """Backward-compatible wrapper around runtime selection helpers."""
-        return self.runtime_context._score_debug_option(option)
 
-    def _parse_selection_input(
-        self,
-        raw_input: str,
-        option_count: int,
-        max_select: int,
-        must_select: bool,
-    ) -> Optional[List[int]]:
-        """Backward-compatible wrapper around runtime selection helpers."""
-        return self.runtime_context._parse_selection_input(
-            raw_input=raw_input,
-            option_count=option_count,
-            max_select=max_select,
-            must_select=must_select,
-        )
+def _resolve_human_selection_wrapper(self, request: InputRequest) -> List[int]:
+    """Backward-compatible wrapper around runtime selection helpers."""
+    return self.runtime_context.default_resolve_human_selection(request)
 
-    def _build_submission(self, options: List, selected_indices: List[int]) -> InputSubmission:
-        """Backward-compatible wrapper around runtime selection helpers."""
-        return self.runtime_context._build_submission(options, selected_indices)
+
+def _resolve_ai_selection_wrapper(self, request: InputRequest) -> List[int]:
+    """Backward-compatible wrapper around runtime selection helpers."""
+    return self.runtime_context.default_resolve_ai_selection(request)
+
+
+def _resolve_debug_selection_wrapper(self, request: InputRequest) -> List[int]:
+    """Backward-compatible wrapper around runtime selection helpers."""
+    return self.runtime_context.default_resolve_debug_selection(request)
+
+
+def _resolve_debug_selection_with_heuristics_wrapper(
+    self,
+    options: List,
+    actual_max_select: int,
+) -> Optional[List[int]]:
+    """Backward-compatible wrapper around runtime selection helpers."""
+    return self.runtime_context.default_resolve_debug_selection_with_heuristics(
+        options,
+        actual_max_select,
+    )
+
+
+def _score_debug_option_wrapper(self, option) -> int:
+    """Backward-compatible wrapper around runtime selection helpers."""
+    return self.runtime_context.default_score_debug_option(option)
+
+
+def _parse_selection_input_wrapper(
+    self,
+    raw_input: str,
+    option_count: int,
+    max_select: int,
+    must_select: bool,
+) -> Optional[List[int]]:
+    """Backward-compatible wrapper around runtime selection helpers."""
+    return self.runtime_context.default_parse_selection_input(
+        raw_input=raw_input,
+        option_count=option_count,
+        max_select=max_select,
+        must_select=must_select,
+    )
+
+
+def _build_submission_wrapper(self, options: List, selected_indices: List[int]) -> InputSubmission:
+    """Backward-compatible wrapper around runtime selection helpers."""
+    return self.runtime_context.default_build_submission(options, selected_indices)
+
+
+GameState.resolve_input_request = _resolve_input_request_wrapper
+GameState._augment_human_options = _augment_human_options_wrapper
+GameState._resolve_human_selection = _resolve_human_selection_wrapper
+GameState._resolve_ai_selection = _resolve_ai_selection_wrapper
+GameState._resolve_debug_selection = _resolve_debug_selection_wrapper
+GameState._resolve_debug_selection_with_heuristics = _resolve_debug_selection_with_heuristics_wrapper
+GameState._score_debug_option = _score_debug_option_wrapper
+GameState._parse_selection_input = _parse_selection_input_wrapper
+GameState._build_submission = _build_submission_wrapper
+
+_GAME_STATE_RUNTIME_HOOK_WRAPPERS = {
+    "resolve_input_request": _resolve_input_request_wrapper,
+    "_augment_human_options": _augment_human_options_wrapper,
+    "_resolve_human_selection": _resolve_human_selection_wrapper,
+    "_resolve_ai_selection": _resolve_ai_selection_wrapper,
+    "_resolve_debug_selection": _resolve_debug_selection_wrapper,
+    "_resolve_debug_selection_with_heuristics": _resolve_debug_selection_with_heuristics_wrapper,
+    "_score_debug_option": _score_debug_option_wrapper,
+    "_parse_selection_input": _parse_selection_input_wrapper,
+    "_build_submission": _build_submission_wrapper,
+}
 
 # Global game state instance
 game_state = GameState()
