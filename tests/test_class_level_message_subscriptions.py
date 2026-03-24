@@ -2,6 +2,7 @@ from actions.combat import GainBlockAction
 from cards.base import Card
 from enemies.act1.cultist import Cultist
 from enemies.act1.lagavulin import Lagavulin
+from enemies.act2.the_champ import TheChamp
 from enemies.base import Enemy
 from engine.messages import (
     AttackPerformedMessage,
@@ -623,8 +624,24 @@ def test_damage_resolved_dispatches_to_lagavulin_override():
     assert lagavulin.turns_without_damage == 0
 
 
+def test_damage_resolved_dispatches_to_the_champ_override_signature():
+    class ChampProbe(TheChamp):
+        def __init__(self):
+            super().__init__()
+            self.observed_damage = None
 
+        def on_damage_taken(self, damage: int):
+            self.observed_damage = damage
+            return TheChamp.on_damage_taken(self, damage)
 
+    champ = ChampProbe()
+    champ.hp = champ.max_hp // 2
+    bus = MessageBus()
 
+    bus.publish(
+        DamageResolvedMessage(amount=9, target=champ, source=None, card=None, damage_type="attack"),
+        participants=[champ],
+    )
 
-
+    assert champ.observed_damage == 9
+    assert champ.hp == champ.max_hp // 2

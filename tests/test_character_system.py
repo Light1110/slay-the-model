@@ -29,8 +29,8 @@ def test_create_ironclad():
         (player.gold == 99, f"Gold: {player.gold} != 99"),
         (player.namespace == "ironclad", f"Namespace: {player.namespace} != ironclad"),
         (player.base_draw_count == 5, f"Draw count: {player.base_draw_count} != 5"),
-        (len(player.card_manager.deck) > 0, "Starter deck is empty"),
-        ({"Strike", "Defend"}.issubset(set(deck_names)), f"Missing starter cards: {deck_names}"),
+        (len(player.card_manager.deck) == 10, f"Deck size: {len(player.card_manager.deck)} != 10"),
+        (len(player.relics) == 1, f"Relics count: {len(player.relics)} != 1"),
         ("BurningBlood" in relic_names, f"BurningBlood not in relics: {relic_names}"),
     ]
 
