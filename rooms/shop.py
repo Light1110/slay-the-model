@@ -31,11 +31,11 @@ class ShopRoom(Room):
         from engine.messages import ShopEnteredMessage
 
         emit_text(self.local("enter", default="Enter the room"))
-        game_state.publish_message(
+        message_actions = game_state.publish_message(
             ShopEnteredMessage(owner=game_state.player, room=self, entities=[]),
             participants=list(game_state.player.relics),
         )
-        return MultipleActionsResult([self._build_shop_menu()])
+        return MultipleActionsResult([*message_actions, self._build_shop_menu()])
 
     def leave(self):
         """Leave the shop and reset single-visit state."""
