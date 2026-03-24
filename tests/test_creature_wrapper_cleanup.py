@@ -1,3 +1,5 @@
+import pytest
+
 from entities.creature import Creature
 
 
@@ -31,3 +33,10 @@ def test_creature_legacy_wrappers_no_longer_fan_out_to_powers():
     assert power.damage_taken_calls == 0
     assert power.lose_hp_calls == 0
     assert power.power_added_calls == 0
+
+
+def test_take_damage_list_input_raises_instead_of_silent_coercion():
+    creature = Creature(max_hp=20)
+
+    with pytest.raises(TypeError, match="take_damage expects int, got list"):
+        creature.take_damage([3])

@@ -9,7 +9,7 @@ from utils.types import RoomType
 
 class TestEventRoomBasic:
     """Test EventRoom basic functionality."""
-    
+
     def test_event_room_creation(self):
         """Test EventRoom initialization."""
         event_room = EventRoom()
@@ -17,18 +17,18 @@ class TestEventRoomBasic:
         assert event_room.room_type == RoomType.EVENT
         assert event_room.available_events == []
         assert event_room.triggered_event is None
-    
+
     def test_event_room_has_should_leave(self):
         """Test EventRoom has should_leave flag."""
         event_room = EventRoom()
         assert hasattr(event_room, 'should_leave')
         assert event_room.should_leave is False
-    
+
     def test_event_room_leave_flag(self):
         """Test EventRoom leave flag functionality."""
         event_room = EventRoom()
         event_room.should_leave = False
-        
+
         # Leave flag should work
         assert event_room.should_leave is False
 
@@ -67,15 +67,15 @@ class TestEventRoomBasic:
         assert room.triggered_event is event
         assert room.should_leave is True
 
-    def test_fallback_event_uses_display_text_key(self):
-        """Fallback event should return DisplayTextAction with fallback key."""
+    def test_empty_event_pool_returns_explicit_empty_pool_message(self):
+        """Empty event pools should return an explicit no-event result."""
         room = EventRoom()
-        room._create_fallback_event()
-        result = room._trigger_event(room.available_events[0])
+
+        result = room.enter()
 
         assert isinstance(result, SingleActionResult)
         assert isinstance(result.action, DisplayTextAction)
-        assert result.action.text_key == "rooms.event.fallback"
+        assert result.action.text_key == "rooms.event.empty_pool"
 
 
 if __name__ == "__main__":

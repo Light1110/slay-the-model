@@ -2,6 +2,12 @@
 import player.characters  # noqa: F401
 
 
+UNIMPLEMENTED_CHARACTER_ERRORS = {
+    "silent": "Character 'Silent' is not playable yet: starter cards are unavailable",
+    "the_silent": "Character 'Silent' is not playable yet: starter cards are unavailable",
+}
+
+
 def _import_character_cards(character: str):
     """Import cards for specified character to register them in registry.
 
@@ -11,8 +17,11 @@ def _import_character_cards(character: str):
     character = character.lower()
     if character in ("ironclad", "ironclad"):
         import cards.ironclad  # noqa: F401
-    elif character in ("silent", "the_silent"):
         return
+
+    error_message = UNIMPLEMENTED_CHARACTER_ERRORS.get(character)
+    if error_message is not None:
+        raise ValueError(error_message)
     # Add other characters here as they are implemented
 
 

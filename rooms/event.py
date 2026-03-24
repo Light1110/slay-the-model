@@ -87,7 +87,7 @@ class EventRoom(Room):
             self.selected_event = self.available_events[0]
 
         if not self.selected_event:
-            return SingleActionResult(display_action)
+            return self._empty_pool_result()
 
         event_result = self._trigger_event(self.selected_event)
         return self._merge_display_with_result(display_action, event_result)
@@ -110,6 +110,15 @@ class EventRoom(Room):
             return result
 
         return NoneResult()
+
+    def _empty_pool_result(self) -> BaseResult:
+        """Return the explicit runtime result for an empty event pool."""
+        return SingleActionResult(
+            DisplayTextAction(
+                text_key="rooms.event.empty_pool",
+                default="The room is quiet. Nothing happens.",
+            )
+        )
 
     def _select_event(self, event):
         self.selected_event = event

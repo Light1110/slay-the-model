@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """Tests for character system extensibility."""
 
 import sys
@@ -6,6 +6,9 @@ import sys
 import pytest
 
 from player.player_factory import create_player, list_characters
+
+
+UNIMPLEMENTED_SILENT_ERROR = "Character 'Silent' is not playable yet: starter cards are unavailable"
 
 
 def test_list_characters():
@@ -40,28 +43,10 @@ def test_create_ironclad():
     assert not failed, "; ".join(failed)
 
 
-def test_create_silent():
-    """Test creating Silent player."""
-    player = create_player("Silent")
-    deck_names = [card.__class__.__name__ for card in player.card_manager.deck]
-    relic_names = [r.__class__.__name__ for r in player.relics]
-
-    checks = [
-        (player.character == "Silent", f"Character name: {player.character} != Silent"),
-        (player.max_hp == 70, f"Max HP: {player.max_hp} != 70"),
-        (player.energy == 3, f"Energy: {player.energy} != 3"),
-        (player.gold == 99, f"Gold: {player.gold} != 99"),
-        (player.namespace == "silent", f"Namespace: {player.namespace} != silent"),
-        (player.base_draw_count == 5, f"Draw count: {player.base_draw_count} != 5"),
-        (len(player.card_manager.deck) == 10, f"Deck size: {len(player.card_manager.deck)} != 10"),
-        (len(player.relics) == 1, f"Relics count: {len(player.relics)} != 1"),
-    ]
-
-    print(f"Silent deck: {deck_names}")
-    print(f"Silent relics: {relic_names}")
-
-    failed = [msg for passed, msg in checks if not passed]
-    assert not failed, "; ".join(failed)
+def test_create_silent_reports_character_as_not_playable_yet():
+    """Silent remains registered but must fail explicitly until starter cards exist."""
+    with pytest.raises(ValueError, match=UNIMPLEMENTED_SILENT_ERROR):
+        create_player("Silent")
 
 
 def test_case_insensitive():
