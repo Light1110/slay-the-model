@@ -3,7 +3,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Any, Callable, Iterable, List, Optional, Type
+from typing import Any, Callable, Iterable, List, Type
+
+from engine.message_contracts import subscription_parameter_names, validate_subscription
 
 
 class MessagePriority(Enum):
@@ -37,6 +39,13 @@ def subscribe(message_type: Type[Any], priority: MessagePriority = MessagePriori
     """Mark a method as a subscriber for a message type."""
 
     def decorator(func: Callable):
+        param_names = subscription_parameter_names(func, bound=False)
+        if not validate_subscription(message_type, param_names, method_name=func.__name__):
+            joined_names = ", ".join(param_names)
+            raise TypeError(
+                f"Unsupported subscription signature for {message_type.__name__}: "
+                f"{func.__name__}({joined_names})"
+            )
         specs = list(getattr(func, "__message_subscriptions__", []))
         specs.append(SubscriptionSpec(message_type=message_type, priority=priority))
         setattr(func, "__message_subscriptions__", specs)

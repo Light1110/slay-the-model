@@ -193,6 +193,17 @@ class _LifecycleRelic(Relic):
         return [GainBlockAction(block=8, target=self._target_player)]
 
 
+class _MessageFormRelic(Relic):
+    def __init__(self):
+        super().__init__()
+        self.seen_message = None
+
+    @subscribe(CardDrawnMessage, priority=MessagePriority.PLAYER_RELIC)
+    def on_card_draw_message(self, message):
+        self.seen_message = message
+        return []
+
+
 class _ReactionCreature(Creature):
     def __init__(self):
         super().__init__(max_hp=20)
@@ -486,6 +497,20 @@ def test_medium_risk_messages_use_class_level_subscription_metadata():
     assert [type(action).__name__ for action in draw_actions] == ["GainBlockAction", "GainBlockAction"]
     assert [type(action).__name__ for action in discard_actions] == ["GainBlockAction", "GainBlockAction"]
     assert [type(action).__name__ for action in added_actions] == ["GainBlockAction"]
+
+
+def test_card_drawn_message_contract_supports_message_form_dispatch():
+    helper = create_test_helper()
+    player = helper.create_player(hp=80, max_hp=80, energy=3)
+    card = _LifecycleCard()
+    relic = _MessageFormRelic()
+    message = CardDrawnMessage(card=card, owner=player)
+
+    bus = MessageBus()
+    actions = bus.publish(message, participants=[relic])
+
+    assert relic.seen_message is message
+    assert actions == []
 
 
 def test_high_risk_messages_use_class_level_subscription_metadata():
