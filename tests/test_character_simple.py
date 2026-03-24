@@ -21,6 +21,10 @@ def main():
     characters = list_characters()
     print(f"Available characters: {characters}")
     print(f"Count: {len(characters)}")
+    if characters != ["Ironclad"]:
+        print(f"FAIL: Expected only playable characters, got {characters}")
+        return 1
+    print("PASS: Only playable characters are listed")
     print()
 
     # Test 2: Create Ironclad

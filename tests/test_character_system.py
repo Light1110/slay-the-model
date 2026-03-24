@@ -11,11 +11,12 @@ from player.player_factory import create_player, list_characters
 UNIMPLEMENTED_SILENT_ERROR = "Character 'Silent' is not playable yet: starter cards are unavailable"
 
 
-def test_list_characters():
-    """Test listing all available characters."""
+def test_list_characters_returns_only_playable_characters():
+    """Public character list should only expose playable characters."""
     characters = list_characters()
     print(f"Available characters: {characters}")
-    assert len(characters) > 0, "No characters registered"
+    assert characters == ["Ironclad"]
+    assert "Silent" not in characters
 
 
 def test_create_ironclad():

@@ -2,10 +2,7 @@
 import player.characters  # noqa: F401
 
 
-UNIMPLEMENTED_CHARACTER_ERRORS = {
-    "silent": "Character 'Silent' is not playable yet: starter cards are unavailable",
-    "the_silent": "Character 'Silent' is not playable yet: starter cards are unavailable",
-}
+DEFAULT_UNPLAYABLE_CHARACTER_ERROR = "Character '{name}' is not playable yet"
 
 
 def _import_character_cards(character: str):
@@ -15,13 +12,9 @@ def _import_character_cards(character: str):
         character: Character name (e.g., "ironclad", "silent")
     """
     character = character.lower()
-    if character in ("ironclad", "ironclad"):
+    if character == "ironclad":
         import cards.ironclad  # noqa: F401
         return
-
-    error_message = UNIMPLEMENTED_CHARACTER_ERRORS.get(character)
-    if error_message is not None:
-        raise ValueError(error_message)
     # Add other characters here as they are implemented
 
 
@@ -55,6 +48,11 @@ def create_player(character=None):
     if char_config is None:
         raise ValueError(f"Unknown character: {character}. "
                        f"Available characters: {list_characters()}")
+    if not char_config.playable:
+        raise ValueError(
+            char_config.unplayable_reason
+            or DEFAULT_UNPLAYABLE_CHARACTER_ERROR.format(name=char_config.display_name)
+        )
 
     # Import cards for this character BEFORE creating player
     # This ensures cards are registered in the registry
@@ -73,15 +71,11 @@ def create_player(character=None):
     # Create starting deck from card IDs
     starting_deck = []
     for card_id in char_config.deck:
-        # Card IDs in character_config are "namespace.ClassName" format
-        # Registry stores cards by class name only (capitalized)
-        # Extract class name from "namespace.ClassName" and capitalize it
         if "." in card_id:
             class_name = card_id.split(".")[-1].capitalize()
         else:
             class_name = card_id.capitalize()
 
-        # Get card instance from registry
         card = get_registered_instance("card", class_name)
         if card is None:
             raise ValueError(f"Card not found in registry: {card_id} (tried {class_name})")
@@ -94,7 +88,6 @@ def create_player(character=None):
     from relics.relics import create_relic_instance
     from utils.registry import get_registered
     for relic_id in char_config.starting_relics:
-        # Get relic class from registry
         relic_class = get_registered("relic", relic_id)
         if relic_class is None:
             raise ValueError(f"Relic not found in registry: {relic_id}")
@@ -108,17 +101,13 @@ def list_characters():
     """List all available characters.
 
     Returns:
-        List of character names (display names)
+        List of playable character names (display names)
     """
     from player.character_config import get_character_config
-
-    # Get all registered character configs
     from player.character_config import list_characters as list_char_names
-    char_names = list_char_names()
 
-    # Return display names
     display_names = []
-    for name in char_names:
+    for name in list_char_names(playable_only=True):
         config = get_character_config(name)
         if config:
             display_names.append(config.display_name)
