@@ -1,6 +1,7 @@
 from typing import Optional, Union, List, TYPE_CHECKING
 from actions.base import LambdaAction
 from entities.creature import Creature
+from utils.result_types import MultipleActionsResult
 from utils.types import TargetType 
 
 if TYPE_CHECKING:
@@ -61,7 +62,10 @@ def resolve_target(target_type: TargetType) -> List[Optional[Creature]]:
             max_select=1,
             must_select=True
         )
-        select_action.execute()
+        result = select_action.execute()
+        if isinstance(result, MultipleActionsResult):
+            for action in result.actions:
+                action.execute()
         return [alive_enemies[game_state.last_select_idx]]
     else:
         raise ValueError(f"Unsupported TargetType: {target_type}")
