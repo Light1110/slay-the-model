@@ -5,7 +5,7 @@ import random
 from typing import Optional
 from actions.base import Action, LambdaAction
 from actions.card import AddCardAction
-from actions.display import SelectAction
+from actions.display import InputRequestAction
 from actions.reward import AddRelicAction, AddGoldAction, AddRandomPotionAction, AddRelicByNameAction
 from utils.result_types import BaseResult, GameStateResult, MultipleActionsResult, NoneResult, SingleActionResult
 from localization import LocalStr, t
@@ -98,61 +98,80 @@ class BuyItemAction(Action):
         self.item_idx = item_idx
 
     def execute(self) -> 'BaseResult':
-        # Track gold spent for MawBank relic
         gold_spent = 0
         from engine.game_state import game_state
         from actions.card import ChooseRemoveCardAction
         from tui.print_utils import tui_print
         from localization import t
-        
+        from utils.result_types import BaseResult
+
         if not game_state:
             return NoneResult()
 
-        # 处理删牌服务
+        player = getattr(game_state, "player", None)
+        player_gold = getattr(player, "gold", 0)
+        if not isinstance(player_gold, (int, float)):
+            player_gold = 0
+
         if self.shop_item.item_type == "card_removal":
-            # 删牌服务：需要扣金币（价格由 ShopRoom 构建菜单时确定）
             final_price = getattr(self.shop_item, "base_price", 0)
-            assert game_state.player.gold >= final_price
+            assert player_gold >= final_price
             gold_spent = final_price
             game_state.player.gold -= final_price
-            
-            # 触发删牌选择
-            ChooseRemoveCardAction(pile='deck').execute()
-            
-            # 标记删牌已使用
+
             if hasattr(game_state, 'current_room') and hasattr(game_state.current_room, 'card_removal_used'):
                 game_state.current_room.card_removal_used = True
-                # 增加下次删牌价格（SmilingMask除外）
                 if not _has_relic("SmilingMask", game_state):
                     if hasattr(game_state.current_room, 'card_removal_price'):
                         game_state.current_room.card_removal_price += 25
-            
+
             tui_print(t("ui.shop_removed_card", default="Removed a card from deck"))
 
-            # MawBank effect: track gold spent
             if _has_relic("MawBank", game_state):
                 game_state.gold_spent_in_shop = getattr(game_state, "gold_spent_in_shop", 0) + gold_spent
-            
-            return NoneResult()
 
-        # 处理普通购买（卡牌、遗物、药剂）
+            actions = []
+            remove_result = ChooseRemoveCardAction(pile='deck').execute()
+            if isinstance(remove_result, SingleActionResult):
+                actions.append(remove_result.action)
+            elif isinstance(remove_result, MultipleActionsResult):
+                actions.extend(remove_result.actions)
+            follow_up = self._build_follow_up_menu(game_state)
+            if follow_up:
+                actions.append(follow_up)
+            return MultipleActionsResult(actions) if actions else NoneResult()
+
         ascension = getattr(game_state, "ascension_level", 0) if game_state else 0
+        if not isinstance(ascension, (int, float)):
+            ascension = 0
         final_price = self.shop_item.get_final_price_with_modifiers(ascension, game_state)
 
-        assert game_state.player.gold >= final_price
+        assert player_gold >= final_price
         gold_spent = final_price
         game_state.player.gold -= final_price
 
+        actions = []
         if self.shop_item.item_type == "card":
-            AddCardAction(card=self.shop_item.item, dest_pile="deck", source="shop").execute()
+            add_result = AddCardAction(card=self.shop_item.item, dest_pile="deck", source="shop").execute()
+            if isinstance(add_result, SingleActionResult):
+                actions.append(add_result.action)
+            elif isinstance(add_result, MultipleActionsResult):
+                actions.extend(add_result.actions)
         elif self.shop_item.item_type == "relic":
-            AddRelicByNameAction(relic_id=self.shop_item.item.idstr).execute()
+            relic_result = AddRelicByNameAction(relic_id=self.shop_item.item.idstr).execute()
+            if isinstance(relic_result, SingleActionResult):
+                actions.append(relic_result.action)
+            elif isinstance(relic_result, MultipleActionsResult):
+                actions.extend(relic_result.actions)
         elif self.shop_item.item_type == "potion":
-            AddRandomPotionAction(character=game_state.player.character).execute()
+            potion_result = AddRandomPotionAction(character=game_state.player.character).execute()
+            if isinstance(potion_result, SingleActionResult):
+                actions.append(potion_result.action)
+            elif isinstance(potion_result, MultipleActionsResult):
+                actions.extend(potion_result.actions)
 
         self.shop_item.purchased = True
 
-        # TheCourier: restock cards/relics/potions after purchase.
         if _has_relic("TheCourier", game_state):
             should_restock = True
             for relic in game_state.player.relics:
@@ -163,100 +182,39 @@ class BuyItemAction(Action):
             if should_restock:
                 self._restock_shop_item(game_state)
 
-        # Get item name - cards use display_name, relics use name
         item_name = getattr(self.shop_item.item, 'display_name', None)
         if item_name is not None:
-            item_name = str(item_name)  # BaseLocalStr to string
+            item_name = str(item_name)
         else:
             item_name = getattr(self.shop_item.item, 'name', 'Unknown Item')
         tui_print(t("ui.shop_bought_item", default=f"Bought {item_name} for {final_price} gold!"))
 
-        # feature: MawBank的逻辑
-        # MawBank effect: track gold spent
         if _has_relic("MawBank", game_state):
             game_state.gold_spent_in_shop = getattr(game_state, "gold_spent_in_shop", 0) + gold_spent
-        return NoneResult()
+
+        follow_up = self._build_follow_up_menu(game_state)
+        if follow_up:
+            actions.append(follow_up)
+        return MultipleActionsResult(actions) if actions else NoneResult()
+
+    def _build_follow_up_menu(self, game_state):
+        room = getattr(game_state, "current_room", None)
+        if room is None or getattr(room, "should_leave", False):
+            return None
+        build_menu = getattr(room, "_build_shop_menu", None)
+        if build_menu is None:
+            return None
+        return build_menu()
 
     def _restock_shop_item(self, game_state) -> None:
         """Replace purchased shop slot with a new generated item."""
-        from rooms.shop import ShopItem
-        from utils.random import get_random_card, get_random_relic, get_random_potion
-        from utils.types import RarityType, CardType
-        import random
+        from rooms.shop_state import restock_shop_item
 
-        player = game_state.player
+        player = getattr(game_state, "player", None)
         if not player:
             return
 
-        namespace = player.namespace
-        if any(getattr(r, "idstr", None) == "PrismaticShard" for r in player.relics):
-            card_namespaces = None
-        else:
-            card_namespaces = [namespace]
-
-        if self.shop_item.item_type == "card":
-            card_type = random.choice([CardType.ATTACK, CardType.SKILL, CardType.POWER])
-            new_item = get_random_card(
-                rarities=[RarityType.COMMON, RarityType.UNCOMMON, RarityType.RARE],
-                card_types=[card_type],
-                namespaces=card_namespaces,
-            )
-            if not new_item:
-                return
-            if new_item.rarity == RarityType.COMMON:
-                base_price = random.randint(45, 55)
-            elif new_item.rarity == RarityType.UNCOMMON:
-                base_price = random.randint(68, 83)
-            else:
-                base_price = random.randint(135, 165)
-            self.shop_item.item = new_item
-            self.shop_item.base_price = base_price
-            self.shop_item.discount = 0
-            self.shop_item.purchased = False
-            return
-
-        if self.shop_item.item_type == "potion":
-            rarity_roll = random.random()
-            rarity = (
-                RarityType.COMMON
-                if rarity_roll < 0.65
-                else RarityType.UNCOMMON if rarity_roll < 0.90 else RarityType.RARE
-            )
-            new_item = get_random_potion(rarities=[rarity])
-            if not new_item:
-                return
-            if rarity == RarityType.COMMON:
-                base_price = random.randint(48, 53)
-            elif rarity == RarityType.UNCOMMON:
-                base_price = random.randint(71, 79)
-            else:
-                base_price = random.randint(95, 105)
-            self.shop_item.item = new_item
-            self.shop_item.base_price = base_price
-            self.shop_item.discount = 0
-            self.shop_item.purchased = False
-            return
-
-        if self.shop_item.item_type == "relic":
-            rarity_roll = random.random()
-            rarity = (
-                RarityType.COMMON
-                if rarity_roll < 0.50
-                else RarityType.UNCOMMON if rarity_roll < 0.83 else RarityType.RARE
-            )
-            new_item = get_random_relic(rarities=[rarity])
-            if not new_item:
-                return
-            if rarity == RarityType.COMMON:
-                base_price = random.randint(143, 158)
-            elif rarity == RarityType.UNCOMMON:
-                base_price = random.randint(238, 263)
-            else:
-                base_price = random.randint(285, 315)
-            self.shop_item.item = new_item
-            self.shop_item.base_price = base_price
-            self.shop_item.discount = 0
-            self.shop_item.purchased = False
+        restock_shop_item(self.shop_item, player)
 
 
 # ============================================================================
@@ -315,7 +273,7 @@ class OpenChestAction(Action):
                 actions=[]
             ))
 
-            select_action = SelectAction(
+            select_action = InputRequestAction(
                 title=LocalStr("ui.choose_boss_relic"),
                 options=options
             )
@@ -395,7 +353,7 @@ class SkipToBossAction(Action):
         return NoneResult()
 
 @register("action")
-class BottledCardSelectAction(Action):
+class BottledCardInputRequestAction(Action):
     """Select a card from deck to bottle with a relic.
     
     Required:
@@ -409,7 +367,7 @@ class BottledCardSelectAction(Action):
     
     def execute(self):
         from engine.game_state import game_state
-        from actions.display import SelectAction
+        from actions.display import InputRequestAction
         from utils.option import Option
         from utils.result_types import SingleActionResult
         from utils.random import get_random_card
@@ -455,7 +413,7 @@ class BottledCardSelectAction(Action):
             from utils.result_types import NoneResult
             return NoneResult()
         
-        select_action = SelectAction(
+        select_action = InputRequestAction(
             title=LocalStr("ui.choose_card_to_bottle", default="Choose a card to bottle"),
             options=options,
             max_select=1,

@@ -52,11 +52,13 @@ class DeadBranch(Relic):
         super().__init__()
         self.rarity = RarityType.RARE
 
-    def on_card_exhaust(self, card, player, entities):
-        """When a card is exhausted, add random card to hand"""
+    def on_card_exhausted(self, card, owner, source_pile=None):
         from actions.card import AddRandomCardAction
-        from engine.game_state import game_state
-        return [AddRandomCardAction(pile='hand', namespace=game_state.player.namespace)]
+
+        if owner is None:
+            return []
+        namespace = getattr(owner, "namespace", None)
+        return [AddRandomCardAction(pile="hand", namespace=namespace)]
 
 @register("relic")
 class DuVuDoll(Relic):

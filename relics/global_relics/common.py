@@ -205,6 +205,13 @@ class CeramicFish(Relic):
         super().__init__()
         self.rarity = RarityType.COMMON
 
+    def on_card_added(self, card, dest_pile: str = "deck") -> List[Action]:
+        from actions.reward import AddGoldAction
+
+        if dest_pile == "deck":
+            return [AddGoldAction(amount=9)]
+        return []
+
 @register("relic")
 class DreamCatcher(Relic):
     """Whenever you rest, you may add a Card to your deck."""

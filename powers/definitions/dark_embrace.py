@@ -2,10 +2,10 @@
 Dark Embrace power for Ironclad.
 Whenever a card is exhausted, draw 1 card.
 """
-from typing import List, Any
-from powers.base import Power, StackType
-from actions.base import Action
 from actions.card import DrawCardsAction
+from powers.base import Power, StackType
+from engine.messages import CardExhaustedMessage
+from engine.subscriptions import MessagePriority, subscribe
 from utils.registry import register
 
 
@@ -26,6 +26,8 @@ class DarkEmbracePower(Power):
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
 
-    def on_exhaust(self) -> List[Action]:
-        """Draw 1 card when any card is exhausted."""
+    @subscribe(CardExhaustedMessage, priority=MessagePriority.REACTION)
+    def on_card_exhausted(self, card, owner, source_pile=None):
+        if owner is not self.owner:
+            return []
         return [DrawCardsAction(count=self.amount)]

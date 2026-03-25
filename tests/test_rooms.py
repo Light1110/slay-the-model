@@ -1,15 +1,13 @@
-#!/usr/bin/env python
 """Tests for room system."""
 
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 from rooms.combat import CombatRoom
 from rooms.rest import RestRoom
 from rooms.shop import ShopRoom
 from rooms.treasure import TreasureRoom
 from rooms.event import EventRoom
-from map.map_manager import MapManager
 from engine.game_state import game_state
 
 
@@ -48,7 +46,6 @@ class TestRooms(unittest.TestCase):
 
     def test_create_boss_room(self):
         """Test boss room can be created."""
-        # Boss rooms are combat rooms with BOSS room_type
         room = CombatRoom(enemies=[], room_type="BOSS", encounter_name="test_boss")
         self.assertIsInstance(room, CombatRoom)
 
