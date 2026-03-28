@@ -15,6 +15,8 @@ spec = importlib.util.spec_from_file_location(
     "relics.base",
     os.path.join(os.path.dirname(__file__), "..", "relics", "base.py")
 )
+assert spec is not None
+assert spec.loader is not None
 relic_base_module = importlib.util.module_from_spec(spec)
 sys.modules['relics.base'] = relic_base_module
 spec.loader.exec_module(relic_base_module)
@@ -25,6 +27,8 @@ spec = importlib.util.spec_from_file_location(
     "potions.base",
     os.path.join(os.path.dirname(__file__), "..", "potions", "base.py")
 )
+assert spec is not None
+assert spec.loader is not None
 potion_base_module = importlib.util.module_from_spec(spec)
 sys.modules['potions.base'] = potion_base_module
 spec.loader.exec_module(potion_base_module)
@@ -35,6 +39,8 @@ spec = importlib.util.spec_from_file_location(
     "powers.base",
     os.path.join(os.path.dirname(__file__), "..", "powers", "base.py")
 )
+assert spec is not None
+assert spec.loader is not None
 power_base_module = importlib.util.module_from_spec(spec)
 sys.modules['powers.base'] = power_base_module
 spec.loader.exec_module(power_base_module)
@@ -46,6 +52,8 @@ spec = importlib.util.spec_from_file_location(
     "utils.types",
     os.path.join(os.path.dirname(__file__), "..", "utils", "types.py")
 )
+assert spec is not None
+assert spec.loader is not None
 types_module = importlib.util.module_from_spec(spec)
 sys.modules['utils.types'] = types_module
 spec.loader.exec_module(types_module)

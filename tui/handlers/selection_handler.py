@@ -4,6 +4,8 @@ Selection handler - manages the selection panel for input-request integration.
 """
 from typing import List, Optional, Any, TYPE_CHECKING
 
+from localization import resolve_text
+
 if TYPE_CHECKING:
     from actions.display import InputRequestAction
     from utils.option import Option
@@ -24,7 +26,7 @@ class SelectionHandler:
         """
         self._current_action = select_action
         
-        title = str(select_action.request.title) if select_action.request.title else "Choose:"
+        title = resolve_text(select_action.request.title) or "Choose:"
         options = select_action.request.options
         
         self._app.show_selection(title, options)

@@ -1,8 +1,8 @@
 """Test TreasureRoom basic functionality."""
 import pytest
+from engine.game_state import game_state
 from actions.display import DisplayTextAction, InputRequestAction
 from rooms.treasure import TreasureRoom
-from utils.result_types import MultipleActionsResult
 from utils.types import RoomType
 
 
@@ -66,16 +66,18 @@ class TestTreasureRoomBasic:
         assert boss_treasure.chest_type == "boss"
     
     def test_treasure_room_enter_composes_menu_into_flow(self):
-        """Test enter() returns the room entry text and menu together."""
+        """Test enter() queues the room entry text and menu together."""
         treasure_room = TreasureRoom()
         treasure_room.init()
+        game_state.action_queue.clear()
 
         result = treasure_room.enter()
 
-        assert isinstance(result, MultipleActionsResult)
-        assert len(result.actions) == 2
-        assert isinstance(result.actions[0], DisplayTextAction)
-        assert isinstance(result.actions[1], InputRequestAction)
+        assert result is None
+        queued = list(game_state.action_queue.queue)
+        assert len(queued) == 2
+        assert isinstance(queued[0], DisplayTextAction)
+        assert isinstance(queued[1], InputRequestAction)
     
     def test_treasure_room_builds_menu(self):
         """Test _build_treasure_menu returns menu options directly."""

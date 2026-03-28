@@ -1,6 +1,7 @@
 """
 Ironclad Uncommon Attack card - Rampage
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -23,10 +24,10 @@ class Rampage(Card):
     base_magic = {"damage_gain": 5, "damage_increase": 5}
     upgrade_magic = {"damage_gain": 8, "damage_increase": 8}
 
-    def on_play(self, targets: List[Creature] = []) -> List[Action]:
+    def on_play(self, targets: List[Creature] = []):
         target = targets[0] if targets else None
-        actions = super().on_play(targets)
-
+        super().on_play(targets)
+        actions = []
         # Increase this card's damage for the combat
         damage_increase = self.get_magic_value(
             "damage_increase",
@@ -34,4 +35,8 @@ class Rampage(Card):
         )
         self._damage += damage_increase
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

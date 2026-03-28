@@ -25,7 +25,7 @@ class CorruptionPower(Power):
         """
         super().__init__(amount=0, duration=-1, owner=owner)
 
-    def on_draw_card(self, card, player, entities) -> List[Action]:
+    def on_draw_card(self, card, player, entities):
         """Modify skill costs to 0."""
         from cards.base import Card
         if TYPE_CHECKING:
@@ -37,4 +37,4 @@ class CorruptionPower(Power):
         if hasattr(card, 'card_type') and card.card_type == CardType.SKILL:
             card.cost = 0
 
-        return []
+        return

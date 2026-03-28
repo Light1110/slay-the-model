@@ -1,6 +1,7 @@
 """Strength Up power for temporary strength restoration.
 Gains Strength at end of turn, then expires.
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 
@@ -26,11 +27,11 @@ class StrengthUpPower(Power):
             return LocalStr(f"{self.localization_key}.description", 
                           default=f"At the end of turn, gain {amount} Strength.",
                           amount=amount)
-        return super().local(field)
+        return super().local(field, **kwargs)
     def __init__(self, amount: int = 0, duration: int = 1, owner=None):
         super().__init__(amount=amount, duration=duration, owner=owner)
 
-    def on_turn_end(self) -> List[Action]:
+    def on_turn_end(self):
         from powers.definitions.strength import StrengthPower
         
         actions: List[Action] = []
@@ -42,4 +43,6 @@ class StrengthUpPower(Power):
                 )
             )
         self.duration = 0
-        return actions
+        from engine.game_state import game_state
+        add_actions(actions)
+        return

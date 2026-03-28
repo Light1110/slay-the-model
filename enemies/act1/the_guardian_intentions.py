@@ -1,4 +1,5 @@
 """The Guardian (Boss) specific intentions."""
+from engine.runtime_api import add_action, add_actions
 
 from typing import List, TYPE_CHECKING
 
@@ -16,16 +17,19 @@ class ChargingUpIntention(Intention):
         super().__init__("charging_up", enemy)
         self.base_block = 9
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Charging Up: gains 9 Block."""
         from actions.combat import GainBlockAction
         
-        return [
+        from engine.game_state import game_state
+        add_actions(
+        [
             GainBlockAction(
                 block=self.base_block,
                 target=self.enemy
             )
         ]
+        )
 
 
 class FierceBashIntention(Intention):
@@ -35,15 +39,16 @@ class FierceBashIntention(Intention):
         super().__init__("fierce_bash", enemy)
         self.base_damage = 32
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Fierce Bash: deals 32 damage to player."""
         from actions.combat import AttackAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -51,6 +56,7 @@ class FierceBashIntention(Intention):
                 damage_type="attack",
             )
         ]
+        )
 
 
 class VentSteamIntention(Intention):
@@ -59,15 +65,16 @@ class VentSteamIntention(Intention):
     def __init__(self, enemy: 'Enemy'):
         super().__init__("vent_steam", enemy)
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Vent Steam: applies 2 Weak and 2 Vulnerable to player."""
         from actions.combat import ApplyPowerAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             ApplyPowerAction(
                 power="Weak",
                 target=game_state.player,
@@ -81,6 +88,7 @@ class VentSteamIntention(Intention):
                 duration=2
             )
         ]
+        )
 
 
 class WhirlwindIntention(Intention):
@@ -91,15 +99,16 @@ class WhirlwindIntention(Intention):
         self.base_damage = 5
         self._hits = 4
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Whirlwind: deals 5 damage 4 times."""
         from actions.combat import AttackAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -108,6 +117,7 @@ class WhirlwindIntention(Intention):
             )
             for _ in range(self._hits)
         ]
+        )
 
 
 class DefensiveModeIntention(Intention):
@@ -117,11 +127,13 @@ class DefensiveModeIntention(Intention):
         super().__init__("defensive_mode", enemy)
         self._sharp_hide_stacks = 3
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Defensive Mode: gains Sharp Hide."""
         from actions.combat import ApplyPowerAction
         
-        return [
+        from engine.game_state import game_state
+        add_actions(
+        [
             ApplyPowerAction(
                 power="SharpHide",
                 target=self.enemy,
@@ -129,6 +141,7 @@ class DefensiveModeIntention(Intention):
                 duration=-1
             )
         ]
+        )
 
 
 class RollAttackIntention(Intention):
@@ -138,15 +151,16 @@ class RollAttackIntention(Intention):
         super().__init__("roll_attack", enemy)
         self.base_damage = 9
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Roll Attack: deals 9 damage to player."""
         from actions.combat import AttackAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -154,6 +168,7 @@ class RollAttackIntention(Intention):
                 damage_type="attack",
             )
         ]
+        )
 
 
 class TwinSlamIntention(Intention):
@@ -163,14 +178,13 @@ class TwinSlamIntention(Intention):
         super().__init__("twin_slam", enemy)
         self.base_damage = 8
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Twin Slam: deals 8 damage 2 times and removes Sharp Hide."""
         from actions.combat import AttackAction, RemovePowerAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
+            return
         actions = [
             AttackAction(
                 damage=self.base_damage,
@@ -189,4 +203,7 @@ class TwinSlamIntention(Intention):
             )
         )
         
-        return actions
+        from engine.game_state import game_state
+        
+        add_actions(actions)
+        

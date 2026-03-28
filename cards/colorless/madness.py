@@ -1,6 +1,7 @@
 """
 Colorless Uncommon Skill card - Madness
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -22,13 +23,14 @@ class Madness(Card):
 
     upgrade_cost = 0
 
-    def on_play(self, targets: List[Creature] = []) -> List[Action]:
+    def on_play(self, targets: List[Creature] = []):
         target = targets[0] if targets else None
         from engine.game_state import game_state
         import random
 
-        actions = super().on_play(targets)
+        super().on_play(targets)
 
+        actions = []
         # Reduce cost of a random card in hand to 0 for this combat
         if game_state.player and hasattr(game_state.player, "card_manager"):
             hand_cards = list(game_state.player.card_manager.get_pile("hand"))
@@ -41,4 +43,8 @@ class Madness(Card):
                 # A proper implementation would use a power or special flag
                 random_card.cost = 0
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

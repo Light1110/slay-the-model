@@ -1,6 +1,7 @@
 """
 Colorless Rare Power card - Panache
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -23,13 +24,14 @@ class Panache(Card):
 
     upgrade_magic = {"damage": 14}
 
-    def on_play(self, targets: List[Creature] = []) -> List[Action]:
+    def on_play(self, targets: List[Creature] = []):
         target = targets[0] if targets else None
         from engine.game_state import game_state
         from actions.combat import ApplyPowerAction
 
-        actions = super().on_play(targets)
+        super().on_play(targets)
 
+        actions = []
         # Apply Panache power
         damage_amount = self.get_magic_value("damage")
         actions.append(ApplyPowerAction(
@@ -39,4 +41,8 @@ class Panache(Card):
             duration=-1  # Permanent for this combat
         ))
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

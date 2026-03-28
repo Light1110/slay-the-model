@@ -1,8 +1,9 @@
 ﻿import random as rd
 import sys
-from typing import List, Optional
+from typing import List, Optional, cast
 
 from engine.input_protocol import InputRequest, InputSubmission
+from utils.option import Option
 
 NO_OVERRIDE = object()
 
@@ -87,6 +88,18 @@ class RuntimeContext:
 
         return bound(*args, **kwargs)
 
+    @staticmethod
+    def _coerce_selected_indices(value: object) -> List[int]:
+        if not isinstance(value, list):
+            return []
+        return [index for index in value if isinstance(index, int)]
+
+    @staticmethod
+    def _coerce_submission(value: object) -> InputSubmission:
+        if isinstance(value, InputSubmission):
+            return value
+        return InputSubmission([])
+
     def message_participants(self, enemies=None, include_hand=False, hand=None) -> List:
         """Build the standard runtime participant list for message dispatch."""
         participants = []
@@ -108,6 +121,56 @@ class RuntimeContext:
 
         return participants
 
+    def message_participants_for_message(self, message) -> List:
+        """Infer runtime participants from a published message."""
+        participants = []
+        seen = set()
+
+        def add_participant(participant):
+            if participant is None:
+                return
+            marker = id(participant)
+            if marker in seen:
+                return
+            seen.add(marker)
+            participants.append(participant)
+
+        def add_creature(creature):
+            add_participant(creature)
+            for relic in list(getattr(creature, "relics", []) or []):
+                add_participant(relic)
+            for power in list(getattr(creature, "powers", []) or []):
+                add_participant(power)
+
+        if type(message).__name__ == "CreatureDiedMessage":
+            add_creature(getattr(message, "creature", None))
+            add_participant(getattr(message, "card", None))
+            return participants
+
+        add_creature(getattr(message, "owner", None))
+        add_creature(getattr(message, "target", None))
+        add_creature(getattr(message, "source", None))
+        add_creature(getattr(message, "creature", None))
+
+        for enemy in list(getattr(message, "enemies", []) or []):
+            add_creature(enemy)
+
+        for entity in list(getattr(message, "entities", []) or []):
+            add_creature(entity)
+
+        for target in list(getattr(message, "targets", []) or []):
+            add_creature(target)
+
+        for hand_card in list(getattr(message, "hand_cards", []) or []):
+            add_participant(hand_card)
+
+        add_participant(getattr(message, "card", None))
+        add_participant(getattr(message, "power", None))
+        add_participant(getattr(message, "potion", None))
+        add_participant(getattr(message, "relic", None))
+
+        return participants
+
     def resolve_input_request(self, request: InputRequest) -> InputSubmission:
         """Resolve one declarative input request based on the configured mode."""
         if request.request_type != "selection":
@@ -117,32 +180,41 @@ class RuntimeContext:
         if not options:
             return InputSubmission([])
 
-        if self.config.auto_select and len(options) == 1:
+        config = self.config
+        if bool(getattr(config, "auto_select", False)) and len(options) == 1:
             return self.default_build_submission(options, [0])
 
-        mode = self.config.mode
+        mode = str(getattr(config, "mode", "human"))
         if mode == "ai":
-            selected_indices = self._call_game_state_override("_resolve_ai_selection", request)
-            if selected_indices is NO_OVERRIDE:
+            selected_indices_obj = self._call_game_state_override("_resolve_ai_selection", request)
+            if selected_indices_obj is NO_OVERRIDE:
                 selected_indices = self.default_resolve_ai_selection(request)
+            else:
+                selected_indices = self._coerce_selected_indices(selected_indices_obj)
         elif mode == "debug":
-            selected_indices = self._call_game_state_override("_resolve_debug_selection", request)
-            if selected_indices is NO_OVERRIDE:
+            selected_indices_obj = self._call_game_state_override("_resolve_debug_selection", request)
+            if selected_indices_obj is NO_OVERRIDE:
                 selected_indices = self.default_resolve_debug_selection(request)
+            else:
+                selected_indices = self._coerce_selected_indices(selected_indices_obj)
         else:
-            selected_indices = self._call_game_state_override("_resolve_human_selection", request)
-            if selected_indices is NO_OVERRIDE:
+            selected_indices_obj = self._call_game_state_override("_resolve_human_selection", request)
+            if selected_indices_obj is NO_OVERRIDE:
                 selected_indices = self.default_resolve_human_selection(request)
+            else:
+                selected_indices = self._coerce_selected_indices(selected_indices_obj)
 
-        submission = self._call_game_state_override("_build_submission", options, selected_indices)
-        if submission is NO_OVERRIDE:
-            submission = self.default_build_submission(options, selected_indices)
-        return submission
+        submission_obj = self._call_game_state_override("_build_submission", options, selected_indices)
+        if submission_obj is NO_OVERRIDE:
+            return self.default_build_submission(options, selected_indices)
+        return self._coerce_submission(submission_obj)
 
     def default_augment_human_options(self, request: InputRequest) -> List:
         """Add human-only helper options such as the in-run menu."""
         options = list(request.options or [])
-        show_menu = bool(self.config.human.get("show_menu_option", False))
+        config = self.config
+        human_config = getattr(config, "human", {}) if config is not None else {}
+        show_menu = bool(getattr(human_config, "get", lambda *_args, **_kwargs: False)("show_menu_option", False))
         if not request.allow_menu or not show_menu:
             return options
 
@@ -160,14 +232,18 @@ class RuntimeContext:
 
     def default_resolve_human_selection(self, request: InputRequest) -> List[int]:
         """Resolve a selection request from CLI or TUI human input."""
-        from localization import t
+        from localization import resolve_text, t
         from tui import get_app, is_tui_mode
         from tui.print_utils import tui_print
 
-        options = self._call_game_state_override("_augment_human_options", request)
-        if options is NO_OVERRIDE:
-            options = self.default_augment_human_options(request)
-        title = t(str(request.title), default=str(request.title)) if isinstance(request.title, str) else str(request.title or "")
+        options_obj = self._call_game_state_override("_augment_human_options", request)
+        if options_obj is NO_OVERRIDE:
+            options = cast(List[Option], self.default_augment_human_options(request))
+        elif isinstance(options_obj, list):
+            options = cast(List[Option], options_obj)
+        else:
+            options = []
+        title = resolve_text(request.title)
 
         if is_tui_mode():
             app = get_app()
@@ -184,7 +260,7 @@ class RuntimeContext:
                 tui_print(title)
 
             for idx, option in enumerate(options, start=1):
-                tui_print(f"  {idx}. {option.name}")
+                tui_print(f"  {idx}. {resolve_text(option.name)}")
 
             if request.must_select:
                 prompt = t("ui.select_prompt", default=f"Select (1-{len(options)}): ", count=len(options))
@@ -192,22 +268,25 @@ class RuntimeContext:
                 prompt = t("ui.select_prompt", default=f"Select (0-{len(options)}): ", count=len(options))
 
             raw = input(prompt)
-            parsed = self._call_game_state_override(
+            parsed_obj = self._call_game_state_override(
                 "_parse_selection_input",
                 raw_input=raw,
                 option_count=len(options),
                 max_select=request.max_select,
                 must_select=request.must_select,
             )
-            if parsed is NO_OVERRIDE:
+            if parsed_obj is NO_OVERRIDE:
                 parsed = self.default_parse_selection_input(
                     raw_input=raw,
                     option_count=len(options),
                     max_select=request.max_select,
                     must_select=request.must_select,
                 )
+            elif parsed_obj is None:
+                parsed = None
+            else:
+                parsed = self._coerce_selected_indices(parsed_obj)
             if parsed is not None:
-                request.options = options
                 return parsed
 
     def default_resolve_ai_selection(self, request: InputRequest) -> List[int]:
@@ -219,13 +298,15 @@ class RuntimeContext:
             return []
 
         if self.decision_engine is None:
-            selected_indices = self._call_game_state_override("_resolve_debug_selection", request)
-            if selected_indices is NO_OVERRIDE:
-                selected_indices = self.default_resolve_debug_selection(request)
-            return selected_indices
+            selected_indices_obj = self._call_game_state_override("_resolve_debug_selection", request)
+            if selected_indices_obj is NO_OVERRIDE:
+                return self.default_resolve_debug_selection(request)
+            return self._coerce_selected_indices(selected_indices_obj)
 
-        title = str(request.title or "")
-        option_text = [str(option.name) for option in options]
+        from localization import resolve_text
+
+        title = resolve_text(request.title)
+        option_text = [resolve_text(option.name) for option in options]
         context = request.context or {}
         max_select = len(options) if request.max_select == -1 else request.max_select
 
@@ -267,23 +348,30 @@ class RuntimeContext:
         if actual_max_select == 0:
             return []
 
-        select_type = self.config.get("debug.select_type", "random")
+        config = self.config
+        select_type = "random"
+        if config is not None:
+            select_type = str(getattr(config, "get", lambda *_args, **_kwargs: "random")("debug.select_type", "random"))
         if select_type == "first":
             return list(range(min(actual_max_select, len(options))))
         if select_type == "last":
             start = max(0, len(options) - actual_max_select)
             return list(range(start, len(options)))
 
-        heuristic_selection = self._call_game_state_override(
+        heuristic_selection_obj = self._call_game_state_override(
             "_resolve_debug_selection_with_heuristics",
             options,
             actual_max_select,
         )
-        if heuristic_selection is NO_OVERRIDE:
+        if heuristic_selection_obj is NO_OVERRIDE:
             heuristic_selection = self.default_resolve_debug_selection_with_heuristics(
                 options,
                 actual_max_select,
             )
+        elif heuristic_selection_obj is None:
+            heuristic_selection = None
+        else:
+            heuristic_selection = self._coerce_selected_indices(heuristic_selection_obj)
         if heuristic_selection is not None:
             return heuristic_selection
 

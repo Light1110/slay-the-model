@@ -1,4 +1,5 @@
 """Sentry elite enemy intentions."""
+from engine.runtime_api import add_action, add_actions
 
 from typing import List, TYPE_CHECKING
 
@@ -16,7 +17,7 @@ class BoltIntention(Intention):
         super().__init__("bolt", enemy)
         self.dazed_count = dazed_count
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Bolt: add Dazed cards to player's discard pile."""
         from actions.card import AddCardAction
         from cards.colorless.dazed import Dazed
@@ -34,9 +35,10 @@ class BoltIntention(Intention):
                     )
                 )
         
-        return actions
-
-
+        from engine.game_state import game_state
+        
+        add_actions(actions)
+        
 class BeamIntention(Intention):
     """Beam - Deal 9 damage."""
     
@@ -44,15 +46,16 @@ class BeamIntention(Intention):
         super().__init__("beam", enemy)
         self.base_damage = damage
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Beam: deal damage."""
         from actions.combat import AttackAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -60,3 +63,4 @@ class BeamIntention(Intention):
                 damage_type="attack",
             )
         ]
+        )

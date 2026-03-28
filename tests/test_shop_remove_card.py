@@ -2,6 +2,7 @@
 
 import unittest
 from unittest.mock import patch
+from typing import Any, cast
 
 from actions.misc import BuyItemAction
 from engine.game_state import game_state
@@ -57,8 +58,8 @@ class TestShopRemoveCard(unittest.TestCase):
     def setUp(self):
         game_state._initialized = False
         game_state.__init__()
-        game_state.player = _DummyPlayer(gold=100)
-        game_state.current_room = _DummyRoom(card_removal_price=75)
+        cast(Any, game_state).player = _DummyPlayer(gold=100)
+        cast(Any, game_state).current_room = _DummyRoom(card_removal_price=75)
 
     @patch("actions.card.ChooseRemoveCardAction.execute", return_value=None)
     def test_card_removal_spends_gold_and_updates_room_state(self, _):
@@ -67,6 +68,7 @@ class TestShopRemoveCard(unittest.TestCase):
         BuyItemAction(item, -1).execute()
 
         self.assertEqual(game_state.player.gold, 25)
+        assert game_state.current_room is not None
         self.assertTrue(game_state.current_room.card_removal_used)
         self.assertEqual(game_state.current_room.card_removal_price, 100)
 
@@ -79,6 +81,7 @@ class TestShopRemoveCard(unittest.TestCase):
         BuyItemAction(item, -1).execute()
 
         self.assertEqual(game_state.player.gold, 50)
+        assert game_state.current_room is not None
         self.assertTrue(game_state.current_room.card_removal_used)
         self.assertEqual(game_state.current_room.card_removal_price, 75)
 
@@ -90,7 +93,7 @@ class TestShopRemoveCard(unittest.TestCase):
 
         self.assertEqual(game_state.player.gold, 50)
         self.assertTrue(item.purchased)
-        self.assertEqual(len(game_state.player.card_manager.added), 1)
+        self.assertEqual(len(cast(Any, game_state.player.card_manager).added), 1)
 
 
 if __name__ == "__main__":

@@ -13,7 +13,8 @@ def test_mayhem_power_uses_draw_pile_on_turn_start():
 
     power = MayhemPower(owner=game_state.player)
 
-    actions = power.on_turn_start()
+    game_state.action_queue.clear()
+    power.on_turn_start()
 
-    assert len(actions) == 1
-    assert actions[0].card is top_card
+    assert len(game_state.action_queue.queue) == 1
+    assert getattr(game_state.action_queue.queue[0], "card", None) is top_card

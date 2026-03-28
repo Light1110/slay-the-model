@@ -962,7 +962,7 @@ powers:
     description: Steals {amount} gold when attacking. Gold returned on death.
   SlowPower:
     name: Slow
-    description: Player's cards cost +{amount} this combat (stacks with each card played).
+    description: Whenever you play a card, this enemy receives 10% more damage from Attacks this turn.
   DrawReductionPower:
     name: Draw Reduction
     description: Draw 1 less card at the start of each turn for {amount} turn(s).
@@ -2019,7 +2019,10 @@ enemies:
         description: Deal {damage} damage.
       Count:
         name: Count
-        description: Counting down...
+        description: Deal {damage} damage.
+      Glare:
+        name: Glare
+        description: Apply {amount} Weak.
   Nemesis:
     name: Nemesis
     intentions:

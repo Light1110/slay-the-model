@@ -31,16 +31,14 @@ class SlowPower(Power):
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
     
-    def on_turn_start(self) -> List[Action]:
+    def on_turn_start(self):
         """Reset the counter at the start of each turn."""
         self.amount = 0
-        return []
-    
-    def on_card_play(self, card, player, entities) -> List[Action]:
+        return
+    def on_card_play(self, card, player, entities):
         """Increment damage multiplier when player plays a card."""
         self.amount += 1
-        return []
-    
+        return
     def get_damage_taken_multiplier(self) -> float:
         """Return damage multiplier. Each card played adds 10% more damage."""
         return 1.0 + (self.amount * 0.1)

@@ -12,12 +12,12 @@ if TYPE_CHECKING:
 
 class Intention(ABC, Localizable):
     """Base class for enemy intentions.
-    
-    Each intention defines what an enemy plans to do and returns a list of Actions
-    to execute when triggered.
+
+    Each intention defines what an enemy plans to do and queues its effects
+    when triggered.
     """
     
-    # 本地化 - intentions are now nested under owner enemy
+    # Localization keys are nested under the owning enemy class.
     localization_prefix = "enemies"
     localizable_fields = ("name", "description")
     
@@ -25,25 +25,22 @@ class Intention(ABC, Localizable):
         self.name = name
         self.enemy = enemy
         
-        # 基础数值（子类在__init__中设置）
+        # Base values populated by subclasses in __init__.
         self.base_damage = 0
         self.base_block = 0
         self.base_strength_gain = 0
         self.base_heal = 0
         self.base_amount = 0  # Generic amount for status effects
+        self.base_cards = 0
     
     @abstractmethod
-    def execute(self) -> List['Action']:
-        """Execute this intention and return list of actions to perform.
-
-        Returns:
-            List of Action objects to queue for execution
-        """
+    def execute(self) -> None:
+        """Execute this intention and queue its actions."""
         pass
     
     def _get_localized_key(self, field: str) -> str:
-        """构建字段对应的本地化 key。
-        
+        """Build the localization key for a specific intention field.
+
         Keys are structured as: enemies.{EnemyClass}.intentions.{intention_name}.{field}
         e.g., enemies.Cultist.intentions.ritual.name
         """
@@ -58,7 +55,6 @@ class Intention(ABC, Localizable):
         """Generate common localization variants for runtime intention names."""
         if not name:
             return []
-
         stripped = name.strip()
         no_bang = stripped.replace("!", "")
         snake = re.sub(r"[^A-Za-z0-9]+", "_", stripped).strip("_")
@@ -102,50 +98,50 @@ class Intention(ABC, Localizable):
     
     @property
     def description(self) -> 'BaseLocalStr':
-        """获取意图描述（动态替换{damage}等变量）"""    
-        # 动态替换变量
+        """Return the localized intention description with dynamic values filled in."""
+        # Fill template variables used by the localized description.
         variables = {}
         
-        # 伤害值
+        # Damage value.
         if self.base_damage > 0:
             from utils.dynamic_values import resolve_potential_damage
             from engine.game_state import game_state
             player = game_state.player
             variables['damage'] = resolve_potential_damage(self.base_damage, self.enemy, player)
         
-        # 护盾值
+        # Block value.
         if self.base_block > 0:
             variables['block'] = self.base_block
         
-        # 力量
+        # Strength gain.
         if self.base_strength_gain > 0:
             variables['strength_gain'] = self.base_strength_gain
         
-        # 治疗值
+        # Healing amount.
         if self.base_heal > 0:
             variables['heal'] = self.base_heal
         
-        # 通用数量（支持多种命名方式：base_amount, weak_stacks, vulnerable_stacks, frail_stacks）
+        # Generic amount fields such as base_amount / weak / vulnerable / frail.
         amount = self._get_amount()
         if amount > 0:
             variables['amount'] = amount
         
-        # 卡牌数量 (用于 Corrosive Spit 等意图)
+        # Card count, used by intentions like Corrosive Spit.
         if hasattr(self, 'base_cards') and self.base_cards > 0:
             variables['cards'] = self.base_cards
         
-        # 攻击次数 (多次攻击才显示)
+        # Hit count for multi-hit intentions.
         hits = self._get_hits()
         if hits > 1:
             variables['hits'] = hits
         
-        # 返回带变量的LocalStr对象
+        # Return a LocalStr carrying the computed variables.
         return self.local("description", **variables)
     
     def _get_amount(self) -> int:
-        """获取通用数量（支持多种命名方式）。
-        
-        优先级：base_amount > weak_stacks > vulnerable_stacks > frail_stacks
+        """Resolve a generic amount field using the common fallback order.
+
+        Priority: base_amount > weak_stacks > vulnerable_stacks > frail_stacks
         """
         candidates = [
             'base_amount',
@@ -163,7 +159,7 @@ class Intention(ABC, Localizable):
         return 0
     
     def _get_hits(self) -> int:
-        """获取攻击次数（支持多种命名方式）。"""
+        """Resolve hit count using the common fallback attribute order."""
         candidates = [
             'hits',
             'base_hits',

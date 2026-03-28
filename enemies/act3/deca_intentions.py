@@ -1,4 +1,5 @@
 """Deca Boss intentions for Act 3."""
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 
@@ -20,7 +21,7 @@ class DecaBeam(Intention):
         self.base_damage = 10
         self.base_hits = 2
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute the intention."""
         from engine.game_state import game_state
         
@@ -41,9 +42,10 @@ class DecaBeam(Intention):
                 source="enemy"
             ))
         
-        return actions
-
-
+        from engine.game_state import game_state
+        
+        add_actions(actions)
+        
 class SquareOfProtection(Intention):
     """All enemies gain 16 Block. Gain 1 Plated Armor on A17+."""
     
@@ -51,13 +53,16 @@ class SquareOfProtection(Intention):
         super().__init__("Square of Protection", enemy)
         self.base_block = 16
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute the intention - give all enemies block."""
         from engine.game_state import game_state
         
         actions = []
+        combat = game_state.current_combat
+        if combat is None:
+            return
         # Apply Block to all enemies
-        for enemy in game_state.current_combat.enemies:
+        for enemy in combat.enemies:
             if not enemy.is_dead:
                 actions.append(GainBlockAction(
                     block=self.base_block,
@@ -73,4 +78,7 @@ class SquareOfProtection(Intention):
                 amount=1
             ))
         
-        return actions
+        from engine.game_state import game_state
+        
+        add_actions(actions)
+        

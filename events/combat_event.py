@@ -2,8 +2,9 @@
 Base event definitions for new architecture.
 Events use global action queue - they represent random encounters in Unknown Rooms.
 """
+from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
 from events.base_event import Event
-from utils.result_types import BaseResult
+from utils.result_types import GameTerminalState
 from utils.types import CombatType
 from localization import Localizable
 
@@ -20,11 +21,11 @@ class CombatEvent(Event):
         self.enemies = enemies or []
         self.combat_type = combat_type
     
-    def trigger(self) -> 'BaseResult':
+    def trigger(self) -> None:
         """Trigger combat event"""
         from engine.combat import Combat
         from actions.display import DisplayTextAction
-        from utils.result_types import GameStateResult, MultipleActionsResult
+        from engine.game_state import game_state
 
         # Collect all actions
         actions = []
@@ -43,14 +44,15 @@ class CombatEvent(Event):
         result = combat.start()
         
         # Handle combat result
-        if result.state == "COMBAT_WIN":
+        if result == GameTerminalState.COMBAT_WIN:
             self._handle_victory()
         # ESCAPE：没有reward
         
-        if result.state == "GAME_LOSE":
-            return result
-        else:
-            return MultipleActionsResult(actions)
+        if result == GameTerminalState.GAME_LOSE:
+            set_terminal_state(result)
+            return
+
+        add_actions(actions)
     
     def _handle_victory(self):
         """Handle combat victory - add event-specific rewards"""

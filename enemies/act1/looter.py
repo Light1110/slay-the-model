@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from engine.runtime_api import add_action, add_actions
 """Looter - Common enemy in Act 1 and Act 2.
 
 Steals gold when attacking and tries to escape after a few turns.
@@ -102,7 +103,7 @@ class Looter(Enemy):
         # Turn 4+ (if we got here without smoke bomb somehow): Smoke Bomb then Escape
         return self.intentions["smoke_bomb"]
     
-    def execute_intention(self) -> List['Action']:
+    def execute_intention(self) -> None:
         """Execute the current intention and update turn tracking."""
         # Update turn tracking before executing
         self._turn_count += 1
@@ -114,9 +115,9 @@ class Looter(Enemy):
             self._used_smoke_bomb = True
         
         # Execute the intention
-        return super().execute_intention()
+        super().execute_intention()
     
-    def on_death(self) -> List['Action']:
+    def on_death(self) -> None:
         """Called when Looter dies - return stolen gold."""
         actions = []
         
@@ -125,4 +126,7 @@ class Looter(Enemy):
         if thievery and hasattr(thievery, 'on_remove'):
             thievery.on_remove()
         
-        return actions
+        from engine.game_state import game_state
+        
+        add_actions(actions)
+        

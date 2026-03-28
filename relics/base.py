@@ -61,128 +61,128 @@ class Relic(Localizable):
         return "any"
     
     @subscribe(RelicObtainedMessage, priority=MessagePriority.PLAYER_RELIC)
-    def on_obtain(self) -> List[Action]:
-        return []
+    def on_obtain(self):
+        return
     
     # ==================== Phase Hooks ====================
     
     @subscribe(CombatStartedMessage, priority=MessagePriority.PLAYER_RELIC)
-    def on_combat_start(self, player, entities) -> List[Action]:
+    def on_combat_start(self, player, entities):
         """Called at the start of combat.
         
         Returns:
             List of actions to execute after combat starts.
         """
-        return []
+        return
 
     @subscribe(CombatEndedMessage, priority=MessagePriority.PLAYER_RELIC)
-    def on_combat_end(self, player, entities) -> List[Action]:
+    def on_combat_end(self, player, entities):
         """Called at the end of combat.
         
         Returns:
             List of actions to execute after combat ends.
         """
-        return []
+        return
     
     @subscribe(EliteVictoryMessage, priority=MessagePriority.PLAYER_RELIC)
-    def on_elite_victory(self, player, entities) -> List[Action]:
+    def on_elite_victory(self, player, entities):
         """Called when player defeats an elite enemy.
         
         Returns:
             List of actions to execute after elite victory.
         """
-        return []
+        return
 
     @subscribe(PlayerTurnStartedMessage, priority=MessagePriority.PLAYER_RELIC)
-    def on_player_turn_start(self, player, entities) -> List[Action]:
+    def on_player_turn_start(self, player, entities):
         """Called at the start of player's turn.
         
         Returns:
             List of actions to execute at turn start.
         """
-        return []
+        return
 
     @subscribe(PlayerTurnEndedMessage, priority=MessagePriority.PLAYER_RELIC)
-    def on_player_turn_end(self, player, entities) -> List[Action]:
+    def on_player_turn_end(self, player, entities):
         """Called at the end of player's turn.
         
         Returns:
             List of actions to execute at turn end.
         """
-        return []
+        return
 
-    def on_enemy_turn_start(self, enemy, player, entities) -> List[Action]:
+    def on_enemy_turn_start(self, enemy, player, entities):
         """Called at the start of enemy's turn.
         
         Returns:
             List of actions to execute at enemy turn start.
         """
-        return []
+        return
 
-    def on_enemy_turn_end(self, enemy, player, entities) -> List[Action]:
+    def on_enemy_turn_end(self, enemy, player, entities):
         """Called at the end of enemy's turn.
         
         Returns:
             List of actions to execute at enemy turn end.
         """
-        return []
+        return
 
     @subscribe(ShopEnteredMessage, priority=MessagePriority.PLAYER_RELIC)
-    def on_shop_enter(self, player, entities=None) -> List[Action]:
+    def on_shop_enter(self, player, entities=None):
         """Called when entering a shop room."""
-        return []
+        return
     
     # ==================== Card Hooks ====================
     
     @subscribe(CardPlayedMessage, priority=MessagePriority.REACTION)
-    def on_card_play(self, card, player, entities) -> List[Action]:
+    def on_card_play(self, card, player, entities):
         """Called when a card is played.
         
         Returns:
             List of actions to execute after card is played.
         """
-        return []
+        return
     
     @subscribe(CardDrawnMessage, priority=MessagePriority.PLAYER_RELIC)
-    def on_card_draw(self, card, player, entities) -> List[Action]:
+    def on_card_draw(self, card, player, entities):
         """Called when a card is drawn.
         
         Returns:
             List of actions to execute after card is drawn.
         """
-        return []
+        return
     
     @subscribe(CardDiscardedMessage, priority=MessagePriority.PLAYER_RELIC)
-    def on_card_discard(self, card, player, entities) -> List[Action]:
+    def on_card_discard(self, card, player, entities):
         """Called when a card is discarded.
         
         Returns:
             List of actions to execute after card is discarded.
         """
-        return []
+        return
     
-    def on_card_exhaust(self, card, player, entities) -> List[Action]:
+    def on_card_exhaust(self, card, player, entities):
         """Called when a card is exhausted.
         
         Returns:
             List of actions to execute after card is exhausted.
         """
-        return []
+        return
 
     @subscribe(CardExhaustedMessage, priority=MessagePriority.REACTION)
-    def on_card_exhausted(self, card, owner, source_pile=None) -> List[Action]:
+    def on_card_exhausted(self, card, owner, source_pile=None):
         """Called when a card is exhausted."""
-        return []
+        return
 
     @subscribe(CardAddedToPileMessage, priority=MessagePriority.PLAYER_RELIC)
-    def on_card_added(self, card, dest_pile: str = "deck") -> List[Action]:
+    def on_card_added(self, card, dest_pile: str = "deck"):
         """Called when a card is added to a pile."""
-        return []
+        return
 
     # ==================== Stat Hooks ====================
     
     @subscribe(DamageResolvedMessage, priority=MessagePriority.REACTION)
-    def on_damage_dealt(self, damage, target, player, entities) -> List[Action]:
+    def on_damage_dealt(self, damage, target, player, entities):
         """Called when damage is dealt.
         
         Args:
@@ -194,10 +194,10 @@ class Relic(Localizable):
         Returns:
             List of actions to execute when damage is dealt
         """
-        return []
+        return
 
     @subscribe(DamageResolvedMessage, priority=MessagePriority.REACTION)
-    def on_damage_taken(self, damage, source, player, entities) -> List[Action]:
+    def on_damage_taken(self, damage, source, player, entities):
         """Called when damage is taken.
         
         Args:
@@ -209,10 +209,10 @@ class Relic(Localizable):
         Returns:
             List of actions to execute when damage is taken
         """
-        return []
+        return
 
     @subscribe(HealedMessage, priority=MessagePriority.REACTION)
-    def on_heal(self, heal_amount, player, entities) -> List[Action]:
+    def on_heal(self, heal_amount, player, entities):
         """Called when healing occurs.
         
         Args:
@@ -223,7 +223,7 @@ class Relic(Localizable):
         Returns:
             List of actions to execute when healing occurs
         """
-        return []
+        return
     
     # ==================== Modification Hooks ====================
     
@@ -286,7 +286,7 @@ class Relic(Localizable):
         return base_gold
     
     @subscribe(GoldGainedMessage, priority=MessagePriority.PLAYER_RELIC)
-    def on_gold_gained(self, gold_amount: int, player) -> List[Action]:
+    def on_gold_gained(self, gold_amount: int, player):
         """Called when gold is gained.
         
         Args:
@@ -296,19 +296,19 @@ class Relic(Localizable):
         Returns:
             List of actions to execute when gold is gained
         """
-        return []
+        return
     
     @subscribe(ShuffleMessage, priority=MessagePriority.PLAYER_RELIC)
-    def on_shuffle(self) -> List[Action]:
+    def on_shuffle(self):
         """Called when draw pile is shuffled.
         
         Returns:
             List of actions to execute when shuffling occurs
         """
-        return []
+        return
     
     @subscribe(PotionUsedMessage, priority=MessagePriority.PLAYER_RELIC)
-    def on_use_potion(self, potion, player, entities) -> List[Action]:
+    def on_use_potion(self, potion, player, entities):
         """Called when a potion is used.
         
         Args:
@@ -319,10 +319,10 @@ class Relic(Localizable):
         Returns:
             List of actions to execute when potion is used
         """
-        return []
+        return
     
     @subscribe(PowerAppliedMessage, priority=MessagePriority.REACTION)
-    def on_apply_power(self, power, target, player, entities) -> List[Action]:
+    def on_apply_power(self, power, target, player, entities):
         """Called when a power is applied to a target.
         
         Args:
@@ -334,11 +334,11 @@ class Relic(Localizable):
         Returns:
             List of actions to execute when power is applied
         """
-        return []
+        return
  
     # ==================== Active Trigger ====================
     
-    def on_trigger(self, **kwargs) -> List[Action]:
+    def on_trigger(self, **kwargs):
         """Manually trigger relic effect.
         
         This is called for relics with active effects that can be
@@ -350,7 +350,7 @@ class Relic(Localizable):
         Returns:
             List of actions to execute
         """
-        return []
+        return
     
     def info(self):
         """

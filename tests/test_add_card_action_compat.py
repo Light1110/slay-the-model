@@ -16,6 +16,6 @@ def test_add_card_action_accepts_legacy_target_argument():
 
     result = action.execute()
 
-    assert result is not None
+    assert result is None
     assert len(discard_pile) == 1
     assert discard_pile[0].__class__.__name__ == "Burn"

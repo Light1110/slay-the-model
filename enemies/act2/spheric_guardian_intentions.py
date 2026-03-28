@@ -1,4 +1,5 @@
 """Spheric Guardian specific intentions."""
+from engine.runtime_api import add_action, add_actions
 
 import random
 from typing import List, TYPE_CHECKING
@@ -17,16 +18,19 @@ class ActivateIntention(Intention):
         super().__init__("activate", enemy)
         self.base_block = 25
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Activate: gains Block."""
         from actions.combat import GainBlockAction
         
-        return [
+        from engine.game_state import game_state
+        add_actions(
+        [
             GainBlockAction(
                 block=self.base_block,
                 target=self.enemy
             )
         ]
+        )
 
 
 class DebuffAttackIntention(Intention):
@@ -37,15 +41,16 @@ class DebuffAttackIntention(Intention):
         self.base_damage = 10
         self.frail_stacks = 5
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Debuff Attack: deals damage and applies Frail."""
         from actions.combat import AttackAction, ApplyPowerAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -59,6 +64,7 @@ class DebuffAttackIntention(Intention):
                 duration=1
             )
         ]
+        )
 
 
 class SlamIntention(Intention):
@@ -69,14 +75,13 @@ class SlamIntention(Intention):
         self.base_damage = 10
         self.hits = 2
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Slam: deals 10x2 damage to player."""
         from actions.combat import AttackAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
+            return
         actions = []
         for _ in range(self.hits):
             actions.append(
@@ -87,9 +92,8 @@ class SlamIntention(Intention):
                     damage_type="attack",
                 )
             )
-        return actions
-
-
+        from engine.game_state import game_state
+        add_actions(actions)
 class HardenIntention(Intention):
     """Harden - Deals 10 damage, gains 15 Block (11 dmg on A3+)."""
     
@@ -98,15 +102,16 @@ class HardenIntention(Intention):
         self.base_damage = 10
         self.base_block = 15
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Harden: deals damage and gains Block."""
         from actions.combat import AttackAction, GainBlockAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -118,3 +123,4 @@ class HardenIntention(Intention):
                 target=self.enemy
             )
         ]
+        )

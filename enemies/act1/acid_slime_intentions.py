@@ -1,4 +1,5 @@
 """Acid Slime specific intentions."""
+from engine.runtime_api import add_action, add_actions
 
 from typing import List, TYPE_CHECKING
 import random
@@ -36,7 +37,7 @@ class CorrosiveSpitIntention(Intention):
             self._slimed_count = 1
         self.base_cards = self._slimed_count  # For description variable {cards}
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Corrosive Spit: deals damage and adds Slimed cards."""
         from actions.combat import AttackAction
         from actions.card import AddCardAction
@@ -44,8 +45,7 @@ class CorrosiveSpitIntention(Intention):
         from utils.registry import get_registered
         
         if not game_state or not game_state.player:
-            return []
-        
+            return
         actions = [
             AttackAction(
                 damage=self.base_damage,
@@ -68,9 +68,10 @@ class CorrosiveSpitIntention(Intention):
         except Exception:
             pass
         
-        return actions
-
-
+        from engine.game_state import game_state
+        
+        add_actions(actions)
+        
 class LickIntention(Intention):
     """Lick - Applies Weak to player.
     
@@ -91,21 +92,23 @@ class LickIntention(Intention):
         else:
             self.weak_stacks = 1
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Lick: applies Weak to player."""
         from actions.combat import ApplyPowerAction
         from powers.definitions.weak import WeakPower
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             ApplyPowerAction(
                 WeakPower(amount=self.weak_stacks, duration=2, owner=game_state.player),
                 game_state.player
             )
         ]
+        )
 
 
 class TackleIntention(Intention):
@@ -130,15 +133,16 @@ class TackleIntention(Intention):
         else:
             self.base_damage = 10
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Tackle: deals damage to player."""
         from actions.combat import AttackAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -146,6 +150,7 @@ class TackleIntention(Intention):
                 damage_type="attack",
             )
         ]
+        )
 
 
 class SplitIntention(Intention):
@@ -157,7 +162,7 @@ class SplitIntention(Intention):
     def __init__(self, enemy: 'Enemy'):
         super().__init__("split", enemy)
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Split: spawns smaller slimes."""
         from actions.combat import RemoveEnemyAction, AddEnemyAction
         
@@ -185,4 +190,7 @@ class SplitIntention(Intention):
         except Exception:
             pass
         
-        return actions
+        from engine.game_state import game_state
+        
+        add_actions(actions)
+        

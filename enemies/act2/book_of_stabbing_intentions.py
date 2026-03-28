@@ -1,4 +1,5 @@
 """Book of Stabbing intentions - Act 2 Elite enemy."""
+from engine.runtime_api import add_action, add_actions
 
 import random
 from typing import TYPE_CHECKING, List
@@ -18,7 +19,7 @@ class MultiStab(Intention):
         self.base_damage = 6  # Per hit
         self._hits_base = 2  # Base number of hits
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute multi-stab attack."""
         from engine.game_state import game_state
         
@@ -34,9 +35,10 @@ class MultiStab(Intention):
                 damage_type="attack"
             ))
         
-        return actions
-
-
+        from engine.game_state import game_state
+        
+        add_actions(actions)
+        
 class BigStab(Intention):
     """Deals 21 damage."""
     
@@ -44,13 +46,16 @@ class BigStab(Intention):
         super().__init__("Big Stab", enemy)
         self.base_damage = 21
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute big stab attack."""
         from engine.game_state import game_state
         
-        return [AttackAction(
+        from engine.game_state import game_state
+        add_actions(
+        [AttackAction(
             damage=self.base_damage,
             target=game_state.player,
             source=self.enemy,
             damage_type="attack"
         )]
+        )

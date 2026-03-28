@@ -2,6 +2,7 @@
 Shop Relics
 Relics available only at shop.
 """
+from engine.runtime_api import add_action, add_actions
 from typing import List
 from actions.base import Action, LambdaAction
 from actions.card import ChooseCopyCardAction, ChooseObtainCardAction, DrawCardsAction
@@ -21,15 +22,16 @@ class Cauldron(Relic):
         super().__init__()
         self.rarity = RarityType.SHOP
     
-    def on_obtain(self) -> List[Action]:
+    def on_obtain(self):
         # Lazy import to avoid circular dependency
         from actions.reward import AddRandomPotionAction
         from engine.game_state import game_state
         actions = []
         for _ in range(5):
             actions.append(AddRandomPotionAction(game_state.player.namespace))
-        return actions
-
+        from engine.game_state import game_state
+        add_actions(actions)
+        return
 @register("relic")
 class ChemicalX(Relic):
     """Whenever you play a cost X Card, its effects are increased by 2."""
@@ -53,8 +55,9 @@ class ClockworkSouvenir(Relic):
 
     def on_combat_start(self, player, entities):
         """Gain 1 Artifact at start of combat"""
-        return [ApplyPowerAction(power="Artifact", target=player, amount=1)]
-
+        from engine.game_state import game_state
+        add_actions([ApplyPowerAction(power="Artifact", target=player, amount=1)])
+        return
 @register("relic")
 class DollysMirror(Relic):
     """Upon pickup, obtain an additional copy of a Card in your deck."""
@@ -64,9 +67,10 @@ class DollysMirror(Relic):
         self.rarity = RarityType.SHOP
         self.copied_card = None  # Would be set on pickup
         
-    def on_obtain(self) -> List[Action]:
-        return [ChooseCopyCardAction(pile='deck', copies=1)]
-
+    def on_obtain(self):
+        from engine.game_state import game_state
+        add_actions([ChooseCopyCardAction(pile='deck', copies=1)])
+        return
 @register("relic")
 class FrozenEye(Relic):
     """When viewing your Drawpile, Cards are now shown in order."""
@@ -89,8 +93,12 @@ class HandDrill(Relic):
         self.rarity = RarityType.SHOP
 
     def on_damage_dealt(self, damage, target, player, entities):
-        return [ApplyPowerAction(power="Vulnerable", target=target,
+        from engine.game_state import game_state
+        add_actions(
+        [ApplyPowerAction(power="Vulnerable", target=target,
                                  amount=2, duration=2)]
+        )
+        return
 
 @register("relic")
 class LeesWaffle(Relic):
@@ -100,10 +108,14 @@ class LeesWaffle(Relic):
         super().__init__()
         self.rarity = RarityType.SHOP
 
-    def on_obtain(self) -> List[Action]:
+    def on_obtain(self):
         from engine.game_state import game_state
-        return [ModifyMaxHpAction(amount=7),
+        from engine.game_state import game_state
+        add_actions(
+        [ModifyMaxHpAction(amount=7),
                 HealAction(amount=game_state.player.max_hp)]
+        )
+        return
 
 @register("relic")
 class MedicalKit(Relic):
@@ -153,7 +165,7 @@ class Orrery(Relic):
         super().__init__()
         self.rarity = RarityType.SHOP
 
-    def on_obtain(self) -> List[Action]:
+    def on_obtain(self):
         from engine.game_state import game_state
 
         has_prismatic_shard = any(
@@ -170,8 +182,9 @@ class Orrery(Relic):
                 encounter_type="shop",
                 use_rolling_offset=False,
             ))
-        return actions
-
+        from engine.game_state import game_state
+        add_actions(actions)
+        return
 @register("relic")
 class SlingOfCourage(Relic):
     """Start each Elite combat with 2 Strength. (Does not work against Bosses)"""
@@ -187,9 +200,10 @@ class SlingOfCourage(Relic):
         
         combat = game_state.current_combat
         if combat is not None and combat.combat_type == CombatType.ELITE:
-            return [ApplyPowerAction(power="Strength", target=player, amount=2)]
-        return []
-
+            from engine.game_state import game_state
+            add_actions([ApplyPowerAction(power="Strength", target=player, amount=2)])
+            return
+        return
 @register("relic")
 class StrangeSpoonShop(Relic):
     """Cards which Exhaust when played will instead discard 50% of time."""
@@ -213,11 +227,12 @@ class TheAbacus(Relic):
         super().__init__()
         self.rarity = RarityType.SHOP
 
-    def on_shuffle(self) -> List[Action]:
+    def on_shuffle(self):
         """Gain 6 Block when shuffling draw pile."""
         from engine.game_state import game_state
-        return [GainBlockAction(block=6, target=game_state.player)]
-
+        from engine.game_state import game_state
+        add_actions([GainBlockAction(block=6, target=game_state.player)])
+        return
 @register("relic")
 class TwistedFunnel(Relic):
     """At the start of each combat, apply 4 Poison to ALL enemies."""
@@ -231,8 +246,9 @@ class TwistedFunnel(Relic):
         actions = []
         for enemy in entities:
             actions.append(ApplyPowerAction(power="Poison", target=enemy, amount=4, duration=3))
-        return actions
-
+        from engine.game_state import game_state
+        add_actions(actions)
+        return
 @register("relic")
 class Toolbox(Relic):
     """At the start of each combat, choose 1 of 3 random Colorless Cards and add the chosen Card into your hand."""
@@ -246,11 +262,15 @@ class Toolbox(Relic):
         from actions.card import AddRandomCardAction
         from engine.game_state import game_state
         # Add a random colorless card to hand with 0 cost for the turn
-        return [AddRandomCardAction(
+        from engine.game_state import game_state
+        add_actions(
+        [AddRandomCardAction(
             pile='hand', 
             namespace='colorless',
             temp_cost=0
         )]
+        )
+        return
 
 
 @register("relic")
@@ -278,8 +298,8 @@ class PotionBeltShop(Relic):
         super().__init__()
         self.rarity = RarityType.SHOP
     
-    def on_obtain(self) -> List[Action]:
+    def on_obtain(self):
         """Increase potion slots by 2."""
         from engine.game_state import game_state
         game_state.player.potion_slots += 2
-        return []
+        return

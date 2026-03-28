@@ -3,13 +3,13 @@
 Cross-run card storage event that allows receiving a card from previous run
 and storing a card for future runs.
 """
+from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
 
 import json
 import os
 from pathlib import Path
 from typing import Optional
 
-from utils.result_types import BaseResult, MultipleActionsResult
 from events.base_event import Event
 from events.event_pool import register_event
 from actions.display import InputRequestAction, DisplayTextAction
@@ -84,7 +84,7 @@ class ANoteForYourself(Event):
         # Also disabled in Daily Climb (not implemented yet)
         return True
     
-    def trigger(self) -> BaseResult:
+    def trigger(self) -> None:
         actions = []
         
         # Display event description
@@ -147,7 +147,7 @@ class ANoteForYourself(Event):
         ))
         
         self.end_event()
-        return MultipleActionsResult(actions)
+        add_actions(actions)
 
 
 from utils.types import RarityType
@@ -159,7 +159,7 @@ from utils.registry import register
 class StoreCardForFutureAction(Action):
     """Store the last removed card for future runs."""
     
-    def execute(self) -> BaseResult:
+    def execute(self) -> None:
         # This action is triggered after ChooseRemoveCardAction
         # We need to find what card was removed
         # For now, we'll use a simple approach: store the most recently
@@ -170,5 +170,4 @@ class StoreCardForFutureAction(Action):
         
         # Get the current deck and find cards not in the original deck
         # This is a workaround until we have proper card tracking
-        from utils.result_types import NoneResult
-        return NoneResult()
+        pass

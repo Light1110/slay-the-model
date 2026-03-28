@@ -3,6 +3,7 @@
 Whenever the player plays a certain number of cards (x12), 
 ends their turn and the owner gains 1 Strength.
 """
+from engine.runtime_api import add_action, add_actions
 from typing import List
 from actions.base import Action
 from actions.combat import ApplyPowerAction, EndTurnAction
@@ -40,7 +41,7 @@ class TimeWarpPower(Power):
         super().__init__(amount=amount, duration=duration, owner=owner)
         self.card_counter = amount  # Cards played since last trigger
     
-    def on_card_play(self, card, player, entities) -> List[Action]:
+    def on_card_play(self, card, player, entities):
         """Called when a card is played.
         
         Increments counter and triggers effect when threshold is reached.
@@ -81,10 +82,12 @@ class TimeWarpPower(Power):
                     self.owner
                 ))
             
-            return actions
-        
-        return []
-    
+            from engine.game_state import game_state
+            
+            add_actions(actions)
+            
+            return
+        return
     @property
     def counter(self) -> int:
         """Current card counter."""

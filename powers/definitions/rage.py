@@ -2,6 +2,7 @@
 Rage power for Ironclad.
 Whenever you play an ATTACK card this turn, gain block.
 """
+from engine.runtime_api import add_action, add_actions
 from typing import List, Any
 from actions.base import Action
 from powers.base import Power, StackType
@@ -26,7 +27,7 @@ class RagePower(Power):
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
 
-    def on_play_card(self, card, player, entities) -> List[Action]:
+    def on_play_card(self, card, player, entities):
         """Gain block when an Attack card is played."""
         from engine.game_state import game_state
         from utils.types import CardType
@@ -37,4 +38,8 @@ class RagePower(Power):
             if card.card_type == CardType.ATTACK:
                 actions.append(GainBlockAction(block=self.amount, target=game_state.player))
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

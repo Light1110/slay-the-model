@@ -1,6 +1,7 @@
 """
 Card base class - class-driven card system with namespace support
 """
+from engine.runtime_api import add_action, add_actions
 from typing import Any, Dict, List, Optional
 from actions.base import Action, LambdaAction
 from actions.combat import AttackAction
@@ -118,6 +119,7 @@ class Card(Localizable):
         
         # temporary cost for this turn (e.g. from Corruption)
         self.temp_cost: Optional[int] = None
+        self._x_cost_energy = 0
         
         # Handle optional kwargs for testing
         if kwargs.get("name"):
@@ -350,7 +352,7 @@ class Card(Localizable):
 
     # * * * actions 相关
 
-    def on_play(self, targets: List[Creature] = []) -> List[Action]:
+    def on_play(self, targets: List[Creature] = []):
         """卡牌被打出时触发，返回 Action 列表"""
         # Extract first target for compatibility
         try:
@@ -410,50 +412,53 @@ class Card(Localizable):
             if self.exhaust:
                 actions.append(ExhaustCardAction(card=self, source_pile="hand"))
             
-            return actions
+            add_actions(actions)
+            return
         except ImportError:
-            return []
+            return
 
     @subscribe(CardDiscardedMessage, priority=MessagePriority.CARD)
     def on_discard(self):
         """卡牌被弃置时触发，默认返回 Action 列表。"""
-        return []
+        return
 
     @subscribe(CardDrawnMessage, priority=MessagePriority.CARD)
     def on_draw(self):
         """卡牌被抽到时触发，默认返回 Action 列表。"""
-        return []
+        return
 
     def on_exhaust(self):
         """卡牌被消耗（放逐）时触发，默认返回 Action 列表。"""
-        return []
+        return
     
     @subscribe(CardPlayedMessage, priority=MessagePriority.REACTION)
-    def on_card_play(self, card, player, entities) -> List[Action]:
+    def on_card_play(self, card, player, entities):
         """Called when another card is played while this card is active."""
-        return []
+        return
 
     def on_player_turn_start(self):
         """
         卡牌在回合开始时触发。
         默认：如果temp_cost不为None，重置为None（只影响当前回合）
         """
-        return [LambdaAction(lambda: setattr(self, 'temp_cost', None))]
+        from engine.game_state import game_state
+        add_action(LambdaAction(lambda: setattr(self, 'temp_cost', None)))
+        return
     
     @subscribe(PlayerTurnEndedMessage, priority=MessagePriority.CARD)
     def on_player_turn_end(self):
         """卡牌在回合结束时触发，默认返回 Action 列表。"""
-        return []
+        return
 
     @subscribe(DamageResolvedMessage, priority=MessagePriority.REACTION)
-    def on_damage_dealt(self, damage: int, target=None, card=None, damage_type: str = "direct") -> List[Action]:
+    def on_damage_dealt(self, damage: int, target=None, card=None, damage_type: str = "direct"):
         """Called when this card deals damage."""
-        return []
+        return
 
     @subscribe(DamageResolvedMessage, priority=MessagePriority.REACTION)
-    def on_fatal(self, damage: int, target=None, card=None, damage_type: str = "direct") -> List[Action]:
+    def on_fatal(self, damage: int, target=None, card=None, damage_type: str = "direct"):
         """Called when this card delivers a killing blow."""
-        return []
+        return
 
     def can_play(self, ignore_energy=False) -> tuple[bool, Optional[str]]:
         """Check if this card can be played."""

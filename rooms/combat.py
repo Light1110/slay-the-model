@@ -1,16 +1,16 @@
 """
 Combat room implementation - manages Combat instance execution.
 """
+from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
 from typing import TYPE_CHECKING, List
 
 from actions.base import Action
 from actions.display import DisplayTextAction
-from utils.result_types import MultipleActionsResult, NoneResult
 from actions.reward import AddGoldAction, AddRandomPotionAction
 from actions.card import AddRandomCardAction, ChooseAddRandomCardAction, ChooseObtainCardAction
-from utils.result_types import GameStateResult
+from utils.result_types import GameTerminalState
 from engine.combat import Combat
-from rooms.base import Room, BaseResult
+from rooms.base import Room
 from utils.registry import register
 from utils.types import RoomType, RarityType, CardType, CombatType
 
@@ -35,8 +35,9 @@ class CombatRoom(Room):
         ):
             for relic in game_state.player.relics:
                 if getattr(relic, "idstr", None) == "PreservedInsect":
-                    if hasattr(relic, "apply_elite_hp_reduction"):
-                        relic.apply_elite_hp_reduction(self.enemies)
+                    hook = getattr(relic, "apply_elite_hp_reduction", None)
+                    if hook is not None:
+                        hook(self.enemies)
                     break
 
         # Determine combat type based on room type
@@ -47,7 +48,7 @@ class CombatRoom(Room):
             combat_type=combat_type
         )
     
-    def enter(self) -> BaseResult:
+    def enter(self):
         """Enter combat room and execute combat"""
         from engine.game_state import game_state
         actions = []
@@ -65,18 +66,17 @@ class CombatRoom(Room):
         result = self.combat.start()
         
         # Handle combat result
-        if result.state == "COMBAT_WIN":
+        if result == GameTerminalState.COMBAT_WIN:
             victory_actions = self._handle_victory()
             if victory_actions:
                 actions.extend(victory_actions)
         # ESCAPE：没有reward
         
-        if result.state == "GAME_LOSE":
+        if result == GameTerminalState.GAME_LOSE:
             return result
-        else:
-            if actions:
-                return MultipleActionsResult(actions)
-            return NoneResult()
+        if actions:
+            add_actions(actions)
+        return None
     
     def leave(self):
         """Leave the combat room"""
@@ -90,6 +90,8 @@ class CombatRoom(Room):
         from engine.game_state import game_state
         from engine.messages import EliteVictoryMessage
         from actions.misc import _has_relic
+        combat = self.combat
+        assert combat is not None
         actions = []
         
         # Display victory message
@@ -105,15 +107,12 @@ class CombatRoom(Room):
         if self.room_type == RoomType.ELITE:
             if self.encounter_name:
                 game_state.elite_history.append(self.encounter_name)
-            actions.extend(
-                game_state.publish_message(
-                    EliteVictoryMessage(
-                        owner=game_state.player,
-                        room=self,
-                        encounter_name=self.encounter_name,
-                        entities=[],
-                    ),
-                    participants=list(game_state.player.relics),
+            publish_message(
+                EliteVictoryMessage(
+                    owner=game_state.player,
+                    room=self,
+                    encounter_name=self.encounter_name,
+                    entities=[],
                 )
             )
 
@@ -135,10 +134,11 @@ class CombatRoom(Room):
 
             
             # Check for PrayerWheel - adds extra card reward for normal enemies
-            combat_type_str = "normal" if self.combat.combat_type == CombatType.NORMAL else "elite"
+            combat_type_str = "normal" if combat.combat_type == CombatType.NORMAL else "elite"
             for relic in game_state.player.relics:
-                if hasattr(relic, "modify_card_reward_count"):
-                    reward_options = relic.modify_card_reward_count(reward_options, combat_type_str)
+                hook = getattr(relic, "modify_card_reward_count", None)
+                if hook is not None:
+                    reward_options = hook(reward_options, combat_type_str)
             
             # 3 choose 1, rarity determined by encounter type
             actions.append(ChooseObtainCardAction(

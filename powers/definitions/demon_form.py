@@ -2,6 +2,7 @@
 Demon Form power for Ironclad.
 At end of your turn, gain Strength.
 """
+from engine.runtime_api import add_action, add_actions
 from typing import List, Any
 from powers.base import Power, StackType
 from actions.base import Action
@@ -25,7 +26,7 @@ class DemonFormPower(Power):
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
 
-    def on_turn_start(self) -> List[Action]:
+    def on_turn_start(self):
         """Gain Strength at end of turn."""
         from actions.combat import ApplyPowerAction
         from engine.game_state import game_state
@@ -38,4 +39,8 @@ class DemonFormPower(Power):
                 game_state.player
             ))
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

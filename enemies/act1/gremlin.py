@@ -10,6 +10,7 @@ HP values based on Slay the Spire Ascension 0:
 - Shield Gremlin: 12-15 HP
 - Gremlin Wizard: 9-12 HP
 """
+from engine.runtime_api import add_action, add_actions
 
 import random
 from typing import Optional
@@ -91,7 +92,7 @@ class MadGremlin(Enemy):
         
         # Gain Strength when damaged by player attacks
         if damage > 0 and source == game_state.player:
-            game_state.action_queue.add_action(
+            add_action(
                 ApplyPowerAction(
                     power="strength",
                     target=self,

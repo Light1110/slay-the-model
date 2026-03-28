@@ -1,6 +1,7 @@
 """
 Ironclad Uncommon Power card - Fire Breathing
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -22,14 +23,19 @@ class FireBreathing(Card):
     base_magic = {"damage_on_status": 7, "damage": 7}
     upgrade_magic = {"damage_on_status": 10, "damage": 10}
 
-    def on_play(self, targets: List[Creature] = []) -> List[Action]:
+    def on_play(self, targets: List[Creature] = []):
         target = targets[0] if targets else None
         from engine.game_state import game_state
 
-        actions = super().on_play(targets)
+        super().on_play(targets)
 
+        actions = []
         # Apply FireBreathingPower
         damage_on_status = self.get_magic_value("damage_on_status")
         actions.append(ApplyPowerAction(power="FireBreathing", target=game_state.player, amount=damage_on_status, duration=-1))
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

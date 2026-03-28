@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import types
+from typing import Any, cast
 
 
 def test_emit_text_is_queued_until_explicit_flush(monkeypatch):
@@ -107,13 +108,13 @@ def test_gain_energy_emits_runtime_event_instead_of_print(monkeypatch):
     original_player = game_state.player
     original_config = game_state.config
     try:
-        game_state.player = DummyPlayer()
-        game_state.config = types.SimpleNamespace(mode="debug", debug={"print": False})
+        cast(Any, game_state).player = DummyPlayer()
+        cast(Any, game_state).config = types.SimpleNamespace(mode="debug", debug={"print": False})
         clear_runtime_events()
 
         result = GainEnergyAction(2).execute()
 
-        assert getattr(result.result_type, "value", result.result_type) == "none"
+        assert result is None
         queued = get_runtime_events()
         assert queued
         assert queued[0].kind == "text"
@@ -151,13 +152,13 @@ def test_end_turn_emits_runtime_event_instead_of_print(monkeypatch):
     original_combat = game_state.current_combat
     original_config = game_state.config
     try:
-        game_state.current_combat = DummyCombat()
-        game_state.config = types.SimpleNamespace(mode="debug", debug={"print": False})
+        cast(Any, game_state).current_combat = DummyCombat()
+        cast(Any, game_state).config = types.SimpleNamespace(mode="debug", debug={"print": False})
         clear_runtime_events()
 
         result = EndTurnAction().execute()
 
-        assert getattr(result.result_type, "value", result.result_type) == "none"
+        assert result is None
         queued = get_runtime_events()
         assert queued
         assert queued[0].kind == "text"
@@ -191,9 +192,9 @@ def test_shop_room_enter_emits_runtime_event_instead_of_display_action(monkeypat
     original_publish_message = game_state.publish_message
     original_config = game_state.config
     try:
-        game_state.player = DummyPlayer()
-        game_state.config = types.SimpleNamespace(mode="debug", debug={"print": False})
-        game_state.publish_message = lambda *args, **kwargs: []
+        cast(Any, game_state).player = DummyPlayer()
+        cast(Any, game_state).config = types.SimpleNamespace(mode="debug", debug={"print": False})
+        cast(Any, game_state).publish_message = lambda *args, **kwargs: []
         clear_runtime_events()
 
         room = ShopRoom()
@@ -204,7 +205,8 @@ def test_shop_room_enter_emits_runtime_event_instead_of_display_action(monkeypat
         assert queued[0].kind == "text"
         assert queued[0].text.endswith("\n")
         assert rendered == []
-        assert result.actions
+        assert result is None
+        assert game_state.action_queue.queue
 
         flush_runtime_events()
         assert len(rendered) == len(queued)
@@ -236,7 +238,7 @@ def test_event_room_empty_pool_emits_runtime_event_instead_of_display_action(mon
     assert queued[0].kind == "text"
     assert queued[0].text.endswith("\n")
     assert rendered == []
-    assert getattr(result.result_type, "value", result.result_type) == "none"
+    assert result is None
 
     flush_runtime_events()
     assert len(rendered) == len(queued)

@@ -1,4 +1,5 @@
 """Bronze Orb - Minion summoned by Bronze Automaton."""
+from engine.runtime_api import add_action, add_actions
 
 import random
 from enemies.base import Enemy
@@ -72,4 +73,6 @@ class BronzeOrb(Enemy):
         actions = []
         for card in self.stolen_cards:
             actions.append(AddCardAction(card=card, dest_pile='hand'))
-        return actions
+        from engine.game_state import game_state
+        add_actions(actions)
+        return

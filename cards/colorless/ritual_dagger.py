@@ -1,6 +1,7 @@
 """
 Colorless Special Attack card - Ritual Dagger
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -25,7 +26,7 @@ class RitualDagger(Card):
 
     upgrade_magic = {"fatal_bonus": 5, "damage_increase": 5}
 
-    def on_fatal(self) -> List[Action]:
+    def on_fatal(self):
         """If this kills enemy, permanently increase this Card's damage"""
         actions = []
 
@@ -36,4 +37,8 @@ class RitualDagger(Card):
         # Permanently increase this card instance's damage
         self._damage += fatal_bonus
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

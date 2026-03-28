@@ -1,6 +1,7 @@
 """
 Rest room implementation.
 """
+from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
 from actions.card import (
     ChooseObtainCardAction,
     ChooseRemoveCardAction,
@@ -9,10 +10,9 @@ from actions.card import (
 from actions.display import InputRequestAction, DisplayTextAction
 from actions.reward import AddRelicAction, AddRandomRelicAction
 from actions.misc import LeaveRoomAction, _has_relic
-from utils.result_types import GameStateResult, MultipleActionsResult, NoneResult
 from engine.game_state import game_state
 from localization import LocalStr
-from rooms.base import Room, BaseResult
+from rooms.base import Room
 from utils.option import Option
 from utils.registry import register
 from utils.types import RarityType, RoomType
@@ -31,7 +31,7 @@ class RestRoom(Room):
         """Initialize the rest room"""
         pass
     
-    def enter(self) -> BaseResult:
+    def enter(self) -> None:
         """Enter rest room and return the initial rest actions."""
         actions = []
 
@@ -44,7 +44,7 @@ class RestRoom(Room):
 
         actions.append(DisplayTextAction(text_key="rooms.RestRoom.enter"))
         actions.append(self._build_rest_menu())
-        return MultipleActionsResult(actions)
+        add_actions(actions)
     
     def leave(self):
         """Leave the rest room"""
@@ -54,7 +54,7 @@ class RestRoom(Room):
             # set relic available for next combat
             for relic in game_state.player.relics:
                 if getattr(relic, "idstr", "").lower() == "ancientteaset":
-                    relic.is_rest_last_room = True
+                    setattr(relic, "is_rest_last_room", True)
                     break
     
     def _build_rest_menu(self):
@@ -64,8 +64,9 @@ class RestRoom(Room):
         # Rest option - heal 30% of max HP
         heal_amount = game_state.player.max_hp // 10 * 3
         for relic in game_state.player.relics:
-            if hasattr(relic, "modify_rest_heal"):
-                heal_amount = relic.modify_rest_heal(heal_amount)
+            modify_rest_heal = getattr(relic, "modify_rest_heal", None)
+            if modify_rest_heal is not None:
+                heal_amount = modify_rest_heal(heal_amount)
         rest_actions = [HealAction(amount=heal_amount)]
         if _has_relic("DreamCatcher", game_state):
             rest_actions.append(
@@ -109,7 +110,8 @@ class RestRoom(Room):
             # Check if Girya can still be used
             for relic in game_state.player.relics:
                 if getattr(relic, "idstr", None) == "Girya":
-                    if hasattr(relic, "can_use_at_rest") and relic.can_use_at_rest():
+                    can_use_at_rest = getattr(relic, "can_use_at_rest", None)
+                    if can_use_at_rest is not None and can_use_at_rest():
                         options.append(Option(
                             name=self.local("lift"),
                             actions=[TriggerRelicAction(relic_name="Lift"), LeaveRoomAction(room=self)],
@@ -146,8 +148,9 @@ class RestRoom(Room):
         # Rest option - heal 30% of max HP
         heal_amount = game_state.player.max_hp // 10 * 3
         for relic in game_state.player.relics:
-            if hasattr(relic, "modify_rest_heal"):
-                heal_amount = relic.modify_rest_heal(heal_amount)
+            modify_rest_heal = getattr(relic, "modify_rest_heal", None)
+            if modify_rest_heal is not None:
+                heal_amount = modify_rest_heal(heal_amount)
         rest_actions = [HealAction(amount=heal_amount)]
         if self._check_relic("DreamCatcher"):
             rest_actions.append(

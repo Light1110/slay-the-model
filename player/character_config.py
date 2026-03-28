@@ -144,8 +144,6 @@ def list_characters(playable_only: bool = False) -> List[str]:
     if not playable_only:
         return list(_character_registry.keys())
     return [name for name, config in _character_registry.items() if config.playable]
-
-
 # Register Ironclad character
 @register_character(
     name="ironclad",

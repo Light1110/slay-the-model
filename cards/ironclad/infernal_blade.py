@@ -1,6 +1,7 @@
 """
 Ironclad Uncommon Skill card - Infernal Blade
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -24,10 +25,16 @@ class InfernalBlade(Card):
 
     upgrade_cost = 0
 
-    def on_play(self, targets: List[Creature] = []) -> List[Action]:
+    def on_play(self, targets: List[Creature] = []):
         target = targets[0] if targets else None
         from engine.game_state import game_state
 
         namespace = game_state.player.namespace
 
-        return super().on_play(targets) + [ChooseAddRandomCardAction(namespace=namespace, card_type=CardType.ATTACK, temp_cost=0)]
+        super().on_play(targets)
+
+        from engine.game_state import game_state
+
+        add_actions([ChooseAddRandomCardAction(namespace=namespace, card_type=CardType.ATTACK, temp_cost=0)])
+
+        return

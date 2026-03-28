@@ -2,6 +2,7 @@
 Plated Armor power for combat effects.
 Gain Block at end of turn; unblocked damage reduces stacks.
 """
+from engine.runtime_api import add_action, add_actions
 from typing import List
 from actions.base import Action
 from actions.combat import GainBlockAction
@@ -25,12 +26,14 @@ class PlatedArmorPower(Power):
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
         
-    def on_turn_end(self) -> List[Action]:
+    def on_turn_end(self):
         # Gain Block equal to stacks for the owner (enemy or player)
-        return super().on_turn_end() + [GainBlockAction(block=self.amount, target=self.owner)]
-    
-    def on_damage_taken(self, damage: int, source=None, card=None, player=None, damage_type: str = "direct") -> List[Action]:
+        super().on_turn_end()
+        from engine.game_state import game_state
+        add_actions([GainBlockAction(block=self.amount, target=self.owner)])
+        return
+    def on_damage_taken(self, damage: int, source=None, card=None, player=None, damage_type: str = "direct"):
         if damage_type == "attack":
             self.amount -= 1
         # todo: amount = 0 时 remove
-        return []
+        return

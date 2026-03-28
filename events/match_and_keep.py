@@ -2,10 +2,10 @@
 
 A card matching minigame where you flip cards and match pairs to add them to your deck.
 """
+from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
 
 import random
 from typing import List, Optional, Tuple
-from utils.result_types import BaseResult, MultipleActionsResult, NoneResult, SingleActionResult
 from events.base_event import Event
 from events.event_pool import register_event
 from actions.display import InputRequestAction, DisplayTextAction
@@ -119,7 +119,7 @@ class MatchAndKeep(Event):
         """Can appear in any act."""
         return True
     
-    def trigger(self) -> BaseResult:
+    def trigger(self) -> None:
         global _matching_state
         
         # Initialize minigame state
@@ -145,27 +145,29 @@ class MatchAndKeep(Event):
         actions.append(MatchAndKeepAction())
         
         self.end_event()
-        return MultipleActionsResult(actions)
+        add_actions(actions)
 
 
 @register("action")
 class MatchAndKeepAction(Action):
     """Interactive matching minigame action."""
     
-    def execute(self) -> BaseResult:
+    def execute(self) -> None:
         global _matching_state
         
         if not _matching_state:
-            return NoneResult()
+            return
         
         # Check if game is over
         if _matching_state['tries_remaining'] <= 0:
-            return self._end_game()
+            add_actions(self._end_game(), to_front=True)
+            return
         
         # Check if all cards matched
         unmatched = [c for c in _matching_state['deck'] if not c['matched']]
         if not unmatched:
-            return self._end_game()
+            add_actions(self._end_game(), to_front=True)
+            return
         
         # Build selection options for face-down cards
         options = []
@@ -196,15 +198,18 @@ class MatchAndKeepAction(Action):
         # Show tries remaining
         tries_text = f"Tries remaining: {_matching_state['tries_remaining']}"
         
-        return SingleActionResult(InputRequestAction(
-            title=LocalStr('events.match_and_keep.select_card', 
-                          default=f"Select a card to flip. {tries_text}"),
-            options=options,
-            max_select=1,
-            must_select=True
-        ))
+        add_action(
+            InputRequestAction(
+                title=LocalStr('events.match_and_keep.select_card', 
+                              default=f"Select a card to flip. {tries_text}"),
+                options=options,
+                max_select=1,
+                must_select=True,
+            ),
+            to_front=True,
+        )
     
-    def _end_game(self) -> BaseResult:
+    def _end_game(self) -> list:
         """End the minigame and add matched cards to deck."""
         global _matching_state
         
@@ -231,7 +236,7 @@ class MatchAndKeepAction(Action):
         # Clear state
         _matching_state = {}
         
-        return MultipleActionsResult(actions)
+        return actions
 
 
 @register("action")
@@ -241,22 +246,22 @@ class FlipCardAction(Action):
     def __init__(self, card_index: int):
         self.card_index = card_index
     
-    def execute(self) -> BaseResult:
+    def execute(self) -> None:
         global _matching_state
         
         if not _matching_state:
-            return NoneResult()
+            return
         
         deck = _matching_state['deck']
         
         if self.card_index < 0 or self.card_index >= len(deck):
-            return NoneResult()
+            return
         
         card_data = deck[self.card_index]
         
         # Can't flip matched or already revealed cards
         if card_data['matched'] or card_data['revealed']:
-            return NoneResult()
+            return
         
         # Flip the card
         card_data['revealed'] = True
@@ -265,7 +270,8 @@ class FlipCardAction(Action):
             # First card of the pair
             _matching_state['first_selection'] = self.card_index
             # Continue selecting
-            return SingleActionResult(MatchAndKeepAction())
+            add_action(MatchAndKeepAction(), to_front=True)
+            return
         else:
             # Second card - check for match
             first_index = _matching_state['first_selection']
@@ -287,7 +293,8 @@ class FlipCardAction(Action):
             _matching_state['first_selection'] = None
             
             # Continue the game
-            return SingleActionResult(MatchAndKeepAction())
+            add_action(MatchAndKeepAction(), to_front=True)
+            return
 
 
 from utils.registry import list_registered

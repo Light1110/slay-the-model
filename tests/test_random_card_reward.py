@@ -103,7 +103,6 @@ class TestGetRandomCardRewardIntegration:
         mock_card_instance.card_type = CardType.ATTACK
         mock_card_instance.set = None
         mock_card_instance.rarity = RarityType.COMMON
-        mock_card_instance.__class__ = type('Card', (), {})
         mock_card_cls.return_value = mock_card_instance
 
         # Make get_registered return the same mock for all cards
@@ -156,7 +155,6 @@ class TestGetRandomCardRewardIntegration:
         mock_card_instance.card_type = CardType.ATTACK
         mock_card_instance.set = None
         mock_card_instance.rarity = RarityType.COMMON
-        mock_card_instance.__class__ = type('Card', (), {})
         mock_card_cls.return_value = mock_card_instance
 
         mock_get.return_value = mock_card_cls

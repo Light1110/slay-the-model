@@ -1,3 +1,4 @@
+from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
 from actions.base import Action
 from typing import List, Optional, TYPE_CHECKING
 from localization import LocalStr, t
@@ -5,8 +6,6 @@ from utils.option import Option
 from utils.registry import register
 from utils.types import CardType, PilePosType, RarityType
 from utils.random import get_random_card, get_random_card_reward
-from utils.result_types import BaseResult, MultipleActionsResult, NoneResult, SingleActionResult
-
 if TYPE_CHECKING:
     from cards.base import Card
 
@@ -25,12 +24,11 @@ class RemoveCardAction(Action):
         self.card = card
         self.src_pile = src_pile
     
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         from engine.game_state import game_state
         if self.card and game_state.player:
             if hasattr(game_state.player, "card_manager"):
                 game_state.player.card_manager.remove_from_pile(self.card, self.src_pile)
-        return NoneResult()
 
 @register("action")
 class AddCardAction(Action):
@@ -50,8 +48,8 @@ class AddCardAction(Action):
     def __init__(
         self,
         card,
-        dest_pile: str = None,
-        source: str = None,
+        dest_pile: Optional[str] = None,
+        source: Optional[str] = None,
         position: PilePosType = PilePosType.TOP,
         chance: float = 1.0,
         target=None,
@@ -66,7 +64,7 @@ class AddCardAction(Action):
         # argument for backward compatibility and ignore it.
         self.target = target
 
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         import random
         from engine.game_state import game_state
         from engine.messages import CardDrawnMessage
@@ -76,35 +74,31 @@ class AddCardAction(Action):
         # Check probability if chance < 1.0
         if self.chance < 1.0 and random.random() >= self.chance:
             # Chance check failed - don't add the card
-            return NoneResult()
+            return
 
         if self.card and game_state.player:
             if hasattr(game_state.player, "card_manager"):
                 target_pile = self.dest_pile or "deck"
-                follow_up_actions = []
-    
-                # todo: 该遗物还没有被实现
                 # Omamori: negate curse cards that would be added to deck.
-                if (
-                    target_pile in ("deck")
-                    and getattr(self.card, "card_type", None) == CardType.CURSE
-                ):
+                if target_pile == "deck" and getattr(self.card, "card_type", None) == CardType.CURSE:
                     for relic in list(game_state.player.relics):
                         if getattr(relic, "idstr", None) != "Omamori":
                             continue
-                        if not hasattr(relic, "try_negate_curse"):
+                        negate_curse = getattr(relic, "try_negate_curse", None)
+                        if negate_curse is None:
                             continue
-                        if relic.try_negate_curse():
+                        if negate_curse():
                             if getattr(relic, "curses_to_negate", 0) <= 0:
+                                # TODO: Do not remove Omamori outright; disable it when charges run out.
                                 game_state.player.relics.remove(relic)
                             print(
                                 f"[Relic] Omamori negated curse: "
                                 f"{self.card.display_name.resolve()}"
                             )
-                            return NoneResult()
+                            return
 
                 # Egg relics: upgrade qualifying cards before adding to deck.
-                if target_pile in ("deck"):
+                if target_pile == "deck":
                     for relic in list(game_state.player.relics):
                         hook = getattr(relic, "should_upgrade_added_card", None)
                         if not hook:
@@ -114,18 +108,14 @@ class AddCardAction(Action):
 
                 game_state.player.card_manager.add_to_pile(self.card, target_pile, pos=self.position)
                 
-                # todo: 改为事件系统
                 # Ceramic Fish: whenever a card is added to deck, gain 9 gold.
-                follow_up_actions.extend(
-                    game_state.publish_message(
-                        CardAddedToPileMessage(
-                            card=self.card,
-                            owner=game_state.player,
-                            dest_pile=target_pile,
-                            source=self.source,
-                            position=self.position,
-                        ),
-                        participants=list(game_state.player.relics),
+                publish_message(
+                    CardAddedToPileMessage(
+                        card=self.card,
+                        owner=game_state.player,
+                        dest_pile=target_pile,
+                        source=self.source,
+                        position=self.position,
                     )
                 )
                 # Only show [Reward] for actual rewards, use appropriate prefix for others
@@ -139,9 +129,6 @@ class AddCardAction(Action):
                     print(f"[{t('combat.enemy', default='Enemy')}] {t('combat.card_added', default='Added')} {self.card.display_name.resolve()} {t('combat.to_pile', default='to')} {pile_name}")
                 else:
                     print(f"[{self.source.title()}] {t('combat.card_added', default='Added')} {self.card.display_name.resolve()} {t('combat.to_pile', default='to')} {pile_name}")
-                if follow_up_actions:
-                    return MultipleActionsResult(follow_up_actions)
-        return NoneResult()
 
 @register("action")
 class ExhaustCardAction(Action):
@@ -157,7 +144,7 @@ class ExhaustCardAction(Action):
         self.card = card
         self.source_pile = source_pile
 
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         from engine.game_state import game_state
         from engine.messages import CardExhaustedMessage
         if self.card and game_state.player and hasattr(game_state.player, "card_manager"):
@@ -165,25 +152,18 @@ class ExhaustCardAction(Action):
             exhausted = game_state.player.card_manager.exhaust(self.card, src=self.source_pile)
             
             # Trigger card's on_exhaust method
-            card_actions = self.card.on_exhaust() if hasattr(self.card, 'on_exhaust') else []
-
-            message_actions = []
+            if hasattr(self.card, 'on_exhaust'):
+                self.card.on_exhaust()
             if exhausted:
-                message_actions = game_state.publish_message(
+                publish_message(
                     CardExhaustedMessage(
                         card=self.card,
                         owner=game_state.player,
                         source_pile=self.source_pile,
-                    ),
-                    participants=[
-                        *list(getattr(game_state.player, "powers", [])),
-                        *list(getattr(game_state.player, "relics", [])),
-                    ],
+                    )
                 )
 
-            return MultipleActionsResult(card_actions + message_actions)
-
-        return NoneResult()
+            return
 
 @register("action")
 class DiscardCardAction(Action):
@@ -199,7 +179,7 @@ class DiscardCardAction(Action):
         self.card = card
         self.source_pile = source_pile
 
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         from engine.game_state import game_state
         from engine.messages import CardDiscardedMessage
         if self.card and game_state.player and hasattr(game_state.player, "card_manager"):
@@ -211,17 +191,13 @@ class DiscardCardAction(Action):
             discarded = game_state.player.card_manager.discard(self.card, src=self.source_pile)
             
             if discarded:
-                actions = game_state.publish_message(
+                publish_message(
                     CardDiscardedMessage(
                         card=self.card,
                         owner=game_state.player,
                         source_pile=self.source_pile,
-                    ),
-                    participants=[self.card, *list(game_state.player.powers), *list(game_state.player.relics)],
+                    )
                 )
-                if actions:
-                    return MultipleActionsResult(actions)
-        return NoneResult()
 
 @register("action")
 class DrawCardsAction(Action):
@@ -236,7 +212,7 @@ class DrawCardsAction(Action):
     def __init__(self, count: int):
         self.count = count
 
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         from engine.game_state import game_state
         from engine.messages import CardDrawnMessage
 
@@ -249,26 +225,16 @@ class DrawCardsAction(Action):
             # Note: Draw message is now printed in CombatState._print_combat_state()
             # after "Player Turn" header for better display order
             
-            message_actions = []
+            # TODO: Refactor execute/on_xxx hooks so they never return values.
+            # TODO: Queue every follow-up effect explicitly through add_action/add_actions.
+            # TODO: After each queued action, reevaluate combat state and pause cleanly for input.
             for card in cards:
-                message_actions.extend(
-                    game_state.publish_message(
-                        CardDrawnMessage(
-                            card=card,
-                            owner=game_state.player,
-                        ),
-                        participants=[card, *list(game_state.player.powers), *list(game_state.player.relics)],
+                publish_message(
+                    CardDrawnMessage(
+                        card=card,
+                        owner=game_state.player,
                     )
                 )
-            
-            # If there are any actions from powers/card callbacks, queue them
-            if message_actions:
-                from utils.result_types import MultipleActionsResult
-                return MultipleActionsResult(message_actions)
-            
-            return NoneResult()
-
-        return NoneResult()
 
 @register("action")
 class ReplaceCardAction(Action):
@@ -283,11 +249,13 @@ class ReplaceCardAction(Action):
     def __init__(self, card: "Card"):
         self.card = card
         
-    def execute(self) -> 'BaseResult':
-        return MultipleActionsResult([
+    def execute(self) -> None:
+        from engine.game_state import game_state
+
+        add_actions([
             DiscardCardAction(self.card),
             DrawCardsAction(count=1)
-        ])
+        ], to_front=True)
 
 @register("action")
 class ExhaustRandomCardAction(Action):
@@ -304,19 +272,19 @@ class ExhaustRandomCardAction(Action):
         self.pile = pile
         self.amount = amount
 
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         from engine.game_state import game_state
         from engine.messages import ShuffleMessage
         import random
 
         if not game_state.player:
-            return NoneResult()
+            return
 
         card_manager = game_state.player.card_manager
         cards_in_pile = list(card_manager.get_pile(self.pile))
 
         if not cards_in_pile:
-            return NoneResult()
+            return
 
         amount_to_exhaust = min(self.amount, len(cards_in_pile))
         cards_to_exhaust = random.sample(cards_in_pile, amount_to_exhaust)
@@ -326,8 +294,7 @@ class ExhaustRandomCardAction(Action):
             actions.append(ExhaustCardAction(card=card, source_pile=self.pile))
 
         if actions:
-            return MultipleActionsResult(actions)
-        return NoneResult()
+            add_actions(actions, to_front=True)
 
 @register("action")
 class ShuffleAction(Action):
@@ -340,7 +307,7 @@ class ShuffleAction(Action):
         import random
 
         if not game_state.player or not hasattr(game_state.player, "card_manager"):
-            return NoneResult()
+            return
 
         card_manager = game_state.player.card_manager
 
@@ -358,13 +325,4 @@ class ShuffleAction(Action):
         draw_cards = card_manager.get_pile("draw_pile")
         random.shuffle(draw_cards)
         
-        relic_actions = game_state.publish_message(
-            ShuffleMessage(owner=game_state.player),
-            participants=list(game_state.player.relics),
-        )
-        
-        # If there are any actions from relic callbacks, queue them
-        if relic_actions:
-            return MultipleActionsResult(relic_actions)
-        
-        return NoneResult()
+        publish_message(ShuffleMessage(owner=game_state.player))

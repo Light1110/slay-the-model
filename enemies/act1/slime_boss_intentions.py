@@ -1,4 +1,5 @@
 """Slime Boss (Boss) specific intentions."""
+from engine.runtime_api import add_action, add_actions
 
 from typing import List, TYPE_CHECKING
 
@@ -16,7 +17,7 @@ class GoopSprayIntention(Intention):
         super().__init__("goop_spray", enemy)
         self._slimed_count = 3
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Goop Spray: adds Slimed cards to discard pile."""
         from actions.card import AddCardAction
         from utils.registry import get_registered
@@ -31,20 +32,18 @@ class GoopSprayIntention(Intention):
         except Exception:
             pass
         
-        return actions
-
-
+        from engine.game_state import game_state
+        
+        add_actions(actions)
+        
 class PreparingIntention(Intention):
     """Preparing - Does nothing."""
     
     def __init__(self, enemy: 'Enemy'):
         super().__init__("preparing", enemy)
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Preparing: does nothing."""
-        return []
-
-
 class SlamIntention(Intention):
     """Slam - Deals 35 damage (38 on A4+)."""
     
@@ -52,15 +51,16 @@ class SlamIntention(Intention):
         super().__init__("slam", enemy)
         self.base_damage = 35
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Slam: deals 35 damage to player."""
         from actions.combat import AttackAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -68,6 +68,7 @@ class SlamIntention(Intention):
                 damage_type="attack",
             )
         ]
+        )
 
 
 class SplitIntention(Intention):
@@ -76,7 +77,7 @@ class SplitIntention(Intention):
     def __init__(self, enemy: 'Enemy'):
         super().__init__("split", enemy)
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Split: spawns two Large Slimes."""
         from actions.combat import RemoveEnemyAction, AddEnemyAction
         
@@ -104,4 +105,7 @@ class SplitIntention(Intention):
         except Exception:
             pass
         
-        return actions
+        from engine.game_state import game_state
+        
+        add_actions(actions)
+        

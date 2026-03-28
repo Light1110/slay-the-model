@@ -1,3 +1,4 @@
+from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
 from actions.base import Action
 from typing import List, Optional, TYPE_CHECKING
 from localization import LocalStr, t
@@ -5,8 +6,6 @@ from utils.option import Option
 from utils.registry import register
 from utils.types import CardType, PilePosType, RarityType
 from utils.random import get_random_card, get_random_card_reward
-from utils.result_types import BaseResult, MultipleActionsResult, NoneResult, SingleActionResult
-
 if TYPE_CHECKING:
     from cards.base import Card
 
@@ -28,20 +27,19 @@ class TransformCardAction(Action):
         self.pile = pile
         self.reason = reason
     
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         from engine.game_state import game_state
 
-        # 相当于删掉原卡，随机获得一张新卡
+        # Skip when no player is loaded in the current runtime state.
         if not game_state.player:
-            return NoneResult()
+            return
 
         namespace = self.card.namespace
 
-        # Return actions to be added to caller's action_queue
-        return MultipleActionsResult([
+        add_actions([
             RemoveCardAction(card=self.card, src_pile=self.pile),
             AddCardAction(card=get_random_card(namespaces=[namespace]), dest_pile=self.pile),
-        ])
+        ], to_front=True)
 
 @register("action")
 class RemoveAllStrikesAction(Action):
@@ -53,12 +51,12 @@ class RemoveAllStrikesAction(Action):
     Optional:
         None
     """
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         from engine.game_state import game_state
         from cards.ironclad.strike import Strike
 
         if not game_state.player:
-            return NoneResult()
+            return
 
         removed_count = 0
         # Check all piles
@@ -78,7 +76,6 @@ class RemoveAllStrikesAction(Action):
                 removed_count += 1
 
         print(f"[Event] Removed {removed_count} Strike card(s)")
-        return NoneResult()
 
 @register("action")
 class RemoveRandomCardAction(Action):
@@ -93,13 +90,13 @@ class RemoveRandomCardAction(Action):
     def __init__(self, card_type):
         self.card_type = card_type
 
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         import random
         from engine.game_state import game_state
         from utils.types import CardType
 
         if not game_state.player or not hasattr(game_state.player, 'card_manager'):
-            return NoneResult()
+            return
 
         # Get all cards from all piles
         all_cards = []
@@ -125,14 +122,13 @@ class RemoveRandomCardAction(Action):
 
         if not all_cards:
             print(f"[Event] No {self.card_type} cards found to remove")
-            return NoneResult()
+            return
 
         # Remove a random card
         card_to_remove, pile_name = random.choice(all_cards)
         card_manager.remove_from_pile(card_to_remove, pile_name)
         print(f"[Event] Removed {card_to_remove.name} ({self.card_type})")
 
-        return NoneResult()
 
 @register("action")
 class UpgradeCardAction(Action):
@@ -147,11 +143,9 @@ class UpgradeCardAction(Action):
     def __init__(self, card):
         self.card = card
     
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         if self.card and self.card.can_upgrade():
             self.card.upgrade()
-            return NoneResult()
-        return NoneResult()
 
 @register("action")   
 class AddRandomCardAction(Action):
@@ -180,10 +174,10 @@ class AddRandomCardAction(Action):
         self.permanent_cost = permanent_cost
         self.temp_cost = temp_cost
     
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         from engine.game_state import game_state
         if not game_state.player:
-            return NoneResult()
+            return
 
         random_card = get_random_card(
             namespaces=[self.namespace if self.namespace else game_state.player.character.lower()],
@@ -192,7 +186,7 @@ class AddRandomCardAction(Action):
         )
 
         if random_card is None:
-            return NoneResult()
+            return
         
         if self.upgrade:
             random_card.upgrade()
@@ -201,8 +195,7 @@ class AddRandomCardAction(Action):
         if self.temp_cost:
             random_card.temp_cost = self.temp_cost
 
-        # Return AddCardAction to be added to caller's action_queue
-        return SingleActionResult(AddCardAction(card=random_card, dest_pile=self.pile))
+        add_action(AddCardAction(card=random_card, dest_pile=self.pile), to_front=True)
 
 @register("action")
 class UpgradeAllCardsAction(Action):
@@ -215,10 +208,10 @@ class UpgradeAllCardsAction(Action):
         None
     """
 
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         from engine.game_state import game_state
         if not game_state.player:
-            return NoneResult()
+            return
 
         deck = game_state.player.card_manager.get_pile('deck')
 
@@ -231,7 +224,6 @@ class UpgradeAllCardsAction(Action):
         if upgraded_count > 0:
             print(f"[Event] Upgraded {upgraded_count} card(s)")
 
-        return NoneResult()
 
 @register("action")
 class UpgradeRandomCardAction(Action):
@@ -250,11 +242,11 @@ class UpgradeRandomCardAction(Action):
         self.card_type = card_type
         self.namespace = namespace
     
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         """Execute: upgrade random cards from deck"""
         from engine.game_state import game_state
         if not game_state.player:
-            return NoneResult()
+            return
         
         from utils.types import CardType
         
@@ -262,7 +254,7 @@ class UpgradeRandomCardAction(Action):
         deck = game_state.player.card_manager.get_pile('deck')
         
         if not deck:
-            return NoneResult()
+            return
         
         # Filter cards by type (if specified) and that can be upgraded
         cards_to_choose = []
@@ -289,7 +281,7 @@ class UpgradeRandomCardAction(Action):
         
         if not cards_to_choose:
             print(t("ui.no_upgradeable_cards", default="No upgradeable cards found"))
-            return NoneResult()
+            return
         
         # If requesting more than available, reduce to available
         actual_count = min(self.count, len(cards_to_choose))
@@ -303,10 +295,7 @@ class UpgradeRandomCardAction(Action):
         for card in cards_to_upgrade:
             actions.append(UpgradeCardAction(card=card))
         
-        if len(actions) == 1:
-            return SingleActionResult(actions[0])
-        else:
-            return MultipleActionsResult(actions)
+        add_actions(actions, to_front=True)
 
 @register("action")
 class TransformRandomCardAction(Action):
@@ -322,11 +311,11 @@ class TransformRandomCardAction(Action):
         self.count = count
         self.card_type = card_type
 
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         """Execute: transform random cards from deck"""
         from engine.game_state import game_state
         if not game_state.player:
-            return NoneResult()
+            return
 
         from utils.types import CardType
 
@@ -334,7 +323,7 @@ class TransformRandomCardAction(Action):
         deck = game_state.player.card_manager.get_pile('deck')
 
         if not deck:
-            return NoneResult()
+            return
 
         # Filter cards by type (if specified)
         cards_to_choose = []
@@ -352,7 +341,7 @@ class TransformRandomCardAction(Action):
 
         if not cards_to_choose:
             print(t("ui.no_cards_to_transform", default="No cards to transform found"))
-            return NoneResult()
+            return
 
         # If requesting more than available, reduce to available
         actual_count = min(self.count, len(cards_to_choose))
@@ -366,10 +355,7 @@ class TransformRandomCardAction(Action):
         for card in cards_to_transform:
             actions.append(TransformCardAction(card=card, pile='deck'))
 
-        if len(actions) == 1:
-            return SingleActionResult(actions[0])
-        else:
-            return MultipleActionsResult(actions)
+        add_actions(actions, to_front=True)
 
 @register("action")
 class TransformAndUpgradeCardAction(Action):
@@ -388,11 +374,11 @@ class TransformAndUpgradeCardAction(Action):
         self.card = card
         self.pile = pile
     
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         from engine.game_state import game_state
 
         if not game_state.player:
-            return NoneResult()
+            return
 
         namespace = self.card.namespace
         
@@ -400,14 +386,13 @@ class TransformAndUpgradeCardAction(Action):
         new_card = get_random_card(namespaces=[namespace])
         
         if new_card is None:
-            return NoneResult()
+            return
         
         # Upgrade the new card before adding
         if new_card.can_upgrade():
             new_card.upgrade()
         
-        # Return actions: remove old card, add upgraded new card
-        return MultipleActionsResult([
+        add_actions([
             RemoveCardAction(card=self.card, src_pile=self.pile),
             AddCardAction(card=new_card, dest_pile=self.pile),
-        ])
+        ], to_front=True)

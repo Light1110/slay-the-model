@@ -1,4 +1,5 @@
 """The Collector intentions - Act 2 Elite enemy."""
+from engine.runtime_api import add_action, add_actions
 
 import random
 from typing import TYPE_CHECKING, List
@@ -20,7 +21,7 @@ class Spawn(Intention):
     def __init__(self, enemy: "TheCollector"):
         super().__init__("Spawn", enemy)
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute spawn - summon Torch Heads."""
         from engine.game_state import game_state
         from actions.combat import AddEnemyAction
@@ -43,9 +44,10 @@ class Spawn(Intention):
         for _ in range(to_summon):
             actions.append(AddEnemyAction(TorchHead))
         
-        return actions
-
-
+        from engine.game_state import game_state
+        
+        add_actions(actions)
+        
 class Fireball(Intention):
     """Deals 18 damage."""
     
@@ -53,16 +55,19 @@ class Fireball(Intention):
         super().__init__("Fireball", enemy)
         self.base_damage = 18
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute fireball attack."""
         from engine.game_state import game_state
         
-        return [AttackAction(
+        from engine.game_state import game_state
+        add_actions(
+        [AttackAction(
             damage=self.base_damage,
             target=game_state.player,
             source=self.enemy,
             damage_type="attack"
         )]
+        )
 
 
 class Buff(Intention):
@@ -73,7 +78,7 @@ class Buff(Intention):
         self.base_strength_gain = 3
         self.base_block = 15
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute buff - strengthen all allies and gain block."""
         from engine.game_state import game_state
         enemies = (
@@ -96,9 +101,10 @@ class Buff(Intention):
             target=self.enemy
         ))
         
-        return actions
-
-
+        from engine.game_state import game_state
+        
+        add_actions(actions)
+        
 class MegaDebuff(Intention):
     """Applies 3 Weak, 3 Vulnerable, and 3 Frail."""
     
@@ -106,7 +112,7 @@ class MegaDebuff(Intention):
         super().__init__("Mega Debuff", enemy)
         self.base_amount = 3
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute mega debuff - apply multiple debuffs."""
         from engine.game_state import game_state
         
@@ -125,9 +131,12 @@ class MegaDebuff(Intention):
         actions.append(ApplyPowerAction(FrailPower(amount=self.base_amount, owner=player), player))
 
         
-        return actions
+        from engine.game_state import game_state
 
+        
+        add_actions(actions)
 
+        
 class Tackle(Intention):
     """Deals 7 damage (Torch Head attack)."""
     
@@ -135,13 +144,16 @@ class Tackle(Intention):
         super().__init__("Tackle", enemy)
         self.base_damage = 7
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute tackle attack."""
         from engine.game_state import game_state
         
-        return [AttackAction(
+        from engine.game_state import game_state
+        add_actions(
+        [AttackAction(
             damage=self.base_damage,
             target=game_state.player,
             source=self.enemy,
             damage_type="attack"
         )]
+        )

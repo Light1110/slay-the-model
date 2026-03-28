@@ -19,11 +19,11 @@ class BerserkPower(Power):
     def __init__(self, amount: int = 1, duration: int = -1, owner=None):
         super().__init__(amount=amount, duration=duration, owner=owner)
     
-    def on_turn_start(self) -> List[Action]:
+    def on_turn_start(self):
         """Gain 1 Energy and apply Vulnerable at start of turn."""
         
         # Gain 1 Energy directly
         if self.owner and hasattr(self.owner, 'gain_energy'):
             self.owner.gain_energy(self.amount)
         
-        return []
+        return

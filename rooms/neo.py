@@ -3,8 +3,8 @@ Neo reward room - starting room where player chooses their blessing.
 """
 from actions.display import DisplayTextAction
 from tui.print_utils import tui_print
-from utils.result_types import GameStateResult, NoneResult, MultipleActionsResult
-from rooms.base import Room, BaseResult
+from utils.result_types import GameTerminalState
+from rooms.base import Room
 from utils.registry import register
 
 
@@ -19,12 +19,9 @@ class NeoRewardRoom(Room):
     def init(self):
         """Initialize Neo room - no special initialization needed"""
 
-    def enter(self) -> BaseResult:
+    def enter(self):
         """Enter Neo room and trigger blessing selection"""
-        from engine.game_state import game_state
-        from utils.result_types import MultipleActionsResult
         from localization import t
-        actions = []
 
         # Display welcome message directly
         tui_print("\n" + "=" * 60)
@@ -39,7 +36,7 @@ class NeoRewardRoom(Room):
         # Execute Neo event
         result = neo_event.trigger()
 
-        if isinstance(result, GameStateResult):
+        if isinstance(result, GameTerminalState):
             return result
 
         # Display goodbye message directly
@@ -48,8 +45,4 @@ class NeoRewardRoom(Room):
 
         # Neo room is done, player should leave
         self.should_leave = True
-
-        # Return all actions to be executed
-        if actions:
-            return MultipleActionsResult(actions)
-        return NoneResult()
+        return None

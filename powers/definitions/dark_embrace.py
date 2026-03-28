@@ -2,6 +2,7 @@
 Dark Embrace power for Ironclad.
 Whenever a card is exhausted, draw 1 card.
 """
+from engine.runtime_api import add_action, add_actions
 from actions.card import DrawCardsAction
 from powers.base import Power, StackType
 from engine.messages import CardExhaustedMessage
@@ -29,5 +30,7 @@ class DarkEmbracePower(Power):
     @subscribe(CardExhaustedMessage, priority=MessagePriority.REACTION)
     def on_card_exhausted(self, card, owner, source_pile=None):
         if owner is not self.owner:
-            return []
-        return [DrawCardsAction(count=self.amount)]
+            return
+        from engine.game_state import game_state
+        add_actions([DrawCardsAction(count=self.amount)])
+        return

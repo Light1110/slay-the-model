@@ -26,5 +26,7 @@ class DuplicationPower(Power):
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
 
-    def on_card_play(self, card: Card, player, entities) -> List[Action]:
-        return card.on_play() * self.amount
+    def on_card_play(self, card: Card, player, entities):
+        for _ in range(self.amount):
+            card.on_play()
+        return

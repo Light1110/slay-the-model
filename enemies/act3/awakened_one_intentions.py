@@ -1,4 +1,5 @@
 """Awakened One Boss intentions for Act 3."""
+from engine.runtime_api import add_action, add_actions
 
 import random
 from typing import List
@@ -19,15 +20,18 @@ class Slash(Intention):
         super().__init__("Slash", enemy)
         self.base_damage = 20
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute the intention."""
         from engine.game_state import game_state
-        return [AttackAction(
+        from engine.game_state import game_state
+        add_actions(
+        [AttackAction(
             damage=self.base_damage,
             target=game_state.player,
             source=self.enemy,
             damage_type="attack"
         )]
+        )
 
 
 class SoulStrike(Intention):
@@ -38,7 +42,7 @@ class SoulStrike(Intention):
         self.base_damage = 6
         self.base_hits = 4
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute the intention."""
         from engine.game_state import game_state
         actions = []
@@ -49,16 +53,15 @@ class SoulStrike(Intention):
                 source=self.enemy,
                 damage_type="attack"
             ))
-        return actions
-
-
+        from engine.game_state import game_state
+        add_actions(actions)
 class Rebirth(Intention):
     """Heals to full HP. Removes all debuffs. Loses 1 Curiosity."""
     
     def __init__(self, enemy):
         super().__init__("Rebirth", enemy)
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute the intention."""
         from powers.definitions.strength import StrengthPower
         
@@ -75,9 +78,6 @@ class Rebirth(Intention):
         self.enemy.heal(self.enemy.max_hp)
         # Switch to phase 2
         self.enemy._phase = 2
-        return []
-
-
 class DarkEcho(Intention):
     """Deals 40 damage."""
     
@@ -85,15 +85,18 @@ class DarkEcho(Intention):
         super().__init__("Dark Echo", enemy)
         self.base_damage = 40
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute the intention."""
         from engine.game_state import game_state
-        return [AttackAction(
+        from engine.game_state import game_state
+        add_actions(
+        [AttackAction(
             damage=self.base_damage,
             target=game_state.player,
             source=self.enemy,
             damage_type="attack"
         )]
+        )
 
 
 class Sludge(Intention):
@@ -103,11 +106,13 @@ class Sludge(Intention):
         super().__init__("Sludge", enemy)
         self.base_damage = 18
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute the intention."""
         from engine.game_state import game_state
         from cards.colorless.wound import Wound
-        return [
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -116,6 +121,7 @@ class Sludge(Intention):
             ),
             AddCardAction(card=Wound(), dest_pile="draw_pile", source="enemy")
         ]
+        )
 
 
 class Tackle(Intention):
@@ -126,7 +132,7 @@ class Tackle(Intention):
         self.base_damage = 10
         self.base_hits = 3
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute the intention."""
         from engine.game_state import game_state
         actions = []
@@ -137,4 +143,5 @@ class Tackle(Intention):
                 source=self.enemy,
                 damage_type="attack"
             ))
-        return actions
+        from engine.game_state import game_state
+        add_actions(actions)

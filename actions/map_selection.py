@@ -1,10 +1,10 @@
 """
 Map selection action for choosing next node to visit.
 """
+from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
 from typing import List, Optional
 from actions.base import Action
 from actions.display import InputRequestAction
-from utils.result_types import BaseResult, NoneResult, SingleActionResult
 from map.map_node import MapNode
 from utils.option import Option
 from localization import BaseLocalStr, LocalStr, t
@@ -31,14 +31,14 @@ class MoveToMapNodeAction(Action):
         self.floor = floor
         self.position = position
     
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         from engine.game_state import game_state
 
         # Get map manager
         map_manager = game_state.map_manager
         if not map_manager:
             tui_print("Error: Map not initialized")
-            return NoneResult()
+            return
 
         # Move to specified node
         new_room = map_manager.move_to_node(self.floor, self.position)
@@ -51,7 +51,6 @@ class MoveToMapNodeAction(Action):
         from localization import t
         tui_print(t("ui.room_entered").format(room_type=new_room.room_type.value, floor=self.floor, position=self.position))
         
-        return NoneResult()
 
 @register("action")
 class SelectMapNodeAction(Action):
@@ -70,7 +69,7 @@ class SelectMapNodeAction(Action):
         pass
         
     
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         """
         Execute map selection action.
 
@@ -87,9 +86,9 @@ class SelectMapNodeAction(Action):
 
         if not available_moves:
             tui_print("\nNo available moves. You've reached end of act!")
-            return NoneResult()
+            return
 
-        return self._make_decision(map_manager, available_moves)
+        self._make_decision(map_manager, available_moves)
     
     def _make_decision(self, map_manager, available_moves: List):
         """
@@ -127,7 +126,7 @@ class SelectMapNodeAction(Action):
             option = Option(option_name, [move_action])
             options.append(option)
             
-        # todo: 在 ai 模式下，获取额外的上下文
+        # TODO: In AI mode, fetch extra map context before presenting choices.
         # get_map_context_for_ai
         
         # Return InputRequestAction to be added to caller's action_queue
@@ -135,7 +134,7 @@ class SelectMapNodeAction(Action):
             title=t("ui.select_move", default="Select your next move"),
             options=options
         )
-        return SingleActionResult(select_action)
+        add_action(select_action, to_front=True)
     
     def _get_move_option_name(self, node: MapNode) -> BaseLocalStr:
         """

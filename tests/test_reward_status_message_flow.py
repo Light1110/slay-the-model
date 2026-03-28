@@ -9,7 +9,7 @@ from relics.character.ironclad import ChampionBelt, RedSkull
 from relics.global_relics.common import ToyOrnithopter
 from relics.global_relics.event import BloodyIdol
 from tests.test_combat_utils import create_test_helper
-from utils.result_types import MultipleActionsResult, SingleActionResult
+from typing import cast
 
 
 def test_status_actions_import_from_split_modules():
@@ -20,23 +20,6 @@ def test_status_actions_import_from_split_modules():
 
     assert CombatApplyPowerAction is SplitApplyPowerAction
     assert CombatUsePotionBHAction is SplitUsePotionBHAction
-
-
-def _execute_result(result):
-    if result is None:
-        return
-
-    if isinstance(result, SingleActionResult):
-        _execute_result(result.action.execute())
-        return
-
-    if isinstance(result, MultipleActionsResult):
-        for action in result.actions:
-            _execute_result(action.execute())
-        return
-
-    if hasattr(result, "execute"):
-        _execute_result(result.execute())
 
 
 def _capture_published_message_types(game_state, monkeypatch):
@@ -60,8 +43,8 @@ def test_apply_power_action_publishes_power_applied_message(monkeypatch):
 
     published = _capture_published_message_types(helper.game_state, monkeypatch)
 
-    result = ApplyPowerAction(power="Vulnerable", target=enemy, amount=1).execute()
-    _execute_result(result)
+    ApplyPowerAction(power="Vulnerable", target=enemy, amount=1).execute()
+    helper.game_state.drive_actions()
 
     assert "PowerAppliedMessage" in published
     assert enemy.has_power("Vulnerable")
@@ -80,8 +63,8 @@ def test_use_potion_action_publishes_potion_used_message(monkeypatch):
 
     published = _capture_published_message_types(helper.game_state, monkeypatch)
 
-    result = UsePotionBHAction(potion=potion, targets=[player]).execute()
-    _execute_result(result)
+    UsePotionBHAction(potion=potion, targets=[player]).execute()
+    helper.game_state.drive_actions()
 
     assert "PotionUsedMessage" in published
     assert player.hp == initial_hp + 5
@@ -96,8 +79,8 @@ def test_add_gold_action_publishes_gold_gained_message(monkeypatch):
 
     published = _capture_published_message_types(helper.game_state, monkeypatch)
 
-    result = AddGoldAction(amount=12).execute()
-    _execute_result(result)
+    AddGoldAction(amount=12).execute()
+    helper.game_state.drive_actions()
 
     assert "GoldGainedMessage" in published
     assert player.gold == 111
@@ -113,8 +96,7 @@ def test_heal_action_publishes_healed_message(monkeypatch):
 
     published = _capture_published_message_types(helper.game_state, monkeypatch)
 
-    result = HealAction(amount=10, target=player).execute()
-    _execute_result(result)
+    HealAction(amount=10, target=player).execute()
 
     assert "HealedMessage" in published
     assert player.hp == initial_hp + 10
@@ -128,17 +110,16 @@ def test_healed_message_runs_red_skull_response():
     enemy = helper.create_enemy(Cultist, hp=30)
     helper.start_combat([enemy])
     red_skull.strength_applied = True
-    _execute_result(ApplyPowerAction(power="Strength", target=player, amount=3).execute())
+    ApplyPowerAction(power="Strength", target=player, amount=3).execute()
 
-    actions = helper.game_state.publish_message(
+    helper.game_state.publish_message(
         HealedMessage(target=player, amount=10, previous_hp=35, new_hp=45),
-        participants=[player, red_skull],
     )
-    assert len(actions) == 1
-    action = actions[0]
+    action = helper.game_state.action_queue.peek_next()
     assert isinstance(action, ApplyPowerAction)
+    action = cast(ApplyPowerAction, action)
     assert action.target is player
-    assert action.power.amount == -3
+    assert getattr(action.power, "amount", None) == -3
 
 
 def test_heal_action_does_not_use_direct_red_skull_fallback(monkeypatch):
@@ -149,12 +130,11 @@ def test_heal_action_does_not_use_direct_red_skull_fallback(monkeypatch):
     enemy = helper.create_enemy(Cultist, hp=30)
     helper.start_combat([enemy])
     red_skull.strength_applied = True
-    _execute_result(ApplyPowerAction(power="Strength", target=player, amount=3).execute())
+    ApplyPowerAction(power="Strength", target=player, amount=3).execute()
 
     monkeypatch.setattr(helper.game_state, "publish_message", lambda message, *args, **kwargs: [])
 
-    result = HealAction(amount=10, target=player).execute()
-    _execute_result(result)
+    HealAction(amount=10, target=player).execute()
 
     assert player.strength == 3
 
@@ -171,8 +151,8 @@ def test_lose_hp_action_publishes_hp_lost_message(monkeypatch):
 
     published = _capture_published_message_types(helper.game_state, monkeypatch)
 
-    result = LoseHPAction(amount=3, target=player, card=bloodletting, source=bloodletting).execute()
-    _execute_result(result)
+    LoseHPAction(amount=3, target=player, card=bloodletting, source=bloodletting).execute()
+    helper.game_state.drive_actions()
 
     assert "HpLostMessage" in published
     assert player.hp == 77
@@ -188,8 +168,8 @@ def test_gain_block_action_publishes_block_gained_message(monkeypatch):
 
     published = _capture_published_message_types(helper.game_state, monkeypatch)
 
-    result = GainBlockAction(block=7, target=player).execute()
-    _execute_result(result)
+    GainBlockAction(block=7, target=player).execute()
+    helper.game_state.drive_actions()
 
     assert "BlockGainedMessage" in published
     assert player.block == 7

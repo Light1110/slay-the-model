@@ -1,6 +1,7 @@
 """
 Ironclad Common Attack card - Anger
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -23,5 +24,8 @@ class Anger(Card):
 
     upgrade_damage = 8
 
-    def on_play(self, targets: List[Creature] = []) -> List[Action]:
-        return super().on_play(targets) + [AddCardAction(card=self.copy(), dest_pile="discard_pile")]
+    def on_play(self, targets: List[Creature] = []):
+        super().on_play(targets)
+        from engine.game_state import game_state
+        add_actions([AddCardAction(card=self.copy(), dest_pile="discard_pile")])
+        return

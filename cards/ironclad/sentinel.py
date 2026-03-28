@@ -1,6 +1,7 @@
 """
 Ironclad Uncommon Skill card - Sentinel
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -26,19 +27,25 @@ class Sentinel(Card):
     base_magic = {"energy_on_exhaust": 2, "energy": 2}
     upgrade_magic = {"energy_on_exhaust": 3, "energy": 3}
 
-    def on_play(self, targets: List[Creature] = []) -> List[Action]:
+    def on_play(self, targets: List[Creature] = []):
         target = targets[0] if targets else None
         from engine.game_state import game_state
 
-        actions = super().on_play(targets)
+        super().on_play(targets)
 
+        actions = []
         # Gain block
         actions.append(GainBlockAction(block=self.block, target=game_state.player))
 
-        return actions
+        from engine.game_state import game_state
 
-    def on_exhaust(self) -> List[Action]:
+        add_actions(actions)
+
+        return
+    def on_exhaust(self):
         """Gain energy when this card is exhausted."""
         from actions.combat import GainEnergyAction
         energy_on_exhaust = self.get_magic_value("energy_on_exhaust")
-        return [GainEnergyAction(energy=energy_on_exhaust)]
+        from engine.game_state import game_state
+        add_actions([GainEnergyAction(energy=energy_on_exhaust)])
+        return

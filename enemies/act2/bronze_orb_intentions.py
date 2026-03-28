@@ -1,4 +1,5 @@
 """Bronze Orb minion intentions."""
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from enemies.intention import Intention
@@ -12,20 +13,18 @@ class Steal(Intention):
         super().__init__("Steal", enemy)
         # Note: Card stealing is complex, this is a simplified implementation
 
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Steal a random high-rarity card from draw pile."""
         from engine.game_state import game_state
         from utils.types import RarityType
         
         if not game_state.player:
-            return []
-        
+            return
         card_manager = game_state.player.card_manager
         draw_pile = card_manager.get_pile('draw_pile')
         
         if not draw_pile:
-            return []
-        
+            return
         # Prefer stealing higher rarity cards
         rarity_priority = [RarityType.RARE, RarityType.UNCOMMON, RarityType.COMMON, RarityType.STARTER]
         
@@ -39,16 +38,13 @@ class Steal(Intention):
                 card_manager.remove_from_pile(stolen_card, 'draw_pile')
                 # Store in enemy's stolen cards
                 self.enemy.stolen_cards.append(stolen_card)
-                return []  # No actions needed, card is stolen
+                return
         
         # Fallback: steal any card
         import random
         stolen_card = random.choice(draw_pile)
         card_manager.remove_from_pile(stolen_card, 'draw_pile')
         self.enemy.stolen_cards.append(stolen_card)
-        return []
-
-
 class SupportBeam(Intention):
     """Give Bronze Automaton 11 Block."""
 
@@ -56,7 +52,7 @@ class SupportBeam(Intention):
         super().__init__("Support Beam", enemy)
         self.base_block = 12
 
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Give block to Bronze Automaton."""
         from engine.game_state import game_state
         actions = []
@@ -66,9 +62,8 @@ class SupportBeam(Intention):
                 if e.__class__.__name__ == "BronzeAutomaton" and e.hp > 0:
                     actions.append(GainBlockAction(self.base_block, e))
                     break
-        return actions
-
-
+        from engine.game_state import game_state
+        add_actions(actions)
 class Beam(Intention):
     """Deal 8 damage."""
 
@@ -76,7 +71,8 @@ class Beam(Intention):
         super().__init__("Beam", enemy)
         self.base_damage = 8
 
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Deal damage to player."""
         from engine.game_state import game_state
-        return [AttackAction(self.base_damage, game_state.player, self.enemy, "attack")]
+        from engine.game_state import game_state
+        add_actions([AttackAction(self.base_damage, game_state.player, self.enemy, "attack")])

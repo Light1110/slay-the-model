@@ -1,4 +1,5 @@
 """Time Eater Boss intentions for Act 3."""
+from engine.runtime_api import add_action, add_actions
 
 import random
 from typing import List
@@ -19,7 +20,7 @@ class Reverberate(Intention):
         self.base_damage = 7
         self.base_hits = 3
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute the intention."""
         from engine.game_state import game_state
         
@@ -31,9 +32,8 @@ class Reverberate(Intention):
                 source=self.enemy,
                 damage_type="attack"
             ))
-        return actions
-
-
+        from engine.game_state import game_state
+        add_actions(actions)
 class HeadSlam(Intention):
     """Deals 26 damage. Applies 1 Draw Reduction."""
     
@@ -42,7 +42,7 @@ class HeadSlam(Intention):
         self.base_damage = 26
         self.base_draw_reduction = 1
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute the intention."""
         from engine.game_state import game_state
         
@@ -60,9 +60,8 @@ class HeadSlam(Intention):
                 duration=self.base_draw_reduction
             )
         ]
-        return actions
-
-
+        from engine.game_state import game_state
+        add_actions(actions)
 class Ripple(Intention):
     """Gains 20 block. Applies 1 Vulnerable and 1 Weak."""
     
@@ -71,7 +70,7 @@ class Ripple(Intention):
         self.base_block = 20
         self.base_amount = 1
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute the intention."""
         from engine.game_state import game_state
         
@@ -93,16 +92,15 @@ class Ripple(Intention):
                 duration=1
             )
         ]
-        return actions
-
-
+        from engine.game_state import game_state
+        add_actions(actions)
 class Haste(Intention):
     """Removes all debuffs. Heals to 50% HP."""
     
     def __init__(self, enemy):
         super().__init__("Haste", enemy)
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute the intention."""
         from powers.definitions.strength import StrengthPower
         
@@ -120,4 +118,3 @@ class Haste(Intention):
         self.enemy.heal(heal_amount)
         # Mark that haste was used
         self.enemy._haste_used = True
-        return []

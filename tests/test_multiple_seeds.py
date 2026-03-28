@@ -22,6 +22,7 @@ def test_seed(seed: int) -> bool:
             assert not (
                 problem_type in prev_types and problem_type in curr_types
             ), f"Seed {seed} - Consecutive {problem_type.name} on floors {f-1} and {f}"
+    return True
 
 if __name__ == "__main__":
     seeds = [1, 42, 100, 999, 12345, 666, 777, 8888]

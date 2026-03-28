@@ -2,6 +2,7 @@
 Juggernaut power for Ironclad.
 Whenever you gain Block, deal damage to all enemies.
 """
+from engine.runtime_api import add_action, add_actions
 from typing import List, Any
 from actions.base import Action
 from powers.base import Power, StackType
@@ -28,7 +29,7 @@ class JuggernautPower(Power):
         """
         super().__init__(amount=amount, duration=-1, owner=owner)
 
-    def on_gain_block(self, amount: int, player: Any = None, source: Any = None, card: Any = None) -> List[Action]:
+    def on_gain_block(self, amount: int, player: Any = None, source: Any = None, card: Any = None):
         """Deal damage to all enemies when block is gained."""
         from engine.game_state import game_state
         actions = []
@@ -38,7 +39,9 @@ class JuggernautPower(Power):
             if isinstance(enemy, list):
                 enemy = enemy[0] if enemy else None
             if enemy is None:
-                return actions
+                from engine.game_state import game_state
+                add_actions(actions)
+                return
             actions.append(DealDamageAction(
                 damage=self.amount,
                 target=enemy,
@@ -47,4 +50,8 @@ class JuggernautPower(Power):
                 card=None
             ))
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

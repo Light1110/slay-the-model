@@ -1,6 +1,7 @@
 """
 Colorless Status card - Void
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -21,8 +22,12 @@ class Void(Card):
     base_ethereal = True
     upgradeable = False
 
-    def on_draw(self) -> List[Action]:
+    def on_draw(self):
         """Lose 1 energy when drawn"""
         from actions.combat import GainEnergyAction
 
-        return [GainEnergyAction(energy=-1)]
+        from engine.game_state import game_state
+
+        add_actions([GainEnergyAction(energy=-1)])
+
+        return

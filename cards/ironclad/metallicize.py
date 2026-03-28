@@ -1,6 +1,7 @@
 """
 Ironclad Uncommon Power card - Metallicize
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -22,14 +23,19 @@ class Metallicize(Card):
     base_magic = {"auto_block":3}
     upgrade_magic = {"auto_block":4}
 
-    def on_play(self, targets: List[Creature] = []) -> List[Action]:
+    def on_play(self, targets: List[Creature] = []):
         target = targets[0] if targets else None
         from engine.game_state import game_state
 
-        actions = super().on_play(targets)
+        super().on_play(targets)
 
+        actions = []
         # Apply MetallicizePower
         auto_block = self.get_magic_value("auto_block")
         actions.append(ApplyPowerAction(power="MetallicizePower", target=game_state.player, amount=auto_block))
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

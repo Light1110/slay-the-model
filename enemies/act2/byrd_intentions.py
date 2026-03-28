@@ -1,4 +1,5 @@
 """Byrd specific intentions."""
+from engine.runtime_api import add_action, add_actions
 
 import random
 from typing import List, TYPE_CHECKING
@@ -18,14 +19,13 @@ class PeckIntention(Intention):
         self.base_damage = 5
         self.hits = 5
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Peck: deals 1x5 damage to player."""
         from actions.combat import AttackAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
+            return
         actions = []
         for _ in range(self.hits):
             actions.append(
@@ -36,9 +36,8 @@ class PeckIntention(Intention):
                     damage_type="attack",
                 )
             )
-        return actions
-
-
+        from engine.game_state import game_state
+        add_actions(actions)
 class CawIntention(Intention):
     """Caw - Gains 1 Strength."""
     
@@ -46,11 +45,13 @@ class CawIntention(Intention):
         super().__init__("caw", enemy)
         self.base_strength_gain = 1
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Caw: gains 1 Strength."""
         from actions.combat import ApplyPowerAction
         
-        return [
+        from engine.game_state import game_state
+        add_actions(
+        [
             ApplyPowerAction(
                 power="strength",
                 target=self.enemy,
@@ -58,6 +59,7 @@ class CawIntention(Intention):
                 duration=-1
             )
         ]
+        )
 
 
 class SwoopIntention(Intention):
@@ -67,15 +69,16 @@ class SwoopIntention(Intention):
         super().__init__("swoop", enemy)
         self.base_damage = 12
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Swoop: deals damage to player."""
         from actions.combat import AttackAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -83,6 +86,7 @@ class SwoopIntention(Intention):
                 damage_type="attack",
             )
         ]
+        )
 
 
 class StunnedIntention(Intention):
@@ -91,11 +95,8 @@ class StunnedIntention(Intention):
     def __init__(self, enemy: 'Enemy'):
         super().__init__("stunned", enemy)
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Stunned: does nothing."""
-        return []
-
-
 class HeadbuttIntention(Intention):
     """Headbutt - Deals 3 damage."""
     
@@ -103,15 +104,16 @@ class HeadbuttIntention(Intention):
         super().__init__("headbutt", enemy)
         self.base_damage = 3
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Headbutt: deals 3 damage to player."""
         from actions.combat import AttackAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -119,6 +121,7 @@ class HeadbuttIntention(Intention):
                 damage_type="attack",
             )
         ]
+        )
 
 
 class GoAirborneIntention(Intention):
@@ -128,11 +131,13 @@ class GoAirborneIntention(Intention):
         super().__init__("go_airborne", enemy)
         self.base_flying_gain = 3
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Go Airborne: gains Flying status."""
         from actions.combat import ApplyPowerAction
         
-        return [
+        from engine.game_state import game_state
+        add_actions(
+        [
             ApplyPowerAction(
                 power="Flying",
                 target=self.enemy,
@@ -140,3 +145,4 @@ class GoAirborneIntention(Intention):
                 duration=-1
             )
         ]
+        )

@@ -20,9 +20,9 @@ class Slimed(Card):
     base_damage = 0
     base_magic = {}
     
-    def on_play(self, targets: List[Creature] = []) -> List[Action]:
+    def on_play(self, targets: List[Creature] = []):
         """Slimed exhausts when played."""
         from engine.game_state import game_state
         # Exhaust this card (move from hand to exhaust pile)
         game_state.player.card_manager.exhaust(self, 'hand')
-        return []  # Return empty list of actions
+        return

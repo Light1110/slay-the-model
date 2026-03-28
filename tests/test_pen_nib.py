@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 from relics.global_relics.common import PenNib
 from utils.types import CardType, RarityType
 from actions.combat import ApplyPowerAction
+from engine.game_state import game_state
 
 
 class TestPenNib(unittest.TestCase):
@@ -15,6 +16,7 @@ class TestPenNib(unittest.TestCase):
         self.pen_nib = PenNib()
         self.player = MagicMock()
         self.entities = []
+        game_state.action_queue.clear()
 
     def test_pen_nib_initialization(self):
         """Test PenNib initializes correctly."""
@@ -24,10 +26,10 @@ class TestPenNib(unittest.TestCase):
     def test_pen_nib_resets_on_combat_start(self):
         """Test attack counter resets on combat start."""
         self.pen_nib.attacks_played = 15
-        actions = self.pen_nib.on_combat_start(self.player, self.entities)
+        self.pen_nib.on_combat_start(self.player, self.entities)
         
         self.assertEqual(self.pen_nib.attacks_played, 0)
-        self.assertEqual(actions, [])
+        self.assertTrue(game_state.action_queue.is_empty())
 
     def test_pen_nib_tracks_attacks(self):
         """Test PenNib tracks attacks played."""
@@ -57,15 +59,15 @@ class TestPenNib(unittest.TestCase):
         
         # Play 9 attacks - should not trigger
         for _ in range(9):
-            actions = self.pen_nib.on_card_play(attack_card, self.player, self.entities)
-            self.assertEqual(actions, [])
+            self.pen_nib.on_card_play(attack_card, self.player, self.entities)
+            self.assertTrue(game_state.action_queue.is_empty())
         
         # 10th attack should trigger PenNibPower
-        actions = self.pen_nib.on_card_play(attack_card, self.player, self.entities)
-        self.assertEqual(len(actions), 1)
-        self.assertIsInstance(actions[0], ApplyPowerAction)
+        self.pen_nib.on_card_play(attack_card, self.player, self.entities)
+        self.assertEqual(len(game_state.action_queue.queue), 1)
+        self.assertIsInstance(game_state.action_queue.queue[0], ApplyPowerAction)
         from powers.definitions.pen_nib import PenNibPower
-        self.assertIsInstance(actions[0].power, PenNibPower)
+        self.assertIsInstance(getattr(game_state.action_queue.queue[0], "power", None), PenNibPower)
 
     def test_pen_nib_applies_power_on_20th_attack(self):
         """Test PenNib applies PenNibPower on 20th attack."""
@@ -74,13 +76,14 @@ class TestPenNib(unittest.TestCase):
         
         # Play 20 attacks
         for i in range(20):
-            actions = self.pen_nib.on_card_play(attack_card, self.player, self.entities)
+            self.pen_nib.on_card_play(attack_card, self.player, self.entities)
             if (i + 1) % 10 == 0:
                 # 10th and 20th should trigger
-                self.assertEqual(len(actions), 1)
-                self.assertIsInstance(actions[0], ApplyPowerAction)
+                self.assertEqual(len(game_state.action_queue.queue), 1)
+                self.assertIsInstance(game_state.action_queue.queue[0], ApplyPowerAction)
+                game_state.action_queue.clear()
             else:
-                self.assertEqual(actions, [])
+                self.assertTrue(game_state.action_queue.is_empty())
 
 
 if __name__ == '__main__':

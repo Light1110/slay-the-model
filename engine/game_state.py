@@ -12,7 +12,7 @@ from typing import List, Optional
 from engine.input_protocol import InputRequest, InputSubmission
 from engine.message_bus import MessageBus
 from engine.runtime_context import RuntimeContext
-from utils.result_types import BaseResult, GameStateResult
+from utils.result_types import GameTerminalState
 from config.game_config import GameConfig
 import os
 import time
@@ -64,6 +64,8 @@ class GameState:
 
         # Key tracking for treasure events
         self.sapphire_key_picked = False
+        self.skip_to_boss = False
+        self.elapsed_time = 0
 
         # Tiny Chest relic tracking
         self.event_room_counter = 0
@@ -99,6 +101,8 @@ class GameState:
         
         # Current combat (None when not in combat)
         self.current_combat: Optional[Combat] = None
+        self.combat_state = None
+        self._initialized = True
         # AI Decision Engine (initialized if in AI mode with valid config)
         self.decision_engine = None
         if self.config.mode == "ai" and self.config.ai.get("api_key"):
@@ -116,10 +120,28 @@ class GameState:
         # temp value for select result
         self.last_select_idx = -1
         self.runtime_context = RuntimeContext(game_state=self)
+        self.pending_input_request = None
+        self.terminal_state = None
 
-    def publish_message(self, message, participants: Optional[List] = None) -> List:
-        """Publish a runtime message and return follow-up actions."""
-        return self.message_bus.publish(message, participants=participants)
+    def publish_message(self, message) -> None:
+        """Publish a runtime message and queue follow-up actions immediately."""
+        self.action_queue.add_actions(self.message_bus.publish(message))
+
+    def add_action(self, action, to_front: bool = False) -> None:
+        """Queue a single action through the runtime scheduler."""
+        self.action_queue.add_action(action, to_front=to_front)
+
+    def add_actions(self, actions, to_front: bool = False) -> None:
+        """Queue multiple actions through the runtime scheduler."""
+        self.action_queue.add_actions(actions, to_front=to_front)
+
+    def request_input(self, request) -> None:
+        """Pause action driving until input is resolved."""
+        self.pending_input_request = request
+
+    def set_terminal_state(self, result: GameTerminalState) -> None:
+        """Publish a terminal runtime state for the outer driver."""
+        self.terminal_state = result
 
     def message_participants(self, enemies=None, include_hand: bool = False, hand=None) -> List:
         """Build the standard runtime participant list for message dispatch."""
@@ -250,157 +272,95 @@ class GameState:
         self.map_manager = MapManager(self.config.seed + self.current_act, act_id=self.current_act)
         self.map_data = self.map_manager.generate_map()
 
-    def execute_all_actions(self) -> BaseResult:
-        """
-        Execute all actions in the global action queue.
+    def execute_all_actions(self):
+        """Backward-compatible alias for the explicit scheduler loop."""
+        return self.drive_actions()
 
-        This is the central action execution method that all rooms
-        and events should use instead of managing their own queues.
-
-        Supports both new BaseResult types and legacy return patterns
-        for backward compatibility.
-
-        Returns:
-            BaseResult if special result encountered, NoneResult otherwise
-        """
-        from utils.result_types import (
-            BaseResult, SingleActionResult, MultipleActionsResult,
-            GameStateResult, InputRequestResult, NoneResult
-        )
-
-        result = None
-        while not self.action_queue.is_empty():
-            result = self.action_queue.execute_next()
-
-            # Check if action returned something to process
-            if result is not None:
-                # Handle legacy returns (Action, List[Action], str) directly
-                # for backward compatibility with actions that haven't been updated
-                from actions.base import Action
-
-                assert isinstance(result, BaseResult), f"Expected BaseResult, got {type(result)}"
-                
-                # BaseResult types - handle appropriately
-                if isinstance(result, SingleActionResult):
-                    self.action_queue.add_action(result.action, to_front=True)
-                elif isinstance(result, MultipleActionsResult):
-                    self.action_queue.add_actions(result.actions, to_front=True)
-                elif isinstance(result, GameStateResult):
-                    return result
-                elif isinstance(result, InputRequestResult):
-                    return result
-                # NoneResult: nothing to queue, continue loop
-                elif isinstance(result, NoneResult):
-                    pass
-
-        return NoneResult()
-
-    def drive_actions(self) -> BaseResult:
+    def drive_actions(self):
         """Run actions until queue drains or the game reaches a terminal state."""
-        from utils.result_types import GameStateResult, InputRequestResult, NoneResult
-
         while True:
-            result = self.execute_all_actions()
-
-            if isinstance(result, GameStateResult):
+            if self.terminal_state is not None:
+                result = self.terminal_state
+                self.terminal_state = None
                 return result
 
-            if isinstance(result, InputRequestResult):
-                submission = self.resolve_input_request(result.request)
+            if self.pending_input_request is not None:
+                request = self.pending_input_request
+                self.pending_input_request = None
+                submission = self.resolve_input_request(request)
                 if submission.actions:
                     self.action_queue.add_actions(submission.actions, to_front=True)
                 continue
 
-            return result if result is not None else NoneResult()
+            if self.action_queue.is_empty():
+                return None
 
+            self.action_queue.execute_next()
 
-# Runtime selection helpers live on RuntimeContext. GameState keeps thin wrappers
-# assigned below so existing override and monkeypatch points still work.
+    def resolve_input_request(self, request: InputRequest) -> InputSubmission:
+        """Resolve one declarative input request based on the configured mode."""
+        return self.runtime_context.resolve_input_request(request)
 
+    def _augment_human_options(self, request: InputRequest) -> List:
+        """Backward-compatible wrapper around runtime selection helpers."""
+        return self.runtime_context.default_augment_human_options(request)
 
-def _resolve_input_request_wrapper(self, request: InputRequest) -> InputSubmission:
-    """Resolve one declarative input request based on the configured mode."""
-    return self.runtime_context.resolve_input_request(request)
+    def _resolve_human_selection(self, request: InputRequest) -> List[int]:
+        """Backward-compatible wrapper around runtime selection helpers."""
+        return self.runtime_context.default_resolve_human_selection(request)
 
+    def _resolve_ai_selection(self, request: InputRequest) -> List[int]:
+        """Backward-compatible wrapper around runtime selection helpers."""
+        return self.runtime_context.default_resolve_ai_selection(request)
 
-def _augment_human_options_wrapper(self, request: InputRequest) -> List:
-    """Backward-compatible wrapper around runtime selection helpers."""
-    return self.runtime_context.default_augment_human_options(request)
+    def _resolve_debug_selection(self, request: InputRequest) -> List[int]:
+        """Backward-compatible wrapper around runtime selection helpers."""
+        return self.runtime_context.default_resolve_debug_selection(request)
 
+    def _resolve_debug_selection_with_heuristics(
+        self,
+        options: List,
+        actual_max_select: int,
+    ) -> Optional[List[int]]:
+        """Backward-compatible wrapper around runtime selection helpers."""
+        return self.runtime_context.default_resolve_debug_selection_with_heuristics(
+            options,
+            actual_max_select,
+        )
 
-def _resolve_human_selection_wrapper(self, request: InputRequest) -> List[int]:
-    """Backward-compatible wrapper around runtime selection helpers."""
-    return self.runtime_context.default_resolve_human_selection(request)
+    def _score_debug_option(self, option) -> int:
+        """Backward-compatible wrapper around runtime selection helpers."""
+        return self.runtime_context.default_score_debug_option(option)
 
+    def _parse_selection_input(
+        self,
+        raw_input: str,
+        option_count: int,
+        max_select: int,
+        must_select: bool,
+    ) -> Optional[List[int]]:
+        """Backward-compatible wrapper around runtime selection helpers."""
+        return self.runtime_context.default_parse_selection_input(
+            raw_input=raw_input,
+            option_count=option_count,
+            max_select=max_select,
+            must_select=must_select,
+        )
 
-def _resolve_ai_selection_wrapper(self, request: InputRequest) -> List[int]:
-    """Backward-compatible wrapper around runtime selection helpers."""
-    return self.runtime_context.default_resolve_ai_selection(request)
-
-
-def _resolve_debug_selection_wrapper(self, request: InputRequest) -> List[int]:
-    """Backward-compatible wrapper around runtime selection helpers."""
-    return self.runtime_context.default_resolve_debug_selection(request)
-
-
-def _resolve_debug_selection_with_heuristics_wrapper(
-    self,
-    options: List,
-    actual_max_select: int,
-) -> Optional[List[int]]:
-    """Backward-compatible wrapper around runtime selection helpers."""
-    return self.runtime_context.default_resolve_debug_selection_with_heuristics(
-        options,
-        actual_max_select,
-    )
-
-
-def _score_debug_option_wrapper(self, option) -> int:
-    """Backward-compatible wrapper around runtime selection helpers."""
-    return self.runtime_context.default_score_debug_option(option)
-
-
-def _parse_selection_input_wrapper(
-    self,
-    raw_input: str,
-    option_count: int,
-    max_select: int,
-    must_select: bool,
-) -> Optional[List[int]]:
-    """Backward-compatible wrapper around runtime selection helpers."""
-    return self.runtime_context.default_parse_selection_input(
-        raw_input=raw_input,
-        option_count=option_count,
-        max_select=max_select,
-        must_select=must_select,
-    )
-
-
-def _build_submission_wrapper(self, options: List, selected_indices: List[int]) -> InputSubmission:
-    """Backward-compatible wrapper around runtime selection helpers."""
-    return self.runtime_context.default_build_submission(options, selected_indices)
-
-
-GameState.resolve_input_request = _resolve_input_request_wrapper
-GameState._augment_human_options = _augment_human_options_wrapper
-GameState._resolve_human_selection = _resolve_human_selection_wrapper
-GameState._resolve_ai_selection = _resolve_ai_selection_wrapper
-GameState._resolve_debug_selection = _resolve_debug_selection_wrapper
-GameState._resolve_debug_selection_with_heuristics = _resolve_debug_selection_with_heuristics_wrapper
-GameState._score_debug_option = _score_debug_option_wrapper
-GameState._parse_selection_input = _parse_selection_input_wrapper
-GameState._build_submission = _build_submission_wrapper
+    def _build_submission(self, options: List, selected_indices: List[int]) -> InputSubmission:
+        """Backward-compatible wrapper around runtime selection helpers."""
+        return self.runtime_context.default_build_submission(options, selected_indices)
 
 _GAME_STATE_RUNTIME_HOOK_WRAPPERS = {
-    "resolve_input_request": _resolve_input_request_wrapper,
-    "_augment_human_options": _augment_human_options_wrapper,
-    "_resolve_human_selection": _resolve_human_selection_wrapper,
-    "_resolve_ai_selection": _resolve_ai_selection_wrapper,
-    "_resolve_debug_selection": _resolve_debug_selection_wrapper,
-    "_resolve_debug_selection_with_heuristics": _resolve_debug_selection_with_heuristics_wrapper,
-    "_score_debug_option": _score_debug_option_wrapper,
-    "_parse_selection_input": _parse_selection_input_wrapper,
-    "_build_submission": _build_submission_wrapper,
+    "resolve_input_request": GameState.resolve_input_request,
+    "_augment_human_options": GameState._augment_human_options,
+    "_resolve_human_selection": GameState._resolve_human_selection,
+    "_resolve_ai_selection": GameState._resolve_ai_selection,
+    "_resolve_debug_selection": GameState._resolve_debug_selection,
+    "_resolve_debug_selection_with_heuristics": GameState._resolve_debug_selection_with_heuristics,
+    "_score_debug_option": GameState._score_debug_option,
+    "_parse_selection_input": GameState._parse_selection_input,
+    "_build_submission": GameState._build_submission,
 }
 
 # Global game state instance

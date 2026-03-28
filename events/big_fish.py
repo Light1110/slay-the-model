@@ -1,7 +1,7 @@
 """
 Event 1 - Big Fish
 """
-from utils.result_types import BaseResult
+from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
 from events.base_event import Event
 from actions.card import AddCardAction
 from actions.combat import HealAction, ModifyMaxHpAction
@@ -28,9 +28,8 @@ class BigFishEvent(Event):
     [Box] Receive a random Relic (Common/Uncommon/Rare). Become Cursed: Regret
     """
     
-    def trigger(self) -> 'BaseResult':
+    def trigger(self) -> None:
         """Trigger big fish blessing event"""
-        from utils.result_types import MultipleActionsResult
         from engine.game_state import game_state
         
         # Collect all actions
@@ -77,4 +76,4 @@ class BigFishEvent(Event):
             options=options
         ))
         
-        return MultipleActionsResult(actions)
+        add_actions(actions)

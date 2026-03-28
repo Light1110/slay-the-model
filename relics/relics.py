@@ -56,7 +56,6 @@ def get_random_relic_by_rarity(rarity: RarityType, count: int = 1) -> List[Type]
     relics = RELICS_BY_RARITY.get(rarity, [])
     if not relics:
         return []
-    
     return random.sample(relics, min(count, len(relics)))
 
 

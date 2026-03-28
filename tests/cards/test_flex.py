@@ -31,8 +31,19 @@ class TestFlex(unittest.TestCase):
         card = Flex()
         card.upgrade()
         self.assertEqual(card.get_magic_value("temp_strength"), 4)
-        
-    # todo: test apply power
+
+    def test_temporary_strength_powers_expose_localized_names(self):
+        self.helper.create_player(max_hp=50, energy=3)
+        self.helper.start_combat([])
+        card = Flex()
+        self.helper.add_card_to_hand(card)
+        self.helper.play_card(card, None)
+
+        from engine.game_state import game_state
+
+        power_names = [power.local("name").resolve() for power in game_state.player.powers]
+        self.assertIn("Strength", power_names)
+        self.assertIn("Strength Down", power_names)
 
 if __name__ == "__main__":
     unittest.main()

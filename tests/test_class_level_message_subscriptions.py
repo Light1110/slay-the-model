@@ -28,6 +28,7 @@ from potions.global_potions import BlockPotion
 from engine.message_bus import MessageBus
 from engine.subscriptions import MessagePriority, subscribe
 from powers.base import Power
+from player.player import Player
 from relics.base import Relic
 from tests.test_combat_utils import create_test_helper
 from utils.types import PilePosType
@@ -180,7 +181,7 @@ class _LifecycleRelic(Relic):
         self.draw_triggered = False
         self.discard_triggered = False
         self.added_triggered = False
-        self._target_player = None
+        self._target_player: Player | None = None
 
     def on_card_draw(self, card, player, entities):
         self.draw_triggered = True

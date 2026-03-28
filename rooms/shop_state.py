@@ -10,7 +10,7 @@ from rooms.shop_pricing import compute_shop_price
 class ShopItem:
     """Represents an item for sale in the shop."""
 
-    def __init__(self, item_type, item, base_price, discount=0):
+    def __init__(self, item_type, item, base_price, discount: float = 0):
         self.item_type = item_type
         self.item = item
         self.base_price = base_price

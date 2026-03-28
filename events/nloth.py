@@ -2,10 +2,10 @@
 
 Trade a relic for N'loth's Gift (50% chance to duplicate obtained cards).
 """
+from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
 
 import random
 
-from utils.result_types import BaseResult, MultipleActionsResult
 from events.base_event import Event
 from events.event_pool import register_event
 from actions.display import InputRequestAction, DisplayTextAction
@@ -29,7 +29,7 @@ class Nloth(Event):
         """Only appears if player has 2+ relics."""
         return len(game_state.player.relics) >= 2
     
-    def trigger(self) -> BaseResult:
+    def trigger(self) -> None:
         actions = []
         
         # Select 2 random relics to offer on first trigger
@@ -49,10 +49,10 @@ class Nloth(Event):
         
         for relic in self.offered_relics:
             # Get relic display name
-            relic_name = relic.name if hasattr(relic, 'name') else str(relic.__class__.__name__)
+            relic_name = getattr(relic, "name", str(relic.__class__.__name__))
             
             options.append(Option(
-                name=LocalStr(f'Trade {relic_name}'),
+                name=LocalStr(str(f"Trade {relic_name}")),
                 actions=[
                     LoseRelicAction(relic=relic),
                     AddRelicAction(relic=NlothGift())
@@ -71,4 +71,4 @@ class Nloth(Event):
         ))
         
         self.end_event()
-        return MultipleActionsResult(actions)
+        add_actions(actions)

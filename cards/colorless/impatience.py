@@ -1,6 +1,7 @@
 """
 Colorless Uncommon Skill card - Impatience
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -24,12 +25,13 @@ class Impatience(Card):
 
     upgrade_magic = {"draw_amount": 3}
 
-    def on_play(self, targets: List[Creature] = []) -> List[Action]:
+    def on_play(self, targets: List[Creature] = []):
         target = targets[0] if targets else None
         from engine.game_state import game_state
 
-        actions = super().on_play(targets)
+        super().on_play(targets)
 
+        actions = []
         # Check if there are any attacks in hand
         has_attack = False
         if game_state.player and hasattr(game_state.player, "card_manager"):
@@ -44,4 +46,8 @@ class Impatience(Card):
             draw_amount = self.get_magic_value("draw_amount")
             actions.append(DrawCardsAction(count=draw_amount))
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

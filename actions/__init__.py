@@ -1,105 +1,61 @@
-"""
-Module initialization for game actions
+"""Lazy action package surface.
 
-Note on ActionQueue in new architecture:
-- Each Room, Event, and Combat has its own ActionQueue for isolation
-- Actions return other actions to be added to the caller's queue
-- This provides clean separation between different game contexts
-
-Action Result Type System:
-- Actions can now return standardized BaseResult types for type safety
-- Result types include: NoneResult, SingleActionResult, MultipleActionsResult,
-   GameStateResult
-- Backward compatible with old-style returns (None, Action, List[Action], "DEATH"/"WIN")
+This module avoids importing the entire action graph at package import time,
+which keeps type checkers from reporting large import cycles while preserving
+the existing public API.
 """
-# Import base classes immediately
+
+from importlib import import_module
+from typing import Any
+
 from actions.base import Action, ActionQueue
+from utils.result_types import GameTerminalState
 
-# Import result type system
-from utils.result_types import (
-    BaseResult,
-    NoneResult,
-    SingleActionResult,
-    MultipleActionsResult,
-    GameStateResult,
-)
 
-# Import commonly used actions
-from actions.display import DisplayTextAction, InputRequestAction
-from actions.card import (
-    AddRandomCardAction,
-    ChooseExhaustCardAction,
-    ChooseMoveCardAction,
-    ChooseRemoveCardAction,
-    ChooseReplaceCardAction,
-    ChooseTransformCardAction,
-    ChooseUpgradeCardAction,
-    CopyCardAction,
-    DrawCardsAction,
-    ExhaustCardAction,
-    ExhaustRandomCardAction,
-    MoveCardAction,
-    RemoveCardAction,
-    ReplaceCardAction,
-    ShuffleAction,
-    TransformCardAction,
-    UpgradeAllCardsAction,
-    UpgradeCardAction,
-)
-# Note: BuyItemAction, OpenChestAction, LeaveRoomAction imported from actions.misc
-# directly in modules that need them to avoid circular import with relics package
-from actions.combat import TriggerRelicAction
-from actions.combat import ApplyPowerAction, AttackAction, DealDamageAction, HealAction, UsePotionAction
-from actions.game_over import GameOverAction
+_LAZY_EXPORTS = {
+    "DisplayTextAction": ("actions.display", "DisplayTextAction"),
+    "InputRequestAction": ("actions.display", "InputRequestAction"),
+    "AddRandomCardAction": ("actions.card", "AddRandomCardAction"),
+    "ChooseExhaustCardAction": ("actions.card", "ChooseExhaustCardAction"),
+    "ChooseMoveCardAction": ("actions.card", "ChooseMoveCardAction"),
+    "ChooseRemoveCardAction": ("actions.card", "ChooseRemoveCardAction"),
+    "ChooseReplaceCardAction": ("actions.card", "ChooseReplaceCardAction"),
+    "ChooseTransformCardAction": ("actions.card", "ChooseTransformCardAction"),
+    "ChooseUpgradeCardAction": ("actions.card", "ChooseUpgradeCardAction"),
+    "CopyCardAction": ("actions.card", "CopyCardAction"),
+    "DrawCardsAction": ("actions.card", "DrawCardsAction"),
+    "ExhaustCardAction": ("actions.card", "ExhaustCardAction"),
+    "ExhaustRandomCardAction": ("actions.card", "ExhaustRandomCardAction"),
+    "MoveCardAction": ("actions.card", "MoveCardAction"),
+    "RemoveCardAction": ("actions.card", "RemoveCardAction"),
+    "ReplaceCardAction": ("actions.card", "ReplaceCardAction"),
+    "ShuffleAction": ("actions.card", "ShuffleAction"),
+    "TransformCardAction": ("actions.card", "TransformCardAction"),
+    "UpgradeAllCardsAction": ("actions.card", "UpgradeAllCardsAction"),
+    "UpgradeCardAction": ("actions.card", "UpgradeCardAction"),
+    "TriggerRelicAction": ("actions.combat", "TriggerRelicAction"),
+    "ApplyPowerAction": ("actions.combat", "ApplyPowerAction"),
+    "AttackAction": ("actions.combat", "AttackAction"),
+    "DealDamageAction": ("actions.combat", "DealDamageAction"),
+    "HealAction": ("actions.combat", "HealAction"),
+    "UsePotionAction": ("actions.combat", "UsePotionAction"),
+    "GameOverAction": ("actions.game_over", "GameOverAction"),
+}
 
-# Note: Orb actions are imported on-demand to avoid circular imports
-# Import them directly: from actions.orb import OrbPassiveAction, etc.
+
+def __getattr__(name: str) -> Any:
+    if name not in _LAZY_EXPORTS:
+        raise AttributeError(f"module 'actions' has no attribute {name!r}")
+
+    module_name, attr_name = _LAZY_EXPORTS[name]
+    value = getattr(import_module(module_name), attr_name)
+    globals()[name] = value
+    return value
+
 
 __all__ = [
-    # Base classes
-    'Action', 'ActionQueue',
-
-    # Result type system
-    'BaseResult',
-    'NoneResult',
-    'SingleActionResult',
-    'MultipleActionsResult',
-    'GameStateResult',
-
-    # Display actions
-    'DisplayTextAction', 'InputRequestAction',
-
-     # Card actions
-     'RemoveCardAction',
-     'TransformCardAction',
-     'ExhaustCardAction',
-     'UpgradeCardAction',
-     'UpgradeAllCardsAction',
-     'ChooseExhaustCardAction',
-     'ChooseRemoveCardAction',
-     'ChooseTransformCardAction',
-     'ChooseUpgradeCardAction',
-     'DrawCardsAction',
-     'ReplaceCardAction',
-     'ChooseReplaceCardAction',
-     'MoveCardAction',
-     'CopyCardAction',
-     'AddRandomCardAction',
-     'ExhaustRandomCardAction',
-     'ChooseMoveCardAction',
-    'MoveCardAction',
-    'CopyCardAction',
-    'AddRandomCardAction',
-    'ExhaustRandomCardAction',
-    'ChooseMoveCardAction',
-    'ShuffleAction',
-
-    # Combat actions
-    'ApplyPowerAction',
-    'AttackAction',
-    'DealDamageAction',
-    'HealAction',
-    'TriggerRelicAction',
-    'UsePotionAction',
+    "Action",
+    "ActionQueue",
+    "GameTerminalState",
+    *_LAZY_EXPORTS.keys(),
 ]
-

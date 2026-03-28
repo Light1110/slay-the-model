@@ -1,4 +1,5 @@
 """Mugger specific intentions."""
+from engine.runtime_api import add_action, add_actions
 
 import random
 from typing import List, TYPE_CHECKING
@@ -17,15 +18,16 @@ class MugIntention(Intention):
         super().__init__("mug", enemy)
         self.base_damage = 10
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Mug: deals damage to player."""
         from actions.combat import AttackAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -33,6 +35,7 @@ class MugIntention(Intention):
                 damage_type="attack",
             )
         ]
+        )
 
 
 class LungeIntention(Intention):
@@ -42,15 +45,16 @@ class LungeIntention(Intention):
         super().__init__("lunge", enemy)
         self.base_damage = 16
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Lunge: deals damage to player."""
         from actions.combat import AttackAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -58,6 +62,7 @@ class LungeIntention(Intention):
                 damage_type="attack",
             )
         ]
+        )
 
 
 class SmokeBombIntention(Intention):
@@ -67,16 +72,19 @@ class SmokeBombIntention(Intention):
         super().__init__("smoke_bomb", enemy)
         self.base_block = 11
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Smoke Bomb: gains Block."""
         from actions.combat import GainBlockAction
         
-        return [
+        from engine.game_state import game_state
+        add_actions(
+        [
             GainBlockAction(
                 block=self.base_block,
                 target=self.enemy
             )
         ]
+        )
 
 
 class EscapeIntention(Intention):
@@ -85,7 +93,8 @@ class EscapeIntention(Intention):
     def __init__(self, enemy: 'Enemy'):
         super().__init__("escape", enemy)
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Escape: flee combat."""
         from actions.combat import RemoveEnemyAction
-        return [RemoveEnemyAction(self.enemy)]
+        from engine.game_state import game_state
+        add_actions([RemoveEnemyAction(self.enemy)])

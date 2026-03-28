@@ -1,6 +1,5 @@
 from typing import Optional
 from cards.base import COST_UNPLAYABLE, Card
-from utils.result_types import List
 from utils.types import CardType
 
 

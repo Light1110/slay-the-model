@@ -2,6 +2,7 @@
 Sadistic Nature power for combat effects.
 Deal damage when applying debuff to enemy.
 """
+from engine.runtime_api import add_action, add_actions
 from typing import List
 from actions.base import Action
 from actions.combat import DealDamageAction
@@ -26,32 +27,38 @@ class SadisticNaturePower(Power):
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
 
-    def on_power_added(self, power, source=None) -> List[Action]:
+    def on_power_added(self, power, source=None):
         """Deal damage when a debuff is applied to an enemy by the player."""
         from engine.game_state import game_state
         
         actions = []
         
         if self.owner != game_state.player:
-            return actions
-        
+            from engine.game_state import game_state
+            add_actions(actions)
+            return
         if not hasattr(power, 'is_buff') or power.is_buff:
-            return actions
-        
+            from engine.game_state import game_state
+            add_actions(actions)
+            return
         if not hasattr(power, 'owner') or not power.owner:
-            return actions
-        
+            from engine.game_state import game_state
+            add_actions(actions)
+            return
         target = power.owner
         if target == self.owner:
-            return actions
-        
+            from engine.game_state import game_state
+            add_actions(actions)
+            return
         from entities.creature import Creature
         if not isinstance(target, Creature):
-            return actions
-        
+            from engine.game_state import game_state
+            add_actions(actions)
+            return
         if target == game_state.player:
-            return actions
-        
+            from engine.game_state import game_state
+            add_actions(actions)
+            return
         actions.append(DealDamageAction(
             damage=self.amount,
             target=target,
@@ -59,4 +66,8 @@ class SadisticNaturePower(Power):
             damage_type="hp_loss"
         ))
         
-        return actions
+        from engine.game_state import game_state
+        
+        add_actions(actions)
+        
+        return

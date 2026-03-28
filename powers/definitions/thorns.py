@@ -2,6 +2,7 @@
 Thorns power for combat effects.
 Deal damage back when attacked.
 """
+from engine.runtime_api import add_action, add_actions
 from typing import Any, List
 from actions.base import Action
 from actions.combat import DealDamageAction
@@ -25,7 +26,9 @@ class ThornsPower(Power):
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
         
-    def on_damage_taken(self, damage: int, source: Any = None, card: Any = None, player: Any = None, damage_type: str = "direct") -> List[Action]:
+    def on_damage_taken(self, damage: int, source: Any = None, card: Any = None, player: Any = None, damage_type: str = "direct"):
         if damage_type == "attack" and source is not None:
-            return [DealDamageAction(damage=self.amount, target=source, damage_type="direct")]
-        return []
+            from engine.game_state import game_state
+            add_actions([DealDamageAction(damage=self.amount, target=source, damage_type="direct")])
+            return
+        return

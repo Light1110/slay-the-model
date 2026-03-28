@@ -1,6 +1,7 @@
 """Shifting power for Transient.
 Upon losing HP, apply temporary Strength loss and end-of-turn restoration.
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import Any, List
 
@@ -31,10 +32,9 @@ class ShiftingPower(Power):
         card: Any = None,
         player: Any = None,
         damage_type: str = "direct",
-    ) -> List[Action]:
+    ):
         if not self.owner or damage <= 0:
-            return []
-
+            return
         actions: List[Action] = [
             ApplyPowerAction(
                 StrengthPower(amount=-damage, owner=self.owner),
@@ -54,4 +54,8 @@ class ShiftingPower(Power):
                 )
             )
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

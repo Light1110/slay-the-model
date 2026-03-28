@@ -31,9 +31,9 @@ class Enemy(Creature):
     def __init__(
         self,
         hp_range: Tuple[int, int] = (40, 50),
-        name: str = None,
-        max_hp: int = None,
-        damage: int = None,
+        name: Optional[str] = None,
+        max_hp: Optional[int] = None,
+        damage: Optional[int] = None,
         is_minion: bool = False,
         **kwargs
     ) -> None:
@@ -135,14 +135,10 @@ class Enemy(Creature):
             f"{type(selection).__name__}"
         )
     
-    def execute_intention(self) -> List['Action']:
-        """Execute the current intention and update history.
-        
-        Returns:
-            List of actions to queue
-        """
+    def execute_intention(self) -> None:
+        """Execute the current intention."""
         if not self.current_intention:
-            return []
+            return
         
         # Record in history
         if self.current_intention.name not in self.history_intentions:
@@ -150,9 +146,7 @@ class Enemy(Creature):
         else:
             self.history_intentions.append(self.current_intention.name)
         
-        # Execute the intention
-        actions = self.current_intention.execute()
-        return actions
+        self.current_intention.execute()
     
     @subscribe(CombatStartedMessage, priority=MessagePriority.ENEMY)
     def on_combat_start(self, floor: int = 1) -> None:
@@ -176,7 +170,7 @@ class Enemy(Creature):
         selection = self.determine_next_intention(current_floor)
         self.current_intention = self._resolve_next_intention(selection)
     
-    def on_damage_taken(self, damage: int, source=None, card=None, damage_type=None) -> List['Action']:
+    def on_damage_taken(self, damage: int, source=None, card=None, damage_type=None) -> None:
         """Called when enemy takes damage.
         
         Can be used to trigger special behaviors like splitting at 50% HP.
@@ -187,11 +181,8 @@ class Enemy(Creature):
             card: Card that caused damage
             damage_type: Type of damage
             
-        Returns:
-            List of actions to queue after taking damage
         """
         # Override in subclasses for special behaviors
-        return []
     
     def info(self) -> str:
         """Display current enemy info for displaying in game.
@@ -200,12 +191,9 @@ class Enemy(Creature):
         intention_info = f"Intention: {self.current_intention.name} - {self.current_intention.description}" if self.current_intention else "No intention"
         return f"{self.name} - HP: {self.hp}/{self.max_hp} - {intention_info}"
     
-    def on_death(self) -> List['Action']:
+    def on_death(self) -> None:
         """Called when enemy dies.
-        
-        Subclasses can override this to return actions to execute after death.
-        
-        Returns:
-            List of actions to queue after death
+
+        Subclasses can override this for additional death behavior.
         """
-        return super().on_death()
+        super().on_death()

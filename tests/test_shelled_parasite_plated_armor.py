@@ -20,6 +20,7 @@ class TestShelledParasitePlatedArmor(unittest.TestCase):
                 break
         
         self.assertIsNotNone(plated_armor)
+        assert plated_armor is not None
         self.assertEqual(plated_armor.amount, 14)
     
     def test_plated_armor_decreases_on_attack_damage(self):
@@ -34,6 +35,7 @@ class TestShelledParasitePlatedArmor(unittest.TestCase):
                 break
         
         self.assertIsNotNone(plated_armor)
+        assert plated_armor is not None
         initial_amount = plated_armor.amount
         
         # Simulate attack damage on power
@@ -53,6 +55,7 @@ class TestShelledParasitePlatedArmor(unittest.TestCase):
                 break
         
         self.assertIsNotNone(plated_armor)
+        assert plated_armor is not None
         initial_amount = plated_armor.amount
         
         # Simulate non-attack damage (e.g., poison, card effect)
@@ -73,6 +76,7 @@ class TestShelledParasitePlatedArmor(unittest.TestCase):
                 break
         
         self.assertIsNotNone(plated_armor)
+        assert plated_armor is not None
         plated_armor.amount = 1
         
         # Simulate damage that triggers the reduction to 0 (must be attack type)

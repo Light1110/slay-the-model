@@ -4,7 +4,6 @@ from enemies.act1.cultist import Cultist
 from enemies.act1.fungi_beast import FungiBeast
 from relics.character.ironclad import RedSkull
 from tests.test_combat_utils import create_test_helper
-from utils.result_types import MultipleActionsResult, SingleActionResult
 
 
 def test_damage_actions_import_from_split_modules():
@@ -15,23 +14,6 @@ def test_damage_actions_import_from_split_modules():
 
     assert CombatDealDamageAction is SplitDealDamageAction
     assert CombatHealAction is SplitHealAction
-
-
-def _execute_result(result):
-    if result is None:
-        return
-
-    if isinstance(result, SingleActionResult):
-        _execute_result(result.action.execute())
-        return
-
-    if isinstance(result, MultipleActionsResult):
-        for action in result.actions:
-            _execute_result(action.execute())
-        return
-
-    if hasattr(result, "execute"):
-        _execute_result(result.execute())
 
 
 def _capture_published_message_types(game_state, monkeypatch):
@@ -56,8 +38,8 @@ def test_deal_damage_action_publishes_damage_resolved_message(monkeypatch):
 
     published = _capture_published_message_types(helper.game_state, monkeypatch)
 
-    result = DealDamageAction(damage=25, target=player, source=enemy).execute()
-    _execute_result(result)
+    DealDamageAction(damage=25, target=player, source=enemy).execute()
+    helper.game_state.drive_actions()
 
     assert "DamageResolvedMessage" in published
     assert player.strength == 3
@@ -71,8 +53,8 @@ def test_deal_damage_action_publishes_creature_died_message(monkeypatch):
 
     published = _capture_published_message_types(helper.game_state, monkeypatch)
 
-    result = DealDamageAction(damage=5, target=enemy, source=player).execute()
-    _execute_result(result)
+    DealDamageAction(damage=5, target=enemy, source=player).execute()
+    helper.game_state.drive_actions()
 
     assert "DamageResolvedMessage" in published
     assert "CreatureDiedMessage" in published
@@ -89,8 +71,8 @@ def test_deal_damage_action_preserves_card_on_fatal(monkeypatch):
 
     published = _capture_published_message_types(helper.game_state, monkeypatch)
 
-    result = DealDamageAction(damage=10, target=enemy, source=player, card=card, damage_type="attack").execute()
-    _execute_result(result)
+    DealDamageAction(damage=10, target=enemy, source=player, card=card, damage_type="attack").execute()
+    helper.game_state.drive_actions()
 
     assert "DamageResolvedMessage" in published
     assert "CreatureDiedMessage" in published

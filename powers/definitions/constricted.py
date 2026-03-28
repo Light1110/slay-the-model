@@ -1,4 +1,5 @@
 """Constricted power for combat effects."""
+from engine.runtime_api import add_action, add_actions
 from typing import List
 
 from actions.base import Action
@@ -19,6 +20,9 @@ class ConstrictedPower(Power):
     def __init__(self, amount: int = 10, duration: int = -1, owner=None):
         super().__init__(amount=amount, duration=duration, owner=owner)
 
-    def on_turn_end(self) -> List[Action]:
+    def on_turn_end(self):
         actions = [LoseHPAction(amount=self.amount, target=self.owner)] if self.amount > 0 else []
-        return super().on_turn_end() + actions
+        super().on_turn_end()
+        from engine.game_state import game_state
+        add_actions(actions)
+        return

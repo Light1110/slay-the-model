@@ -960,7 +960,7 @@ powers:
     description: 攻击时偷取 {amount} 金币。死亡时追回。
   SlowPower:
     name: 缓慢
-    description: 本战斗你的卡牌消耗 +{amount}（每打出一张牌叠加一次）。
+    description: 每当你打出一张牌，本回合该敌人受到的攻击伤害增加 10%。
   DrawReductionPower:
     name: 抽牌减少
     description: 每回合开始少抽 1 张牌，持续 {amount} 回合。
@@ -2121,7 +2121,10 @@ enemies:
         description: 造成 {damage} 点伤害。
       Count:
         name: 计数
-        description: 正在倒数...
+        description: 造成 {damage} 点伤害。
+      Glare:
+        name: 凝视
+        description: 施加 {amount} 层虚弱。
   Nemesis:
     name: ??
     intentions:

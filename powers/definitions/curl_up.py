@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from engine.runtime_api import add_action, add_actions
 """
 CurlUpPower - Louse enemy ability
 When taking damage, gains block equal to the amount.
@@ -29,7 +30,7 @@ class CurlUpPower(Power):
         self.localization_key = "powers.curl_up"
         self.triggered = False
         
-    def on_damage_taken(self, damage: int, source=None, card=None, player=None, damage_type="direct"):
+    def on_damage_taken(self, damage: int, source=None, card=None, player=None, damage_type="direct") -> None:
         """
         Called when owner takes damage.
         Gains block equal to amount, then removes.
@@ -40,21 +41,18 @@ class CurlUpPower(Power):
             card: Card that caused damage (optional)
             player: Player taking damage (optional)
             damage_type: Type of damage (optional)
-            
-        Returns:
-            List of actions (GainBlockAction and RemovePowerAction)
         """
         # Only trigger on attack damage, not on HP loss or other damage
         if not self.triggered and damage > 0 and damage_type == "attack":
             self.triggered = True
             if self.owner:
-                # Return GainBlockAction to gain block (do NOT call gain_block directly)
-                return [
-                    GainBlockAction(self.amount, self.owner),
-                    RemovePowerAction(power="Curl Up", target=self.owner)
-                ]
-        return []
-        
+                add_actions(
+                    [
+                        GainBlockAction(self.amount, self.owner),
+                        RemovePowerAction(power="Curl Up", target=self.owner),
+                    ]
+                )
+
     def local(self, field: str, **kwargs) -> LocalStr:
         """Get localized string for this power
         
@@ -70,4 +68,4 @@ class CurlUpPower(Power):
             return LocalStr(f"{self.localization_key}.description", 
                           default=f"On damage, gains {amount} Block.",
                           amount=amount)
-        return super().local(field)
+        return super().local(field, **kwargs)

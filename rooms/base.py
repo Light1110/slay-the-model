@@ -4,7 +4,6 @@ Rooms use global action queue and lifecycle management.
 """
 from actions.base import Action
 from actions.map_selection import SelectMapNodeAction
-from utils.result_types import BaseResult
 from localization import Localizable
 from utils.types import RoomType
 
@@ -20,6 +19,8 @@ class Room(Localizable):
         
         # Control flag for leaving room
         self.should_leave = False
+        self.card_removal_used = False
+        self.card_removal_price = 75
         
         # Room type tracking
         self.room_type = None
@@ -33,15 +34,13 @@ class Room(Localizable):
         """
         pass
     
-    def enter(self) -> BaseResult:
+    def enter(self):
         """
         Enter room and execute room logic.
 
         This method should implement room's main logic loop,
         building and executing actions as needed.
 
-        Returns:
-            Execution result: NoneResult()/"DEATH"/"WIN"
         """
         raise NotImplementedError(f"{self.__class__.__name__} must implement enter()")
     

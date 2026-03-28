@@ -23,5 +23,4 @@ class Normality(Card):
         assert combat is not None
         if combat.combat_state.turn_cards_played >= 3:
             combat.combat_state.turn_enable_card_play = False
-        return []
-            
+        return

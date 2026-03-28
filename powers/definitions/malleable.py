@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from engine.runtime_api import add_action, add_actions
 """
 MalleablePower - Writhing Mass enemy ability
 Upon receiving attack damage, gains Block. Block gain increases as triggered.
@@ -41,13 +42,12 @@ class MalleablePower(Power):
         """Current block amount to gain on next trigger."""
         return self._current_block_bonus
     
-    def on_turn_start(self) -> List[Action]:
+    def on_turn_start(self):
         """Reset block bonus at start of turn."""
         self._current_block_bonus = self.amount
-        return []
-    
+
     def on_damage_taken(self, damage: int, source: Any = None, card: Any = None, 
-                       player: Any = None, damage_type: str = "direct") -> List[Action]:
+                       player: Any = None, damage_type: str = "direct") -> None:
         """
         Called when owner takes damage.
         Gains block equal to current block bonus, then increases the bonus.
@@ -58,18 +58,14 @@ class MalleablePower(Power):
             card: Card that caused damage
             player: Player (not used here)
             damage_type: Type of damage
-            
-        Returns:
-            List of actions (GainBlockAction)
         """
         # Only trigger on attack damage
         if damage > 0 and damage_type == "attack" and self.owner:
             block_to_gain = self._current_block_bonus
             # Increase bonus for next trigger
             self._current_block_bonus += 1
-            return [GainBlockAction(block_to_gain, self.owner)]
-        return []
-    
+            add_actions([GainBlockAction(block_to_gain, self.owner)])
+
     def local(self, field: str, **kwargs) -> LocalStr:
         """Get localized string for this power."""
         if field == "name":
@@ -83,4 +79,4 @@ class MalleablePower(Power):
                 amount=amount,
                 current_block=current
             )
-        return super().local(field)
+        return super().local(field, **kwargs)

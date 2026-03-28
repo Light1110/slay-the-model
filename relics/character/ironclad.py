@@ -1,6 +1,7 @@
 """
 Ironclad-specific relics - all Ironclad relics in one file.
 """
+from engine.runtime_api import add_action, add_actions
 from typing import List
 from actions.base import Action, LambdaAction
 from actions.card import DrawCardsAction
@@ -23,8 +24,9 @@ class BurningBlood(Relic):
 
     def on_combat_end(self, player, entities):
         """Heal 6 HP at combat end"""
-        return [HealAction(amount=6)]
-
+        from engine.game_state import game_state
+        add_actions([HealAction(amount=6)])
+        return
 # Common Relic (Ironclad-specific)
 @register("relic")
 class RedSkull(Relic):
@@ -35,32 +37,34 @@ class RedSkull(Relic):
         self.rarity = RarityType.COMMON
         self.strength_applied = False
         
-    def on_combat_start(self, player, entities) -> List[Action]:
+    def on_combat_start(self, player, entities):
         self.strength_applied = False
         # Check if HP is already <= 50% at combat start
         if player.hp <= player.max_hp // 2:
             self.strength_applied = True
-            return [ApplyPowerAction(StrengthPower(amount=3, owner=player), player)]
-        return []
-    
-    def on_damage_taken(self, damage, source, player, entities) -> List[Action]:
+            from engine.game_state import game_state
+            add_actions([ApplyPowerAction(StrengthPower(amount=3, owner=player), player)])
+            return
+        return
+    def on_damage_taken(self, damage, source, player, entities):
         """Check if HP dropped to 50% or below"""
         if not self.strength_applied and player.hp <= player.max_hp // 2:
             self.strength_applied = True
-            return [ApplyPowerAction(StrengthPower(amount=3, owner=player), player)]
-        return []
-    
-    def on_heal(self, heal_amount, player, entities) -> List[Action]:
+            from engine.game_state import game_state
+            add_actions([ApplyPowerAction(StrengthPower(amount=3, owner=player), player)])
+            return
+        return
+    def on_heal(self, heal_amount, player, entities):
         """Check if HP went above 50% after heal, remove Strength if so"""
         if self.strength_applied:
             # Calculate HP after heal (before actual HP change)
             new_hp = min(player.hp + heal_amount, player.max_hp)
             if new_hp > player.max_hp // 2:
                 self.strength_applied = False
-                return [ApplyPowerAction(StrengthPower(amount=-3, owner=player), player)]
-        return []
-        
-
+                from engine.game_state import game_state
+                add_actions([ApplyPowerAction(StrengthPower(amount=-3, owner=player), player)])
+                return
+        return
 # PaperPhrog removed - duplicate of PaperPhrog in global_relics/uncommon.py
 
 # Rare Relic
@@ -77,12 +81,15 @@ class ChampionBelt(Relic):
         from actions.combat import ApplyPowerAction
         
         if isinstance(power, VulnerablePower):
-            return [
+            from engine.game_state import game_state
+            add_actions(
+            [
                 ApplyPowerAction(WeakPower(amount=1, owner=target), target)
             ]
+            )
+            return
 
-        return []
-
+        return
 @register("relic")
 class CharonsAshes(Relic):
     """Whenever you Exhaust a card, deal 3 damage to ALL enemies."""
@@ -95,12 +102,16 @@ class CharonsAshes(Relic):
         from engine.game_state import game_state
 
         if owner is not game_state.player or not game_state.current_combat:
-            return []
-        return [
+            return
+        combat = game_state.current_combat
+        add_actions(
+        [
             DealDamageAction(damage=3, target=enemy)
-            for enemy in list(game_state.current_combat.enemies)
+            for enemy in list(combat.enemies)
             if not enemy.is_dead()
         ]
+        )
+        return
 
 @register("relic")
 class MagicFlower(Relic):
@@ -127,8 +138,9 @@ class BlackBlood(Relic):
 
     def on_combat_end(self, player, entities):
         """Heal 12 HP at combat end"""
-        return [HealAction(amount=12)]
-
+        from engine.game_state import game_state
+        add_actions([HealAction(amount=12)])
+        return
 @register("relic")
 class Runicube(Relic):
     """Whenever you lose HP, draw 1 card."""
@@ -140,9 +152,10 @@ class Runicube(Relic):
     def on_damage_taken(self, damage, source, player, entities):
         """Draw 1 card when taking damage"""
         if damage > 0:
-            return [DrawCardsAction(count=1)]
-        return []
-
+            from engine.game_state import game_state
+            add_actions([DrawCardsAction(count=1)])
+            return
+        return
 # Shop Relic
 @register("relic")
 class BrimStone(Relic):
@@ -155,15 +168,18 @@ class BrimStone(Relic):
     def on_player_turn_start(self, player, entities):
         """Gain 2 Strength for player, 1 Strength for all enemies"""
         from engine.game_state import game_state
+        combat = game_state.current_combat
+        if combat is None:
+            return
         actions = [
             ApplyPowerAction(StrengthPower(amount=2, owner=player), player)
         ]
-        assert game_state.current_combat is not None
-        for enemy in game_state.current_combat.enemies:
+        for enemy in combat.enemies:
             if enemy.hp > 0:
                 actions.append(ApplyPowerAction(StrengthPower(amount=1, owner=enemy), enemy))
-        return actions
-
+        from engine.game_state import game_state
+        add_actions(actions)
+        return
 @register("relic")
 class OrangePellets(Relic):
     """Whenever you play a Power, Attack, and Skill in same turn, remove all of your Debuffs."""
@@ -175,17 +191,18 @@ class OrangePellets(Relic):
         self.attack_count = 0
         self.skill_count = 0
     
-    def on_combat_start(self, player, entities) -> List[Action]:
+    def on_combat_start(self, player, entities):
         """Reset counters at start of combat"""
-        return [LambdaAction(func=lambda: self._reset_counters())]
-    
+        from engine.game_state import game_state
+        add_actions([LambdaAction(func=lambda: self._reset_counters())])
+        return
     def on_card_play(self, card, player, entities):
         """Track cards played and remove debuffs when all 3 types played"""
         from utils.types import CardType
         from actions.combat import RemovePowerAction
         
         if card is None:
-            return []
+            return
         if card.card_type == CardType.POWER:
             self.power_count += 1
         elif card.card_type == CardType.ATTACK:
@@ -204,9 +221,10 @@ class OrangePellets(Relic):
                     actions.append(RemovePowerAction(power=power.idstr, target=player, is_buff=False))
             
             self._reset_counters()
-            return actions
-        return []
-
+            from engine.game_state import game_state
+            add_actions(actions)
+            return
+        return
     def _reset_counters(self):
         self.power_count = 0
         self.attack_count = 0

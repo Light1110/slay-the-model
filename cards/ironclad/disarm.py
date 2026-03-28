@@ -1,6 +1,7 @@
 """
 Ironclad Uncommon Skill card - Disarm
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -24,13 +25,17 @@ class Disarm(Card):
 
     upgrade_magic = {"strength_debuff": 3, "strength": 3}
 
-    def on_play(self, targets: List[Creature] = []) -> List[Action]:
+    def on_play(self, targets: List[Creature] = []):
         target = targets[0] if targets else None
-        actions = super().on_play(targets)
-
+        super().on_play(targets)
+        actions = []
         # Apply Strength debuff to target
         if targets:
             strength_amount = self.get_magic_value("strength_debuff")
             actions.append(ApplyPowerAction(target=target, power="strength", amount=-strength_amount))
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

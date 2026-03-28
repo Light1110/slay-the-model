@@ -1,6 +1,7 @@
 """
 Colorless Rare Skill card - Secret Weapon
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -24,12 +25,13 @@ class SecretWeapon(Card):
 
     # Note: Upgraded version removes Exhaust flag
 
-    def on_play(self, targets: List[Creature] = []) -> List[Action]:
+    def on_play(self, targets: List[Creature] = []):
         target = targets[0] if targets else None
         from engine.game_state import game_state
 
-        actions = super().on_play(targets)
+        super().on_play(targets)
 
+        actions = []
         # Move an Attack from draw pile to hand
         if game_state.player and hasattr(game_state.player, "card_manager"):
             actions.append(ChooseMoveCardAction(
@@ -39,4 +41,8 @@ class SecretWeapon(Card):
                 filter_card_type=CardType.ATTACK
             ))
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

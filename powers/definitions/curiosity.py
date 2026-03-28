@@ -2,6 +2,7 @@
 Curiosity power for enemies.
 Gain Strength when the player plays a Power card.
 """
+from engine.runtime_api import add_action, add_actions
 from typing import List
 from actions.base import Action
 from actions.combat import ApplyPowerAction
@@ -30,7 +31,7 @@ class CuriosityPower(Power):
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
 
-    def on_card_play(self, card, player, entities) -> List['Action']:
+    def on_card_play(self, card, player, entities) -> None:
         """Called when a card is played.
         
         If the card is a Power type, gain Strength.
@@ -48,10 +49,13 @@ class CuriosityPower(Power):
         # Check if the played card is a Power card
         if hasattr(card, 'type') and card.type == CardType.POWER:
             # Gain Strength equal to this power's amount
-            return [ApplyPowerAction(
+            from engine.game_state import game_state
+            add_actions(
+            [ApplyPowerAction(
                 target=self.owner,
                 power=StrengthPower(amount=self.amount),
                 source=self.owner
             )]
+            )
+            return
         
-        return []

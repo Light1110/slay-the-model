@@ -1,4 +1,5 @@
 """Dagger minion intentions for Slay the Model."""
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 
@@ -13,7 +14,7 @@ class WoundIntention(Intention):
         super().__init__("Wound", enemy)
         self.base_damage = 9
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute Wound intention."""
         from cards.colorless import Wound
         from engine.game_state import game_state
@@ -21,12 +22,15 @@ class WoundIntention(Intention):
         # Add Wound to player's discard pile
         game_state.player.card_manager.get_pile("discard_pile").append(Wound())
         
-        return [AttackAction(
+        from engine.game_state import game_state
+        add_actions(
+        [AttackAction(
             self.enemy.calculate_damage(self.base_damage),
             game_state.player,
             self.enemy,
             "attack"
         )]
+        )
 
 
 class ExplodeIntention(Intention):
@@ -36,11 +40,13 @@ class ExplodeIntention(Intention):
         super().__init__("Explode", enemy)
         self.base_damage = 25
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute Explode intention."""
         from engine.game_state import game_state
         
-        return [
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 self.base_damage,
                 game_state.player,
@@ -49,3 +55,4 @@ class ExplodeIntention(Intention):
             ),
             RemoveEnemyAction(self.enemy)
         ]
+        )

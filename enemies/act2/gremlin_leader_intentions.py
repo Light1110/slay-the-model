@@ -1,4 +1,5 @@
 """Gremlin Leader intentions - Act 2 Elite enemy."""
+from engine.runtime_api import add_action, add_actions
 
 import random
 from typing import TYPE_CHECKING, List
@@ -19,7 +20,7 @@ class Encourage(Intention):
         self.base_strength_gain = 3
         self.base_block = 6
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute encourage - buff all allies."""
         from engine.game_state import game_state
         enemies = (
@@ -44,9 +45,10 @@ class Encourage(Intention):
                         target=enemy
                     ))
         
-        return actions
-
-
+        from engine.game_state import game_state
+        
+        add_actions(actions)
+        
 class Stab(Intention):
     """Deals 6×3 damage."""
     
@@ -55,7 +57,7 @@ class Stab(Intention):
         self.base_damage = 6
         self._hits = 3
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute stab attack."""
         from engine.game_state import game_state
         
@@ -68,16 +70,17 @@ class Stab(Intention):
                 damage_type="attack"
             ))
         
-        return actions
-
-
+        from engine.game_state import game_state
+        
+        add_actions(actions)
+        
 class Rally(Intention):
     """Summon 2 random Gremlins."""
     
     def __init__(self, enemy: "GremlinLeader"):
         super().__init__("Rally!", enemy)
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute rally - summon 2 random gremlins."""
         from engine.game_state import game_state
         from actions.combat import AddEnemyAction
@@ -116,4 +119,7 @@ class Rally(Intention):
             gremlin._is_gremlin = True
             actions.append(AddEnemyAction(gremlin))
         
-        return actions
+        from engine.game_state import game_state
+        
+        add_actions(actions)
+        

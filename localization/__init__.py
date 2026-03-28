@@ -106,6 +106,17 @@ class LocalStr(BaseLocalStr):
 
     def resolve(self) -> str:
         return t(self.key, default=self.default, **self.kwargs)
+
+
+def resolve_text(value: Any) -> str:
+    """Resolve localized display values from LocalStr-like objects or raw keys."""
+    if value is None:
+        return ""
+    if isinstance(value, BaseLocalStr):
+        return value.resolve()
+    if isinstance(value, str):
+        return t(value, default=value)
+    return str(value)
     
 class Localizable:
     """Provide localized fields via prefix + class name."""

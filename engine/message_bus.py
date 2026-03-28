@@ -32,6 +32,12 @@ class MessageBus:
         self._handlers.sort(key=lambda current: getattr(current, "priority", 0))
 
     def publish(self, message: GameMessage, participants: List | None = None) -> List:
+        if participants is None:
+            try:
+                from engine.game_state import game_state
+                participants = game_state.runtime_context.message_participants_for_message(message)
+            except Exception:
+                participants = []
         actions: List = []
         for handler in self._handlers:
             if not handler.handles(message):

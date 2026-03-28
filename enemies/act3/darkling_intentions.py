@@ -1,4 +1,5 @@
 """Darkling enemy intentions for Slay the Model."""
+from engine.runtime_api import add_action, add_actions
 
 import random
 from typing import List
@@ -15,7 +16,7 @@ class Harden(Intention):
         self.base_block = 12
         self.strength_gain = 0  # A17+: gains 2 Strength
 
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute Harden intention."""
         from engine.game_state import game_state
         actions = []
@@ -25,9 +26,8 @@ class Harden(Intention):
             actions.append(ApplyPowerAction(
                 "strength", self.enemy, 2, -1
             ))
-        return actions
-
-
+        from engine.game_state import game_state
+        add_actions(actions)
 class Nip(Intention):
     """Darkling Nip intention - deals damage."""
 
@@ -44,15 +44,18 @@ class Nip(Intention):
         else:
             self.base_damage = random.randint(7, 11)
 
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute Nip intention."""
         from engine.game_state import game_state
-        return [AttackAction(
+        from engine.game_state import game_state
+        add_actions(
+        [AttackAction(
             self.enemy.calculate_damage(self.base_damage),
             game_state.player,
             self.enemy,
             "attack"
         )]
+        )
 
 
 class Chomp(Intention):
@@ -63,7 +66,7 @@ class Chomp(Intention):
         self.base_damage = 8
         self.hit_count = 2
 
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute Chomp intention."""
         from engine.game_state import game_state
         actions = []
@@ -74,31 +77,26 @@ class Chomp(Intention):
                 self.enemy,
                 "attack"
             ))
-        return actions
-
-
+        from engine.game_state import game_state
+        add_actions(actions)
 class Regrowing(Intention):
     """Darkling Regrowing intention - does nothing."""
 
     def __init__(self, enemy):
         super().__init__("Regrowing...", enemy)
 
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute Regrowing intention - do nothing."""
-        return []
-
-
 class Reincarnate(Intention):
     """Darkling Reincarnate intention - revive with 50% HP."""
 
     def __init__(self, enemy):
         super().__init__("Reincarnate", enemy)
 
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute Reincarnate intention."""
         # Heal to 50% max HP
         heal_amount = self.enemy.max_hp // 2
         self.enemy.hp = heal_amount
         # Reset cannot be targeted state
         self.enemy._is_regrowing = False
-        return []

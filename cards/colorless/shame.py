@@ -1,6 +1,7 @@
 """
 Colorless Curse card - Shame
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -21,16 +22,21 @@ class Shame(Card):
     base_cost = COST_UNPLAYABLE
     upgradeable = False
 
-    def on_player_turn_end(self) -> List[Action]:
+    def on_player_turn_end(self):
         """Gain 1 Frail at end of turn"""
         from engine.game_state import game_state
 
-        actions = super().on_player_turn_end()
+        super().on_player_turn_end()
 
+        actions = []
         frail_amount = 1
         actions.append(ApplyPowerAction(
             FrailPower(amount=frail_amount, duration=frail_amount, owner=game_state.player),
             game_state.player
         ))
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

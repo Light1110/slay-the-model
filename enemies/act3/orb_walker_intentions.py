@@ -1,4 +1,5 @@
 """Orb Walker intentions."""
+from engine.runtime_api import add_action, add_actions
 
 from enemies.intention import Intention
 from actions.combat import AttackAction
@@ -34,9 +35,11 @@ class Laser(Intention):
         burn2 = Burn()
         game_state.player.card_manager.get_pile("discard_pile").append(burn2)
 
-        return actions
+        from engine.game_state import game_state
 
+        add_actions(actions)
 
+        return
 class Claw(Intention):
     """Claw attack - deals damage."""
 
@@ -49,7 +52,9 @@ class Claw(Intention):
         """Execute Claw: Deals damage."""
         from engine.game_state import game_state
 
-        return [
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -57,3 +62,5 @@ class Claw(Intention):
                 damage_type="attack",
             )
         ]
+        )
+        return

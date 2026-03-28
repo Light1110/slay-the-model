@@ -2,6 +2,7 @@
 Magnetism power for combat effects.
 Add random colorless card to hand at start of turn.
 """
+from engine.runtime_api import add_action, add_actions
 from typing import List
 from actions.base import Action
 from actions.card import AddRandomCardAction
@@ -27,6 +28,8 @@ class MagnetismPower(Power):
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
 
-    def on_turn_start(self) -> List[Action]:
+    def on_turn_start(self):
         """Add random colorless card to hand at start of turn."""
-        return [AddRandomCardAction(pile="hand", namespace="colorless")]
+        from engine.game_state import game_state
+        add_actions([AddRandomCardAction(pile="hand", namespace="colorless")])
+        return

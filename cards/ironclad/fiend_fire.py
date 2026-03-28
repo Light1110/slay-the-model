@@ -1,6 +1,7 @@
 """
 Ironclad Rare Attack card - Fiend Fire
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -24,12 +25,13 @@ class FiendFire(Card):
     base_magic = {"exhaust_damage": 7}
     upgrade_magic = {"exhaust_damage": 10}
 
-    def on_play(self, targets: List[Creature] = []) -> List[Action]:
+    def on_play(self, targets: List[Creature] = []):
         target = targets[0] if targets else None
         from engine.game_state import game_state
 
-        actions = super().on_play(targets)
-        
+        super().on_play(targets)
+
+        actions = []
         player = game_state.player
         hand = player.card_manager.get_pile('hand')
         assert hand is not None
@@ -47,4 +49,8 @@ class FiendFire(Card):
             if target and target.hp > 0:
                 actions.append(AttackAction(damage=damage, target=target, source=player))
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

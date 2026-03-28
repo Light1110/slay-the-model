@@ -29,7 +29,7 @@ class ThieveryPower(Power):
 
     
     def on_attack(self, target: Any = None, source: Any = None, 
-                   card: Any = None) -> List['Action']:
+                   card: Any = None) -> None:
         """Steal gold when attacking the player.
         
         Triggered on attack action, regardless of whether damage is dealt.
@@ -48,8 +48,7 @@ class ThieveryPower(Power):
         
         # Only steal from player
         if not target or target != game_state.player:
-            return []
-        
+            return
         # Calculate gold to steal
         gold_to_steal = min(self.amount, game_state.player.gold)
         
@@ -60,9 +59,7 @@ class ThieveryPower(Power):
             owner_name = getattr(self.owner, 'name', 'Enemy') if self.owner else 'Enemy'
             tui_print(t("combat.thievery_steal", default=f"{owner_name} stole {gold_to_steal} gold!", enemy=owner_name, amount=gold_to_steal))
         
-        return []
-    
-    def on_remove(self) -> List['Action']:
+    def on_remove(self) -> None:
         """Return stolen gold when the power is removed (enemy dies).
         
         Returns:
@@ -75,4 +72,3 @@ class ThieveryPower(Power):
             from localization import t
             tui_print(t("combat.thievery_return", default=f"Recovered {self.stolen_gold} stolen gold!", amount=self.stolen_gold))
         
-        return []

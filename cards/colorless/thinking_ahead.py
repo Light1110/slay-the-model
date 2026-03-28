@@ -1,6 +1,7 @@
 """
 Colorless Rare Skill card - Thinking Ahead
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -27,8 +28,11 @@ class ThinkingAhead(Card):
     base_exhaust = True
     upgrade_exhaust = False
 
-    def on_play(self, targets: List[Creature] = []) -> List[Action]:
-        return super().on_play(targets) + [
+    def on_play(self, targets: List[Creature] = []):
+        super().on_play(targets)
+        from engine.game_state import game_state
+        add_actions([
             DrawCardsAction(count=self.base_draw),
             ChooseMoveCardAction(src="hand", dst="draw_pile", amount=1, position=PilePosType.TOP)
-        ]
+        ])
+        return

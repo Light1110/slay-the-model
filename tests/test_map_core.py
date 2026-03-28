@@ -52,7 +52,7 @@ def test_map_generation():
     for floor in range(map_data.floor_count):
         floor_nodes = map_data.get_floor(floor)
         print(f"Floor {floor}:")
-        for node in floor_nodes:
+        for node in floor_nodes or []:
             print(f"  Position {node.position}: {node.room_type.value}")
             print(f"    Up: {node.connections_up}")
     
@@ -91,6 +91,7 @@ def test_navigation():
     map_data.set_current_position(0, 0)
     print(f"Set position to Floor 0, Position 0")
     current = map_data.get_current_node()
+    assert current is not None
     print(f"Current node: Floor {current.floor}, Position {current.position}, "
           f"Type: {current.room_type.value}")
     print(f"Visited: {current.visited}")
@@ -98,6 +99,7 @@ def test_navigation():
     
     # Test getting nodes
     node = map_data.get_node(1, 1)
+    assert node is not None
     print(f"Got node at Floor 1, Position 1: {node.room_type.value}")
     print()
     

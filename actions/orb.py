@@ -1,7 +1,7 @@
 """Orb-related actions."""
+from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
 
 from actions.base import Action
-from utils.result_types import BaseResult, NoneResult, MultipleActionsResult
 from utils.registry import register
 
 
@@ -18,20 +18,23 @@ class OrbPassiveAction(Action):
     def __init__(self, orb):
         self.orb = orb
 
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         """Execute the orb's passive effect"""
+        from engine.game_state import game_state
+
         if not self.orb:
-            return NoneResult()
+            return
 
         # Get actions from orb's passive
         actions = self.orb.on_passive()
 
         if actions:
             if isinstance(actions, list):
-                return MultipleActionsResult(actions)
-            return MultipleActionsResult([actions])
+                add_actions(actions, to_front=True)
+                return
+            add_action(actions, to_front=True)
+            return
 
-        return NoneResult()
 
 
 @register("action")
@@ -47,20 +50,23 @@ class OrbEvokeAction(Action):
     def __init__(self, orb):
         self.orb = orb
 
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         """Execute the orb's evoke effect"""
+        from engine.game_state import game_state
+
         if not self.orb:
-            return NoneResult()
+            return
 
         # Get actions from orb's evoke
         actions = self.orb.on_evoke()
 
         if actions is None:
-            return NoneResult()
+            return
         
         if isinstance(actions, list):
-            return MultipleActionsResult(actions)
-        return MultipleActionsResult([actions])
+            add_actions(actions, to_front=True)
+            return
+        add_action(actions, to_front=True)
 
 
 @register("action")
@@ -76,12 +82,12 @@ class TriggerOrbPassivesAction(Action):
     def __init__(self, timing: str):
         self.timing = timing
 
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         """Trigger passives for all matching orbs"""
         from engine.game_state import game_state
 
         if not game_state.player or not hasattr(game_state.player, 'orb_manager'):
-            return NoneResult()
+            return
 
         actions_to_return = []
 
@@ -95,9 +101,9 @@ class TriggerOrbPassivesAction(Action):
                 actions_to_return.append(action)
 
         if actions_to_return:
-            return MultipleActionsResult(actions_to_return)
+            add_actions(actions_to_return, to_front=True)
+            return
 
-        return NoneResult()
 
 
 @register("action")
@@ -114,21 +120,24 @@ class EvokeOrbAction(Action):
         self.index = index
         self.times = times
 
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         """Evoke the orb at the specified index"""
         from engine.game_state import game_state
 
         if not game_state.player or not hasattr(game_state.player, 'orb_manager'):
-            return NoneResult()
+            return
 
         orb_manager = game_state.player.orb_manager
         orbs = list(orb_manager.orbs)
 
         # Validate index
-        if self.index < 0 or self.index >= len(orbs):
-            return NoneResult()
+        orb_index = self.index
+        if orb_index < 0:
+            orb_index = len(orbs) + orb_index
+        if orb_index < 0 or orb_index >= len(orbs):
+            return
 
-        orb = orbs[self.index]
+        orb = orbs[orb_index]
 
         # Evoke the orb (remove it)
         actions = []
@@ -137,12 +146,12 @@ class EvokeOrbAction(Action):
             actions.append(evoke_action)
 
         # Remove the orb from manager
-        orb_manager.remove_orb(self.index)
+        orb_manager.remove_orb(orb_index)
 
         if actions:
-            return MultipleActionsResult(actions)
+            add_actions(actions, to_front=True)
+            return
 
-        return NoneResult()
 
 
 @register("action")
@@ -158,18 +167,18 @@ class EvokeAllOrbsAction(Action):
     def __init__(self):
         pass
 
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         """Evoke all orbs"""
         from engine.game_state import game_state
 
         if not game_state.player or not hasattr(game_state.player, 'orb_manager'):
-            return NoneResult()
+            return
 
         orb_manager = game_state.player.orb_manager
         orbs = list(orb_manager.orbs)
 
         if not orbs:
-            return NoneResult()
+            return
 
         # Create evoke actions for all orbs
         actions = []
@@ -181,9 +190,9 @@ class EvokeAllOrbsAction(Action):
         orb_manager.clear_all()
 
         if actions:
-            return MultipleActionsResult(actions)
+            add_actions(actions, to_front=True)
+            return
 
-        return NoneResult()
 
 
 @register("action")
@@ -199,12 +208,12 @@ class AddOrbAction(Action):
     def __init__(self, orb):
         self.orb = orb
 
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         """Add the orb to player's orb manager"""
         from engine.game_state import game_state
 
         if not game_state.player or not hasattr(game_state.player, 'orb_manager'):
-            return NoneResult()
+            return
 
         orb_manager = game_state.player.orb_manager
 
@@ -217,4 +226,3 @@ class AddOrbAction(Action):
         # Add the new orb
         orb_manager.add_orb(self.orb)
 
-        return NoneResult()

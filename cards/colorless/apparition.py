@@ -1,6 +1,7 @@
 """
 Colorless Special Skill card - Apparition
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -24,12 +25,13 @@ class Apparition(Card):
 
     upgrade_ethereal = False  # Upgraded version removes Ethereal
 
-    def on_play(self, targets: List[Creature] = []) -> List[Action]:
+    def on_play(self, targets: List[Creature] = []):
         target = targets[0] if targets else None
         from engine.game_state import game_state
 
-        actions = super().on_play(targets)
+        super().on_play(targets)
 
+        actions = []
         # Gain Intangible
         intangible_amount = 1
         actions.append(ApplyPowerAction(
@@ -39,4 +41,8 @@ class Apparition(Card):
             duration=intangible_amount,
         ))
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

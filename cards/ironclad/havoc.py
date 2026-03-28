@@ -1,6 +1,7 @@
 """
 Ironclad Common Skill card - Havoc
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -23,12 +24,13 @@ class Havoc(Card):
 
     upgrade_cost = 0
 
-    def on_play(self, targets: List[Creature] = []) -> List[Action]:
+    def on_play(self, targets: List[Creature] = []):
         target = targets[0] if targets else None
         from engine.game_state import game_state
 
-        actions = super().on_play(targets)
+        super().on_play(targets)
 
+        actions = []
         # Play top card of draw pile (index 0 is the top)
         draw_pile = game_state.player.card_manager.get_pile('draw_pile')
         if draw_pile:
@@ -36,4 +38,8 @@ class Havoc(Card):
             actions.append(PlayCardAction(card=card_to_play, is_auto=True, ignore_energy=True))
             actions.append(ExhaustCardAction(card=card_to_play))
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

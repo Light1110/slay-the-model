@@ -1,10 +1,13 @@
 """Test Act 3 monsters"""
 import unittest
+import localization
+from engine.game_state import game_state
 from enemies.act3.awakened_one import AwakenedOne
 from enemies.act3.dagger import Dagger
 from enemies.act3.darkling import Darkling
 from enemies.act3.exploder import Exploder
 from enemies.act3.giant_head import GiantHead
+from enemies.act3.giant_head_intentions import CountIntention, GlareIntention
 from enemies.act3.nemesis import Nemesis
 from enemies.act3.orb_walker import OrbWalker
 from enemies.act3.reptomancer import Reptomancer
@@ -14,9 +17,17 @@ from enemies.act3.spire_growth import SpireGrowth
 from enemies.act3.time_eater import TimeEater
 from enemies.act3.transient import Transient
 from enemies.act3.writhing_mass import WrithingMass
+from player.player import Player
+from powers.definitions.slow import SlowPower
 from utils.types import EnemyType
 
 class TestAct3Monsters(unittest.TestCase):
+    def setUp(self):
+        self._original_language = localization.current_language
+
+    def tearDown(self):
+        localization.set_language(self._original_language)
+
     def test_awakened_one_is_boss(self):
         m = AwakenedOne()
         self.assertEqual(m.enemy_type, EnemyType.BOSS)
@@ -36,6 +47,29 @@ class TestAct3Monsters(unittest.TestCase):
     def test_giant_head_is_elite(self):
         m = GiantHead()
         self.assertEqual(m.enemy_type, EnemyType.ELITE)
+
+    def test_giant_head_localized_text(self):
+        game_state.player = Player()
+        enemy = GiantHead()
+
+        self.assertEqual(
+            SlowPower(owner=enemy).local("description").resolve(),
+            "Whenever you play a card, this enemy receives 10% more damage from Attacks this turn.",
+        )
+        self.assertEqual(GlareIntention(enemy).description.resolve(), "Apply 1 Weak.")
+        self.assertEqual(CountIntention(enemy).description.resolve(), "Deal 13 damage.")
+
+    def test_giant_head_localized_text_in_chinese(self):
+        localization.set_language("zh")
+        game_state.player = Player()
+        enemy = GiantHead()
+
+        self.assertEqual(
+            SlowPower(owner=enemy).local("description").resolve(),
+            "每当你打出一张牌，本回合该敌人受到的攻击伤害增加 10%。",
+        )
+        self.assertEqual(GlareIntention(enemy).description.resolve(), "施加 1 层虚弱。")
+        self.assertEqual(CountIntention(enemy).description.resolve(), "造成 13 点伤害。")
 
     def test_nemesis_is_elite(self):
         m = Nemesis()

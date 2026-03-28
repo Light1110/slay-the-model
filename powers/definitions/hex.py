@@ -1,4 +1,5 @@
 """Hex Power - Causes player to spawn Dazed cards when playing skills."""
+from engine.runtime_api import add_action, add_actions
 from powers.base import Power, StackType
 from utils.registry import register
 
@@ -21,17 +22,14 @@ class HexPower(Power):
     def get_description(self) -> str:
         return f"Whenever you play a Skill, add {self.amount} Dazed card(s) to your discard pile."
     
-    def on_card_play(self, card, player, entities) -> list:
+    def on_card_play(self, card, player, entities) -> None:
         """Trigger when a card is played - add Dazed if it's a Skill."""
         from utils.types import CardType
         from engine.game_state import game_state
         from cards.colorless import Dazed
         
         if hasattr(card, 'card_type') and card.card_type == CardType.SKILL:
-            actions = []
             for _ in range(self.amount):
                 dazed = Dazed()
                 if game_state and game_state.player:
                     game_state.player.card_manager.piles['discard_pile'].append(dazed)
-            return actions
-        return []

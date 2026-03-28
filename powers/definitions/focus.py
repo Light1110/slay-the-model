@@ -23,6 +23,5 @@ class FocusPower(Power):
             return f"Orbs deal {self.amount} additional damage/effect."
         return f"Orbs deal {abs(self.amount)} less damage/effect."
     
-    def at_end_of_turn(self, owner, enemies=None) -> list:
+    def at_end_of_turn(self, owner, enemies=None) -> None:
         """Focus doesn't have end of turn effects."""
-        return []

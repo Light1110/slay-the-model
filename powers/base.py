@@ -168,38 +168,38 @@ class Power(Localizable):
         return False
     
     @subscribe(PlayerTurnStartedMessage, priority=MessagePriority.PLAYER_POWER)
-    def on_turn_start(self) -> List[Action]:
+    def on_turn_start(self):
         """Called at start of turn.
         
         Returns:
             List of actions to execute at turn start
         """
-        return []
+        return
     
     @subscribe(PlayerTurnEndedMessage, priority=MessagePriority.PLAYER_POWER)
-    def on_turn_end(self) -> List[Action]:
+    def on_turn_end(self):
         """Called at end of turn."""
         # tick_down should be called by on_turn_end - decrease duration
         self.tick()
         
-        return [] # todo: Whether to remove power that duration == 0?
+        return
     
     @subscribe(CardPlayedMessage, priority=MessagePriority.REACTION)
-    def on_card_play(self, card, player, entities) -> List[Action]:
+    def on_card_play(self, card, player, entities):
         """Called when a card is played.
         
         Returns:
             List of actions to execute after card is played
         """
-        return []
+        return
 
     @subscribe(CardPlayedMessage, priority=MessagePriority.REACTION)
-    def on_play_card(self, card, player, entities) -> List[Action]:
+    def on_play_card(self, card, player, entities):
         """Compatibility alias for card-play triggers."""
-        return []
+        return
     
     @subscribe(DamageResolvedMessage, priority=MessagePriority.REACTION)
-    def on_damage_dealt(self, damage: int, target: Any, source: Any = None, card: Any = None) -> List[Action]:
+    def on_damage_dealt(self, damage: int, target: Any, source: Any = None, card: Any = None):
         """Called when damage is dealt.
         
         Args:
@@ -211,10 +211,10 @@ class Power(Localizable):
         Returns:
             List of actions to execute when damage is dealt
         """
-        return []
+        return
     
     @subscribe(AttackPerformedMessage, priority=MessagePriority.REACTION)
-    def on_attack(self, target: Any, source: Any = None, card: Any = None) -> List[Action]:
+    def on_attack(self, target: Any, source: Any = None, card: Any = None):
         """Called when an attack is performed (before damage calculation).
         
         This hook is called when an attack action is executed, regardless of 
@@ -229,11 +229,11 @@ class Power(Localizable):
         Returns:
             List of actions to execute when attacking
         """
-        return []
+        return
     
     @subscribe(DamageResolvedMessage, priority=MessagePriority.REACTION)
     def on_damage_taken(self, damage: int, source: Any = None, card: Any = None, 
-                       player: Any = None, damage_type: str = "direct") -> List[Action]:
+                       player: Any = None, damage_type: str = "direct"):
         """Called when damage is taken.
         
         Args:
@@ -246,19 +246,19 @@ class Power(Localizable):
         Returns:
             List of actions to execute when damage is taken
         """
-        return []
+        return
     
     @subscribe(BlockGainedMessage, priority=MessagePriority.REACTION)
-    def on_gain_block(self, amount: int, player: Any = None, source: Any = None, card: Any = None) -> List[Action]:
+    def on_gain_block(self, amount: int, player: Any = None, source: Any = None, card: Any = None):
         """Called when block is gained.
         
         Returns:
             List of actions to execute when block is gained
         """
-        return []
+        return
     
     @subscribe(HpLostMessage, priority=MessagePriority.REACTION)
-    def on_lose_hp(self, amount: int, source: Any = None, card: Any = None) -> List[Action]:
+    def on_lose_hp(self, amount: int, source: Any = None, card: Any = None):
         """Called when HP is lost (not from damage).
         
         This is triggered by HP loss effects like Biased Cognition,
@@ -272,10 +272,10 @@ class Power(Localizable):
         Returns:
             List of actions to execute when HP is lost
         """
-        return []
+        return
     
     @subscribe(CardDrawnMessage, priority=MessagePriority.PLAYER_POWER)
-    def on_card_draw(self, card: Any) -> List[Action]:
+    def on_card_draw(self, card: Any):
         """Called when a card is drawn.
         
         Args:
@@ -284,41 +284,41 @@ class Power(Localizable):
         Returns:
             List of actions to execute when card is drawn
         """
-        return []
+        return
 
     @subscribe(CardDrawnMessage, priority=MessagePriority.PLAYER_POWER)
-    def on_draw_card(self, card: Any, player: Any, entities: List[Any]) -> List[Action]:
+    def on_draw_card(self, card: Any, player: Any, entities: List[Any]):
         """Called when a card is drawn, with full combat context."""
-        return []
+        return
 
     @subscribe(CardExhaustedMessage, priority=MessagePriority.REACTION)
-    def on_card_exhausted(self, card: Any, owner: Any, source_pile: str | None = None) -> List[Action]:
+    def on_card_exhausted(self, card: Any, owner: Any, source_pile: str | None = None):
         """Called when a card is exhausted."""
-        return []
+        return
 
     @subscribe(PowerAppliedMessage, priority=MessagePriority.REACTION)
-    def on_power_added(self, power, source=None) -> List[Action]:
+    def on_power_added(self, power, source=None):
         """Called when a power is applied."""
-        return []
+        return
 
     @subscribe(HealedMessage, priority=MessagePriority.REACTION)
-    def on_heal(self, amount: int, player: Any = None, entities: List[Any] | None = None) -> List[Action]:
+    def on_heal(self, amount: int, player: Any = None, entities: List[Any] | None = None):
         """Called when healing occurs."""
-        return []
+        return
 
     @subscribe(CardDiscardedMessage, priority=MessagePriority.PLAYER_POWER)
-    def on_discard(self, card: Any) -> List[Action]:
+    def on_discard(self, card: Any):
         """Called when a card is discarded."""
-        return []
+        return
     
     @subscribe(CombatEndedMessage, priority=MessagePriority.PLAYER_POWER)
-    def on_combat_end(self, owner, entities) -> List[Action]:
+    def on_combat_end(self, owner, entities):
         """Called at end of combat.
         
         Returns:
             List of actions to execute at combat end
         """
-        return []
+        return
     
     def info(self):
         """

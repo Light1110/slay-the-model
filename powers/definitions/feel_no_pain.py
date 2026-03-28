@@ -2,6 +2,7 @@
 Feel No Pain power for Ironclad.
 Whenever you exhaust one card, gain block.
 """
+from engine.runtime_api import add_action, add_actions
 from actions.combat import GainBlockAction
 from powers.base import Power, StackType
 from engine.messages import CardExhaustedMessage
@@ -29,5 +30,7 @@ class FeelNoPainPower(Power):
     @subscribe(CardExhaustedMessage, priority=MessagePriority.REACTION)
     def on_card_exhausted(self, card, owner, source_pile=None):
         if owner is not self.owner:
-            return []
-        return [GainBlockAction(block=self.amount, target=owner)]
+            return
+        from engine.game_state import game_state
+        add_actions([GainBlockAction(block=self.amount, target=owner)])
+        return

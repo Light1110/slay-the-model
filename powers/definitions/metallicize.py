@@ -2,6 +2,7 @@
 Metallicize power for Ironclad.
 Gain block at the end of your turn.
 """
+from engine.runtime_api import add_action, add_actions
 from typing import List, Any
 from actions.base import Action
 from powers.base import Power, StackType
@@ -26,8 +27,10 @@ class MetallicizePower(Power):
         """
         super().__init__(amount=amount, duration=-1, owner=owner)
 
-    def on_turn_end(self) -> List[Action]:
+    def on_turn_end(self):
         """Gain block at end of turn for the owner."""
         if self.owner:
-            return [GainBlockAction(block=self.amount, target=self.owner)]
-        return []
+            from engine.game_state import game_state
+            add_actions([GainBlockAction(block=self.amount, target=self.owner)])
+            return
+        return

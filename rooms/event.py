@@ -4,6 +4,7 @@ Event room definitions.
 Event rooms are rooms where random events occur when player enters.
 Events can offer choices, rewards, or challenges based on game state.
 """
+from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
 from actions.base import LambdaAction
 from actions.display import InputRequestAction
 from engine.runtime_events import emit_text
@@ -11,7 +12,6 @@ from rooms.base import Room
 from utils.option import Option
 from utils.random import get_random_events
 from utils.registry import register
-from utils.result_types import BaseResult, GameStateResult, MultipleActionsResult, NoneResult, SingleActionResult
 from utils.types import RoomType
 
 
@@ -58,13 +58,13 @@ class EventRoom(Room):
             self.selected_event = selected_events[0]
             self.available_events = selected_events
 
-    def enter(self) -> BaseResult:
+    def enter(self):
         """
         Enter event room and directly trigger the random event.
 
-        Returns:
-            Execution result from event or NoneResult
         """
+        from engine.game_state import game_state
+
         emit_text(
             self.local("enter", default="You encounter a mysterious event...")
         )
@@ -78,57 +78,43 @@ class EventRoom(Room):
                         actions=[LambdaAction(func=self._select_event, args=[event])],
                     )
                 )
-            return MultipleActionsResult([InputRequestAction(options=options)])
+            add_action(InputRequestAction(options=options))
+            return None
 
         if self.available_events and not self.selected_event:
             self.selected_event = self.available_events[0]
 
         if not self.selected_event:
-            return self._empty_pool_result()
+            self._empty_pool_result()
+            return None
 
-        event_result = self._trigger_event(self.selected_event)
-        return self._merge_display_with_result(event_result)
+        return self._trigger_event(self.selected_event)
 
-    def _trigger_event(self, event) -> BaseResult:
+    def _trigger_event(self, event):
         """
         Trigger a specific event.
 
         Args:
             event: The event instance to trigger
 
-        Returns:
-            Result from event trigger
         """
         self.triggered_event = event
 
         if hasattr(event, 'trigger'):
-            result = event.trigger()
+            event.trigger()
             self.should_leave = True
-            return result
+            return None
 
-        return NoneResult()
+        return None
 
-    def _empty_pool_result(self) -> BaseResult:
+    def _empty_pool_result(self) -> None:
         """Return the explicit runtime result for an empty event pool."""
         emit_text(
             self.local("empty_pool", default="The room is quiet. Nothing happens.")
         )
-        return NoneResult()
+        return None
 
     def _select_event(self, event):
         self.selected_event = event
-        result = self._trigger_event(event)
-        if isinstance(result, GameStateResult):
-            return result
-        if hasattr(result, 'action'):
-            from engine.game_state import game_state
-            game_state.action_queue.add_action(result.action, to_front=True)
-        elif hasattr(result, 'actions'):
-            from engine.game_state import game_state
-            game_state.action_queue.add_actions(result.actions, to_front=True)
-
-    def _merge_display_with_result(self, event_result: BaseResult) -> BaseResult:
-        """Attach room entry display to event execution result."""
-        if isinstance(event_result, GameStateResult):
-            return event_result
-        return event_result or NoneResult()
+        self._trigger_event(event)
+        return None

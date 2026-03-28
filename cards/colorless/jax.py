@@ -1,6 +1,7 @@
 """
 Colorless Special Skill card - JAX
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -25,12 +26,13 @@ class JAX(Card):
 
     upgrade_magic = {"strength": 3}
 
-    def on_play(self, targets: List[Creature] = []) -> List[Action]:
+    def on_play(self, targets: List[Creature] = []):
         target = targets[0] if targets else None
         from engine.game_state import game_state
 
-        actions = super().on_play(targets)
+        super().on_play(targets)
 
+        actions = []
         # Gain Strength
         strength_amount = self.get_magic_value("strength")
         actions.append(ApplyPowerAction(
@@ -38,4 +40,8 @@ class JAX(Card):
             game_state.player
         ))
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

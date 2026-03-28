@@ -2,6 +2,7 @@
 Rupture power for Ironclad.
 Whenever you lose HP from a card, gain Strength.
 """
+from engine.runtime_api import add_action, add_actions
 from typing import List, Any
 from actions.base import Action
 from powers.base import Power, StackType
@@ -26,7 +27,7 @@ class RupturePower(Power):
         """
         super().__init__(amount=amount, duration=-1, owner=owner)
 
-    def on_lose_hp(self, amount: int, source: Any = None, card: Any = None) -> List[Action]:
+    def on_lose_hp(self, amount: int, source: Any = None, card: Any = None):
         """Gain Strength when HP is lost from a card.
         
         Rupture triggers on any HP loss (not damage), such as from
@@ -52,4 +53,8 @@ class RupturePower(Power):
                 game_state.player
             ))
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

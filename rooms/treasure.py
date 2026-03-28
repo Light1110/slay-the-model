@@ -1,14 +1,14 @@
 """
 Treasure room implementation.
 """
+from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
 import random
 from tui.print_utils import tui_print
 from actions.display import InputRequestAction, DisplayTextAction
 from actions.misc import OpenChestAction
-from utils.result_types import GameStateResult, NoneResult, MultipleActionsResult, SingleActionResult
 from engine.game_state import game_state
 from localization import LocalStr, t
-from rooms.base import Room, BaseResult
+from rooms.base import Room
 from utils.option import Option
 from utils.registry import register
 from utils.types import RoomType
@@ -101,9 +101,9 @@ class TreasureRoom(Room):
                 actions.append(result)
         return actions
 
-    def enter(self) -> BaseResult:
+    def enter(self) -> None:
         """Enter treasure room and return the initial treasure actions."""
-        return MultipleActionsResult([
+        add_actions([
             DisplayTextAction(text_key="rooms.TreasureRoom.enter"),
             self._build_treasure_menu(),
         ])

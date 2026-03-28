@@ -27,7 +27,9 @@ class DoubleTapPower(Power):
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
         
-    def on_card_play(self, card: Card, player, entities) -> List[Action]:
+    def on_card_play(self, card: Card, player, entities):
         if card.card_type == CardType.ATTACK:
-            return card.on_play() * self.amount
-        return []
+            for _ in range(self.amount):
+                card.on_play()
+            return
+        return
