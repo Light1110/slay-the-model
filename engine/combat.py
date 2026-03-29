@@ -361,9 +361,6 @@ class Combat(Localizable):
             for card in hand:
                 game_state.action_queue.add_action(DiscardCardAction(card=card, source_pile="hand"))
 
-        # Reset player block
-        game_state.player.block = 0
-
         result = game_state.drive_actions()
         if result is not None:
             return result
