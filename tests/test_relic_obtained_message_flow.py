@@ -5,24 +5,6 @@ from engine.messages import RelicObtainedMessage
 from engine.subscriptions import MessagePriority, subscribe
 from relics.base import Relic
 from tests.test_combat_utils import create_test_helper
-from utils.result_types import MultipleActionsResult, SingleActionResult
-
-
-def _execute_result(result):
-    if result is None:
-        return
-
-    if isinstance(result, SingleActionResult):
-        _execute_result(result.action.execute())
-        return
-
-    if isinstance(result, MultipleActionsResult):
-        for action in result.actions:
-            _execute_result(action.execute())
-        return
-
-    if hasattr(result, "execute"):
-        _execute_result(result.execute())
 
 
 def _capture_published_message_types(game_state, monkeypatch):
@@ -72,8 +54,7 @@ def test_add_relic_action_publishes_relic_obtained_message(monkeypatch):
 
     published = _capture_published_message_types(helper.game_state, monkeypatch)
 
-    result = AddRelicAction(relic=relic).execute()
-    _execute_result(result)
+    AddRelicAction(relic=relic).execute()
     helper.game_state.drive_actions()
 
     assert "RelicObtainedMessage" in published
@@ -90,8 +71,7 @@ def test_add_relic_by_name_action_publishes_relic_obtained_message(monkeypatch):
     published = _capture_published_message_types(helper.game_state, monkeypatch)
     monkeypatch.setattr("actions.reward.get_registered_instance", lambda *_args, **_kwargs: relic)
 
-    result = AddRelicByNameAction(relic_id="TestRelic").execute()
-    _execute_result(result)
+    AddRelicByNameAction(relic_id="TestRelic").execute()
     helper.game_state.drive_actions()
 
     assert "RelicObtainedMessage" in published
@@ -108,8 +88,7 @@ def test_add_random_relic_action_publishes_relic_obtained_message(monkeypatch):
     published = _capture_published_message_types(helper.game_state, monkeypatch)
     monkeypatch.setattr("actions.reward.get_random_relic", lambda **_kwargs: relic)
 
-    result = AddRandomRelicAction().execute()
-    _execute_result(result)
+    AddRandomRelicAction().execute()
     helper.game_state.drive_actions()
 
     assert "RelicObtainedMessage" in published

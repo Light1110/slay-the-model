@@ -2,6 +2,7 @@
 Evolve power for Ironclad.
 Whenever you draw a status card, draw additional cards.
 """
+from engine.runtime_api import add_action, add_actions
 from typing import TYPE_CHECKING, List, Any
 from powers.base import Power, StackType
 from actions.base import Action
@@ -26,7 +27,7 @@ class EvolvePower(Power):
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
 
-    def on_card_draw(self, card: Any) -> List[Action]:
+    def on_card_draw(self, card: Any):
         """Draw additional card when a status card is drawn."""
         if TYPE_CHECKING:
             from utils.types import CardType
@@ -34,6 +35,7 @@ class EvolvePower(Power):
         # Check if drawn card is a status card (non-character card)
         from engine.game_state import game_state
         if hasattr(card, 'card_type') and card.card_type == CardType.STATUS:
-            return [DrawCardsAction(count=self.amount)]
-
-        return []
+            from engine.game_state import game_state
+            add_actions([DrawCardsAction(count=self.amount)])
+            return
+        return

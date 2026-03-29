@@ -1,8 +1,8 @@
+from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
 from typing import List, Optional, TYPE_CHECKING
 
 from tui.print_utils import tui_print
 from actions.base import Action
-from utils.result_types import BaseResult, NoneResult, SingleActionResult, MultipleActionsResult
 from localization import LocalStr, t
 from utils.option import Option
 from utils.registry import register, get_registered_instance
@@ -24,11 +24,8 @@ def _handle_obtained_relic(relic: "Relic"):
     game_state.player.relics.append(relic)
     game_state.obtained_relics.add(relic.idstr)
     tui_print(t("ui.received_relic", default=f"Received relic: {relic.idstr}!", name=relic.local("name")))
-    game_state.action_queue.add_actions(
-        game_state.publish_message(
-            RelicObtainedMessage(owner=game_state.player, relic=relic),
-            participants=[relic],
-        )
+    publish_message(
+        RelicObtainedMessage(owner=game_state.player, relic=relic),
     )
 
 # Reward actions
@@ -42,12 +39,11 @@ class AddRelicAction(Action):
     def __init__(self, relic: "Relic"):
         self.relic = relic
     
-    def execute(self) -> BaseResult:
+    def execute(self) -> None:
         """Execute: add relic to player"""
         from engine.game_state import game_state
         if self.relic and game_state.player:
             _handle_obtained_relic(self.relic)
-        return NoneResult()
             
 @register("action")
 class AddRelicByNameAction(Action):
@@ -59,14 +55,13 @@ class AddRelicByNameAction(Action):
     def __init__(self, relic_id: str):
         self.relic_id = relic_id
     
-    def execute(self) -> BaseResult:
+    def execute(self) -> None:
         """Execute: lookup relic by name and add to player"""
         from engine.game_state import game_state
         if self.relic_id and game_state.player:
             relic = get_registered_instance("relic", self.relic_id)
             if relic:
                 _handle_obtained_relic(relic)
-        return NoneResult()
 @register("action")
 class AddRandomRelicAction(Action):
     """Add a random relic to player
@@ -80,15 +75,15 @@ class AddRandomRelicAction(Action):
     """
     def __init__(
         self,
-        rarities: List[RarityType] = None,
-        rarity: RarityType = None,
-        pool: str = None,
+        rarities: Optional[List[RarityType]] = None,
+        rarity: Optional[RarityType] = None,
+        pool: Optional[str] = None,
         characters: Optional[List[str]] = None,
         character: Optional[str] = None,
         exclude_relics: Optional[List[str]] = None,
     ):
         if rarities is not None:
-            self.rarities = rarities if isinstance(rarities, list) else [rarities]
+            self.rarities: List[RarityType] = rarities if isinstance(rarities, list) else [rarities]
         elif rarity is not None:
             self.rarities = [rarity]
         else:
@@ -104,19 +99,18 @@ class AddRandomRelicAction(Action):
             self.characters = [character]
         else:
             self.characters = None
-        self.exclude_relics = exclude_relics or []
+        self.exclude_relics: List[str] = list(exclude_relics or [])
     
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         from engine.game_state import game_state
         if game_state.player:
             relic = get_random_relic(
-                characters=self.characters,
-                rarities=self.rarities,
+                characters=list(self.characters) if self.characters is not None else None,
+                rarities=list(self.rarities),
                 exclude=self.exclude_relics,
             )
             if relic:
                 _handle_obtained_relic(relic)
-        return NoneResult()
             
 @register("action")
 class LoseRelicAction(Action):
@@ -136,21 +130,20 @@ class LoseRelicAction(Action):
         self.relic = relic
         self.relic_type = relic_type
     
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         from engine.game_state import game_state
         if not game_state.player:
-            return NoneResult()
+            return
 
         if self.relic and self.relic in game_state.player.relics:
             game_state.player.relics.remove(self.relic)
-            return NoneResult()
+            return
 
         if self.relic_type is not None:
             for relic in list(game_state.player.relics):
                 if isinstance(relic, self.relic_type):
                     game_state.player.relics.remove(relic)
                     break
-        return NoneResult()
 
 @register("action")
 class ChooseBossRelicAction(Action):
@@ -165,7 +158,7 @@ class ChooseBossRelicAction(Action):
     def __init__(self, amount: int = 3):
         self.amount = amount
     
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         from engine.game_state import game_state
         from relics.base import RarityType
         from actions.display import InputRequestAction
@@ -178,7 +171,7 @@ class ChooseBossRelicAction(Action):
                 relics.append(relic)
         
         if not relics:
-            return NoneResult()
+            return
         
         # Create selection action
         options = []
@@ -188,10 +181,14 @@ class ChooseBossRelicAction(Action):
                 'actions': [AddRelicAction(relic=relic)]
             })
         
-        return SingleActionResult(InputRequestAction(
-            title="Choose a boss relic:",
-            options=options
-        ))
+        from engine.game_state import game_state
+        add_action(
+            InputRequestAction(
+                title="Choose a boss relic:",
+                options=options,
+            ),
+            to_front=True,
+        )
 
 @register("action")            
 class AddGoldAction(Action):
@@ -207,36 +204,34 @@ class AddGoldAction(Action):
         self.amount = amount
         self.chance = chance
     
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         import random
         from engine.game_state import game_state
         from engine.messages import GoldGainedMessage
         if game_state.player:
             if random.random() < self.chance:
                 # Ectoplasm: block all gold gain.
-                if any(relic.idstr == "Ectoplasm"
+                if any(getattr(relic, "idstr", None) == "Ectoplasm"
                        for relic in game_state.player.relics):
-                    return NoneResult()
+                    return
 
                 # Calculate modified gold amount through relics
                 modified_amount = self.amount
                 for relic in game_state.player.relics:
-                    modified_amount = relic.modify_gold_gained(modified_amount)
+                    hook = getattr(relic, "modify_gold_gained", None)
+                    if hook is not None:
+                        modified_amount = hook(modified_amount)
                 
                 game_state.player.gold += modified_amount
                 tui_print(t("rewards.gold", default="Gained {amount} gold", amount=modified_amount))
-                actions = game_state.publish_message(
+                publish_message(
                     GoldGainedMessage(
                         owner=game_state.player,
                         amount=modified_amount,
                     ),
-                    participants=list(game_state.player.relics),
                 )
-                if actions:
-                    return MultipleActionsResult(actions)
             else:
                 tui_print(t("rewards.gold_fail", default="Failed to gain gold", chance=self.chance))
-        return NoneResult()
             
 @register("action")
 class LoseGoldAction(Action):
@@ -251,7 +246,7 @@ class LoseGoldAction(Action):
     def __init__(self, amount: int):
         self.amount = amount
     
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         from engine.game_state import game_state
         if game_state.player:
             if self.amount == 'all':
@@ -260,12 +255,11 @@ class LoseGoldAction(Action):
                 try:
                     loss = int(self.amount)
                 except ValueError:
-                    return NoneResult()
+                    return
             else:
                 loss = self.amount
 
             game_state.player.gold = max(0, game_state.player.gold - loss)
-        return NoneResult()
             
 @register("action")
 class AddRandomPotionAction(Action):
@@ -280,11 +274,10 @@ class AddRandomPotionAction(Action):
     def __init__(self, character: str):
         self.character = character
     
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         potion = get_random_potion(characters=[self.character])
         if potion:
-            return AddPotionAction(potion=potion).execute()
-        return NoneResult()
+            AddPotionAction(potion=potion).execute()
 
 @register("action")
 class AddPotionAction(Action):
@@ -299,17 +292,17 @@ class AddPotionAction(Action):
     def __init__(self, potion):
         self.potion = potion
     
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         from engine.game_state import game_state
         from actions.display import InputRequestAction
         player = game_state.player
         if not player:
-            return NoneResult()
+            return
         if self.potion is None:
-            return NoneResult()
+            return
         # Sozu: player can no longer obtain potions.
         if any(getattr(relic, "idstr", None) == "Sozu" for relic in player.relics):
-            return NoneResult()
+            return
 
         if len(player.potions) >= player.potion_limit:
             options = [
@@ -330,17 +323,18 @@ class AddPotionAction(Action):
                         ],
                     )
                 )
-            return SingleActionResult(
+            add_action(
                 InputRequestAction(
                     title="ui.potion_full_title",
                     options=options,
-                )
+                ),
+                to_front=True,
             )
+            return
 
         added = player.potions.append(self.potion)
         if added:
             tui_print(t("ui.received_potion", default=f"Received potion: {self.potion.idstr}!", name=self.potion.idstr))
-        return NoneResult()
 
 @register("action")
 class ReplacePotionAction(Action):
@@ -357,18 +351,17 @@ class ReplacePotionAction(Action):
         self.index = index
         self.new_potion = new_potion
 
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         from engine.game_state import game_state
         if not game_state.player:
-            return NoneResult()
+            return
         if self.new_potion is None or not isinstance(self.index, int):
-            return NoneResult()
+            return
         potions = game_state.player.potions
         if 0 <= self.index < len(potions):
             potions[self.index] = self.new_potion
             tui_print(t("ui.received_potion", default=f"Received potion: {self.new_potion.idstr}!", name=self.new_potion.idstr))
-            return NoneResult()
-        return NoneResult()
+            return
 
 
 @register("action")
@@ -383,14 +376,14 @@ class LosePotionAction(Action):
     Optional:
         None
     """
-    def __init__(self, index: int = None, potion = None):
+    def __init__(self, index: Optional[int] = None, potion = None):
         self.index = index
         self.potion = potion
     
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         from engine.game_state import game_state
         if not game_state.player:
-            return NoneResult()
+            return
         
         if self.index is not None:
             # Remove by index
@@ -401,4 +394,3 @@ class LosePotionAction(Action):
             if self.potion in game_state.player.potions:
                 game_state.player.potions.remove(self.potion)
         
-        return NoneResult()

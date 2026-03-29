@@ -16,6 +16,8 @@ spec = importlib.util.spec_from_file_location(
     "event_pool",
     os.path.join(os.path.dirname(__file__), "..", "events", "event_pool.py")
 )
+assert spec is not None
+assert spec.loader is not None
 event_pool_module = importlib.util.module_from_spec(spec)
 sys.modules['events.event_pool'] = event_pool_module
 spec.loader.exec_module(event_pool_module)
@@ -29,6 +31,8 @@ for event_file in event_files:
         f"events.{event_file}",
         os.path.join(os.path.dirname(__file__), "..", "events", f"{event_file}.py")
     )
+    assert spec is not None
+    assert spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     sys.modules[f'events.{event_file}'] = module
     spec.loader.exec_module(module)

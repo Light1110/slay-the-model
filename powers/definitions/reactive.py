@@ -34,19 +34,16 @@ class ReactivePower(Power):
         self.localization_key = "powers.reactive"
         
     def on_damage_taken(self, damage: int, source: Any = None, card: Any = None, 
-                       player: Any = None, damage_type: str = "direct") -> List[Action]:
+                       player: Any = None, damage_type: str = "direct") -> None:
         """
         Called when owner takes damage.
         This power serves as a marker - the actual intent change logic
         is handled by WrithingMass.on_damage_taken().
         
-        Returns:
-            Empty list - actual behavior handled by enemy
         """
         # This power is a marker/indicator
         # The actual intent change is handled by the enemy's on_damage_taken
-        return []
-    
+
     def local(self, field: str, **kwargs) -> LocalStr:
         """Get localized string for this power."""
         if field == "name":
@@ -56,4 +53,4 @@ class ReactivePower(Power):
                 f"{self.localization_key}.description",
                 default="On damage, changes its intent."
             )
-        return super().local(field)
+        return super().local(field, **kwargs)

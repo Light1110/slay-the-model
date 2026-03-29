@@ -15,6 +15,6 @@ def test_modify_max_hp_action_does_not_use_legacy_hook():
 
     result = ModifyMaxHpAction(amount=7).execute()
 
-    assert result is not None
+    assert result is None
     assert player.max_hp == initial_max_hp + 7
     assert player.hp == initial_hp + 7

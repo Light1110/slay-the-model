@@ -7,8 +7,8 @@ Sacrifice a card to the spirits for rewards based on card rarity.
 - Rare: +10 Max HP + Full heal
 - Curse: Receive Spirit Poop relic
 """
+from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
 
-from utils.result_types import BaseResult, MultipleActionsResult
 from localization import t
 from events.base_event import Event
 from events.event_pool import register_event
@@ -26,7 +26,7 @@ from utils.types import RarityType
 class BonfireSpirits(Event):
     """Bonfire Spirits - sacrifice card for reward by rarity."""
     
-    def trigger(self) -> BaseResult:
+    def trigger(self) -> None:
         actions = []
         
         # Display event description
@@ -83,4 +83,4 @@ class BonfireSpirits(Event):
         ))
         
         self.end_event()
-        return MultipleActionsResult(actions)
+        add_actions(actions)

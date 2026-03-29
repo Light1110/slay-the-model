@@ -1,7 +1,7 @@
 """
 Event 5 - The Woman in Blue
 """
-from utils.result_types import BaseResult
+from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
 from events.base_event import Event
 from actions.display import InputRequestAction, DisplayTextAction
 from actions.reward import LoseGoldAction, AddRandomPotionAction
@@ -26,9 +26,8 @@ class WomanInBlueEvent(Event):
     [Leave] Lose HP equal to 5% of Max HP.
     """
     
-    def trigger(self) -> 'BaseResult':
+    def trigger(self) -> None:
         """Trigger woman in blue encounter"""
-        from utils.result_types import MultipleActionsResult
         from engine.game_state import game_state
         
         # Collect all actions
@@ -89,4 +88,4 @@ class WomanInBlueEvent(Event):
             options=options
         ))
         
-        return MultipleActionsResult(actions)
+        add_actions(actions)

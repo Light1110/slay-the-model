@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from engine.runtime_api import add_action, add_actions
 """Looter specific intentions."""
 
 import random
@@ -19,15 +20,16 @@ class LooterMugIntention(Intention):
         super().__init__("mug", enemy)
         self.base_damage = 11  # Ascension 7+ value
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Mug: deals damage to player."""
         from actions.combat import AttackAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -35,6 +37,7 @@ class LooterMugIntention(Intention):
                 damage_type="attack",
             )
         ]
+        )
 
 
 class LooterLungeIntention(Intention):
@@ -44,15 +47,16 @@ class LooterLungeIntention(Intention):
         super().__init__("lunge", enemy)
         self.base_damage = 14  # Ascension 3+ value
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Lunge: deals damage to player."""
         from actions.combat import AttackAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -60,6 +64,7 @@ class LooterLungeIntention(Intention):
                 damage_type="attack",
             )
         ]
+        )
 
 
 class LooterSmokeBombIntention(Intention):
@@ -69,17 +74,20 @@ class LooterSmokeBombIntention(Intention):
         super().__init__("smoke_bomb", enemy)
         self.base_block = 6
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Smoke Bomb: gains block."""
         from actions.combat import GainBlockAction
         
-        return [
+        from engine.game_state import game_state
+        add_actions(
+        [
             GainBlockAction(
                 block=self.base_block,
                 target=self.enemy,
                 source=self.enemy,
             )
         ]
+        )
 
 
 class LooterEscapeIntention(Intention):
@@ -88,7 +96,7 @@ class LooterEscapeIntention(Intention):
     def __init__(self, enemy: 'Enemy'):
         super().__init__("escape", enemy)
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Escape: remove enemy from combat (keeping stolen gold)."""
         from actions.combat import RemoveEnemyAction
         from localization import t
@@ -96,6 +104,9 @@ class LooterEscapeIntention(Intention):
         # Print escape message
         tui_print(t("combat.looter_escape", default=f"{self.enemy.name} escapes with your gold!", enemy=self.enemy.name))
         
-        return [
+        from engine.game_state import game_state
+        add_actions(
+        [
             RemoveEnemyAction(enemy=self.enemy)
         ]
+        )

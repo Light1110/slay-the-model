@@ -1,4 +1,5 @@
 """Spike Slime specific intentions."""
+from engine.runtime_api import add_action, add_actions
 
 from typing import List, TYPE_CHECKING
 
@@ -20,15 +21,16 @@ class LickIntention(Intention):
         self._frail_amount = 2
         self.base_amount = 2  # For description variable {amount}
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Lick: applies 2 Frail to player."""
         from actions.combat import ApplyPowerAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             ApplyPowerAction(
                 power="Frail",
                 target=game_state.player,
@@ -36,6 +38,7 @@ class LickIntention(Intention):
                 duration=2
             )
         ]
+        )
 
 
 class TackleIntention(Intention):
@@ -60,15 +63,16 @@ class TackleIntention(Intention):
         else:
             self.base_damage = 5
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Tackle: deals damage to player."""
         from actions.combat import AttackAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -76,6 +80,7 @@ class TackleIntention(Intention):
                 damage_type="attack",
             )
         ]
+        )
 
 
 class SplitIntention(Intention):
@@ -87,7 +92,7 @@ class SplitIntention(Intention):
     def __init__(self, enemy: 'Enemy'):
         super().__init__("split", enemy)
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Split: spawns 2 smaller slimes."""
         from actions.combat import RemoveEnemyAction, AddEnemyAction
         
@@ -114,4 +119,7 @@ class SplitIntention(Intention):
         except Exception:
             pass
         
-        return actions
+        from engine.game_state import game_state
+        
+        add_actions(actions)
+        

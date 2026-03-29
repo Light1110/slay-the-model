@@ -1,6 +1,7 @@
 from entities.creature import Creature
 """Comprehensive tests for Dual Wield card."""
 import unittest
+from typing import cast
 from utils.types import CardType, RarityType
 from cards.ironclad.dual_wield import DualWield
 from cards.ironclad.strike import Strike
@@ -45,7 +46,6 @@ class TestDualWield(unittest.TestCase):
         """Test that Dual Wield's ChooseCopyCardAction only includes Attack or Power cards."""
         # Import the action class
         from actions.card import ChooseCopyCardAction
-        from utils.result_types import SingleActionResult
         from actions.display import InputRequestAction
         
         # Setup
@@ -72,12 +72,14 @@ class TestDualWield(unittest.TestCase):
         # Execute the action
         result = action.execute()
         
-        # The action should return a SingleActionResult with a InputRequestAction
-        self.assertIsInstance(result, SingleActionResult)
-        self.assertIsInstance(result.action, InputRequestAction)
+        # The action should queue an InputRequestAction
+        self.assertIsNone(result)
+        queued = self.helper.game_state.action_queue.peek_next()
+        self.assertIsInstance(queued, InputRequestAction)
+        queued = cast(InputRequestAction, queued)
         
         # The InputRequestAction should have options only for Attack and Power cards (2 options)
-        options = result.action.options
+        options = queued.options
         self.assertEqual(len(options), 2, "Should only have options for Attack and Power cards, not Skill cards")
         
         # Verify that the options are for Attack and Power cards only
@@ -92,7 +94,6 @@ class TestDualWield(unittest.TestCase):
         """Test that ChooseCopyCardAction without card_types filter includes all cards."""
         # Import the action class
         from actions.card import ChooseCopyCardAction
-        from utils.result_types import SingleActionResult
         from actions.display import InputRequestAction
         
         # Create a mock game state with different card types in hand
@@ -115,12 +116,14 @@ class TestDualWield(unittest.TestCase):
         # Execute the action
         result = action.execute()
         
-        # The action should return a SingleActionResult with a InputRequestAction
-        self.assertIsInstance(result, SingleActionResult)
-        self.assertIsInstance(result.action, InputRequestAction)
+        # The action should queue an InputRequestAction
+        self.assertIsNone(result)
+        queued = self.helper.game_state.action_queue.peek_next()
+        self.assertIsInstance(queued, InputRequestAction)
+        queued = cast(InputRequestAction, queued)
         
         # Without filter, should have 3 options (all cards)
-        options = result.action.options
+        options = queued.options
         self.assertEqual(len(options), 3, "Without filter, should have all 3 cards as options")
 
 

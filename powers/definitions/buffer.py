@@ -27,7 +27,7 @@ class BufferPower(Power):
             return LocalStr(f"{self.localization_key}.description", 
                           default=f"Prevents the next {amount} times you would lose HP.",
                           amount=amount)
-        return super().local(field)
+        return super().local(field, **kwargs)
     def __init__(self, amount: int = 1, duration: int = -1, owner=None):
         # BufferPower is permanent (duration=-1 means infinite)
         # It only expires when amount reaches 0, not based on duration

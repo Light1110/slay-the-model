@@ -1,6 +1,7 @@
 """
 Ironclad Uncommon Attack card - Whirlwind.
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 
@@ -35,11 +36,14 @@ class Whirlwind(Card):
         )
         return x_value + 2 if has_chemical_x else x_value
 
-    def on_play(self, targets: List[Creature] = []) -> List[Action]:
+    def on_play(self, targets: List[Creature] = []):
         """Deal damage to all enemies X times."""
         from actions.combat import DealDamageAction
         from engine.game_state import game_state
 
+        combat = game_state.combat
+        if combat is None:
+            return
         times = getattr(self, "_x_cost_energy", 0)
         has_chemical_x = any(
             getattr(relic, "idstr", None) == "ChemicalX"
@@ -49,7 +53,7 @@ class Whirlwind(Card):
             times += 2
 
         actions = []
-        for enemy in game_state.combat.enemies:
+        for enemy in combat.enemies:
             if enemy.hp <= 0:
                 continue
             for _ in range(times):
@@ -61,4 +65,6 @@ class Whirlwind(Card):
                         card=self,
                     )
                 )
-        return actions
+        from engine.game_state import game_state
+        add_actions(actions)
+        return

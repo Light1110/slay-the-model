@@ -1,4 +1,5 @@
 """Corrupt Heart boss intentions for Act 4."""
+from engine.runtime_api import add_action, add_actions
 
 import random
 from typing import List
@@ -28,7 +29,7 @@ class Debilitate(Intention):
     def __init__(self, enemy):
         super().__init__("Debilitate", enemy)
 
-    def execute(self) -> List[Action]:
+    def execute(self):
         from engine.game_state import game_state
         player = game_state.player
 
@@ -46,16 +47,16 @@ class Debilitate(Intention):
                     position=PilePosType.TOP,
                 )
             )
-        return actions
-
-
+        from engine.game_state import game_state
+        add_actions(actions)
+        return
 class BloodShots(Intention):
     """Deal 2x12 or 2x15 damage."""
 
     def __init__(self, enemy):
         super().__init__("Blood Shots", enemy)
 
-    def execute(self) -> List[Action]:
+    def execute(self):
         from engine.game_state import game_state
 
         base_damage, hits = random.choice([(2, 12), (2, 15)])
@@ -69,20 +70,22 @@ class BloodShots(Intention):
                     damage_type="attack",
                 )
             )
-        return actions
-
-
+        from engine.game_state import game_state
+        add_actions(actions)
+        return
 class Echo(Intention):
     """Deal 40 or 45 damage."""
 
     def __init__(self, enemy):
         super().__init__("Echo", enemy)
 
-    def execute(self) -> List[Action]:
+    def execute(self):
         from engine.game_state import game_state
 
         base_damage = random.choice([40, 45])
-        return [
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=base_damage,
                 target=game_state.player,
@@ -90,6 +93,8 @@ class Echo(Intention):
                 damage_type="attack",
             )
         ]
+        )
+        return
 
 
 class BuffHeart(Intention):
@@ -98,7 +103,7 @@ class BuffHeart(Intention):
     def __init__(self, enemy):
         super().__init__("Buff", enemy)
 
-    def execute(self) -> List[Action]:
+    def execute(self):
         self.enemy._buff_count += 1
         buff_count = self.enemy._buff_count
 
@@ -118,8 +123,11 @@ class BuffHeart(Intention):
         elif buff_count == 5:
             actions.append(ApplyPowerAction(StrengthPower(amount=50, owner=self.enemy), self.enemy))
 
-        return actions
+        from engine.game_state import game_state
 
+        add_actions(actions)
+
+        return
     def _remove_negative_strength(self):
         strength = self.enemy.get_power("Strength")
         if strength is not None and strength.amount < 0:

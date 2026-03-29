@@ -60,14 +60,16 @@ class TestSentinel(unittest.TestCase):
     
     def test_exhaust_effect(self):
         """Test Sentinel grants energy when exhausted."""
+        from engine.game_state import game_state
         card = Sentinel()
         
         # Check that the card has the exhaust effect
         self.assertTrue(hasattr(card, 'on_exhaust'))
         
-        # Exhaust effect should return a GainEnergyAction
-        actions = card.on_exhaust()
-        self.assertIsNotNone(actions)
+        # Exhaust effect should queue a GainEnergyAction
+        game_state.action_queue.clear()
+        card.on_exhaust()
+        self.assertEqual(len(game_state.action_queue.queue), 1)
 
 
 if __name__ == '__main__':

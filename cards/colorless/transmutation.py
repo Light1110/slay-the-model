@@ -1,6 +1,7 @@
 """
 Colorless Rare Skill card - Transmutation
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -21,11 +22,12 @@ class Transmutation(Card):
     base_cost = -1  # COST_X
     base_exhaust = True
 
-    def on_play(self, targets: List[Creature] = []) -> List[Action]:
+    def on_play(self, targets: List[Creature] = []):
         from engine.game_state import game_state
 
-        actions = super().on_play(targets)
+        super().on_play(targets)
 
+        actions = []
         # Get X value (energy spent before card play).
         x_value = getattr(self, "_x_cost_energy", 0)
         has_chemical_x = any(
@@ -46,4 +48,8 @@ class Transmutation(Card):
                 upgrade=use_upgraded  # Add upgrade parameter
             ))
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

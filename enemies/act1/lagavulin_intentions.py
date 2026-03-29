@@ -1,4 +1,5 @@
 """Lagavulin elite enemy intentions."""
+from engine.runtime_api import add_action, add_actions
 
 from typing import List, TYPE_CHECKING
 
@@ -15,22 +16,16 @@ class SleepIntention(Intention):
     def __init__(self, enemy: 'Enemy'):
         super().__init__("sleep", enemy)
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Sleep: do nothing."""
-        return []
-
-
 class StunnedIntention(Intention):
     """Stunned - Does nothing for one turn."""
     
     def __init__(self, enemy: 'Enemy'):
         super().__init__("stunned", enemy)
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Stunned: do nothing."""
-        return []
-
-
 class AttackIntention(Intention):
     """Attack - Deals 18 damage (10 on A9+)."""
     
@@ -38,15 +33,16 @@ class AttackIntention(Intention):
         super().__init__("attack", enemy)
         self.base_damage = damage
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Attack: deals damage to player."""
         from actions.combat import AttackAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -54,6 +50,7 @@ class AttackIntention(Intention):
                 damage_type="attack",
             )
         ]
+        )
 
 
 class SiphonSoulIntention(Intention):
@@ -64,7 +61,7 @@ class SiphonSoulIntention(Intention):
         self.dex_loss = dex_loss
         self.str_gain = str_gain
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Siphon Soul: player loses Dexterity, Lagavulin gains Strength."""
         from actions.combat import ApplyPowerAction
         from powers.definitions.dexterity import DexterityPower
@@ -90,4 +87,7 @@ class SiphonSoulIntention(Intention):
             )
         )
         
-        return actions
+        from engine.game_state import game_state
+        
+        add_actions(actions)
+        

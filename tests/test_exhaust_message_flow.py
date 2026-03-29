@@ -4,18 +4,6 @@ from enemies.act1.cultist import Cultist
 from powers.definitions.dark_embrace import DarkEmbracePower
 from powers.definitions.feel_no_pain import FeelNoPainPower
 from tests.test_combat_utils import create_test_helper
-from utils.result_types import MultipleActionsResult, SingleActionResult
-
-
-def _execute_result(result):
-    if result is None:
-        return
-    if isinstance(result, SingleActionResult):
-        _execute_result(result.action.execute())
-        return
-    if isinstance(result, MultipleActionsResult):
-        for action in result.actions:
-            _execute_result(action.execute())
 
 
 def test_exhaust_card_action_publishes_message_for_feel_no_pain_and_dark_embrace():
@@ -35,8 +23,8 @@ def test_exhaust_card_action_publishes_message_for_feel_no_pain_and_dark_embrace
         initial_block = player.block
         initial_hand_size = len(player.card_manager.get_pile('hand'))
 
-        result = ExhaustCardAction(card=exhaust_target, source_pile='hand').execute()
-        _execute_result(result)
+        ExhaustCardAction(card=exhaust_target, source_pile='hand').execute()
+        helper.game_state.drive_actions()
 
         assert exhaust_target in player.card_manager.get_pile('exhaust_pile')
         assert player.block == initial_block + 4

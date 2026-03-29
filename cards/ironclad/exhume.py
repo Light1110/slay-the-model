@@ -1,10 +1,11 @@
 """
 Ironclad Rare Skill card - Exhume
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
-from actions.card import ChooseMoveCardAction, ExhaustCardAction
+from actions.card import ChooseMoveCardAction
 from cards.base import Card
 from entities.creature import Creature
 from utils.registry import register
@@ -22,17 +23,11 @@ class Exhume(Card):
     base_exhaust = True
     upgrade_cost = 0
 
-    def on_play(self, targets: List[Creature] = []) -> List[Action]:
-        actions = super().on_play(targets)
-        exhaust_actions = []
-        other_actions = []
+    def on_play(self, targets: List[Creature] = []):
+        super().on_play(targets)
+        from engine.game_state import game_state
 
-        for action in actions:
-            if isinstance(action, ExhaustCardAction) and action.card is self:
-                exhaust_actions.append(action)
-            else:
-                other_actions.append(action)
-
-        return other_actions + [
+        add_action(
             ChooseMoveCardAction(src="exhaust_pile", dst="hand", amount=1)
-        ] + exhaust_actions
+        )
+        return

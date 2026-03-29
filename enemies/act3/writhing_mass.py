@@ -94,7 +94,7 @@ class WrithingMass(Enemy):
         self.add_power(ReactivePower(owner=self))
     
     def on_damage_taken(self, damage: int, source=None, card=None, 
-                        damage_type=None) -> List['Action']:
+                        damage_type=None) -> None:
         """Called when enemy takes damage.
         
         Due to Reactive power, changes its intention when hit by attack damage.
@@ -124,4 +124,3 @@ class WrithingMass(Enemy):
                     if new_intention in self.intentions:
                         self.current_intention = self.intentions[new_intention]
         
-        return []

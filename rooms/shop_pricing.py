@@ -20,7 +20,7 @@ def compute_card_removal_price(
 def compute_shop_price(
     base_price,
     ascension_level=0,
-    discount=0,
+    discount: float = 0,
     has_membership_card=False,
     has_the_courier=False,
     has_smiling_mask=False,

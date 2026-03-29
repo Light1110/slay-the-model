@@ -2,6 +2,7 @@
 Fire Breathing power for Ironclad.
 Whenever you draw a status card, deal damage to ALL enemies.
 """
+from engine.runtime_api import add_action, add_actions
 from typing import List, Any
 from actions.base import Action
 from powers.base import Power, StackType
@@ -27,7 +28,7 @@ class FireBreathing(Power):
         """
         super().__init__(amount=amount, duration=-1, owner=owner)
 
-    def on_card_draw(self, card: Any) -> List[Action]:
+    def on_card_draw(self, card: Any):
         """Deal damage to all enemies when a status card is drawn."""
         from engine.game_state import game_state
         actions = []
@@ -46,4 +47,8 @@ class FireBreathing(Power):
                             card=None
                         ))
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

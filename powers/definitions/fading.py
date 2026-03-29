@@ -1,6 +1,7 @@
 """Fading power for combat effects.
 Owner dies when countdown reaches zero.
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 
@@ -26,16 +27,13 @@ class FadingPower(Power):
             return LocalStr(f"{self.localization_key}.description", 
                           default=f"Dies in {amount} turns.",
                           amount=amount)
-        return super().local(field)
+        return super().local(field, **kwargs)
 
     def __init__(self, amount: int = 0, duration: int = 5, owner=None):
         super().__init__(amount=amount, duration=duration, owner=owner)
 
-    def on_turn_end(self) -> List[Action]:
-        actions = super().on_turn_end()
+    def on_turn_end(self) -> None:
+        super().on_turn_end()
         if self.owner and self.duration == 0 and not self.owner.is_dead():
             self.owner.hp = 0
-            death_actions = self.owner.on_death()
-            if death_actions:
-                actions.extend(death_actions)
-        return actions
+            self.owner.on_death()

@@ -2,6 +2,7 @@
 Uncommon Global Relics
 Global relics available to all characters at uncommon rarity.
 """
+from engine.runtime_api import add_action, add_actions
 from typing import List
 from actions.base import Action, LambdaAction
 from actions.card import DrawCardsAction
@@ -27,9 +28,10 @@ class HornCleat(Relic):
         from engine.game_state import game_state
         if game_state.current_combat is not None:
             if game_state.current_combat.combat_state.combat_turn == 2:
-                return [GainBlockAction(block=14, target=player)]
-        return []
-
+                from engine.game_state import game_state
+                add_actions([GainBlockAction(block=14, target=player)])
+                return
+        return
 # New Uncommon relics
 @register("relic")
 class BlueCandle(Relic):
@@ -61,19 +63,20 @@ class BottledFlame(Relic):
         self.rarity = RarityType.UNCOMMON
         self.selected_card = None
 
-    def on_obtain(self) -> List[Action]:
+    def on_obtain(self):
         """Choose an Attack card when this relic is obtained."""
-        return [BottledCardInputRequestAction(self, CardType.ATTACK)]
-
-    def on_combat_start(self, player, entities) -> List[Action]:
+        from engine.game_state import game_state
+        add_actions([BottledCardInputRequestAction(self, CardType.ATTACK)])
+        return
+    def on_combat_start(self, player, entities):
         """Add selected card to hand at start of combat."""
         if self.selected_card:
             # Add a copy of selected card to hand
             from actions.card import AddCardAction
-            return [AddCardAction(card=self.selected_card, dest_pile='hand', position=PilePosType.TOP)]
-        return []
-
-
+            from engine.game_state import game_state
+            add_actions([AddCardAction(card=self.selected_card, dest_pile='hand', position=PilePosType.TOP)])
+            return
+        return
 @register("relic")
 class BottledLightning(Relic):
     """Upon pick up, choose a Skill. Start each combat with this Card in your hand."""
@@ -83,19 +86,20 @@ class BottledLightning(Relic):
         self.rarity = RarityType.UNCOMMON
         self.selected_card = None
 
-    def on_obtain(self) -> List[Action]:
+    def on_obtain(self):
         """Choose a Skill card when this relic is obtained."""
-        return [BottledCardInputRequestAction(self, CardType.SKILL)]
-
-    def on_combat_start(self, player, entities) -> List[Action]:
+        from engine.game_state import game_state
+        add_actions([BottledCardInputRequestAction(self, CardType.SKILL)])
+        return
+    def on_combat_start(self, player, entities):
         """Add selected card to hand at start of combat."""
         if self.selected_card:
             # Add a copy of selected card to hand
             from actions.card import AddCardAction
-            return [AddCardAction(card=self.selected_card, dest_pile='hand', position=PilePosType.TOP)]
-        return []
-
-
+            from engine.game_state import game_state
+            add_actions([AddCardAction(card=self.selected_card, dest_pile='hand', position=PilePosType.TOP)])
+            return
+        return
 @register("relic")
 class BottledTornado(Relic):
     """Upon pick up, choose a Power. Start each combat with this Card in your hand."""
@@ -105,19 +109,20 @@ class BottledTornado(Relic):
         self.rarity = RarityType.UNCOMMON
         self.selected_card = None
 
-    def on_obtain(self) -> List[Action]:
+    def on_obtain(self):
         """Choose a Power card when this relic is obtained."""
-        return [BottledCardInputRequestAction(self, CardType.POWER)]
-
-    def on_combat_start(self, player, entities) -> List[Action]:
+        from engine.game_state import game_state
+        add_actions([BottledCardInputRequestAction(self, CardType.POWER)])
+        return
+    def on_combat_start(self, player, entities):
         """Add selected card to hand at start of combat."""
         if self.selected_card:
             # Add a copy of selected card to hand
             from actions.card import AddCardAction
-            return [AddCardAction(card=self.selected_card, dest_pile='hand', position=PilePosType.TOP)]
-        return []
-
-
+            from engine.game_state import game_state
+            add_actions([AddCardAction(card=self.selected_card, dest_pile='hand', position=PilePosType.TOP)])
+            return
+        return
 @register("relic")
 class DarkstonePeriapt(Relic):
     """Whenever you obtain a Curse, increase your Max HP by 6."""
@@ -126,15 +131,15 @@ class DarkstonePeriapt(Relic):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
 
-    def on_card_added(self, card, dest_pile: str = "deck") -> List[Action]:
+    def on_card_added(self, card, dest_pile: str = "deck"):
         """Gain max HP when obtaining a Curse."""
         if dest_pile not in ("deck"):
-            return []
+            return
         if getattr(card, "card_type", None) == CardType.CURSE:
-            return [ModifyMaxHpAction(amount=6)]
-        return []
-
-
+            from engine.game_state import game_state
+            add_actions([ModifyMaxHpAction(amount=6)])
+            return
+        return
 @register("relic")
 class EternalFeather(Relic):
     """For every 5 Cards in your deck, heal 3 HP whenever you enter a Rest Site."""
@@ -172,13 +177,15 @@ class GremlinHorn(Relic):
     def on_damage_dealt(self, damage, target, player, entities):
         """When an enemy dies, gain energy and draw card"""
         if target.is_dead():
-            return [
+            from engine.game_state import game_state
+            add_actions(
+            [
                 GainEnergyAction(energy=1),
                 DrawCardsAction(count=1)
             ]
-        return []
-
-
+            )
+            return
+        return
 @register("relic")
 class InkBottle(Relic):
     """Whenever you play 10 cards, draw 1 Card."""
@@ -193,10 +200,10 @@ class InkBottle(Relic):
         self.cards_played += 1
         if self.cards_played >= 10:
             self.cards_played = 0
-            return [DrawCardsAction(count=1)]
-        return []
-
-
+            from engine.game_state import game_state
+            add_actions([DrawCardsAction(count=1)])
+            return
+        return
 @register("relic")
 class Kunai(Relic):
     """Every time you play 3 Attacks in a single turn, gain 1 Dexterity."""
@@ -209,17 +216,16 @@ class Kunai(Relic):
     def on_player_turn_start(self, player, entities):
         """Reset attack counter at start of each turn"""
         self.attacks_played_this_turn = 0
-        return []
-    
+        return
     def on_card_play(self, card, player, entities):
         """Track attacks played and gain Dexterity on 3rd attack"""
         if card.card_type == CardType.ATTACK:
             self.attacks_played_this_turn += 1
             if self.attacks_played_this_turn == 3:
-                return [ApplyPowerAction(power="Dexterity", target=player, amount=1)]
-        return []
-
-
+                from engine.game_state import game_state
+                add_actions([ApplyPowerAction(power="Dexterity", target=player, amount=1)])
+                return
+        return
 @register("relic")
 class LetterOpener(Relic):
     """Every time you play 3 Skills in a single turn, deal 5 damage to ALL enemies."""
@@ -232,8 +238,7 @@ class LetterOpener(Relic):
     def on_player_turn_start(self, player, entities):
         """Reset skill counter at start of each turn"""
         self.skills_played_this_turn = 0
-        return []
-    
+        return
     def on_card_play(self, card, player, entities):
         """Track skills played and deal damage on 3rd skill"""
         if card.card_type == CardType.SKILL:
@@ -242,10 +247,10 @@ class LetterOpener(Relic):
                 actions = []
                 for enemy in entities:
                     actions.append(DealDamageAction(damage=5, target=enemy))
-                return actions
-        return []
-
-
+                from engine.game_state import game_state
+                add_actions(actions)
+                return
+        return
 @register("relic")
 class Matryoshka(Relic):
     """The next 2 Chests you open contain 2 Relics."""
@@ -255,10 +260,10 @@ class Matryoshka(Relic):
         self.rarity = RarityType.UNCOMMON
         self.chests_to_spawn = 2
 
-    def on_chest_open(self, chest_type: str = None) -> List[Action]:
+    def on_chest_open(self, chest_type: str | None = None):
         """Grant an extra relic from next two non-boss chests."""
         if chest_type == "boss" or self.chests_to_spawn <= 0:
-            return []
+            return
         from actions.reward import AddRandomRelicAction
         from engine.game_state import game_state
         import random
@@ -292,12 +297,16 @@ class Matryoshka(Relic):
             if game_state and game_state.player
             else None
         )
-        return [
+        from engine.game_state import game_state
+        add_actions(
+        [
             AddRandomRelicAction(
                 rarities=[rarity],
                 characters=[character] if character else None,
             )
         ]
+        )
+        return
 
 
 @register("relic")
@@ -311,10 +320,10 @@ class MeatOnBone(Relic):
     def on_combat_end(self, player, entities):
         """Heal if HP at or below 50% at combat end"""
         if player and player.hp <= (player.max_hp / 2):
-            return [HealAction(amount=12)]
-        return []
-
-
+            from engine.game_state import game_state
+            add_actions([HealAction(amount=12)])
+            return
+        return
 @register("relic")
 class MercuryHourglass(Relic):
     """At the start of your turn, deal 3 damage to ALL enemies."""
@@ -328,9 +337,9 @@ class MercuryHourglass(Relic):
         actions = []
         for enemy in entities:
             actions.append(DealDamageAction(damage=3, target=enemy))
-        return actions
-
-
+        from engine.game_state import game_state
+        add_actions(actions)
+        return
 @register("relic")
 class MoltenEgg(Relic):
     """Whenever you add an Attack to your deck, it is Upgraded."""
@@ -364,9 +373,7 @@ class MummifiedHand(Relic):
                 import random
                 target_card = random.choice(hand)
                 target_card.temp_cost = 0
-        return []
-
-
+        return
 @register("relic")
 class NinjaScroll(Relic):
     """Start each combat with 3 Shivs in hand."""
@@ -390,17 +397,16 @@ class OrnamentalFan(Relic):
     def on_player_turn_start(self, player, entities):
         """Reset attack counter at start of each turn"""
         self.attacks_played_this_turn = 0
-        return []
-    
+        return
     def on_card_play(self, card, player, entities):
         """Track attacks played and gain Block on 3rd attack"""
         if card.card_type == CardType.ATTACK:
             self.attacks_played_this_turn += 1
             if self.attacks_played_this_turn == 3:
-                return [GainBlockAction(block=4, target=player)]
-        return []
-
-
+                from engine.game_state import game_state
+                add_actions([GainBlockAction(block=4, target=player)])
+                return
+        return
 @register("relic")
 class Pantograph(Relic):
     """At the start of Boss combats, heal 25 HP."""
@@ -416,10 +422,10 @@ class Pantograph(Relic):
         
         if game_state.current_combat is not None:
             if game_state.current_combat.combat_type != CombatType.NORMAL:
-                return [ApplyPowerAction(power="Regeneration", target=player, amount=25, duration=1)]
-        return []
-
-
+                from engine.game_state import game_state
+                add_actions([ApplyPowerAction(power="Regeneration", target=player, amount=25, duration=1)])
+                return
+        return
 @register("relic")
 class PaperKrane(Relic):
     """Enemies with Weak deal 50% less damage rather than 25%."""
@@ -467,10 +473,10 @@ class Pear(Relic):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
     
-    def on_obtain(self) -> List[Action]:
-        return [ModifyMaxHpAction(amount=10)]
-
-
+    def on_obtain(self):
+        from engine.game_state import game_state
+        add_actions([ModifyMaxHpAction(amount=10)])
+        return
 @register("relic")
 class QuestionCard(Relic):
     """On future Card Reward screens you have 1 additional Card to choose from."""
@@ -497,17 +503,16 @@ class SelfFormingClay(Relic):
         """Track HP loss to gain Block next turn"""
         if damage > 0:
             self.block_gain_next_turn = 3
-        return []
-    
+        return
     def on_player_turn_start(self, player, entities):
         """Gain Block if HP was lost last turn"""
         if self.block_gain_next_turn > 0:
             block = self.block_gain_next_turn
             self.block_gain_next_turn = 0
-            return [GainBlockAction(block=block, target=player)]
-        return []
-
-
+            from engine.game_state import game_state
+            add_actions([GainBlockAction(block=block, target=player)])
+            return
+        return
 @register("relic")
 class Shuriken(Relic):
     """Every time you play 3 Attacks in a single turn, gain 1 Strength."""
@@ -520,17 +525,16 @@ class Shuriken(Relic):
     def on_player_turn_start(self, player, entities):
         """Reset attack counter at start of each turn"""
         self.attacks_played_this_turn = 0
-        return []
-    
+        return
     def on_card_play(self, card, player, entities):
         """Track attacks played and gain Strength on 3rd attack"""
         if card.card_type == CardType.ATTACK:
             self.attacks_played_this_turn += 1
             if self.attacks_played_this_turn == 3:
-                return [ApplyPowerAction(power="Strength", target=player, amount=1)]
-        return []
-
-
+                from engine.game_state import game_state
+                add_actions([ApplyPowerAction(power="Strength", target=player, amount=1)])
+                return
+        return
 @register("relic")
 class SingingBowl(Relic):
     """When adding Cards to your deck, you may gain +2 Max HP instead."""
@@ -572,15 +576,15 @@ class Sundial(Relic):
         self.rarity = RarityType.UNCOMMON
         self.shuffle_count = 0
     
-    def on_shuffle(self) -> List[Action]:
+    def on_shuffle(self):
         """Gain 2 energy every 3 shuffles"""
         self.shuffle_count += 1
         if self.shuffle_count % 3 == 0:
             from actions.combat import GainEnergyAction
-            return [GainEnergyAction(energy=2)]
-        return []
-
-
+            from engine.game_state import game_state
+            add_actions([GainEnergyAction(energy=2)])
+            return
+        return
 @register("relic")
 class TheCourier(Relic):
     """The merchant no longer runs out of Cards, Relics, or Potions and his prices are reduced by 20%."""

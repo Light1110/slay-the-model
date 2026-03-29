@@ -1,6 +1,7 @@
 """
 Colorless Uncommon Skill card - Forethought
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -28,15 +29,15 @@ class Forethought(Card):
 
     upgrade_magic = {"put_bottom": -1}  # -1 means any number of cards
 
-    def on_play(self, targets: List[Creature] = None) -> List[Action]:
+    def on_play(self, targets: List[Creature] | None = None):
         """Execute Forethought effect.
         
         Returns an action that lets player choose cards to move to bottom 
         of draw pile with temporary cost of 0.
         """
         targets = targets or []
-        actions = super().on_play(targets)
-
+        super().on_play(targets)
+        actions = []
         # Get the number of cards that can be selected
         put_bottom = self.get_magic_value("put_bottom")
         
@@ -60,4 +61,6 @@ class Forethought(Card):
         )
         
         actions.append(choose_action)
-        return actions
+        from engine.game_state import game_state
+        add_actions(actions)
+        return

@@ -2,6 +2,7 @@
 Combust power for Ironclad.
 At end of turn, deal damage to all enemies.
 """
+from engine.runtime_api import add_action, add_actions
 from typing import List, Any
 from actions.base import Action
 from powers.base import Power, StackType
@@ -26,7 +27,7 @@ class CombustPower(Power):
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
 
-    def on_turn_end(self) -> List[Action]:
+    def on_turn_end(self):
         """Deal damage to all enemies at end of turn."""
         from engine.game_state import game_state
         player = game_state.player
@@ -47,4 +48,7 @@ class CombustPower(Power):
                     ))
 
         # Call parent method to handle duration tick
-        return super().on_turn_end() + actions
+        super().on_turn_end()
+        from engine.game_state import game_state
+        add_actions(actions)
+        return

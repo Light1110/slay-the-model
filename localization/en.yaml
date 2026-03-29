@@ -25,6 +25,7 @@ ui:
   legend_current: '*=Current'
   legend_available: '>=Available'
   legend_visited: ^=Visited
+  map_connection_help: Indices are above nodes. Lines show exact connections to the next floor.
   connections: 'Connections:'
   conn_left: /=left
   conn_center: '|=center'
@@ -43,18 +44,18 @@ ui:
   neo_goodbye: Your journey begins now. Good luck!
   neo_max_hp_change: Max HP changed by {amount}!
   open_menu: Open the menu
-  room_entered: Enter the room
+  room_entered: 'Entered room: {room_type} (Floor {floor}, Position {position})'
   game_welcome: Welcome to Slay the Spire!
   game_awaken: You awaken in the Spire, ready to begin your climb...
   seed_display: 'Seed: {seed}'
   character_display: 'Character: {character}'
   choose_enemy: 'Choose an enemy:'
-  select_prompt: 'Choose (1-{count}): '
+  select_prompt: 'Select (1-{count}): '
   select_move: Choose your next move
   floor_position: Act {act} - Floor {floor}, Position {position}
-  act_complete: Act {act} complete!
+  act_complete: Act {act} Complete!
   entering_act: Entering Act {act}
-  entering_act4: With all three keys, you unlock the path to the Heart...
+  entering_act4: With all three keys collected, the path to the Heart opens...
   map_move_option: '{floor_pos} - {room_type}'
   invalid_option: Invalid option!
   invalid_number: Please enter a valid number
@@ -64,7 +65,7 @@ ui:
     ELITE: Elite
     BOSS: Boss
     REST: Rest
-    MERCHANT: Merchant
+    MERCHANT: Shop
     TREASURE: Treasure
     EVENT: Event
     NEO: Neow
@@ -78,8 +79,8 @@ ui:
     special: Special
     curse: Curse
   skip_potion: Skip
-  game_over: Game Over! You have fallen in the Spire.=
-  game_won: Congratulations! You conquered the Spire!<
+  game_over: Game Over! You fell in the Spire.
+  game_won: Congratulations! You conquered the Spire!
   player_hp: HP
   player_block: Block
   player_energy: Energy
@@ -88,7 +89,7 @@ ui:
   enemy: Enemy
   enemy_hp: HP
   enemy_block: Block
-  intention: Intent
+  intention: Intention
   player_turn: === Player Turn ===
   enemy_turn: === Enemy Turn ===
   end_turn: End Turn
@@ -101,14 +102,24 @@ ui:
   choose_random_card_to_add: Choose a random card to add to your deck
   empty: Empty
   cost_label: Cost
+  event_skip_to_boss: '[Event] Skipping to boss!'
+  act3_victory: === The Spire Falls! ===
+  act3_victory_message: You have defeated the Act 3 boss and conquered the Spire!
+  keys_hint: (Collect all three keys to challenge the Heart in Act 4)
+  keys_collected: === The Three Keys Resonate! ===
+  keys_collected_message: With the Ruby, Emerald, and Sapphire keys in hand,
+  heart_entrance: you unlock the path to the Corrupt Heart...
+  heart_defeated: === THE CORRUPT HEART FALLS! ===
+  heart_defeated_message: The source of the Spire's corruption is destroyed!
+  true_victory: You have achieved TRUE VICTORY!
   card_type:
     attack: Attack
     skill: Skill
     power: Power
     status: Status
     curse: Curse
-  ssserpent_head_gold: 'Serpent Head: Gain {amount} gold!'
-  received_potion: 'Obtained Potion: {name}!'
+  ssserpent_head_gold: 'Ssserpent Head: Gain {amount} gold!'
+  received_potion: 'Received potion: {name}!'
   shop_bought_item: Bought {item_name} for {final_price} gold!
   character:
     ironclad: Ironclad
@@ -144,68 +155,129 @@ events:
     title: Ancient Writing
     elegance: Elegance
     simplicity: Simplicity
+    description: 'Scaling the city, you notice a wall covered in the writing of Ancients. As you try to wrap your head around
+      what the puzzling symbols and glyphs could mean, the writing begins to glow.
+
+      Suddenly, the message becomes clear...'
   augmenter:
     title: Augmenter
     test_jax: Test JAX
     transform: Transform
     mutagens: Mutagens
+    description: 'A man with an eyepatch and a devilish grin strides up to you.
+
+      "Hey there, stranger. Interested in advancing science? I can make you stronger than any training or blessing. You''re
+      gonna need it if you''re one of those heroes with a death wish."
+
+
+      "Whad''ya say?"'
   a_note_for_yourself:
-    title: A Note for Yourself
+    title: A Note For Yourself
     take_and_give: Take and Give
     ignore: Ignore
+    description: You spot a loose brick within a pillar that catches your eye.
+    take_only: Take only
+    give_only: Give only
   big_fish:
     title: Big Fish
     option1: Option 1
     option2: Option 2
     option3: Option 3
+    description: 'As you make your way down a long corridor you see a banana, a donut, and a box floating about. No... upon
+      closer inspection they are tied to strings coming from holes in the ceiling. There is a quiet cackling from above as
+      you approach the objects.
+
+      What do you do?'
   bonfire_spirits:
     title: Bonfire Spirits
     offer: Offer a card to the spirits
     leave: Leave
+    description: You happen upon a group of what looks like purple fire spirits dancing around a large bonfire.
   council_of_ghosts:
     title: Council of Ghosts
     accept: Accept
     refuse: Refuse
+    description: 'As you continue your ascent, thick black smoke begins to billow out of the ground and walls around you,
+      coalescing into three masked forms that start to speak.
+
+
+      "Another puppet of Neow I think."
+
+      "AGREED! SHE ALWAYS MAKES THE FUNNEST TOYS!"
+
+
+      You notice an over-sized grin as the third addresses you.
+
+      "Ignore the others... Would you like a taste of our power?"'
   cursed_tome:
     title: Cursed Tome
     continue: Continue
     take: Take
     stop: Stop
     leave: Leave
+    description: 'In an abandoned temple, you find a giant book, open, riddled with cryptic writings.
+
+
+      As you try to interpret the elaborate script, it begins to shift and morph into writing you are familiar with.'
   dead_adventurer:
     title: Dead Adventurer
     search: Search
     leave: Leave
+    description: While searching the adventurer you are caught off guard!
+    elite_appears: An elite appears from the shadows!
+    nothing: You find nothing of value.
   designer_in_spire:
-    title: Designer in Spire
+    title: Designer In-Spire
     adjustments: Adjustments
     clean_up: Clean Up
     full_service: Full Service
     punch: Punch
+    description: 'You discover a colorful shop with the banner "IN-SPIRE" and walk in to see what''s inside.
+
+      "No, no way. Nope. Can''t let you in!"
+
+
+      A man with ridiculous clothing appears at the entrance to bar you.'
   divine_fountain:
-    title: Divine Fountain
+    title: The Divine Fountain
     drink: Drink from the fountain
     leave: Leave
+    description: You come across shimmering water flowing endlessly from a fountain on a nearby wall.
   duplicator:
     title: Duplicator
     pray: Pray
     leave: Leave
+    description: Before you lies a decorated altar to some ancient entity.
   face_trader:
     title: Face Trader
     touch: Touch
     trade: Trade
     leave: Leave
+    description: 'You walk by an eerie statue holding several masks...
+
+      Something behind you softly whispers,
+
+      "Stop."'
   falling:
     title: Falling
     land: Land
     channel: Channel
     strike: Strike
+    description: 'As you head upwards hopping from one floating shape to another, you slip.
+
+
+      You begin to fall.'
   forgotten_altar:
     title: Forgotten Altar
     offer_golden_idol: Offer Golden Idol
     sacrifice: Sacrifice
     desecrate: Desecrate
     leave: Leave
+    description: 'In front of you sits an altar to a forgotten god.
+
+      Atop the altar sits an ornate female statue with arms outstretched.
+
+      She calls out to you, demanding sacrifice.'
   GoldenIdol:
     title: Golden Idol
     take: Take the idol
@@ -214,74 +286,146 @@ events:
     smash: Smash
     hide: Hide
     leave: Leave
+    description: 'You come across an inconspicuous pedestal with a shining gold idol sitting peacefully atop. It looks incredibly
+      valuable.
+
+
+      You sure don''t see any traps nearby.'
   golden_shrine:
     title: Golden Shrine
     pray: Pray at the shrine
     desecrate: Desecrate the shrine
     leave: Leave
+    description: Before you lies an elaborate shrine to an ancient spirit.
   hypnotizing_mushrooms:
-    title: Hypnotizing Mushrooms
+    title: Mushrooms
     stomp: Stomp
     eat: Eat a mushroom
+    description: 'You give in to the unnatural desire to eat. As you consume mushroom after mushroom, you feel yourself entering
+      into a daze and pass out. As you awake, you feel very odd.
+
+      You Heal 25% of your HP, but you also get infected.'
   knowing_skull:
     title: Knowing Skull
     potion: Potion
     riches: Riches
     success: Success
     leave: Leave
+    description: You find yourself in an old, decorated chamber. In the center of the room, a large skull sits atop an ornate
+      pedestal. As you approach, the skull bursts into flames and turns to face you.
   lab:
-    title: The Lab
+    title: Lab
     search: Search the lab
+    description: 'You find yourself in a room filled with racks of test tubes, beakers, flasks, forceps, pinch clamps, stirring
+      rods, tongs, goggles, funnels, pipets, cylinders, condensers, and even a rare spiral tube of glass.
+
+
+      Why do you know the name of all these tools? It doesn''t matter, you take a look around.'
   living_wall:
     title: Living Wall
     forget: Forget
     change: Change
     grow: Grow
+    description: 'As you come to a dead-end and begin to turn around, walls slam down from the ceiling, trapping you!
+
+
+      Three faces materialize from the walls and speak.
+
+      "Forget what you know, and I''ll let you go."
+
+      "I require change to see a new space."
+
+      "If you want to pass me, then you must grow."'
   masked_bandits:
     title: Masked Bandits
     pay: Pay
     fight: Fight
+    description: 'Hehehe.. Thanks for the gold!
+
+      Oh, I love gold. It''s so nice.
+
+      shiny shiny chits they are!'
   match_and_keep:
-    title: Match and Keep
+    title: Match and Keep!
     play: Play the game
     leave: Leave
+    description: '" Twelve cards! Match them to keep them! Five tries, no do-overs.
+
+      Are you ready? Let''s start!"'
+    select_card: 'Select a card to flip. Tries remaining: {tries}'
+    no_matches: You did not match any cards.
+    won_cards: 'You matched: {cards}'
   mind_bloom:
     title: Mind Bloom
-    i_am_war: I am War
-    i_am_awake: I am Awake
-    i_am_rich: I am Rich
-    i_am_healthy: I am Healthy
+    i_am_war: I Am War
+    i_am_awake: I Am Awake
+    i_am_rich: I Am Rich
+    i_am_healthy: I Am Healthy
+    description: 'While walking and traversing through the chaos of the Spire, your thoughts suddenly begin to feel very...
+      real...
+
+
+      Imaginings of monsters and riches begin to manifest themselves into reality.
+
+      The sensation is quickly fleeting. What do you do?'
   mysterious_sphere:
     title: Mysterious Sphere
     open_sphere: Open Sphere
     leave: Leave
+    description: 'Jutting from the chaotic terrain around you, a bony sphere surrounds a mysterious glowing object within.
+
+      While you are curious what lies inside, you notice some sentries keeping an eye on it.'
   nloth:
     title: N'loth
     leave: Leave
+    description: 'An odd creature with a hunched back sprouting several tentacles is scrounging through a pile of trash and
+      debris in front of you. As you approach, he shuffles towards you in a non-threatening manner.
+
+      "N''loth hungry. Feed N''loth."'
   old_beggar:
     title: Old Beggar
     offer_gold: Offer Gold
     leave: Leave
+    description: An old beggar cloaked in fur reaches his hands out towards you as you pass. "Spare some coin, child?"
   pleading_vagrant:
     title: Pleading Vagrant
     offer_gold: Offer Gold
     rob: Rob
     leave: Leave
+    description: 'While sneaking past a group of shrouded figures, one of them approaches you.
+
+      "Got anything for me friend? Please... maybe some Coin?"
+
+      "I just need somewhere to stay, I have treasures I can trade..."
+
+      He seems delusional, but harmless.'
   ominous_forge:
     title: Ominous Forge
     forge: Forge a card
     rummage: Rummage
     leave: Leave
+    description: You duck into a small hut. Inside, you find what appears to be a forge. The smithing tools are covered with
+      dust, yet a fire roars inside the furnace. You feel on edge...
   purifier:
     title: Purifier
     pray: Pray
     leave: Leave
+    description: Before you lies an elaborate shrine to a forgotten spirit.
   scrap_ooze:
     title: Scrap Ooze
     reach: Reach
     leave: Leave
+    description: As you walk into the room you hear a gurgling and the grinding of metals. Before you is a slime-like creature
+      that ate too much scrap for its own good. From the center of the creature you see glints of strange light, perhaps something
+      magical? It looks like you can get some treasure if you just reach inside its... opening. However, the acid and sharp
+      objects may hurt.
   secret_portal:
     title: Secret Portal
+    description: 'Before you is a sight that seems out of place in the alien landscape around you. Strangely placed into one
+      of the living walls of the Beyond is an enclosed stone entrance filled with a swirling magical portal.
+
+
+      You aren''t sure where it leads, but maybe it could speed your journey through the Spire.'
     enter: Enter the portal
     leave: Leave
   sensory_stone:
@@ -289,94 +433,199 @@ events:
     recall_1: Recall 1
     recall_2: Recall 2
     recall_3: Recall 3
+    description: Navigating through the Beyond, you discover a glowing tesseract spinning and shifting gently in the air.
   shining_light:
     title: Shining Light
     enter: Enter
     leave: Leave
+    description: 'You find a shimmering mass of light encompassing the center of the room.
+
+
+      Its warm glow and enchanting patterns invite you in.'
   the_cleric:
     title: The Cleric
     option1: Option 1
     option2: Option 2
     option3: Option 3
+    description: 'A strange blue humanoid with a golden helm(?) approaches you with a huge smile.
+
+      "Hello friend! I am Cleric! Are you interested in my services?!" the creature shouts, loudly.'
   the_colosseum:
     title: The Colosseum
     fight: Fight for glory
     leave: Leave
     victory: Victory
     cowardice: Cowardice
+    description: 'Thwack!!!
+
+      ..
+
+      ......
+
+      ...
+
+      You were knocked unconscious...'
   the_joust:
     title: The Joust
     murderer: Murderer
     owner: Owner
+    description: 'As you make your way through the large buildings you come across a long narrow bridge and spot knights on
+      either side, facing one another. You approach...
+
+      "Halt!"
+
+
+      A knight forcefully gestures you to stop with its giant lance.'
   the_library:
     title: The Library
     read: Read a book
     sleep: Sleep
+    description: 'You come across an ornate building which appears abandoned.
+
+      A plaque that has been torn free from a wall is on the floor. It reads, "THE LIBRARY".
+
+      Inside, you find countless rows of scrolls, manuscripts, and books.
+
+      You pick one and cozy yourself into a chair for some quiet time.'
   the_mausoleum:
     title: The Mausoleum
     open_coffin: Open Coffin
     leave: Leave
+    description: 'Venturing through a series of tombs, you are faced with a large sarcophagus studded with gems in the center
+      of a circular room.
+
+      You cannot make out the writing on the coffin, however, you do notice black fog seeping out from the sides.'
   the_moai_head:
     title: The Moai Head
     offer_golden_idol: Offer Golden Idol
     jump_inside: Jump Inside
     leave: Leave
+    description: 'You stumble across something that feels *very* out of place. Before you, an enormous stony head emerges
+      from a large wall segment that does not shift and change like the rest of this area.
+
+      The head''s mouth is wide open, and it reveals large intimidating teeth stained red with blood. The surface of the statue
+      is riddled with pictographs that seem to indicate people throwing themselves into the mouth of this head and being devoured.
+      Why would anyone do that?'
   the_nest:
     title: The Nest
     smash_and_grab: Smash and Grab
     stay_in_line: Stay in Line
+    description: 'A long line of hooded figures can be seen entering
+
+      an unassuming cathedral.'
   the_ssssserpent:
     title: The Ssssserpent
     agree: Agree
     disagree: Disagree
+    description: 'You walk into a room to find a large hole in the ground. As you approach the hole, an enormous serpent creature
+      appears from within.
+
+
+      "Ho hooo! Hello hello! what have we got here? Hello adventurer, I ask a simple question.
+
+      The most fulfilling of lives is that in which you can buy anything!
+
+      Do you agree?"'
   tomb_of_lord_red_mask:
     title: Tomb of Lord Red Mask
     don_mask: Don Mask
     leave: Leave
     offer_gold: Offer Gold
+    description: A highly ornamented tomb can be seen on the other side of a floating path. Upon reaching the tomb, you notice
+      a slot for gold coins with a scratched out inscription above it.
   transmogrifier:
     title: Transmogrifier
     pray: Pray
     leave: Leave
+    description: Before you lies an elaborate shrine to a forgotten spirit.
   upgrade_shrine:
     title: Upgrade Shrine
     pray: Upgrade a card
     leave: Leave
     upgraded: Your {card_name} has been upgraded!
+    description: Before you lies an elaborate shrine to a forgotten spirit.
   vampires:
-    title: Vampires
+    title: Vampires(?)
     offer_blood_vial: Offer Blood Vial
     accept: Accept
     refuse: Refuse
+    description: 'Navigating an unlit street, you come across several hooded figures in the midst of some dark ritual. As
+      you approach, they turn to you in eerie unison. The tallest among them bares fanged teeth and extends a long, pale hand
+      towards you.
+
+      "Join us brother, and feel the warmth of the Spire."'
   wheel_of_change:
     title: Wheel of Change
     play: Play
+    description: 'You come upon a dapper looking, cheery gremlin.
+
+      "It''s time to spin the wheel! Are you R E A D Y ? Of course you are!"'
   we_meet_again:
-    title: We Meet Again
+    title: We Meet Again!
     give_potion: Give Potion
     give_gold: Give Gold
     give_card: Give Card
     attack: Attack
+    description: '"We meet again!"
+
+      A cheery disheveled fellow approaches you gleefully. You do not know this man.
+
+
+      "It''s me, Ranwid! Have any goods for me today? The usual? A fella like me can''t make it alone, you know?"
+
+      You eye him suspiciously and consider your options...'
   winding_halls:
     title: Winding Halls
     embrace_madness: Embrace Madness
     focus: Focus
     retrace: Retrace
+    description: 'As you slowly make your way up the twisting pathways, you constantly find yourself losing your way as the
+      walls and ground seem to inexplicably shift before your eyes.
+
+
+      The constant whispering voices in the back of your head aren''t helping things either.'
   wing_statue:
     title: Wing Statue
     pray: Pray to the statue
     destroy: Destroy
     leave: Leave
+    description: 'Among the stone and boulders, you notice an intricate large blue statue resembling a wing.
+
+      You find gold spilling from its cracks. Maybe there is more inside...'
   woman_in_blue:
-    title: Woman in Blue
+    title: The Woman in Blue
     option1: Option 1
     option2: Option 2
     option3: Option 3
     option4: Option 4
+    description: 'From the darkness, an arm pulls you into a small shop. As your eyes adjust, you see a pale woman in sharp
+      clothes gesturing towards a wall of potions.
+
+      "Buy a potion. Now!" she states.'
   world_of_goop:
     title: World of Goop
     gather: Gather
     leave: Leave
+    description: 'You fall into a puddle.
+
+      IT''S MADE OF SLIME GOOP!!
+
+      Frantically, you claw yourself out over several minutes as you feel the goop starting to burn.
+
+      You can feel goop in your ears, goop in your nose, goop everywhere.
+
+
+      Climbing out, you notice that some of your gold is missing. Looking back to the puddle you see your missing coins combined
+      with gold from unfortunate adventurers mixed together in the puddle.'
+  golden_idol:
+    title: Golden Idol
+    description: Before you lies an elaborate shrine to a forgotten spirit.
+    take: Take
+    leave: Leave
+    trap: 'A trap springs! Choose your escape:'
+    outrun: Outrun
+    smash: Smash
+    hide: Hide
 combat:
   title: Combat
   choose_action: Choose an action
@@ -474,8 +723,8 @@ combat:
   discard_pile: Discard Pile
   exhaust_pile: Exhaust Pile
   enemy_defeated: '{enemy} was defeated!'
-  artifact_blocked: '[Artifact] Blocked a debuff!'
-  artifact_remaining: 'Stacks remaining: {count}'
+  artifact_blocked: '[Artifact] Blocked the debuff!'
+  artifact_remaining: 'Remaining stacks: {count}'
   enemy_intends: Enemy
   intends_to: intends to
   select_target: === Select Target ===
@@ -486,10 +735,10 @@ combat:
   reward: Reward
   enemy: Enemy
   used_potion: Used potion
-  received_potion: Obtained potion
+  received_potion: Received potion
   gained_gold: Gained gold
   added_to_deck: Added to deck
-  on_target: on
+  on_target: 'on'
 cards:
   ironclad:
     Strike:
@@ -529,7 +778,7 @@ cards:
     BodySlam:
       name: Body Slam
       description: Deal damage equal to your Block.
-      combat_description: Deal damage equal to your current Block. (Deals {damage} damage)
+      combat_description: Deal damage equal to your current Block. (Deals {damage} damage.)
     Carnage:
       name: Carnage
       description: Deal {damage} damage. Ethereal.
@@ -596,7 +845,7 @@ cards:
     DoubleTap:
       name: Double Tap
       description: The next {magic.double_tap} Attack(s) is(are) played twice.
-      upgrade_description: The next {magic.double_tap} Attack cards you play are played twice.
+      upgrade_description: Your next {magic.double_tap} Attack cards are played twice.
     Dropkick:
       name: Dropkick
       description: Deal {damage} damage. If the enemy has Vulnerable, gain 1 Energy and draw 1 card.
@@ -707,7 +956,7 @@ cards:
     SpotWeakness:
       name: Spot Weakness
       description: If the enemy intends to attack, gain {magic.strength} Strength.
-      upgrade_description: If the enemy intends to Attack, gain {magic.strength} Strength.
+      upgrade_description: If the enemy intends to attack, gain {magic.strength} Strength.
     SwordBoomerang:
       name: Sword Boomerang
       description: Deal {damage} damage to a random enemy {attack_times} times.
@@ -722,7 +971,7 @@ cards:
       name: Twin Strike
       description: Deal {damage} damage twice.
     WarCry:
-      name: War Cry
+      name: Warcry
       description: Draw {draw} card(s). Place a card from your hand on top of your draw pile.
     Whirlwind:
       name: Whirlwind
@@ -835,7 +1084,7 @@ cards:
       name: Jack of All Trades
       description: Add {magic.cards} random colorless card(s) to your hand. Exhaust.
     JAX:
-      name: JAX
+      name: J.A.X.
       description: Lose 3 HP. Gain {magic.strength} Strength.
     Magnetism:
       name: Magnetism
@@ -868,7 +1117,7 @@ cards:
       name: Parasite
       description: Unplayable. If removed from your deck, lose 3 Max HP.
     Purify:
-      name: Purify
+      name: Purity
       description: Exhaust up to {magic.cards} cards from your hand. Exhaust.
     Regret:
       name: Regret
@@ -931,10 +1180,10 @@ powers:
     name: Frail
     description: Block from cards is reduced by 25%.
   WeakPower:
-    name: Weak
+    name: Weakened
     description: Deals 25% less attack damage.
   FlexPower:
-    name: Flex
+    name: Strength Down
     description: Gain {amount} Strength. Lose equal amount at end of turn.
   HeavyBladePower:
     name: Heavy Blade
@@ -943,7 +1192,7 @@ powers:
     name: Constricted
     description: At the end of your turn, lose HP equal to Constricted.
   ConfusedPower:
-    name: Confused
+    name: Confusion
     description: Randomize card costs at start of turn.
   EntangledPower:
     name: Entangled
@@ -965,7 +1214,7 @@ powers:
     description: Steals {amount} gold when attacking. Gold returned on death.
   SlowPower:
     name: Slow
-    description: Player's cards cost +{amount} this combat (stacks with each card played).
+    description: Whenever you play a card, this enemy receives 10% more damage from Attacks this turn.
   DrawReductionPower:
     name: Draw Reduction
     description: Draw 1 less card at the start of each turn for {amount} turn(s).
@@ -975,7 +1224,7 @@ powers:
     counter: 'Time Warp: {counter}/{threshold}'
     trigger: Time Warp triggers! Turn ended and Time Eater gains Strength!
   FlyingPower:
-    name: Flying
+    name: Flight
     description: Reduce damage taken by {amount}. Lose 1 stack when attacked.
   StrengthDownPower:
     name: Strength Down
@@ -988,7 +1237,7 @@ powers:
     description: Negates the next {amount} debuff(s).
   curl_up:
     name: Curl Up
-    description: When you take damage, gain {amount} Block.
+    description: On receiving attack damage, gain {amount} Block. Once per combat.
 potions:
   BloodPotion:
     name: Blood Potion
@@ -1215,7 +1464,7 @@ relics:
     description: Curse Cards can now be played. Playing a Curse will make you lose 1 HP and Exhaust Card.
   BottledFlame:
     name: Bottled Flame
-    description: Upon pickup, choose an Attack card. Start each combat with that card in your hand.
+    description: Upon pickup, choose an Attack. Start each combat with that card in your hand.
   BottledLightning:
     name: Bottled Lightning
     description: Upon pick up, choose a Skill. Start each combat with this Card in your hand.
@@ -1247,14 +1496,14 @@ relics:
     name: Matryoshka
     description: The next 2 Chests you open contain 2 Relics.
   MeatOnBone:
-    name: Meat on Bone
+    name: Meat on the Bone
     description: If your HP is at or below 50% at end of combat, heal 12 HP.
   MercuryHourglass:
     name: Mercury Hourglass
     description: At start of your turn, deal 3 damage to ALL enemies.
   MoltenEgg:
     name: Molten Egg
-    description: Whenever you add an Attack card to your deck, it is upgraded.
+    description: Whenever you add an Attack to your deck, upgrade it.
   MummifiedHand:
     name: Mummified Hand
     description: Whenever you play a Power, a random card in your hand costs 0 Energy for turn.
@@ -1268,7 +1517,7 @@ relics:
     name: Pantograph
     description: At start of Boss combats, heal 25 HP.
   PaperFrog:
-    name: Paper Frog
+    name: Paper Phrog
     description: Enemies dealing 75% or more of your Max HP have damage reduced by 50%.
   PaperKrane:
     name: Paper Krane
@@ -1433,7 +1682,7 @@ relics:
     name: Philosopher's Stone
     description: Gain 1 Energy at start of each turn. ALL enemies start with 1 Strength.
   RingOfSerpent:
-    name: Ring of Serpent
+    name: Ring of the Serpent
     description: Replaces Ring of Snake. At start of your turn, draw 1 additional Card.
   RunicCube:
     name: Runic Cube
@@ -1488,7 +1737,7 @@ relics:
     description: Status Cards can now be played. Playing a Status will Exhaust Card.
   MembershipCard:
     name: Membership Card
-    description: 50% off all products at the shop!
+    description: 50% discount on all products!
   PrismaticShard:
     name: Prismatic Shard
     description: Combat reward screens now contain colorless cards and cards from other colors.
@@ -1501,7 +1750,7 @@ relics:
     name: Sling of Courage
     description: Start each Elite combat with 2 Strength. (Does not work against Bosses).
   StrangeSpoonShop:
-    name: Strange Spoon (Shop)
+    name: Strange Spoon
     description: Cards which Exhaust when played will instead discard 50% of time.
   TheAbacus:
     name: The Abacus
@@ -1513,7 +1762,7 @@ relics:
     name: Cultist Headpiece
     description: CAW CAW CAWWWW!
   FaceOfCleric:
-    name: Face of Cleric
+    name: Face Of Cleric
     description: Raise your Max HP by 1 after each combat.
   GoldenIdol:
     name: Golden Idol
@@ -1525,7 +1774,7 @@ relics:
     name: Gremlin Visage
     description: Start each combat with 1 Weak.
   MarkOfBloom:
-    name: Mark of Bloom
+    name: Mark of the Bloom
     description: You can no longer heal.
   MutagenicStrength:
     name: Mutagenic Strength
@@ -1577,16 +1826,16 @@ relics:
     name: Red Skull
     description: While your HP is at or below 50%, you have 3 additional Strength.
   PaperPhrogIronclad:
-    name: Paper Frog
+    name: Paper Phrog
     description: Enemies with Vulnerable take 75% more damage rather than 50%.
   ChampionBelt:
-    name: Champion's Belt
+    name: Champion Belt
     description: Whenever you apply Vulnerable, also apply 1 Weak.
   CharonsAshes:
     name: Charon's Ashes
     description: Whenever you Exhaust a card, deal 3 damage to ALL enemies.
   Brimstone:
-    name: Brim Stone
+    name: Brimstone
     description: At start of your turn, gain 2 Strength and ALL enemies gain 1 Strength.
   OrangePellets:
     name: Orange Pellets
@@ -1626,7 +1875,7 @@ enemies:
         name: Grow
         description: Gain {strength_gain} Strength.
   RedLouse:
-    name: Red Louse
+    name: Louse
     intentions:
       bite:
         name: Bite
@@ -1635,7 +1884,7 @@ enemies:
         name: Grow
         description: Gain {strength_gain} Strength.
   GreenLouse:
-    name: Green Louse
+    name: Louse
     intentions:
       bite:
         name: Bite
@@ -1644,7 +1893,7 @@ enemies:
         name: Spit Web
         description: Apply 1 Weak to you.
   BlueSlaver:
-    name: Blue Slaver
+    name: Slaver
     intentions:
       stab:
         name: Stab
@@ -1653,7 +1902,7 @@ enemies:
         name: Rake
         description: Deal {damage} damage. Apply 1 Weak to you.
   RedSlaver:
-    name: Red Slaver
+    name: Slaver
     intentions:
       stab:
         name: Stab
@@ -1778,7 +2027,7 @@ enemies:
         description: Charging up...
       sear:
         name: Sear
-        description: Deal {damage} damage. Add 1 Burn to your discard pile.
+        description: Deal {damage} damage. Shuffle 1 Burn into your discard pile.
       tackle:
         name: Tackle
         description: Deal {damage} damage twice.
@@ -2022,7 +2271,10 @@ enemies:
         description: Deal {damage} damage.
       Count:
         name: Count
-        description: Counting down...
+        description: Deal {damage} damage.
+      Glare:
+        name: Glare
+        description: Apply {amount} Weak.
   Nemesis:
     name: Nemesis
     intentions:
@@ -2048,7 +2300,7 @@ enemies:
         name: Summon
         description: Summon Daggers.
   SpireGrowth:
-    name: Spire Growth
+    name: Writhing Mass
     intentions:
       Attack:
         name: Attack
@@ -2108,7 +2360,7 @@ enemies:
         name: Pierce
         description: Deal {damage} damage.
   CorruptHeart:
-    name: Heart of the Spire
+    name: Corrupt Heart
     intentions:
       BloodShot:
         name: Blood Shots
@@ -2324,7 +2576,7 @@ enemies:
         name: Attack
         description: Deal {damage} damage
   BronzeOrb:
-    name: Bronze Orb
+    name: Orb
     intentions:
       stasis:
         name: Stasis
@@ -2376,13 +2628,13 @@ rooms:
     lift: Lift (Gain 1 Strength)
     toke: Toke (Remove a card)
     dig: Dig (Obtain a random relic)
-    recall: Recall (Obtain Ruby Key)
-    enter: You enter a quiet rest site.
+    recall: Recall (Obtain the Ruby Key)
+    enter: You enter a quiet Rest Site.
   TreasureRoom:
     title: Treasure Room
     open_chest: Open chest
     skip: Skip
-    enter: You find a treasure room!
+    enter: You found a treasure room!
   ShopRoom:
     title: Shop
     buy_card: Buy {card} ({price} gold)

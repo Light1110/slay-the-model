@@ -117,11 +117,11 @@ def test_room_type_distribution():
         
         # Count room types (excluding fixed floors)
         for floor in range(1, 8):  # Floors 1-7 (random floors in first half)
-            for node in map_data.get_floor(floor):
+            for node in map_data.get_floor(floor) or []:
                 room_type_counts[node.room_type] += 1
         
         for floor in range(9, 14):  # Floors 9-13 (random floors in second half)
-            for node in map_data.get_floor(floor):
+            for node in map_data.get_floor(floor) or []:
                 room_type_counts[node.room_type] += 1
     
     # Calculate percentages
@@ -183,12 +183,12 @@ def test_connections():
     for floor in range(map_data.floor_count):
         floor_nodes = map_data.get_floor(floor)
         
-        for node in floor_nodes:
+        for node in floor_nodes or []:
             # Check that connections up point to valid nodes
             for up_pos in node.connections_up:
                 if floor + 1 < map_data.floor_count:
                     next_floor = map_data.get_floor(floor + 1)
-                    if up_pos >= len(next_floor):
+                    if up_pos >= len(next_floor or []):
                         print(f"✗ Invalid up connection at Floor {floor}, "
                               f"Position {node.position}: {up_pos}")
                         all_valid = False

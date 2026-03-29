@@ -2,8 +2,8 @@
 
 Colorless cards for HP trade.
 """
+from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
 
-from utils.result_types import BaseResult, MultipleActionsResult
 from events.base_event import Event
 from events.event_pool import register_event
 from actions.display import InputRequestAction, DisplayTextAction
@@ -17,7 +17,7 @@ from utils.option import Option
 class SensoryStone(Event):
     """Sensory Stone - colorless cards for HP."""
     
-    def trigger(self) -> BaseResult:
+    def trigger(self) -> None:
         actions = []
         
         # Display event description
@@ -58,4 +58,5 @@ class SensoryStone(Event):
         ))
         
         self.end_event()
-        return MultipleActionsResult(actions)
+        from engine.game_state import game_state
+        add_actions(actions)

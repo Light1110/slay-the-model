@@ -2,8 +2,8 @@
 
 Bet 50 gold for 100 or 250 gold reward.
 """
+from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
 
-from utils.result_types import BaseResult, MultipleActionsResult
 from events.base_event import Event
 from events.event_pool import register_event
 from actions.display import InputRequestAction, DisplayTextAction
@@ -22,7 +22,7 @@ class TheJoust(Event):
         """Only appears if player has 50+ gold."""
         return game_state.player.gold >= 50
     
-    def trigger(self) -> BaseResult:
+    def trigger(self) -> None:
         actions = []
         
         # Display event description
@@ -58,4 +58,4 @@ class TheJoust(Event):
         ))
         
         self.end_event()
-        return MultipleActionsResult(actions)
+        add_actions(actions)

@@ -1,7 +1,8 @@
 """
 Neo blessing event.
 """
-from utils.result_types import BaseResult, GameStateResult, MultipleActionsResult, NoneResult
+from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
+from utils.result_types import GameTerminalState
 from events.event_pool import register_event
 from actions.card import ChooseAddRandomCardAction, ChooseRemoveCardAction, ChooseTransformCardAction, ChooseUpgradeCardAction, AddRandomCardAction
 from actions.display import DisplayTextAction, InputRequestAction
@@ -24,7 +25,7 @@ from utils.types import CardType, RarityType
 class NeoEvent(Event):
     """Neo blessing event - special starting event"""
 
-    def trigger(self) -> 'BaseResult':
+    def trigger(self) -> None:
         """Trigger Neo blessing selection"""
         actions = []
 
@@ -45,15 +46,15 @@ class NeoEvent(Event):
 
         # Execute actions using global queue
         result = game_state.drive_actions()
-        if isinstance(result, GameStateResult):
-            return result
+        if isinstance(result, GameTerminalState):
+            set_terminal_state(result)
+            return
 
         # End event after selection
         self.end_event()
 
         if actions:
-            return MultipleActionsResult(actions)
-        return NoneResult()
+            add_actions(actions)
     
     def _show_basic_blessings(self):
         """Show basic blessing options (first run)"""

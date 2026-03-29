@@ -2,6 +2,7 @@
 Rare Global Relics
 Global relics available to all characters at rare rarity.
 """
+from engine.runtime_api import add_action, add_actions
 from typing import List
 from actions.base import Action, LambdaAction
 from actions.card import DrawCardsAction, AddCardAction, RemoveCardAction
@@ -25,9 +26,10 @@ class BirdFacedUrn(Relic):
     def on_card_play(self, card, player, entities):
         """When a Power is played, heal 2 HP"""
         if card.card_type == CardType.POWER:
-            return [HealAction(target=player, amount=2)]
-        return []
-
+            from engine.game_state import game_state
+            add_actions([HealAction(target=player, amount=2)])
+            return
+        return
 @register("relic")
 class CaptainsWheel(Relic):
     """At the start of your 3rd turn, gain 18 Block."""
@@ -41,9 +43,10 @@ class CaptainsWheel(Relic):
         from engine.game_state import game_state
         if game_state.current_combat is not None:
             if game_state.current_combat.combat_state.combat_turn == 3:
-                return [GainBlockAction(block=18, target=player)]
-        return []
-
+                from engine.game_state import game_state
+                add_actions([GainBlockAction(block=18, target=player)])
+                return
+        return
 @register("relic")
 class DeadBranch(Relic):
     """Whenever you Exhaust a Card, add a random Card to your hand."""
@@ -56,10 +59,11 @@ class DeadBranch(Relic):
         from actions.card import AddRandomCardAction
 
         if owner is None:
-            return []
+            return
         namespace = getattr(owner, "namespace", None)
-        return [AddRandomCardAction(pile="hand", namespace=namespace)]
-
+        from engine.game_state import game_state
+        add_actions([AddRandomCardAction(pile="hand", namespace=namespace)])
+        return
 @register("relic")
 class DuVuDoll(Relic):
     """For each Curse in your deck, start each combat with 1 additional Strength."""
@@ -77,8 +81,9 @@ class DuVuDoll(Relic):
             for card in game_state.player.card_manager.get_pile('draw_pile'):
                 if card.card_type == CardType.CURSE:
                     curses += 1
-        return [ApplyPowerAction(power="Strength", target=player, amount=curses)]
-
+        from engine.game_state import game_state
+        add_actions([ApplyPowerAction(power="Strength", target=player, amount=curses)])
+        return
 @register("relic")
 class FossilizedHelix(Relic):
     """Prevent first time you would lose HP in combat."""
@@ -89,8 +94,9 @@ class FossilizedHelix(Relic):
     
     def on_combat_start(self, player, entities):
         """Apply Buffer power at combat start"""
-        return [ApplyPowerAction(power="Buffer", target=player, amount=1, duration=-1)]
-
+        from engine.game_state import game_state
+        add_actions([ApplyPowerAction(power="Buffer", target=player, amount=1, duration=-1)])
+        return
 @register("relic")
 class Ginger(Relic):
     """You can no longer become Weakened."""
@@ -114,14 +120,15 @@ class Girya(Relic):
         self.rarity = RarityType.RARE
         self.uses_remaining = 3
 
-    def on_trigger(self, **kwargs) -> List[Action]:
+    def on_trigger(self, **kwargs):
         """Triggered when player chooses Lift option at rest site"""
         if self.uses_remaining > 0:
             self.uses_remaining -= 1
             from engine.game_state import game_state
-            return [ApplyPowerAction(power="Strength", target=game_state.player, amount=1)]
-        return []
-    
+            from engine.game_state import game_state
+            add_actions([ApplyPowerAction(power="Strength", target=game_state.player, amount=1)])
+            return
+        return
     def can_use_at_rest(self) -> bool:
         """Check if Girya can still be used"""
         return self.uses_remaining > 0
@@ -140,16 +147,16 @@ class IceCream(Relic):
         from engine.game_state import game_state
         if game_state.current_combat is not None:
             self.conserved_energy = game_state.player.energy
-        return []
-
+        return
     def on_player_turn_start(self, player, entities):
         """Add conserved energy at start of turn"""
         actions = []
         if self.conserved_energy > 0:
             actions.append(GainEnergyAction(energy=self.conserved_energy))
             self.conserved_energy = 0
-        return actions
-
+        from engine.game_state import game_state
+        add_actions(actions)
+        return
 @register("relic")
 class LizardTail(Relic):
     """When you would die, heal to 50% of your Max HP instead (works once)."""
@@ -164,9 +171,10 @@ class LizardTail(Relic):
         from engine.game_state import game_state
         if self.can_revive:
             self.can_revive = False
-            return [HealAction(target=player, amount=player.max_hp // 2)]
-        return []
-
+            from engine.game_state import game_state
+            add_actions([HealAction(target=player, amount=player.max_hp // 2)])
+            return
+        return
 @register("relic")
 class Mango(Relic):
     """Upon pickup, raise your Max HP by 14."""
@@ -175,9 +183,10 @@ class Mango(Relic):
         super().__init__()
         self.rarity = RarityType.RARE
 
-    def on_obtain(self) -> List[Action]:
-        return [ModifyMaxHpAction(amount=14)]
-
+    def on_obtain(self):
+        from engine.game_state import game_state
+        add_actions([ModifyMaxHpAction(amount=14)])
+        return
 @register("relic")
 class OldCoin(Relic):
     """Gain 300 Gold."""
@@ -186,11 +195,12 @@ class OldCoin(Relic):
         super().__init__()
         self.rarity = RarityType.RARE
 
-    def on_obtain(self) -> List[Action]:
+    def on_obtain(self):
         # Lazy import to avoid circular dependency
         from actions.reward import AddGoldAction
-        return [AddGoldAction(amount=300)]
-
+        from engine.game_state import game_state
+        add_actions([AddGoldAction(amount=300)])
+        return
 @register("relic")
 class PeacePipe(Relic):
     """You can now remove Cards from your deck at Rest Sites."""
@@ -213,17 +223,15 @@ class Pocketwatch(Relic):
         self.cards_played_this_turn = 0
         self.extra_draw_next_turn = False
 
-    def on_card_play(self, card, player, entities) -> List[Action]:
+    def on_card_play(self, card, player, entities):
         """Track cards played"""
         self.cards_played_this_turn += 1
-        return []
-
+        return
     def on_player_turn_end(self, player, entities):
         """Check cards played and set extra draw"""
         if self.cards_played_this_turn <= 3:
             self.extra_draw_next_turn = True
-        return []
-
+        return
     def on_player_turn_start(self, player, entities):
         """Draw extra cards if condition met"""
         action = []
@@ -278,9 +286,10 @@ class StoneCalendar(Relic):
                 actions = []
                 for enemy in entities:
                     actions.append(DealDamageAction(damage=52, target=enemy))
-                return actions
-        return []
-
+                from engine.game_state import game_state
+                add_actions(actions)
+                return
+        return
 @register("relic")
 class TheSpecimen(Relic):
     """Whenever an enemy dies, transfer any Poison it has to a random enemy."""
@@ -304,9 +313,10 @@ class TheSpecimen(Relic):
                 if alive_enemies:
                     import random
                     target_enemy = random.choice(alive_enemies)
-                    return [ApplyPowerAction(power="Poison", target=target_enemy, amount=poison_amount)]
-        return []
-
+                    from engine.game_state import game_state
+                    add_actions([ApplyPowerAction(power="Poison", target=target_enemy, amount=poison_amount)])
+                    return
+        return
 @register("relic")
 class ThreadAndNeedle(Relic):
     """At the start of each combat, gain 4 Plated Armor."""
@@ -317,8 +327,9 @@ class ThreadAndNeedle(Relic):
 
     def on_combat_start(self, player, entities):
         """Gain 4 Plated Armor at start of combat"""
-        return [ApplyPowerAction(power="PlatedArmor", target=player, amount=4)]
-
+        from engine.game_state import game_state
+        add_actions([ApplyPowerAction(power="PlatedArmor", target=player, amount=4)])
+        return
 @register("relic")
 class Tingsha(Relic):
     """Whenever you discard a card during your turn, deal 3 damage to a random enemy for each card discarded."""
@@ -335,9 +346,10 @@ class Tingsha(Relic):
         if alive_enemies:
             import random
             target_enemy = random.choice(alive_enemies)
-            return [DealDamageAction(damage=3, target=target_enemy)]
-        return []
-
+            from engine.game_state import game_state
+            add_actions([DealDamageAction(damage=3, target=target_enemy)])
+            return
+        return
 @register("relic")
 class Torii(Relic):
     """Whenever you receive 5 or less Attack damage, reduce it to 1."""
@@ -365,8 +377,9 @@ class ToughBandages(Relic):
 
     def on_card_discard(self, card, player, entities):
         """Gain Block on card discard"""
-        return [GainBlockAction(block=3, target=player)]
-
+        from engine.game_state import game_state
+        add_actions([GainBlockAction(block=3, target=player)])
+        return
 @register("relic")
 class TungstenRod(Relic):
     """Whenever you lose HP, lose 1 less."""
@@ -417,17 +430,18 @@ class UnceasingTop(Relic):
         self.rarity = RarityType.RARE
         self.triggered_this_empty = False
 
-    def on_card_play(self, card, player, entities) -> List[Action]:
+    def on_card_play(self, card, player, entities):
         """Check if hand is empty after playing a card"""
         from engine.game_state import game_state
         if game_state.current_combat is not None:
             hand = game_state.player.card_manager.get_pile('hand')
             if len(hand) == 0 and not self.triggered_this_empty:
                 self.triggered_this_empty = True
-                return [DrawCardsAction(count=1)]
-        return []
-
+                from engine.game_state import game_state
+                add_actions([DrawCardsAction(count=1)])
+                return
+        return
     def on_player_turn_start(self, player, entities):
         """Reset tracker at start of turn"""
         self.triggered_this_empty = False
-        return []
+        return

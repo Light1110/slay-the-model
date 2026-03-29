@@ -1,14 +1,8 @@
-﻿"""
+"""
 Base action system
 """
-from typing import TYPE_CHECKING, List
+from collections.abc import Callable, Mapping, Sequence
 from localization import Localizable
-
-if TYPE_CHECKING:
-    from utils.result_types import (
-        BaseResult,
-        NoneResult,
-    )
 
 from tui.print_utils import tui_print
 
@@ -16,110 +10,104 @@ from tui.print_utils import tui_print
 class Action(Localizable):
     """Base action class - executable game logic unit"""
 
-    def __init__(self):
-        pass
+    def __init__(self) -> None:
+        super().__init__()
 
-    def execute(self) -> 'BaseResult':
-        """Execute this action - to be overridden
-
-        Returns:
-            BaseResult: The result of this action execution.
-                NoneResult: Action completed with no follow-up
-                SingleActionResult: One action to queue next (includes UI selection via InputRequestAction)
-                MultipleActionsResult: Multiple actions to queue next
-                GameStateResult: Game state transition (DEATH/WIN)
-        """
+    def execute(self) -> None:
+        """Execute this action - to be overridden."""
         raise NotImplementedError
 
     def _get_localized_key(self, field: str) -> str:
         """Build the localization key for this action field."""
         return f"actions.{self.__class__.__name__}.{field}"
 
-
-def _get_none_result():
-    """Lazy import to avoid circular dependency"""
-    from utils.result_types import NoneResult
-    return NoneResult()
-
-
 class LambdaAction(Action):
     """Action that executes a provided function"""
 
-    def __init__(self, func, args=None, kwargs=None):
+    def __init__(
+        self,
+        func: Callable[..., object],
+        args: Sequence[object] | None = None,
+        kwargs: Mapping[str, object] | None = None,
+    ) -> None:
         super().__init__()
         self.func = func
-        self.args = args or []
-        self.kwargs = kwargs or {}
+        self.args = list(args) if args is not None else []
+        self.kwargs = dict(kwargs) if kwargs is not None else {}
         
-    def execute(self) -> 'BaseResult':
-        """Execute the provided function with arguments"""
-        from utils.result_types import BaseResult
-
-        result = self.func(*self.args, **self.kwargs)
-        if isinstance(result, BaseResult):
-            return result
-        return _get_none_result()
+    def execute(self) -> None:
+        """Execute the provided function with arguments."""
+        self.func(*self.args, **self.kwargs)
 
 
 class ActionQueue:
     """Queue of actions to execute in loop"""
 
     def __init__(self):
-        self.queue: List[Action] = []
+        self.queue: list[Action] = []
 
-    def add_action(self, action, to_front=False):
+    def add_action(self, action: Action, to_front: bool = False) -> None:
         """Add action to queue - optionally to front"""
         if to_front:
             self.queue.insert(0, action)
         else:
             self.queue.append(action)
 
-    def add_actions(self, actions, to_front=False):
+    def add_actions(self, actions: Sequence[Action], to_front: bool = False) -> None:
         """Add multiple actions to queue - optionally to front"""
+        if not actions:
+            return
         if to_front:
-            self.queue = actions + self.queue
+            self.queue = list(actions) + self.queue
         else:
             self.queue.extend(actions)
 
-    def execute_next(self):
-        """Execute next action in queue and return result
-
-        Returns:
-            BaseResult: The result of this action execution.
-        """
+    def execute_next(self) -> None:
+        """Execute next action in queue."""
         if self.queue:
             action = self.queue.pop(0)
             try:
                 from engine.game_state import game_state
-                if game_state.config.mode == "debug" and game_state.config.debug["print"]:
+                if game_state.config.mode == "debug" and game_state.config.debug.get("print", False):
                     tui_print(f"Executing action: {action}")
             except ImportError:
                 pass  # Debug mode not available
 
-            result = action.execute()
+            action.execute()
             try:
                 from engine.runtime_presenter import flush_runtime_events
                 flush_runtime_events()
             except ImportError:
                 pass
-            if result is not None:
-                # If action returned a result (BaseResult subclass), return it
-                if hasattr(result, 'result_type'):
-                    return result
 
-            return _get_none_result()
-        return _get_none_result()
-
-    def is_empty(self):
+    def is_empty(self) -> bool:
         """Check if queue is empty"""
         return len(self.queue) == 0
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear the queue"""
         self.queue = []
 
-    def peek_next(self):
-        """Peek at next action without removing it"""
-        if self.queue:
-            return self.queue[0]
-        return None
+    def peek_next(self) -> Action:
+        """Peek at next action without removing it."""
+        if not self.queue:
+            raise IndexError("Action queue is empty")
+        return self.queue[0]
+
+
+def queue_actions(actions: Sequence[Action] | None, to_front: bool = False) -> None:
+    """Queue actions on the global action queue when any are provided."""
+    if not actions:
+        return
+    from engine.runtime_api import add_actions
+
+    add_actions(actions, to_front=to_front)
+
+
+def queue_action(action: Action | None, to_front: bool = False) -> None:
+    """Queue one action on the global action queue when provided."""
+    if action is None:
+        return
+    from engine.runtime_api import add_action
+
+    add_action(action, to_front=to_front)

@@ -17,6 +17,7 @@ from rich.text import Text
 from rich.panel import Panel
 from rich.console import Console
 
+from localization import resolve_text
 from . import set_app, get_app
 
 
@@ -148,7 +149,7 @@ class SelectionPanel(Widget):
             lines.append("")
         
         for i, opt in enumerate(self._options_data):
-            name = str(opt.name) if hasattr(opt, 'name') else str(opt)
+            name = resolve_text(opt.name) if hasattr(opt, "name") else resolve_text(opt)
             lines.append(f"  [cyan]{i + 1}.[/cyan] {name}")
         
         lines.append("")
@@ -249,7 +250,7 @@ class SelectionPanel(Widget):
             lines.append("")
         
         for i, opt in enumerate(self._options_data):
-            name = str(opt.name) if hasattr(opt, 'name') else str(opt)
+            name = resolve_text(opt.name) if hasattr(opt, "name") else resolve_text(opt)
             lines.append(f"  [cyan]{i + 1}.[/cyan] {name}")
         
         lines.append("")

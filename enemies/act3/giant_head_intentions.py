@@ -1,4 +1,5 @@
 """Giant Head Elite intentions for Act 3."""
+from engine.runtime_api import add_action, add_actions
 
 import random
 from typing import List
@@ -17,15 +18,18 @@ class CountIntention(Intention):
         super().__init__("Count", enemy)
         self.base_damage = 13
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute the intention."""
         from engine.game_state import game_state
-        return [AttackAction(
+        from engine.game_state import game_state
+        add_actions(
+        [AttackAction(
             damage=self.base_damage,
             target=game_state.player,
             source=self.enemy,
             damage_type="attack"
         )]
+        )
 
 
 class GlareIntention(Intention):
@@ -35,15 +39,18 @@ class GlareIntention(Intention):
         super().__init__("Glare", enemy)
         self.base_amount = 1
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute the intention."""
         from engine.game_state import game_state
-        return [ApplyPowerAction(
+        from engine.game_state import game_state
+        add_actions(
+        [ApplyPowerAction(
             power="weak",
             target=game_state.player,
             amount=self.base_amount,
             duration=1
         )]
+        )
 
 
 class ItIsTimeIntention(Intention):
@@ -56,7 +63,7 @@ class ItIsTimeIntention(Intention):
         self.max_damage = 60
         self.max_damage_asc = 70
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute the intention."""
         from engine.game_state import game_state
         # Calculate base damage
@@ -72,9 +79,12 @@ class ItIsTimeIntention(Intention):
         damage = base + (self.enemy._it_is_time_count - 1) * 5
         damage = min(damage, max_dmg)
         
-        return [AttackAction(
+        from engine.game_state import game_state
+        add_actions(
+        [AttackAction(
             damage=damage,
             target=game_state.player,
             source=self.enemy,
             damage_type="attack"
         )]
+        )

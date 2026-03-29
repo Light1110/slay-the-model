@@ -2,8 +2,6 @@
 Base event definitions for new architecture.
 Events use global action queue - they represent random encounters in Unknown Rooms.
 """
-from utils.result_types import BaseResult
-from engine.game_state import game_state
 from localization import Localizable
 
 
@@ -22,15 +20,12 @@ class Event(Localizable):
         # Control flag for ending event
         self.event_ended = False
     
-    def trigger(self) -> 'BaseResult':
+    def trigger(self) -> None:
         """
         Trigger and execute the event.
 
         This method should implement the event's main logic,
         building and executing actions as needed.
-
-        Returns:
-            BaseResult: The result of this event.
         """
         raise NotImplementedError(f"{self.__class__.__name__} must implement trigger()")
     

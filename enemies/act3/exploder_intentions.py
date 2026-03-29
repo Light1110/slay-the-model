@@ -1,4 +1,5 @@
 """Exploder enemy intentions for Act 3."""
+from engine.runtime_api import add_action, add_actions
 
 import random
 from typing import List
@@ -14,7 +15,7 @@ class Attack(Intention):
         super().__init__("Attack", enemy)
         self.base_damage = 9  # 11 on Ascension 2+
 
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute attack action."""
         from engine.game_state import game_state
         
@@ -22,12 +23,15 @@ class Attack(Intention):
         if game_state.ascension >= 2:
             damage = 11
 
-        return [AttackAction(
+        from engine.game_state import game_state
+        add_actions(
+        [AttackAction(
             damage=damage,
             target=game_state.player,
             source=self.enemy,
             damage_type="attack"
         )]
+        )
 
 
 class Explode(Intention):
@@ -37,7 +41,7 @@ class Explode(Intention):
         super().__init__("Explode", enemy)
         self.base_damage = 30
 
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute explode action - deals damage and enemy dies."""
         from engine.game_state import game_state
         
@@ -49,4 +53,5 @@ class Explode(Intention):
         )]
         # Enemy dies after exploding
         self.enemy.hp = 0
-        return actions
+        from engine.game_state import game_state
+        add_actions(actions)

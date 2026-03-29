@@ -80,6 +80,7 @@ class TestBash(unittest.TestCase):
                 break
 
         self.assertIsNotNone(vulnerable_power, "Enemy should have Vulnerable power")
+        assert vulnerable_power is not None
         self.assertEqual(vulnerable_power.amount, 2, "Vulnerable should be 2 stacks")
 
     def test_bash_upgraded_damage(self):
@@ -119,6 +120,7 @@ class TestBash(unittest.TestCase):
                 break
 
         self.assertIsNotNone(vulnerable_power, "Enemy should have Vulnerable power")
+        assert vulnerable_power is not None
         self.assertEqual(vulnerable_power.amount, 3, "Upgraded Bash should apply 3 Vulnerable")
 
     def test_bash_energy_cost(self):

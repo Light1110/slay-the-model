@@ -1,8 +1,9 @@
 ﻿"""Test EventRoom basic functionality."""
 import pytest
+from typing import cast
+from engine.game_state import game_state
 from rooms.event import EventRoom
 from actions.display import InputRequestAction
-from utils.result_types import MultipleActionsResult, NoneResult
 from utils.registry import get_registered
 from utils.types import RoomType
 
@@ -37,8 +38,9 @@ class TestEventRoomBasic:
         assert get_registered("room", "EventRoom") is EventRoom
 
     def test_enter_with_multiple_events_returns_selection(self):
-        """When multiple events are available, room should return a selection request."""
+        """When multiple events are available, room should queue a selection request."""
         room = EventRoom()
+        game_state.action_queue.clear()
 
         class DummyEvent:
             def local(self, field):
@@ -47,10 +49,11 @@ class TestEventRoomBasic:
         room.available_events = [DummyEvent(), DummyEvent()]
         result = room.enter()
 
-        assert isinstance(result, MultipleActionsResult)
-        assert len(result.actions) == 1
-        assert isinstance(result.actions[0], InputRequestAction)
-        assert len(result.actions[0].options) == 2
+        assert result is None
+        queued = game_state.action_queue.peek_next()
+        assert isinstance(queued, InputRequestAction)
+        queued = cast(InputRequestAction, queued)
+        assert len(queued.options) == 2
 
     def test_trigger_event_marks_state(self):
         """Triggering an event should set triggered_event and should_leave."""
@@ -58,22 +61,24 @@ class TestEventRoomBasic:
 
         class DummyEvent:
             def trigger(self):
-                return NoneResult()
+                return None
 
         event = DummyEvent()
         result = room._trigger_event(event)
 
-        assert isinstance(result, NoneResult)
+        assert result is None
         assert room.triggered_event is event
         assert room.should_leave is True
 
     def test_empty_event_pool_returns_explicit_empty_pool_message(self):
-        """Empty event pools should return an explicit no-event result."""
+        """Empty event pools should return without queueing actions."""
         room = EventRoom()
+        game_state.action_queue.clear()
 
         result = room.enter()
 
-        assert isinstance(result, NoneResult)
+        assert result is None
+        assert game_state.action_queue.is_empty()
 
 
 if __name__ == "__main__":

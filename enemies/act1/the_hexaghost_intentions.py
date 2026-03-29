@@ -1,4 +1,5 @@
 """Hexaghost (Boss) specific intentions."""
+from engine.runtime_api import add_action, add_actions
 
 from typing import List, TYPE_CHECKING
 
@@ -15,31 +16,29 @@ class ActivateIntention(Intention):
     def __init__(self, enemy: 'Enemy'):
         super().__init__("activate", enemy)
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Activate: does nothing."""
-        return []
-
-
 class DividerIntention(Intention):
     """Divider - Deals (N+1)×6 damage where N = Player HP / 12."""
     
     def __init__(self, enemy: 'Enemy'):
         super().__init__("divider", enemy)
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Divider: damage based on player's HP."""
         from actions.combat import AttackAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
+            return
         # Calculate damage based on player's HP
         player_hp = game_state.player.hp
         n = player_hp // 12
         damage = n + 1
 
-        return [
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=damage,
                 target=game_state.player,
@@ -48,6 +47,7 @@ class DividerIntention(Intention):
             )
             for _ in range(6)
         ]
+        )
     
     @property
     def description(self):
@@ -76,7 +76,7 @@ class SearIntention(Intention):
         self.base_damage = 6
         self._burn_count = 1
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Sear: deals 6 damage and adds Burn cards."""
         from actions.combat import AttackAction
         from actions.card import AddCardAction
@@ -84,8 +84,7 @@ class SearIntention(Intention):
         from utils.registry import get_registered
         
         if not game_state or not game_state.player:
-            return []
-        
+            return
         actions = [
             AttackAction(
                 damage=self.base_damage,
@@ -109,9 +108,10 @@ class SearIntention(Intention):
         except Exception:
             raise ValueError("Cannot Get Burn Card!")
         
-        return actions
-
-
+        from engine.game_state import game_state
+        
+        add_actions(actions)
+        
 class TackleIntention(Intention):
     """Tackle - Deals 5 damage 2 times (6×2 on A4+)."""
     
@@ -120,15 +120,16 @@ class TackleIntention(Intention):
         self.base_damage = 5
         self._hits = 2
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Tackle: deals damage multiple times."""
         from actions.combat import AttackAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -137,6 +138,7 @@ class TackleIntention(Intention):
             )
             for _ in range(self._hits)
         ]
+        )
 
 
 class InflameIntention(Intention):
@@ -147,11 +149,13 @@ class InflameIntention(Intention):
         self.base_block = 12
         self.base_strength_gain = 2
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Inflame: gains Block and Strength."""
         from actions.combat import GainBlockAction, ApplyPowerAction
         
-        return [
+        from engine.game_state import game_state
+        add_actions(
+        [
             GainBlockAction(
                 block=self.base_block,
                 target=self.enemy
@@ -163,6 +167,7 @@ class InflameIntention(Intention):
                 duration=-1
             )
         ]
+        )
 
 
 class InfernoIntention(Intention):
@@ -174,7 +179,7 @@ class InfernoIntention(Intention):
         self._hits = 2
         self._burn_count = 3
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Inferno: deals damage and adds upgraded Burn cards."""
         from actions.combat import AttackAction
         from actions.card import AddCardAction
@@ -182,8 +187,7 @@ class InfernoIntention(Intention):
         from utils.registry import get_registered
         
         if not game_state or not game_state.player:
-            return []
-        
+            return
         actions = [
             AttackAction(
                 damage=self.base_damage,
@@ -209,4 +213,7 @@ class InfernoIntention(Intention):
         # Mark that Inferno has been used - subsequent Sear Burns will be upgraded
         self.enemy._used_inferno = True
         
-        return actions
+        from engine.game_state import game_state
+        
+        add_actions(actions)
+        

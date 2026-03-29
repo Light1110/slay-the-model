@@ -1,4 +1,4 @@
-﻿from actions.card_choice import (
+from actions.card_choice import (
     ChooseAddRandomCardAction,
     ChooseCopyCardAction,
     ChooseExhaustCardAction,

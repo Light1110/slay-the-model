@@ -1,4 +1,5 @@
 """Spire Shield Elite intentions for Act 4."""
+from engine.runtime_api import add_action, add_actions
 
 import random
 from typing import List
@@ -16,7 +17,7 @@ class Bash(Intention):
     def __init__(self, enemy):
         super().__init__("Bash", enemy)
 
-    def execute(self) -> List[Action]:
+    def execute(self):
         from engine.game_state import game_state
 
         player = game_state.player
@@ -39,9 +40,11 @@ class Bash(Intention):
         else:
             actions.append(ApplyPowerAction(StrengthPower(amount=-1, owner=player), player))
 
-        return actions
+        from engine.game_state import game_state
 
+        add_actions(actions)
 
+        return
 class Fortify(Intention):
     """All enemies gain 30 Block."""
 
@@ -49,36 +52,39 @@ class Fortify(Intention):
         super().__init__("Fortify", enemy)
         self.base_block = 30
 
-    def execute(self) -> List[Action]:
+    def execute(self):
         from engine.game_state import game_state
 
         combat = getattr(game_state, "current_combat", None) or getattr(
             game_state, "combat", None
         )
         if combat is None:
-            return [GainBlockAction(block=self.base_block, target=self.enemy)]
-
+            from engine.game_state import game_state
+            add_actions([GainBlockAction(block=self.base_block, target=self.enemy)])
+            return
         actions = []
         for enemy in combat.enemies:
             if enemy.is_alive:
                 actions.append(GainBlockAction(block=self.base_block, target=enemy))
-        return actions
-
-
+        from engine.game_state import game_state
+        add_actions(actions)
+        return
 class Smash(Intention):
     """Deal heavy damage and gain block."""
 
     def __init__(self, enemy):
         super().__init__("Smash", enemy)
 
-    def execute(self) -> List[Action]:
+    def execute(self):
         from engine.game_state import game_state
 
         base_damage, fixed_block = random.choice(
             [(34, None), (38, None), (38, 99)]
         )
         block_gain = fixed_block if fixed_block is not None else base_damage
-        return [
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=base_damage,
                 target=game_state.player,
@@ -87,3 +93,5 @@ class Smash(Intention):
             ),
             GainBlockAction(block=block_gain, target=self.enemy),
         ]
+        )
+        return

@@ -1,4 +1,5 @@
 """Taskmaster intentions - Act 2 Elite enemy."""
+from engine.runtime_api import add_action, add_actions
 
 from typing import TYPE_CHECKING, List
 
@@ -17,7 +18,7 @@ class ScouringWhip(Intention):
         super().__init__("Scouring Whip", enemy)
         self.base_damage = 7
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute scouring whip attack."""
         from engine.game_state import game_state
         from cards.colorless import Wound
@@ -41,4 +42,9 @@ class ScouringWhip(Intention):
             actions.append(ApplyPowerAction(StrengthPower(amount=1, owner=self.enemy), self.enemy))
 
         
-        return actions
+        from engine.game_state import game_state
+
+        
+        add_actions(actions)
+
+        

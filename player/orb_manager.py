@@ -1,4 +1,5 @@
 """Orb management for the player."""
+from engine.runtime_api import add_action, add_actions
 
 from typing import List, Optional
 from orbs.base import Orb
@@ -26,7 +27,7 @@ class OrbManager:
             self._orbs = self._orbs[:value]
         self._max_orb_slots = value
 
-    def add_orb(self, orb: Orb) -> List[Action]:
+    def add_orb(self, orb: Orb):
         """Add an orb. If max slots exceeded, evoke rightmost orb first.
         
         Args:
@@ -35,20 +36,17 @@ class OrbManager:
         Returns:
             List[Action]: List of actions to execute (evoke actions if slot full)
         """
-        actions: List[Action] = []
-        
         if self._max_orb_slots <= 0:
-            return actions
+            return
             
         if len(self._orbs) >= self._max_orb_slots:
             # Evoke rightmost orb first
-            evoke_actions = self.evoke_orb(index=-1)
-            actions.extend(evoke_actions)
+            self.evoke_orb(index=-1)
             
         self._orbs.append(orb)
-        return actions
+        return
 
-    def evoke_orb(self, index: int = 0, times: int = 1) -> List[Action]:
+    def evoke_orb(self, index: int = 0, times: int = 1):
         """Evoke an orb from slot, calling its on_evoke method.
 
         Args:
@@ -58,17 +56,15 @@ class OrbManager:
         Returns:
             List[Action]: List of actions from the orb's on_evoke method
         """
-        actions: List[Action] = []
-        
         if not self._orbs:
-            return actions
+            return
             
         # Handle negative index (rightmost)
         if index < 0:
             index = len(self._orbs) + index
             
         if index < 0 or index >= len(self._orbs):
-            return actions
+            return
             
         orb = self._orbs.pop(index)
         
@@ -77,14 +73,14 @@ class OrbManager:
             try:
                 orb_actions = orb.on_evoke()
                 if orb_actions:
+                    from engine.game_state import game_state
                     if isinstance(orb_actions, list):
-                        actions.extend(orb_actions)
+                        add_actions(orb_actions)
                     else:
-                        actions.append(orb_actions)
+                        add_action(orb_actions)
             except NotImplementedError:
                 pass
-                
-        return actions
+        return
 
     def remove_orb(self, index: int = 0) -> Optional[Orb]:
         """Remove an orb at specific index without evoking. Defaults to rightmost orb.
@@ -111,16 +107,14 @@ class OrbManager:
         """Remove all orbs without evoking."""
         self._orbs.clear()
         
-    def evoke_all(self) -> List[Action]:
+    def evoke_all(self):
         """Evoke all orbs from slots, calling their on_evoke methods.
 
         Returns:
             List[Action]: List of actions from all orbs' on_evoke methods
         """
-        actions: List[Action] = []
-        
         if not self._orbs:
-            return actions
+            return
             
         # Get all orbs before clearing
         orbs_to_evoke = list(self._orbs)
@@ -131,20 +125,20 @@ class OrbManager:
             try:
                 orb_actions = orb.on_evoke()
                 if orb_actions:
+                    from engine.game_state import game_state
                     if isinstance(orb_actions, list):
-                        actions.extend(orb_actions)
+                        add_actions(orb_actions)
                     else:
-                        actions.append(orb_actions)
+                        add_action(orb_actions)
             except NotImplementedError:
                 pass
-                
-        return actions
+        return
 
     def get_orb_count(self) -> int:
         """Get current number of orbs."""
         return len(self._orbs)
 
-    def trigger_passives(self, timing: str) -> List[Action]:
+    def trigger_passives(self, timing: str):
         """Trigger passives for all orbs with matching timing.
 
         Args:
@@ -153,18 +147,16 @@ class OrbManager:
         Returns:
             List[Action]: List of actions from orbs' on_passive methods
         """
-        actions: List[Action] = []
-        
         for orb in self._orbs:
             if getattr(orb, "passive_timing", None) == timing:
                 try:
                     orb_actions = orb.on_passive()
                     if orb_actions:
+                        from engine.game_state import game_state
                         if isinstance(orb_actions, list):
-                            actions.extend(orb_actions)
+                            add_actions(orb_actions)
                         else:
-                            actions.append(orb_actions)
+                            add_action(orb_actions)
                 except NotImplementedError:
                     pass
-                    
-        return actions
+        return

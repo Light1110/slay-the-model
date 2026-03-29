@@ -1,4 +1,5 @@
 """Fungi Beast specific intentions."""
+from engine.runtime_api import add_action, add_actions
 
 import random
 from typing import List, TYPE_CHECKING
@@ -17,15 +18,16 @@ class BiteIntention(Intention):
         super().__init__("bite", enemy)
         self.base_damage = 6
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Bite: deals 6 damage to player."""
         from actions.combat import AttackAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -33,6 +35,7 @@ class BiteIntention(Intention):
                 damage_type="attack",
             )
         ]
+        )
 
 
 class GrowIntention(Intention):
@@ -43,11 +46,13 @@ class GrowIntention(Intention):
         # Base: 3 Strength, A2+: 4, A17+: 5
         self.base_strength_gain = 3
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Grow: gains Strength."""
         from actions.combat import ApplyPowerAction
         
-        return [
+        from engine.game_state import game_state
+        add_actions(
+        [
             ApplyPowerAction(
                 power="strength",
                 target=self.enemy,
@@ -55,3 +60,4 @@ class GrowIntention(Intention):
                 duration=-1  # Permanent
             )
         ]
+        )

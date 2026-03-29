@@ -2,6 +2,7 @@
 Panache power for combat effects.
 Deal damage to all enemies when playing 5 cards.
 """
+from engine.runtime_api import add_action, add_actions
 from typing import List, Any
 from actions.base import Action
 from actions.combat import DealDamageAction
@@ -26,7 +27,7 @@ class PanachePower(Power):
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
 
-    def on_card_play(self, card, player, entities) -> List[Action]:
+    def on_card_play(self, card, player, entities):
         """Deal damage to all enemies when playing 5 cards."""
         from engine.game_state import game_state
 
@@ -44,6 +45,7 @@ class PanachePower(Power):
                         target=enemy,
                         direct=True
                     ))
-                return actions
-
-        return []
+                from engine.game_state import game_state
+                add_actions(actions)
+                return
+        return

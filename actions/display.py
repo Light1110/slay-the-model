@@ -1,28 +1,20 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """Display actions and declarative input requests."""
-from typing import Dict, List
+from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
+from typing import Dict, List, Optional
 
 from actions.base import Action, LambdaAction
 from engine.input_protocol import InputRequest
 from engine.runtime_events import emit_lines, emit_text
 from engine.runtime_presenter import flush_runtime_events
-from localization import BaseLocalStr, LocalStr, t
+from localization import BaseLocalStr, LocalStr, resolve_text, t
 from utils.option import Option
 from utils.registry import register
-from utils.result_types import (
-    BaseResult,
-    GameStateResult,
-    InputRequestResult,
-    NoneResult,
-)
+from utils.result_types import GameTerminalState
 
 
 def _resolve_title(title: object) -> str:
-    if isinstance(title, str):
-        return t(title)
-    if title is None:
-        return ""
-    return str(title)
+    return resolve_text(title)
 
 
 def build_selected_options(
@@ -44,7 +36,7 @@ def show_selected_options(selected_options: Dict[int, Option]):
 
     lines = [f"\n{t('ui.selected', default='Selected:')}"]
     for idx, option in selected_options.items():
-        lines.append(f"  {idx + 1}. {option.name}")
+        lines.append(f"  {idx + 1}. {resolve_text(option.name)}")
 
     emit_lines(lines)
     flush_runtime_events()
@@ -58,7 +50,7 @@ class DisplayTextAction(Action):
         self.text_key = text_key
         self.fmt = fmt
 
-    def execute(self) -> BaseResult:
+    def execute(self) -> None:
         fallback = self.fmt.get("default", self.text_key)
         text = t(
             self.text_key,
@@ -67,7 +59,6 @@ class DisplayTextAction(Action):
         )
         emit_text(text, end="")
         flush_runtime_events()
-        return NoneResult()
 
 
 @register("action")
@@ -76,11 +67,11 @@ class InputRequestAction(Action):
 
     def __init__(
         self,
-        title: BaseLocalStr = None,
-        options: List[Option] = None,
+        title: Optional[BaseLocalStr] = None,
+        options: Optional[List[Option]] = None,
         max_select: int = 1,
         must_select: bool = True,
-        context: Dict = None,
+        context: Optional[Dict] = None,
         request_type: str = "selection",
         allow_menu: bool = True,
     ):
@@ -99,10 +90,12 @@ class InputRequestAction(Action):
         self.must_select = self.request.must_select
         self.context = self.request.context
 
-    def execute(self) -> BaseResult:
+    def execute(self) -> None:
+        from engine.game_state import game_state
+
         if not self.request.options and self.request.request_type == "selection":
-            return NoneResult()
-        return InputRequestResult(self.request)
+            return
+        request_input(self.request)
 
     def _build_selected_options(self, options, selected_indices):
         return build_selected_options(options, selected_indices)
@@ -118,8 +111,10 @@ class ResumeInputRequestAction(Action):
     def __init__(self, request: InputRequest):
         self.request = request
 
-    def execute(self) -> BaseResult:
-        return InputRequestResult(self.request)
+    def execute(self) -> None:
+        from engine.game_state import game_state
+
+        request_input(self.request)
 
 
 @register("action")
@@ -129,7 +124,7 @@ class MenuAction(Action):
     def __init__(self, parent_request: InputRequest):
         self.parent_request = parent_request
 
-    def execute(self) -> BaseResult:
+    def execute(self) -> None:
         from engine.game_state import game_state
 
         menu_options = [
@@ -170,7 +165,7 @@ class MenuAction(Action):
                 actions=[LambdaAction(func=self._exit_game)],
             ),
         ]
-        return InputRequestResult(
+        request_input(
             InputRequest(
                 title=LocalStr("ui.menu_title", default="Game Menu"),
                 options=menu_options,
@@ -209,7 +204,10 @@ class MenuAction(Action):
         self._emit_lines(["Game saved."])
 
     def _exit_game(self):
-        return GameStateResult("GAME_EXIT")
+        from engine.game_state import game_state
+
+        set_terminal_state(GameTerminalState.GAME_EXIT)
+        return
 
     @staticmethod
     def _emit_lines(lines: List[str]):

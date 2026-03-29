@@ -1,6 +1,7 @@
 """
 Ironclad Rare Skill card - Double Tap
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -23,14 +24,19 @@ class DoubleTap(Card):
     base_magic = {"double_card_num": 1, "double_tap": 1}
     upgrade_magic = {"double_card_num": 2, "double_tap": 2}
 
-    def on_play(self, targets: List[Creature] = []) -> List[Action]:
+    def on_play(self, targets: List[Creature] = []):
         target = targets[0] if targets else None
         from engine.game_state import game_state
 
-        actions = super().on_play(targets)
+        super().on_play(targets)
 
+        actions = []
         # Apply DoubleTapPower
         double_card_num = self.get_magic_value("double_card_num")
         actions.append(ApplyPowerAction(power="DoubleTapPower", target=game_state.player, amount=double_card_num, duration=1))
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

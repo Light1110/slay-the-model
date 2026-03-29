@@ -1,4 +1,5 @@
 """Gremlin Nob elite enemy intentions."""
+from engine.runtime_api import add_action, add_actions
 
 from typing import List, TYPE_CHECKING
 
@@ -16,11 +17,13 @@ class BellowIntention(Intention):
         super().__init__("bellow", enemy)
         self.base_amount = 2
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Bellow: gain 2 Enrage."""
         from actions.combat import ApplyPowerAction
         
-        return [
+        from engine.game_state import game_state
+        add_actions(
+        [
             ApplyPowerAction(
                 power="Enrage",
                 target=self.enemy,
@@ -28,6 +31,7 @@ class BellowIntention(Intention):
                 duration=-1  # Permanent
             )
         ]
+        )
 
 
 class SkullBashIntention(Intention):
@@ -38,7 +42,7 @@ class SkullBashIntention(Intention):
         self.base_damage = damage
         self.vulnerable_stacks = 2
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Skull Bash: deal damage and apply Vulnerable."""
         from actions.combat import AttackAction, ApplyPowerAction
         from engine.game_state import game_state
@@ -64,9 +68,10 @@ class SkullBashIntention(Intention):
                 )
             )
         
-        return actions
-
-
+        from engine.game_state import game_state
+        
+        add_actions(actions)
+        
 class BullRushIntention(Intention):
     """Bull Rush - Deals 14 damage (18 on A9+)."""
     
@@ -74,15 +79,16 @@ class BullRushIntention(Intention):
         super().__init__("bull_rush", enemy)
         self.base_damage = damage
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Bull Rush: deal damage."""
         from actions.combat import AttackAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -90,3 +96,4 @@ class BullRushIntention(Intention):
                 damage_type="attack",
             )
         ]
+        )

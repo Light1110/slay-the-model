@@ -2,7 +2,6 @@ from typing import Optional
 from actions.base import Action
 from cards.base import COST_UNPLAYABLE, Card
 from actions.card import DrawCardsAction
-from utils.result_types import List
 from utils.types import CardType
 
 

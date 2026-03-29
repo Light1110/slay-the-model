@@ -2,6 +2,7 @@
 Shelled Parasite - Normal enemy (Act 2)
 Armored parasite that heals itself.
 """
+from engine.runtime_api import add_action, add_actions
 import random
 from enemies.base import Enemy
 from utils.types import EnemyType
@@ -79,10 +80,10 @@ class ShelledParasite(Enemy):
         if self.pending_life_suck_heal and damage > 0:
             from actions.combat import HealAction
             self.pending_life_suck_heal = False
-            return [HealAction(amount=damage, target=self)]
-        
-        return []
-    
+            from engine.game_state import game_state
+            add_actions([HealAction(amount=damage, target=self)])
+            return
+        return
     def determine_next_intention(self, floor: int = 1):
         """Determine next intention based on pattern."""
         # Cannot use Felt on first turn

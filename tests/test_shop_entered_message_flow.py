@@ -5,24 +5,6 @@ from engine.subscriptions import MessagePriority, subscribe
 from relics.base import Relic
 from rooms.shop import ShopRoom
 from tests.test_combat_utils import create_test_helper
-from utils.result_types import MultipleActionsResult, SingleActionResult
-
-
-def _execute_result(result):
-    if result is None:
-        return
-
-    if isinstance(result, SingleActionResult):
-        _execute_result(result.action.execute())
-        return
-
-    if isinstance(result, MultipleActionsResult):
-        for action in result.actions:
-            _execute_result(action.execute())
-        return
-
-    if hasattr(result, "execute"):
-        _execute_result(result.execute())
 
 
 class _ShopEnterRelic(Relic):
@@ -69,12 +51,12 @@ def test_shop_room_enter_publishes_shop_entered_message(monkeypatch):
     monkeypatch.setattr(helper.game_state, "publish_message", wrapped)
 
     result = room.enter()
-    assert isinstance(result, MultipleActionsResult)
-    assert result.actions
-    assert isinstance(result.actions[0], GainBlockAction)
-    assert any(action.__class__.__name__ == "InputRequestAction" for action in result.actions)
+    assert result is None
+    queued = list(helper.game_state.action_queue.queue)
+    assert queued
+    assert any(isinstance(action, GainBlockAction) for action in queued)
+    assert any(action.__class__.__name__ == "InputRequestAction" for action in queued)
 
-    _execute_result(result)
     helper.game_state.drive_actions()
 
     assert "ShopEnteredMessage" in published

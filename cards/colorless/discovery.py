@@ -1,6 +1,7 @@
 """
 Colorless Uncommon Skill card - Discovery
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -22,10 +23,10 @@ class Discovery(Card):
     base_exhaust = True
     upgrade_exhaust = False
 
-    def on_play(self, targets: List[Creature] = []) -> List[Action]:
+    def on_play(self, targets: List[Creature] = []):
         target = targets[0] if targets else None
-        actions = super().on_play(targets)
-
+        super().on_play(targets)
+        actions = []
         # Choose 1 of 3 random cards
         actions.append(ChooseAddRandomCardAction(
             total=3,
@@ -33,4 +34,8 @@ class Discovery(Card):
             temp_cost=0  # Cards cost 0 this turn
         ))
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

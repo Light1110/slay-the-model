@@ -11,6 +11,10 @@ class MockCard:
     def __init__(self):
         self._cost = 1
 
+    @property
+    def cost(self):
+        return self._cost
+
 class MockPlayer:
     def __init__(self):
         self.card_manager = MockCardManager()
@@ -37,15 +41,17 @@ def test_confused_power():
     card = MockCard()
     player.card_manager.piles['hand'].append(card)
 
-    # Test on_card_draw returns LambdaAction
-    actions = power.on_card_draw(card)
-    assert len(actions) == 1, "Should return one LambdaAction"
+    # Test on_card_draw queues the randomization action
+    from engine.game_state import game_state
+    game_state.action_queue.clear()
+    power.on_card_draw(card)
+    assert len(game_state.action_queue.queue) == 1, "Should queue one LambdaAction"
 
-    # Execute LambdaAction to randomize
-    actions[0].execute()
+    # Execute queued action to randomize
+    game_state.execute_all_actions()
 
     # Check cost was randomized (0-3)
-    assert 0 <= card._cost <= 3, "Cost should be between 0-3"
+    assert 0 <= card.cost <= 3, "Cost should be between 0-3"
 
     print("✓ ConfusedPower unit tests passed!")
     # All tests passed

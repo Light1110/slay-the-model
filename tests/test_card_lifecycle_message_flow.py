@@ -11,7 +11,6 @@ from relics.global_relics.common import CeramicFish
 from relics.global_relics.rare import ToughBandages
 from relics.global_relics.uncommon import DarkstonePeriapt, Sundial
 from tests.test_combat_utils import create_test_helper
-from utils.result_types import MultipleActionsResult, SingleActionResult
 
 
 def test_card_actions_import_from_actions_card_surface():
@@ -23,23 +22,6 @@ def test_card_actions_import_from_actions_card_surface():
     assert card_surface.DrawCardsAction is LifecycleDrawCardsAction
     assert card_surface.ExhaustCardAction is LifecycleExhaustCardAction
     assert card_surface.ChooseMoveCardAction is ChooseMoveCardAction
-
-
-def _execute_result(result):
-    if result is None:
-        return
-
-    if isinstance(result, SingleActionResult):
-        _execute_result(result.action.execute())
-        return
-
-    if isinstance(result, MultipleActionsResult):
-        for action in result.actions:
-            _execute_result(action.execute())
-        return
-
-    if hasattr(result, "execute"):
-        _execute_result(result.execute())
 
 
 def _capture_published_message_types(game_state, monkeypatch):
@@ -66,8 +48,8 @@ def test_play_card_action_publishes_card_played_message(monkeypatch):
 
     published = _capture_published_message_types(helper.game_state, monkeypatch)
 
-    result = PlayCardBHAction(card=attack, targets=[enemy]).execute()
-    _execute_result(result)
+    PlayCardBHAction(card=attack, targets=[enemy]).execute()
+    helper.game_state.drive_actions()
 
     assert "CardPlayedMessage" in published
     assert player.block == 3
@@ -85,8 +67,8 @@ def test_discard_card_action_publishes_card_discarded_message(monkeypatch):
 
     published = _capture_published_message_types(helper.game_state, monkeypatch)
 
-    result = DiscardCardAction(card=discard_target, source_pile="hand").execute()
-    _execute_result(result)
+    DiscardCardAction(card=discard_target, source_pile="hand").execute()
+    helper.game_state.drive_actions()
 
     assert "CardDiscardedMessage" in published
     assert discard_target in player.card_manager.get_pile("discard_pile")
@@ -103,8 +85,8 @@ def test_draw_cards_action_publishes_card_drawn_message(monkeypatch):
     helper.add_card_to_draw_pile(status_card)
     published = _capture_published_message_types(helper.game_state, monkeypatch)
 
-    result = DrawCardsAction(count=1).execute()
-    _execute_result(result)
+    DrawCardsAction(count=1).execute()
+    helper.game_state.drive_actions()
 
     assert "CardDrawnMessage" in published
     assert status_card in player.card_manager.get_pile("hand")
@@ -125,8 +107,8 @@ def test_shuffle_action_publishes_shuffle_message(monkeypatch):
 
     published = _capture_published_message_types(helper.game_state, monkeypatch)
 
-    result = ShuffleAction().execute()
-    _execute_result(result)
+    ShuffleAction().execute()
+    helper.game_state.drive_actions()
 
     assert "ShuffleMessage" in published
     assert player.energy == 3
@@ -142,8 +124,8 @@ def test_add_card_action_publishes_card_added_message(monkeypatch):
 
     published = _capture_published_message_types(helper.game_state, monkeypatch)
 
-    result = AddCardAction(card=curse_card, dest_pile="deck", source="reward").execute()
-    _execute_result(result)
+    AddCardAction(card=curse_card, dest_pile="deck", source="reward").execute()
+    helper.game_state.drive_actions()
 
     assert "CardAddedToPileMessage" in published
     assert curse_card in player.card_manager.get_pile("deck")

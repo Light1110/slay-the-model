@@ -8,7 +8,7 @@ from utils.registry import get_registered_instance
 from localization import t, LocalStr
 from utils.types import RoomType
 from engine.game_state import game_state, MAX_ACTS
-from utils.result_types import BaseResult, GameStateResult, SingleActionResult
+from utils.result_types import GameTerminalState
 from engine.runtime_events import emit_text as tui_print
 from engine.runtime_presenter import flush_runtime_events
 
@@ -54,10 +54,10 @@ class GameFlow:
 
         while self.flow_phase != "finished":
             result = self._execute_next_phase(game_state)
-            if isinstance(result, GameStateResult):
-                if result.state in ("GAME_EXIT",):
+            if isinstance(result, GameTerminalState):
+                if result == GameTerminalState.GAME_EXIT:
                     self._handle_game_exit()
-                elif result.state in ("GAME_LOSE", "DEATH"):
+                elif result == GameTerminalState.GAME_LOSE:
                     self._handle_game_over()
                 break
 
@@ -92,7 +92,7 @@ class GameFlow:
     def _execute_neo_room_phase(self, game_state):
         """Run the special Neo room once at the start of act 1."""
         result = self._start_neo_room()
-        if isinstance(result, GameStateResult):
+        if isinstance(result, GameTerminalState):
             self.flow_phase = "finished"
             return result
         self.flow_phase = "select_room"
@@ -118,7 +118,6 @@ class GameFlow:
 
     def _execute_enter_room_phase(self, game_state):
         """Initialize and execute the current room, then advance flow state."""
-        from utils.result_types import MultipleActionsResult
         from rooms.victory import VictoryRoom
 
         cur_room = self.current_room
@@ -139,18 +138,13 @@ class GameFlow:
                 from tui.handlers.display_handler import DisplayHandler
                 DisplayHandler(app).display_room(cur_room, game_state)
 
-        if isinstance(result, GameStateResult):
+        if isinstance(result, GameTerminalState):
             self.flow_phase = "finished"
             return result
 
-        if isinstance(result, MultipleActionsResult):
-            game_state.action_queue.add_actions(result.actions)
-            result = game_state.drive_actions()
-        elif isinstance(result, SingleActionResult):
-            game_state.action_queue.add_action(result.action, to_front=True)
-            result = game_state.drive_actions()
+        result = game_state.drive_actions()
 
-        if isinstance(result, GameStateResult):
+        if isinstance(result, GameTerminalState):
             self.flow_phase = "finished"
             return result
 
@@ -179,7 +173,6 @@ class GameFlow:
         Run a single act from current floor to boss.
         Returns True if boss defeated, False if player died.
         """
-        from utils.result_types import MultipleActionsResult
         from rooms.victory import VictoryRoom
         
         result = ""
@@ -207,21 +200,17 @@ class GameFlow:
                     DisplayHandler(app).display_room(cur_room, game_state)
             
             # Check for game end conditions
-            if isinstance(result, GameStateResult):
-                if result.state in ("GAME_EXIT",):
+            if isinstance(result, GameTerminalState):
+                if result == GameTerminalState.GAME_EXIT:
                     self._handle_game_exit()
                     return False
-                elif result.state in ("GAME_LOSE", "DEATH"):
+                elif result == GameTerminalState.GAME_LOSE:
                     self._handle_game_over()
                     return False
             
             # Handle results from rooms
-            if isinstance(result, MultipleActionsResult):
-                game_state.action_queue.add_actions(result.actions)
-                game_state.drive_actions()
-            elif isinstance(result, SingleActionResult):
-                game_state.action_queue.add_action(result.action, to_front=True)
-                game_state.drive_actions()
+            if not isinstance(result, GameTerminalState):
+                result = game_state.drive_actions()
             
             # Leave the room (cleanup)
             cur_room.leave()
@@ -239,7 +228,6 @@ class GameFlow:
         VictoryRoom (Acts 3-4) handles its own completion via the room itself.
         Returns True if game should continue to next act.
         """
-        from utils.result_types import MultipleActionsResult
         from rooms.treasure import TreasureRoom
         
         # Check if can advance to next act
@@ -292,15 +280,11 @@ class GameFlow:
         from engine.runtime_presenter import flush_runtime_events
         flush_runtime_events()
         # Handle Neo room result
-        if isinstance(result, GameStateResult) and result.state == "GAME_LOSE":
+        if result == GameTerminalState.GAME_LOSE:
             return result
-        if isinstance(result, SingleActionResult):
-            game_state.action_queue.add_action(result.action, to_front=True)
+        if not isinstance(result, GameTerminalState):
             result = game_state.drive_actions()
-        elif hasattr(result, "actions"):
-            game_state.action_queue.add_actions(result.actions)
-            result = game_state.drive_actions()
-        if isinstance(result, GameStateResult):
+        if isinstance(result, GameTerminalState):
             return result
         neo_room.leave()
         return None
@@ -318,13 +302,8 @@ class GameFlow:
         
         # Use SelectMapNodeAction to handle selection
         select_action = SelectMapNodeAction()
-        result = select_action.execute()
-        
-        # The SelectMapNodeAction will return a MoveToMapNodeAction wrapped in SingleActionResult
-        # We need to add it to queue and execute
-        if isinstance(result, SingleActionResult):
-            game_state.action_queue.add_action(result.action)
-            game_state.drive_actions()
+        select_action.execute()
+        game_state.drive_actions()
         
         # After execution, get the current room from game_state
         room = game_state.current_room

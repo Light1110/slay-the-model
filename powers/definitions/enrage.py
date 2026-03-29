@@ -1,6 +1,7 @@
 """
 Enrage power - Gains Strength when player plays a Skill card.
 """
+from engine.runtime_api import add_action, add_actions
 from typing import List, Any
 from actions.base import Action
 from powers.base import Power, StackType
@@ -25,7 +26,7 @@ class EnragePower(Power):
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
 
-    def on_card_play(self, card, player, entities) -> List[Action]:
+    def on_card_play(self, card, player, entities):
         """Trigger when player plays a card."""
         from utils.types import CardType
         from powers.definitions.strength import StrengthPower
@@ -41,4 +42,8 @@ class EnragePower(Power):
                 )
             )
         
-        return actions
+        from engine.game_state import game_state
+        
+        add_actions(actions)
+        
+        return

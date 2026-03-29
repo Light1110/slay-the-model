@@ -1,3 +1,4 @@
+from engine.runtime_api import add_action, add_actions
 from typing import TYPE_CHECKING, List
 
 from entities import Creature
@@ -35,7 +36,7 @@ class Player(Creature):
         # Stats
         self._gold = self.__class__.starting_gold
         self.potions = Collection(self.__class__.base_potion_limit)
-        self.relics = Collection()
+        self.relics: list[object] = Collection()
 
         # Combat-related properties
         self.max_energy = max_energy if max_energy is not None else self.__class__.base_energy
@@ -52,10 +53,16 @@ class Player(Creature):
         # Draw count (base, can be modified by relics/powers)
         self.base_draw_count = 5
 
-    def on_death(self) -> List['Action']:
+    def on_death(self):
         """Handle player death by setting game over phase."""
-        from actions import GameOverAction
-        return [GameOverAction()]
+        from actions.game_over import GameOverAction
+        from engine.game_state import game_state
+        add_action(GameOverAction())
+        return
+
+    def on_max_hp_changed(self, _amount: int) -> None:
+        """Hook point for tests and effects that observe max HP changes."""
+        pass
 
     @property
     def gold(self) -> int:

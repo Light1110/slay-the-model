@@ -2,6 +2,7 @@
 Poison power for combat effects.
 Lose HP at start of turn, then reduce by 1.
 """
+from engine.runtime_api import add_action, add_actions
 from typing import List
 from actions.base import Action
 from actions.combat import LoseHPAction
@@ -25,8 +26,10 @@ class PoisonPower(Power):
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
         
-    def on_turn_start(self) -> List[Action]:
+    def on_turn_start(self):
         actions = [LoseHPAction(amount=self.amount)]
         # Reduce poison by 1 after dealing damage
         self.amount = max(0, self.amount - 1)
-        return actions
+        from engine.game_state import game_state
+        add_actions(actions)
+        return

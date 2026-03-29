@@ -1,4 +1,5 @@
 """Mystic specific intentions."""
+from engine.runtime_api import add_action, add_actions
 
 import random
 from typing import List, TYPE_CHECKING
@@ -18,15 +19,16 @@ class AttackIntention(Intention):
         self.base_damage = 8
         self.frail_stacks = 2
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Attack: deals damage and applies Frail."""
         from actions.combat import AttackAction, ApplyPowerAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -40,6 +42,7 @@ class AttackIntention(Intention):
                 duration=1
             )
         ]
+        )
 
 
 class BuffIntention(Intention):
@@ -49,7 +52,7 @@ class BuffIntention(Intention):
         super().__init__("buff", enemy)
         self.strength_gain = 2
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Buff: all enemies gain Strength."""
         from actions.combat import ApplyPowerAction
         from engine.game_state import game_state
@@ -69,9 +72,10 @@ class BuffIntention(Intention):
                         )
                     )
         
-        return actions
-
-
+        from engine.game_state import game_state
+        
+        add_actions(actions)
+        
 class HealIntention(Intention):
     """Heal - All enemies heal 16 HP (16 on A3+)."""
     
@@ -79,7 +83,7 @@ class HealIntention(Intention):
         super().__init__("heal", enemy)
         self.heal_amount = 16
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Heal: all enemies heal."""
         from actions.combat import HealAction
         from engine.game_state import game_state
@@ -97,4 +101,7 @@ class HealIntention(Intention):
                         )
                     )
         
-        return actions
+        from engine.game_state import game_state
+        
+        add_actions(actions)
+        

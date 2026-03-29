@@ -3,6 +3,7 @@
 
 import unittest
 from unittest.mock import Mock
+from typing import Any, cast
 
 from engine.game_state import game_state
 from orbs.dark import DarkOrb
@@ -19,12 +20,13 @@ class TestOrbActions(unittest.TestCase):
         game_state._initialized = False
         game_state.__init__()
         # Set up player with get_power returning None (no Focus power)
-        game_state.player = Mock()
-        game_state.player.orb_slots = []
-        game_state.player.get_power = Mock(return_value=None)
+        cast(Any, game_state).player = Mock()
+        player = cast(Any, game_state).player
+        player.orb_slots = []
+        player.get_power = Mock(return_value=None)
         # Set up combat state
-        game_state.combat_state = Mock()
-        game_state.combat_state.enemies = []
+        cast(Any, game_state).combat_state = Mock()
+        cast(Any, game_state).combat_state.enemies = []
 
     def test_dark_orb_creation(self):
         """Test that DarkOrb can be created."""

@@ -2,6 +2,7 @@
 Painful Stabs power for Corrupt Heart boss.
 Adds a Wound to discard pile whenever player plays an Attack.
 """
+from engine.runtime_api import add_action, add_actions
 from typing import List
 
 from actions.base import Action
@@ -29,8 +30,10 @@ class PainfulStabsPower(Power):
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
 
-    def on_card_play(self, card, player, entities) -> List[Action]:
+    def on_card_play(self, card, player, entities):
         """Add a Wound to discard pile when player plays an Attack."""
         if card is None or getattr(card, "card_type", None) != CardType.ATTACK:
-            return []
-        return [AddCardAction(card=Wound(), dest_pile="discard_pile")]
+            return
+        from engine.game_state import game_state
+        add_actions([AddCardAction(card=Wound(), dest_pile="discard_pile")])
+        return

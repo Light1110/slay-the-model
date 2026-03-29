@@ -1,6 +1,7 @@
 """
 Ironclad Uncommon Skill card - Spot Weakness
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -26,16 +27,23 @@ class SpotWeakness(Card):
 
     upgrade_magic = {"strength": 4}
 
-    def on_play(self, targets: List[Creature] = []) -> List[Action]:
+    def on_play(self, targets: List[Creature] = []):
         target = targets[0] if targets else None
         from engine.game_state import game_state
         player = game_state.player
 
-        actions = super().on_play(targets)
+        super().on_play(targets)
 
+        actions = []
         assert target is not None
         assert isinstance(target, Enemy)
-        if target.current_intention.base_damage > 0:
+        enemy_target: Enemy = target
+        current_intention = enemy_target.current_intention
+        if current_intention is not None and current_intention.base_damage > 0:
             actions.append(ApplyPowerAction("strength", player, amount=get_magic_value(self, "strength")))
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

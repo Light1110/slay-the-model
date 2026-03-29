@@ -129,17 +129,16 @@ class Darkling(Enemy):
         self._consecutive_harden = 0
 
     def on_damage_taken(self, damage: int, source=None, card=None,
-                        damage_type: str = "direct") -> List:
+                        damage_type: str = "direct"):
         """Check if HP reaches 0 to start regrowing."""
-        actions = super().on_damage_taken(
+        super().on_damage_taken(
             damage, source=source, card=card, damage_type=damage_type
         )
         if self.hp <= 0:
             self.hp = 0
             self._is_regrowing = True
             self.current_intention = self.intentions["Regrowing..."]
-        return actions
-
+        return
     def is_dead(self) -> bool:
         """Darkling only dies when no other linked enemy is alive."""
         if self.hp > 0:
@@ -158,14 +157,13 @@ class Darkling(Enemy):
                 return False
         return True
 
-    def execute_intention(self) -> List:
+    def execute_intention(self):
         """Execute current intention."""
         if self.current_intention is None:
-            return []
-
+            return
         # If regrowing and about to reincarnate
         if self._is_regrowing and self.current_intention.name == "Reincarnate":
-            actions = self.current_intention.execute()
-            return actions
-
-        return super().execute_intention()
+            self.current_intention.execute()
+            return
+        super().execute_intention()
+        return

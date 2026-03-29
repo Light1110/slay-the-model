@@ -11,5 +11,5 @@ def test_add_enemy_action_accepts_enemy_class_and_spawns_instance():
     action = AddEnemyAction(TorchHead)
     result = action.execute()
 
-    assert result is not None
+    assert result is None
     assert any(isinstance(enemy, TorchHead) for enemy in combat.enemies)

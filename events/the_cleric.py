@@ -5,7 +5,7 @@ Event 2 - The Cleric
 [Purify] Lose 50 (75 on A15+) Gold. Remove a card from your deck.
 [Leave] Nothing happens.
 """
-from utils.result_types import BaseResult
+from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
 from events.base_event import Event
 from actions.card import ChooseRemoveCardAction
 from actions.display import InputRequestAction, DisplayTextAction
@@ -24,9 +24,8 @@ from utils.option import Option
 class TheClericEvent(Event):
     """The Cleric - Heal or remove card for gold"""
     
-    def trigger(self) -> 'BaseResult':
+    def trigger(self) -> None:
         """Trigger clerics encounter event"""
-        from utils.result_types import MultipleActionsResult
         from engine.game_state import game_state
         
         # Collect all actions
@@ -76,4 +75,4 @@ class TheClericEvent(Event):
             options=options
         ))
 
-        return MultipleActionsResult(actions)
+        add_actions(actions)

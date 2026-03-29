@@ -103,19 +103,20 @@ def _bind(*value_getters: Callable[[Callable, GameMessage], object]) -> Binder:
 
 def _bind_with_previous_hp(*value_getters: Callable[[Callable, GameMessage], object]) -> Binder:
     def binder(bound_method: Callable, message: GameMessage):
-        current_hp = getattr(message.target, "hp", None)
+        target = getattr(message, "target", None)
+        current_hp = getattr(target, "hp", None)
         previous_hp = getattr(message, "previous_hp", None)
 
         def call():
             return bound_method(*(getter(bound_method, message) for getter in value_getters))
 
-        if previous_hp is None or current_hp is None:
+        if target is None or previous_hp is None or current_hp is None:
             return call()
-        message.target.hp = previous_hp
+        target.hp = previous_hp
         try:
             return call()
         finally:
-            message.target.hp = current_hp
+            target.hp = current_hp
 
     return binder
 
@@ -142,12 +143,13 @@ def _subscriber(bound_method: Callable):
 
 
 def _target_has_subscriber_power(bound_method: Callable, message: GameMessage) -> bool:
-    powers = getattr(message.target, "powers", None) or []
+    target = getattr(message, "target", None)
+    powers = getattr(target, "powers", None) or []
     return any(power is _subscriber(bound_method) for power in powers)
 
 
 def _subscriber_is_target(bound_method: Callable, message: GameMessage) -> bool:
-    return _subscriber(bound_method) is message.target
+    return _subscriber(bound_method) is getattr(message, "target", None)
 
 
 def _subscriber_is_source_or_card(bound_method: Callable, message: GameMessage) -> bool:
@@ -167,11 +169,12 @@ def _player_entity(_bound_method: Callable, _message: GameMessage):
 
 
 def _damage_took_player(_bound_method: Callable, message: GameMessage):
-    return message.target
+    return getattr(message, "target", None)
 
 
 def _fatal_target_is_dead(_bound_method: Callable, message: GameMessage) -> bool:
-    return getattr(message.target, "is_dead", lambda: False)()
+    target = getattr(message, "target", None)
+    return bool(getattr(target, "is_dead", lambda: False)())
 
 
 _VARIANT = lambda names, binder, predicate=_ALWAYS: ContractVariant(tuple(names), binder, predicate)
@@ -481,6 +484,8 @@ def invoke_subscription_contract(bound_method: Callable, message: GameMessage, m
     if contract is None:
         return None
     resolved_method_name = method_name or getattr(bound_method, "__name__", None)
+    if resolved_method_name is None:
+        return None
     param_names = validate_bound_subscription(bound_method, type(message), resolved_method_name)
     for variant in contract.variants_for(resolved_method_name):
         if variant.param_names != param_names:

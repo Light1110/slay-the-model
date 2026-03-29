@@ -1,4 +1,5 @@
 import pytest
+from typing import cast
 
 from entities.creature import Creature
 
@@ -39,4 +40,4 @@ def test_take_damage_list_input_raises_instead_of_silent_coercion():
     creature = Creature(max_hp=20)
 
     with pytest.raises(TypeError, match="take_damage expects int, got list"):
-        creature.take_damage([3])
+        creature.take_damage([3])  # pyright: ignore[reportArgumentType]

@@ -1,4 +1,5 @@
 """Shelled Parasite specific intentions."""
+from engine.runtime_api import add_action, add_actions
 
 import random
 from typing import List, TYPE_CHECKING
@@ -18,14 +19,13 @@ class DoubleStrikeIntention(Intention):
         self.base_damage = 6
         self.hits = 2
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Double Strike: deals 6x2 damage to player."""
         from actions.combat import AttackAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
+            return
         actions = []
         for _ in range(self.hits):
             actions.append(
@@ -36,9 +36,8 @@ class DoubleStrikeIntention(Intention):
                     damage_type="attack",
                 )
             )
-        return actions
-
-
+        from engine.game_state import game_state
+        add_actions(actions)
 class LifeSuckIntention(Intention):
     """Life Suck - Deals 10 damage, heals equal to unblocked damage (12 on A3+)."""
     
@@ -46,18 +45,19 @@ class LifeSuckIntention(Intention):
         super().__init__("life_suck", enemy)
         self.base_damage = 10
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Life Suck: deals damage, healing handled by on_damage_dealt callback."""
         from actions.combat import AttackAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
+            return
         # Set flag so on_damage_dealt will create HealAction
         self.enemy.pending_life_suck_heal = True
         
-        return [
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -65,6 +65,7 @@ class LifeSuckIntention(Intention):
                 damage_type="attack",
             )
         ]
+        )
 
 
 class FeltIntention(Intention):
@@ -75,15 +76,16 @@ class FeltIntention(Intention):
         self.base_damage = 18
         self.frail_stacks = 2
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Felt: deals damage and applies Frail."""
         from actions.combat import AttackAction, ApplyPowerAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -97,6 +99,7 @@ class FeltIntention(Intention):
                 duration=1
             )
         ]
+        )
 
 
 class StunnedIntention(Intention):
@@ -105,6 +108,5 @@ class StunnedIntention(Intention):
     def __init__(self, enemy: 'Enemy'):
         super().__init__("stunned", enemy)
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Stunned: does nothing."""
-        return []

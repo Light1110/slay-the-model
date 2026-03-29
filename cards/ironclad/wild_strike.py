@@ -1,6 +1,7 @@
 """
 Ironclad Common Attack card - Wild Strike
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -23,14 +24,19 @@ class WildStrike(Card):
 
     upgrade_damage = 17
 
-    def on_play(self, targets: List[Creature] = []) -> List[Action]:
+    def on_play(self, targets: List[Creature] = []):
         target = targets[0] if targets else None
         from engine.game_state import game_state
 
-        actions = super().on_play(targets)
+        super().on_play(targets)
 
+        actions = []
         # Add Wound status card to draw pile
         from cards.colorless.wound import Wound
         actions.append(AddCardAction(card=Wound(), dest_pile="draw_pile"))
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

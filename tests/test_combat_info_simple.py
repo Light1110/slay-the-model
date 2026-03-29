@@ -2,6 +2,7 @@
 Test P2-2 combat info display.
 """
 import types
+from typing import Any, cast
 
 
 def test_combat_snapshot_uses_runtime_event_layer(monkeypatch):
@@ -56,9 +57,9 @@ def test_combat_snapshot_uses_runtime_event_layer(monkeypatch):
         player.powers = [DummyPower()]
         enemy = DummyCreature("Enemy")
         enemy.powers = [DummyPower()]
-        game_state.player = player
+        cast(Any, game_state).player = player
         game_state.current_combat = Combat(enemies=[enemy])
-        game_state.config = types.SimpleNamespace(mode="debug", debug={"print": False})
+        cast(Any, game_state).config = types.SimpleNamespace(mode="debug", debug={"print": False})
         drain_runtime_events()
 
         game_state.current_combat._print_combat_state()

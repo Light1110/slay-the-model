@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+from typing import Any, cast
 
 from actions.base import LambdaAction
 from actions.display import InputRequestAction
@@ -7,7 +8,7 @@ from engine.input_protocol import InputRequest, InputSubmission
 from engine.runtime_context import RuntimeContext
 from localization import LocalStr
 from utils.option import Option
-from utils.result_types import NoneResult
+from utils.result_types import GameTerminalState
 
 
 def test_runtime_context_builds_message_participants_including_hand():
@@ -46,7 +47,7 @@ def test_game_state_resolve_input_request_delegates_to_runtime_context():
             seen_requests.append(request)
             return expected
 
-    gs.runtime_context = StubRuntimeContext()
+    cast(Any, gs).runtime_context = StubRuntimeContext()
     request = InputRequest(
         options=[Option(name=LocalStr("ui.menu_return", default="Return"), actions=[])],
         max_select=1,
@@ -110,9 +111,27 @@ def test_drive_actions_resolves_input_request_in_debug_mode():
 
     result = game_state.drive_actions()
 
-    assert isinstance(result, NoneResult)
+    assert result is None
     assert executed == ["picked"]
     assert game_state.action_queue.is_empty()
+
+
+def test_drive_actions_returns_terminal_state():
+    gs = GameState()
+    expected = GameTerminalState.GAME_EXIT
+
+    gs.set_terminal_state(expected)
+
+    assert gs.drive_actions() is expected
+
+
+def test_drive_actions_returns_none_when_queue_drains_without_terminal_state():
+    gs = GameState()
+    executed = []
+    gs.action_queue.add_action(LambdaAction(lambda: executed.append("ran")))
+
+    assert gs.drive_actions() is None
+    assert executed == ["ran"]
 
 
 def test_parse_selection_input_override_can_return_none(monkeypatch):

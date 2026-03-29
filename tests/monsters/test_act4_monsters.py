@@ -189,9 +189,11 @@ class TestCorruptHeart(unittest.TestCase):
     
     def test_debilitate_actions(self):
         """Test Debilitate applies 3 debuffs and adds 5 status cards."""
+        from engine.game_state import game_state
         heart = CorruptHeart()
-        actions = heart.intentions["Debilitate"].execute()
-        self.assertEqual(len(actions), 8)
+        game_state.action_queue.clear()
+        heart.intentions["Debilitate"].execute()
+        self.assertEqual(len(game_state.action_queue.queue), 8)
 
     def test_buff_intention_type(self):
         """Test Buff intention class remains correct."""

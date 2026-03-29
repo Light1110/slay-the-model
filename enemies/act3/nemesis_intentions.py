@@ -1,4 +1,5 @@
 """Nemesis elite enemy intentions."""
+from engine.runtime_api import add_action, add_actions
 
 import random
 from typing import List
@@ -16,7 +17,7 @@ class TriAttack(Intention):
         super().__init__("Tri Attack", enemy)
         self.base_damage = 6
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute tri attack - 3 hits."""
         from engine.game_state import game_state
         
@@ -29,9 +30,8 @@ class TriAttack(Intention):
                 source=self.enemy,
                 damage_type="attack"
             ))
-        return actions
-
-
+        from engine.game_state import game_state
+        add_actions(actions)
 class TriBurn(Intention):
     """Tri Burn - Adds 3 Burns to discard pile (4 A17+)."""
     
@@ -39,7 +39,7 @@ class TriBurn(Intention):
         super().__init__("Tri Burn", enemy)
         self.base_amount = 3
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Add Burns to player's discard pile."""
         from engine.game_state import game_state
         
@@ -50,9 +50,8 @@ class TriBurn(Intention):
                 target=game_state.player,
                 dest_pile="discard_pile"
             ))
-        return actions
-
-
+        from engine.game_state import game_state
+        add_actions(actions)
 class Scythe(Intention):
     """Scythe - Deals 45 damage."""
     
@@ -60,14 +59,17 @@ class Scythe(Intention):
         super().__init__("Scythe", enemy)
         self.base_damage = 45
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute scythe attack."""
         from engine.game_state import game_state
         
         damage = self.base_damage + self.enemy.strength
-        return [AttackAction(
+        from engine.game_state import game_state
+        add_actions(
+        [AttackAction(
             damage=damage,
             target=game_state.player,
             source=self.enemy,
             damage_type="attack"
         )]
+        )

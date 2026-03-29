@@ -2,6 +2,7 @@
 Mayhem power for combat effects.
 Play top card of draw pile at start of turn.
 """
+from engine.runtime_api import add_action, add_actions
 from typing import List
 from actions.base import Action
 from actions.combat import PlayCardAction
@@ -26,7 +27,7 @@ class MayhemPower(Power):
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
 
-    def on_turn_start(self) -> List[Action]:
+    def on_turn_start(self):
         """Play top card of draw pile at start of turn."""
         from engine.game_state import game_state
 
@@ -35,6 +36,7 @@ class MayhemPower(Power):
             draw_cards = list(game_state.player.card_manager.get_pile("draw_pile"))
             if draw_cards:
                 top_card = draw_cards[0]  # ? First card is top
-                return [PlayCardAction(card=top_card, is_auto=True, ignore_energy=True)]
-
-        return []
+                from engine.game_state import game_state
+                add_actions([PlayCardAction(card=top_card, is_auto=True, ignore_energy=True)])
+                return
+        return

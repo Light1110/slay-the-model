@@ -1,4 +1,5 @@
 """Centurion specific intentions."""
+from engine.runtime_api import add_action, add_actions
 
 import random
 from typing import List, TYPE_CHECKING
@@ -17,15 +18,16 @@ class SlashIntention(Intention):
         super().__init__("slash", enemy)
         self.base_damage = 12
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Slash: deals damage to player."""
         from actions.combat import AttackAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -33,6 +35,7 @@ class SlashIntention(Intention):
                 damage_type="attack",
             )
         ]
+        )
 
 
 class ProtectIntention(Intention):
@@ -42,7 +45,7 @@ class ProtectIntention(Intention):
         super().__init__("protect", enemy)
         self.base_block = 15
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Protect: gives Block to Mystic or self."""
         from actions.combat import GainBlockAction
         from engine.game_state import game_state
@@ -51,12 +54,12 @@ class ProtectIntention(Intention):
         if game_state and game_state.combat:
             for enemy in game_state.combat.enemies:
                 if enemy.__class__.__name__ == 'Mystic' and enemy.is_alive:
-                    return [GainBlockAction(block=self.base_block, target=enemy)]
-        
+                    from engine.game_state import game_state
+                    add_actions([GainBlockAction(block=self.base_block, target=enemy)])
+                    return
         # If alone or no Mystic, give block to self
-        return [GainBlockAction(block=self.base_block, target=self.enemy)]
-
-
+        from engine.game_state import game_state
+        add_actions([GainBlockAction(block=self.base_block, target=self.enemy)])
 class FuryIntention(Intention):
     """Fury - Deals 6x3 damage (7x3 on A3+)."""
     
@@ -65,14 +68,13 @@ class FuryIntention(Intention):
         self.base_damage = 6
         self.hits = 3
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Fury: deals 6x3 damage to player."""
         from actions.combat import AttackAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
+            return
         actions = []
         for _ in range(self.hits):
             actions.append(
@@ -83,4 +85,5 @@ class FuryIntention(Intention):
                     damage_type="attack",
                 )
             )
-        return actions
+        from engine.game_state import game_state
+        add_actions(actions)

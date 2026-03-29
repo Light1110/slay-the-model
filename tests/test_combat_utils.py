@@ -39,7 +39,7 @@ class CombatTestHelper:
         self.game_state.player.relics = []
         self.game_state.player.powers = []
         
-    def create_player(self, hp: int = 80, max_hp: int = 80, energy: int = 3, max_energy: int = None) -> Player:
+    def create_player(self, hp: int = 80, max_hp: int = 80, energy: int = 3, max_energy: Optional[int] = None) -> Player:
         """Create a fresh player with specified stats."""
         self._reset_game_state()
         player = self.game_state.player
@@ -155,7 +155,7 @@ class CombatTestHelper:
             # X-cost cards use all available energy
             cost = player.energy
             # Store the X-cost value on the card for on_play() to use
-            card._x_cost_energy = cost
+            setattr(card, "_x_cost_energy", cost)
         elif cost > player.energy:
             print(f"Not enough energy: need {cost}, have {player.energy}")
             return False
@@ -180,10 +180,8 @@ class CombatTestHelper:
                     target = combat.enemies[0]
             elif card.target_type == TargetType.ENEMY_ALL:
                 # For ENEMY_ALL, pass all enemies as targets
-                result = card.on_play(combat.enemies)
-                # Handle result - recursively execute actions and nested results
-                if result:
-                    self._execute_actions_recursive(result)
+                card.on_play(combat.enemies)
+                self.game_state.drive_actions()
                 # Move to discard or exhaust pile
                 if card.exhaust:
                     player.card_manager.piles['exhaust_pile'].append(card)
@@ -191,11 +189,8 @@ class CombatTestHelper:
                     player.card_manager.piles['discard_pile'].append(card)
                 return True
                 
-        result = card.on_play([target] if target else [])
-        
-        # Handle result - recursively execute actions and nested results
-        if result:
-            self._execute_actions_recursive(result)
+        card.on_play([target] if target else [])
+        self.game_state.drive_actions()
                     
         # Only place the card if on_play actions did not already move it.
         if player.card_manager.get_card_location(card) is None:
@@ -207,30 +202,14 @@ class CombatTestHelper:
         return True
     
     def _execute_actions_recursive(self, actions):
-        """Recursively execute actions and process their nested results."""
-        from utils.result_types import SingleActionResult, MultipleActionsResult
-        
+        """Execute actions and drain the global queue after each step."""
         for action in actions:
             if action is None:
                 continue
             
-            # Execute the action
-            result = action.execute() if hasattr(action, 'execute') else None
-            
-            # Process returned results recursively
-            if result:
-                if isinstance(result, SingleActionResult):
-                    # SingleActionResult contains one nested action
-                    self._execute_actions_recursive([result.action])
-                elif isinstance(result, MultipleActionsResult):
-                    # MultipleActionsResult contains multiple nested actions
-                    self._execute_actions_recursive(result.actions)
-                elif isinstance(result, list):
-                    # List of actions
-                    self._execute_actions_recursive(result)
-                elif hasattr(result, 'execute'):
-                    # Result is itself an executable action
-                    self._execute_actions_recursive([result])
+            if hasattr(action, 'execute'):
+                action.execute()
+                self.game_state.drive_actions()
     
     def end_player_turn(self) -> None:
         """End the player's turn and process enemy actions."""

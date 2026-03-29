@@ -1,4 +1,5 @@
 """Snecko specific intentions."""
+from engine.runtime_api import add_action, add_actions
 
 import random
 from typing import List, TYPE_CHECKING
@@ -16,15 +17,16 @@ class PerplexingGlareIntention(Intention):
     def __init__(self, enemy: 'Enemy'):
         super().__init__("perplexing_glare", enemy)
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Perplexing Glare: applies Confused to player."""
         from actions.combat import ApplyPowerAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             ApplyPowerAction(
                 power="confused",
                 target=game_state.player,
@@ -32,6 +34,7 @@ class PerplexingGlareIntention(Intention):
                 duration=1
             )
         ]
+        )
 
 
 class BiteIntention(Intention):
@@ -41,15 +44,16 @@ class BiteIntention(Intention):
         super().__init__("bite", enemy)
         self.base_damage = 15
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Bite: deals damage to player."""
         from actions.combat import AttackAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -57,6 +61,7 @@ class BiteIntention(Intention):
                 damage_type="attack",
             )
         ]
+        )
 
 
 class TailWhipIntention(Intention):
@@ -67,15 +72,16 @@ class TailWhipIntention(Intention):
         self.base_damage = 8
         self.vulnerable_stacks = 2
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Tail Whip: deals damage and applies Vulnerable."""
         from actions.combat import AttackAction, ApplyPowerAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -89,3 +95,4 @@ class TailWhipIntention(Intention):
                 duration=1
             )
         ]
+        )

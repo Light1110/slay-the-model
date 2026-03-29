@@ -1,6 +1,7 @@
 """
 Colorless Uncommon Skill card - Trip
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -26,12 +27,13 @@ class Trip(Card):
 
     upgrade_magic = {"vulnerable": 2}
 
-    def on_play(self, targets: List[Creature] = []) -> List[Action]:
+    def on_play(self, targets: List[Creature] = []):
         target = targets[0] if targets else None
         from engine.game_state import game_state
 
-        actions = super().on_play(targets)
+        super().on_play(targets)
 
+        actions = []
         # Apply Vulnerable to target(s)
         vuln_amount = self.get_magic_value("vulnerable")
 
@@ -51,4 +53,8 @@ class Trip(Card):
                     target
                 ))
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

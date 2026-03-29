@@ -1,4 +1,5 @@
 """Reptomancer enemy intentions for Slay the Model."""
+from engine.runtime_api import add_action, add_actions
 
 import random
 from typing import List
@@ -15,18 +16,20 @@ class SpawnDaggerIntention(Intention):
     def __init__(self, enemy):
         super().__init__("Spawn Dagger", enemy)
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute Spawn Dagger intention."""
         from engine.game_state import game_state
+        combat = game_state.current_combat
+        if combat is None:
+            return
         
         # Maximum 4 Daggers can be in play
-        dagger_count = sum(1 for e in game_state.current_combat.enemies if isinstance(e, Dagger))
+        dagger_count = sum(1 for e in combat.enemies if isinstance(e, Dagger))
         
         if dagger_count < 4:
-            return [AddEnemyAction(Dagger())]
-        return []
-
-
+            from engine.game_state import game_state
+            add_actions([AddEnemyAction(Dagger())])
+            return
 class BigBiteIntention(Intention):
     """Reptomancer Big Bite intention - 30 damage."""
     
@@ -34,16 +37,19 @@ class BigBiteIntention(Intention):
         super().__init__("Big Bite", enemy)
         self.base_damage = 30
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute Big Bite intention."""
         from engine.game_state import game_state
         
-        return [AttackAction(
+        from engine.game_state import game_state
+        add_actions(
+        [AttackAction(
             self.enemy.calculate_damage(self.base_damage),
             game_state.player,
             self.enemy,
             "attack"
         )]
+        )
 
 
 class SnakeStrikeIntention(Intention):
@@ -54,7 +60,7 @@ class SnakeStrikeIntention(Intention):
         self.base_damage = 13  # A17+ only
         self.base_times = 2
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute Snake Strike intention."""
         from engine.game_state import game_state
         
@@ -67,4 +73,5 @@ class SnakeStrikeIntention(Intention):
                 "attack"
             ))
         actions.append(ApplyPowerAction(WeakPower(amount=1, owner=game_state.player), game_state.player))
-        return actions
+        from engine.game_state import game_state
+        add_actions(actions)

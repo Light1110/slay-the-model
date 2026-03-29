@@ -1,4 +1,5 @@
 """Snake Plant specific intentions."""
+from engine.runtime_api import add_action, add_actions
 
 import random
 from typing import List, TYPE_CHECKING
@@ -18,14 +19,13 @@ class ChompChompIntention(Intention):
         self.base_damage = 7
         self.hits = 3
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Chomp Chomp: deals 7x3 damage to player."""
         from actions.combat import AttackAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
+            return
         actions = []
         for _ in range(self.hits):
             actions.append(
@@ -36,9 +36,8 @@ class ChompChompIntention(Intention):
                     damage_type="attack",
                 )
             )
-        return actions
-
-
+        from engine.game_state import game_state
+        add_actions(actions)
 class EnfeeblingSporesIntention(Intention):
     """Enfeebling Spores - Applies 2 Frail and 2 Weak."""
     
@@ -47,15 +46,16 @@ class EnfeeblingSporesIntention(Intention):
         self.frail_stacks = 2
         self.weak_stacks = 2
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Enfeebling Spores: applies Frail and Weak."""
         from actions.combat import ApplyPowerAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             ApplyPowerAction(
                 power="frail",
                 target=game_state.player,
@@ -69,3 +69,4 @@ class EnfeeblingSporesIntention(Intention):
                 duration=1
             )
         ]
+        )

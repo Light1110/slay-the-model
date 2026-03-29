@@ -10,8 +10,9 @@ def test_constricted_power_loses_hp_on_turn_end():
     power = ConstrictedPower(amount=10, owner=player)
     player.add_power(power)
 
-    for action in power.on_turn_end():
-        action.execute()
+    game_state.action_queue.clear()
+    power.on_turn_end()
+    game_state.execute_all_actions()
 
     assert player.hp == 30
 

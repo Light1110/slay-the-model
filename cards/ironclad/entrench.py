@@ -1,6 +1,7 @@
 """
 Ironclad Uncommon Skill card - Entrench
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -22,14 +23,19 @@ class Entrench(Card):
 
     upgrade_cost = 0
 
-    def on_play(self, targets: List[Creature] = []) -> List[Action]:
+    def on_play(self, targets: List[Creature] = []):
         target = targets[0] if targets else None
         from engine.game_state import game_state
 
-        actions = super().on_play(targets)
+        super().on_play(targets)
 
+        actions = []
         # Double current block
         current_block = game_state.player.block
         actions.append(GainBlockAction(block=current_block, target=game_state.player))
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

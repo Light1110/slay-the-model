@@ -1,6 +1,7 @@
 """
 Colorless Curse card - Pain
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -21,10 +22,12 @@ class Pain(Card):
     base_magic = {"damage_on_card_play": 1}
     upgradeable = False
 
-    def on_card_play(self, card, player, entities) -> List[Action]:
+    def on_card_play(self, card, player, entities):
         """Lose 1 HP when other cards are played"""
         # Only trigger when OTHER cards are played (not itself)
         if card is not self:
             damage_amount = self.get_magic_value("damage_on_card_play")
-            return [LoseHPAction(amount=damage_amount)]
-        return []
+            from engine.game_state import game_state
+            add_actions([LoseHPAction(amount=damage_amount)])
+            return
+        return

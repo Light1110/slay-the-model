@@ -1,4 +1,5 @@
 """Spire Spear Elite intentions for Act 4."""
+from engine.runtime_api import add_action, add_actions
 
 import random
 from typing import List
@@ -18,7 +19,7 @@ class BurnStrike(Intention):
     def __init__(self, enemy):
         super().__init__("Burn Strike", enemy)
 
-    def execute(self) -> List[Action]:
+    def execute(self):
         from engine.game_state import game_state
 
         damage, hits, burn_pile = random.choice(
@@ -45,9 +46,9 @@ class BurnStrike(Intention):
                     position=PilePosType.TOP,
                 )
             )
-        return actions
-
-
+        from engine.game_state import game_state
+        add_actions(actions)
+        return
 class Skewer(Intention):
     """Deal 10 damage 3 times."""
 
@@ -56,7 +57,7 @@ class Skewer(Intention):
         self.base_damage = 10
         self.hits = 3
 
-    def execute(self) -> List[Action]:
+    def execute(self):
         from engine.game_state import game_state
 
         actions = []
@@ -69,9 +70,9 @@ class Skewer(Intention):
                     damage_type="attack",
                 )
             )
-        return actions
-
-
+        from engine.game_state import game_state
+        add_actions(actions)
+        return
 class Piercer(Intention):
     """Deal 10x4 and sometimes grant all enemies +2 Strength."""
 
@@ -80,7 +81,7 @@ class Piercer(Intention):
         self.base_damage = 10
         self.hits = 4
 
-    def execute(self) -> List[Action]:
+    def execute(self):
         from engine.game_state import game_state
 
         actions = []
@@ -107,4 +108,8 @@ class Piercer(Intention):
                             )
                         )
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

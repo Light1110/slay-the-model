@@ -1,4 +1,5 @@
 """Bronze Automaton intentions."""
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from enemies.intention import Intention
@@ -16,7 +17,7 @@ class SpawnOrbs(Intention):
     def __init__(self, enemy):
         super().__init__("Spawn Orbs", enemy)
 
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Summon 2 Bronze Orb minions."""
         from enemies.act2.bronze_orb import BronzeOrb
         actions = []
@@ -24,9 +25,8 @@ class SpawnOrbs(Intention):
         for _ in range(2):
             orb = BronzeOrb()
             actions.append(AddEnemyAction(orb))
-        return actions
-
-
+        from engine.game_state import game_state
+        add_actions(actions)
 class Flail(Intention):
     """Deal 7x2 damage."""
 
@@ -35,7 +35,7 @@ class Flail(Intention):
         self.base_damage = 7
         self.hits = 2
 
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Deal damage to player twice."""
         from engine.game_state import game_state
         actions = []
@@ -43,9 +43,8 @@ class Flail(Intention):
             actions.append(
                 AttackAction(self.base_damage, game_state.player, self.enemy, "attack")
             )
-        return actions
-
-
+        from engine.game_state import game_state
+        add_actions(actions)
 class Boost(Intention):
     """Gain 3 Strength and 9 Block (4 Strength A17+)."""
 
@@ -54,7 +53,7 @@ class Boost(Intention):
         self.base_block = 9
         self.base_strength_gain = 3
 
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Gain strength and block."""
         from engine.game_state import game_state
         actions = []
@@ -65,9 +64,8 @@ class Boost(Intention):
         )
         # Gain Block
         actions.append(GainBlockAction(self.base_block, self.enemy))
-        return actions
-
-
+        from engine.game_state import game_state
+        add_actions(actions)
 class HyperBeam(Intention):
     """Deal 45 damage (54 A17+)."""
 
@@ -75,18 +73,16 @@ class HyperBeam(Intention):
         super().__init__("Hyper Beam", enemy)
         self.base_damage = 45
 
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Deal heavy damage to player."""
         from engine.game_state import game_state
-        return [AttackAction(self.base_damage, game_state.player, self.enemy, "attack")]
-
-
+        from engine.game_state import game_state
+        add_actions([AttackAction(self.base_damage, game_state.player, self.enemy, "attack")])
 class Stunned(Intention):
     """Does nothing (Stunned turn)."""
 
     def __init__(self, enemy):
         super().__init__("Stunned", enemy)
 
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Do nothing."""
-        return []

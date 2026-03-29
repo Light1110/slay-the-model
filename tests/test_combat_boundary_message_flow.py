@@ -3,6 +3,7 @@ from cards.ironclad.strike import Strike
 from relics.character.ironclad import BurningBlood
 from relics.global_relics.common import Anchor, BagOfPreparation
 from tests.test_combat_utils import create_test_helper
+from utils.result_types import GameTerminalState
 
 
 def _capture_published_message_types(game_state, monkeypatch):
@@ -75,6 +76,6 @@ def test_check_combat_end_publishes_combat_ended_message(monkeypatch):
 
     result = combat._check_combat_end()
 
-    assert result.state == "COMBAT_WIN"
+    assert result == GameTerminalState.COMBAT_WIN
     assert "CombatEndedMessage" in published
     assert player.hp == initial_hp + 6

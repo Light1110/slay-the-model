@@ -2,6 +2,7 @@
 Fungi Beast - Common enemy
 Gains strength over time. Applies Vulnerable on death.
 """
+from engine.runtime_api import add_action, add_actions
 import random
 from typing import List, TYPE_CHECKING
 from enemies.base import Enemy
@@ -69,14 +70,15 @@ class FungiBeast(Enemy):
         else:
             return self.intentions["grow"]
     
-    def on_death(self) -> List['Action']:
+    def on_death(self) -> None:
         """Apply Spore Cloud on death: applies 2 Vulnerable to player."""
         from actions.combat import ApplyPowerAction
         from powers.definitions.vulnerable import VulnerablePower
         from engine.game_state import game_state
         
-        actions = super().on_death()
+        super().on_death()
         
+        actions = []
         if game_state and game_state.player:
             actions.append(
                 ApplyPowerAction(
@@ -85,4 +87,7 @@ class FungiBeast(Enemy):
                 )
             )
         
-        return actions
+        from engine.game_state import game_state
+        
+        add_actions(actions)
+        

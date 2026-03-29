@@ -1,4 +1,5 @@
 """Louse (Red and Green) specific intentions."""
+from engine.runtime_api import add_action, add_actions
 
 import random
 from typing import List, TYPE_CHECKING
@@ -17,15 +18,16 @@ class LouseBiteIntention(Intention):
         super().__init__("bite", enemy)
         self.base_damage = damage  # Set at combat start
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Bite: deals damage to player."""
         from actions.combat import AttackAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -33,6 +35,7 @@ class LouseBiteIntention(Intention):
                 damage_type="attack",
             )
         ]
+        )
 
 
 class RedLouseGrowIntention(Intention):
@@ -42,11 +45,13 @@ class RedLouseGrowIntention(Intention):
         super().__init__("grow", enemy)
         self.base_strength_gain = 3
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Grow: gains Strength."""
         from actions.combat import ApplyPowerAction
         
-        return [
+        from engine.game_state import game_state
+        add_actions(
+        [
             ApplyPowerAction(
                 power="strength",
                 target=self.enemy,
@@ -54,6 +59,7 @@ class RedLouseGrowIntention(Intention):
                 duration=-1
             )
         ]
+        )
 
 
 class GreenLouseSpitWebIntention(Intention):
@@ -62,15 +68,16 @@ class GreenLouseSpitWebIntention(Intention):
     def __init__(self, enemy: 'Enemy'):
         super().__init__("spit_web", enemy)
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Spit Web: applies 2 Weak to player."""
         from actions.combat import ApplyPowerAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             ApplyPowerAction(
                 power="Weak",
                 target=game_state.player,
@@ -78,3 +85,4 @@ class GreenLouseSpitWebIntention(Intention):
                 duration=2
             )
         ]
+        )

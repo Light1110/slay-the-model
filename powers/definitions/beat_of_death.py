@@ -2,6 +2,7 @@
 Beat of Death power for Corrupt Heart boss.
 Deals damage to player whenever they play a card.
 """
+from engine.runtime_api import add_action, add_actions
 from typing import List
 
 from actions.base import Action
@@ -27,11 +28,13 @@ class BeatOfDeathPower(Power):
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
 
-    def on_card_play(self, card, player, entities) -> List[Action]:
+    def on_card_play(self, card, player, entities):
         """Deal damage to player when they play a card."""
         if player is None or self.owner is None:
-            return []
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             DealDamageAction(
                 damage=self.amount,
                 target=player,
@@ -39,3 +42,5 @@ class BeatOfDeathPower(Power):
                 damage_type="direct",
             )
         ]
+        )
+        return

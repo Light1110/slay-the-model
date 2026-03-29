@@ -1,17 +1,18 @@
 """
 Miscellaneous actions (room, shop, treasure).
 """
+from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
 import random
 from typing import Optional
 from actions.base import Action, LambdaAction
 from actions.card import AddCardAction
 from actions.display import InputRequestAction
 from actions.reward import AddRelicAction, AddGoldAction, AddRandomPotionAction, AddRelicByNameAction
-from utils.result_types import BaseResult, GameStateResult, MultipleActionsResult, NoneResult, SingleActionResult
 from localization import LocalStr, t
 from utils.option import Option
 from utils.random import get_random_relic
 from utils.registry import register
+from utils.result_types import GameTerminalState
 from utils.types import RarityType
 from tui.print_utils import tui_print
 
@@ -57,7 +58,7 @@ class LeaveRoomAction(Action):
     def __init__(self, room=None):
         self.room = room
 
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         """Leave a room and return to map state"""
         from engine.game_state import game_state
 
@@ -66,7 +67,6 @@ class LeaveRoomAction(Action):
         if target_room:
             target_room.should_leave = True
 
-        return NoneResult()
     
 @register("action")
 class EscapeAction(Action):
@@ -81,9 +81,11 @@ class EscapeAction(Action):
     def __init__(self):
         pass
 
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         """Escape from combat and return to map state"""
-        return GameStateResult(state="COMBAT_ESCAPE")
+        from engine.game_state import game_state
+
+        set_terminal_state(GameTerminalState.COMBAT_ESCAPE)
 
 # ============================================================================
 # Shop Actions
@@ -97,16 +99,15 @@ class BuyItemAction(Action):
         self.shop_item = shop_item
         self.item_idx = item_idx
 
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         gold_spent = 0
         from engine.game_state import game_state
         from actions.card import ChooseRemoveCardAction
         from tui.print_utils import tui_print
         from localization import t
-        from utils.result_types import BaseResult
 
         if not game_state:
-            return NoneResult()
+            return
 
         player = getattr(game_state, "player", None)
         player_gold = getattr(player, "gold", 0)
@@ -119,27 +120,23 @@ class BuyItemAction(Action):
             gold_spent = final_price
             game_state.player.gold -= final_price
 
-            if hasattr(game_state, 'current_room') and hasattr(game_state.current_room, 'card_removal_used'):
-                game_state.current_room.card_removal_used = True
+            room = getattr(game_state, "current_room", None)
+            if room is not None and hasattr(room, "card_removal_used"):
+                room.card_removal_used = True
                 if not _has_relic("SmilingMask", game_state):
-                    if hasattr(game_state.current_room, 'card_removal_price'):
-                        game_state.current_room.card_removal_price += 25
+                    if hasattr(room, "card_removal_price"):
+                        room.card_removal_price += 25
 
             tui_print(t("ui.shop_removed_card", default="Removed a card from deck"))
 
             if _has_relic("MawBank", game_state):
                 game_state.gold_spent_in_shop = getattr(game_state, "gold_spent_in_shop", 0) + gold_spent
 
-            actions = []
-            remove_result = ChooseRemoveCardAction(pile='deck').execute()
-            if isinstance(remove_result, SingleActionResult):
-                actions.append(remove_result.action)
-            elif isinstance(remove_result, MultipleActionsResult):
-                actions.extend(remove_result.actions)
+            ChooseRemoveCardAction(pile='deck').execute()
             follow_up = self._build_follow_up_menu(game_state)
             if follow_up:
-                actions.append(follow_up)
-            return MultipleActionsResult(actions) if actions else NoneResult()
+                add_action(follow_up)
+            return
 
         ascension = getattr(game_state, "ascension_level", 0) if game_state else 0
         if not isinstance(ascension, (int, float)):
@@ -150,25 +147,12 @@ class BuyItemAction(Action):
         gold_spent = final_price
         game_state.player.gold -= final_price
 
-        actions = []
         if self.shop_item.item_type == "card":
-            add_result = AddCardAction(card=self.shop_item.item, dest_pile="deck", source="shop").execute()
-            if isinstance(add_result, SingleActionResult):
-                actions.append(add_result.action)
-            elif isinstance(add_result, MultipleActionsResult):
-                actions.extend(add_result.actions)
+            AddCardAction(card=self.shop_item.item, dest_pile="deck", source="shop").execute()
         elif self.shop_item.item_type == "relic":
-            relic_result = AddRelicByNameAction(relic_id=self.shop_item.item.idstr).execute()
-            if isinstance(relic_result, SingleActionResult):
-                actions.append(relic_result.action)
-            elif isinstance(relic_result, MultipleActionsResult):
-                actions.extend(relic_result.actions)
+            AddRelicByNameAction(relic_id=self.shop_item.item.idstr).execute()
         elif self.shop_item.item_type == "potion":
-            potion_result = AddRandomPotionAction(character=game_state.player.character).execute()
-            if isinstance(potion_result, SingleActionResult):
-                actions.append(potion_result.action)
-            elif isinstance(potion_result, MultipleActionsResult):
-                actions.extend(potion_result.actions)
+            AddRandomPotionAction(character=game_state.player.character).execute()
 
         self.shop_item.purchased = True
 
@@ -194,8 +178,7 @@ class BuyItemAction(Action):
 
         follow_up = self._build_follow_up_menu(game_state)
         if follow_up:
-            actions.append(follow_up)
-        return MultipleActionsResult(actions) if actions else NoneResult()
+            add_action(follow_up)
 
     def _build_follow_up_menu(self, game_state):
         room = getattr(game_state, "current_room", None)
@@ -228,10 +211,10 @@ class OpenChestAction(Action):
     def __init__(self, treasure_room):
         self.treasure_room = treasure_room
 
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         from engine.game_state import game_state
         if self.treasure_room.chest_opened:
-            return NoneResult()
+            return
 
         self.treasure_room.chest_opened = True
         chest_open_actions = self.treasure_room.get_chest_open_actions()
@@ -247,7 +230,8 @@ class OpenChestAction(Action):
                     break
 
         if empty_chest:
-            return MultipleActionsResult(chest_open_actions)
+            add_actions(chest_open_actions, to_front=True)
+            return
 
         # Handle chest contents based on type
         if self.treasure_room.chest_type == "boss":
@@ -278,8 +262,9 @@ class OpenChestAction(Action):
                 options=options
             )
             if chest_open_actions:
-                return MultipleActionsResult(chest_open_actions + [select_action])
-            return SingleActionResult(select_action)
+                add_actions(chest_open_actions, to_front=True)
+            add_action(select_action)
+            return
 
         elif self.treasure_room.chest_type == "small":
             actions = []
@@ -294,7 +279,8 @@ class OpenChestAction(Action):
             if relic:
                 actions.append(AddRelicByNameAction(relic_id=relic.idstr))
                 
-            return MultipleActionsResult(chest_open_actions + actions)
+            add_actions(chest_open_actions + actions, to_front=True)
+            return
             
         elif self.treasure_room.chest_type == "medium":
             actions = []
@@ -312,7 +298,8 @@ class OpenChestAction(Action):
             if relic:
                 actions.append(AddRelicByNameAction(relic_id=relic.idstr))
                 
-            return MultipleActionsResult(chest_open_actions + actions)
+            add_actions(chest_open_actions + actions, to_front=True)
+            return
 
         elif self.treasure_room.chest_type == "large":
             actions = []
@@ -327,7 +314,8 @@ class OpenChestAction(Action):
             if relic:
                 actions.append(AddRelicByNameAction(relic_id=relic.idstr))
                 
-            return MultipleActionsResult(chest_open_actions + actions)
+            add_actions(chest_open_actions + actions, to_front=True)
+            return
         
         else:
             raise ValueError(f"Invalid chest type: {self.treasure_room.chest_type}")
@@ -343,14 +331,13 @@ class SkipToBossAction(Action):
     Optional:
         None
     """
-    def execute(self) -> 'BaseResult':
+    def execute(self) -> None:
         """Skip to boss floor."""
         from engine.game_state import game_state
         
         # Set flag to skip to boss
         game_state.skip_to_boss = True
-        tui_print("[Event] Skipping to boss!")
-        return NoneResult()
+        tui_print(t("ui.event_skip_to_boss", default="[Event] Skipping to boss!"))
 
 @register("action")
 class BottledCardInputRequestAction(Action):
@@ -365,13 +352,9 @@ class BottledCardInputRequestAction(Action):
         self.relic = relic
         self.card_type = card_type
     
-    def execute(self):
+    def execute(self) -> None:
         from engine.game_state import game_state
-        from actions.display import InputRequestAction
-        from utils.option import Option
-        from utils.result_types import SingleActionResult
         from utils.random import get_random_card
-        from localization import LocalStr
         
         # Get all cards from deck
         card_manager = game_state.player.card_manager
@@ -410,8 +393,7 @@ class BottledCardInputRequestAction(Action):
         
         if not options:
             print(f"No cards of type {self.card_type} available")
-            from utils.result_types import NoneResult
-            return NoneResult()
+            return
         
         select_action = InputRequestAction(
             title=LocalStr("ui.choose_card_to_bottle", default="Choose a card to bottle"),
@@ -419,4 +401,4 @@ class BottledCardInputRequestAction(Action):
             max_select=1,
             must_select=True
         )
-        return SingleActionResult(select_action)
+        add_action(select_action, to_front=True)

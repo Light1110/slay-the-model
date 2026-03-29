@@ -2,6 +2,7 @@
 Event Relics
 Relics obtained through events.
 """
+from engine.runtime_api import add_action, add_actions
 from typing import List
 from actions.base import Action, LambdaAction
 from actions.card import ChooseAddRandomCardAction
@@ -33,8 +34,9 @@ class FaceOfCleric(Relic):
     def on_combat_end(self, player, entities):
         """Raise Max HP by 1 after combat"""
         from actions.combat import ModifyMaxHpAction
-        return [ModifyMaxHpAction(amount=1)]
-
+        from engine.game_state import game_state
+        add_actions([ModifyMaxHpAction(amount=1)])
+        return
 @register("relic")
 class GoldenIdol(Relic):
     """Enemies drop 25% more Gold."""
@@ -55,10 +57,11 @@ class BloodyIdol(Relic):
         super().__init__()
         self.rarity = RarityType.EVENT
 
-    def on_gold_gained(self, gold_amount: int, player) -> List[Action]:
+    def on_gold_gained(self, gold_amount: int, player):
         """Heal 5 HP when gold is gained."""
-        return [HealAction(target=player, amount=5)]
-
+        from engine.game_state import game_state
+        add_actions([HealAction(target=player, amount=5)])
+        return
 @register("relic")
 class GremlinVisage(Relic):
     """Start each combat with 1 Weak."""
@@ -72,8 +75,9 @@ class GremlinVisage(Relic):
         actions = []
         for enemy in entities:
             actions.append(ApplyPowerAction(power="Weak", target=enemy, amount=1, duration=2))
-        return actions
-
+        from engine.game_state import game_state
+        add_actions(actions)
+        return
 @register("relic")
 class MarkOfBloom(Relic):
     """You can no longer heal."""
@@ -94,11 +98,12 @@ class MutagenicStrength(Relic):
         super().__init__()
         self.rarity = RarityType.EVENT
 
-    def on_combat_start(self, player, entities) -> List[Action]:
+    def on_combat_start(self, player, entities):
         """Gain 3 Strength at combat start (will be removed at turn end)"""
-        return [ApplyPowerAction(power="Strength", target=player, amount=3)]
-    
-    def on_player_turn_end(self, player, entities) -> List[Action]:
+        from engine.game_state import game_state
+        add_actions([ApplyPowerAction(power="Strength", target=player, amount=3)])
+        return
+    def on_player_turn_end(self, player, entities):
         """Remove all Strength at turn end"""
         from actions.combat import RemovePowerAction
         # Remove all gained Strength (would need to track amount gained)
@@ -106,10 +111,11 @@ class MutagenicStrength(Relic):
         from engine.game_state import game_state
         assert game_state.current_combat is not None
         if game_state.current_combat.combat_state.combat_turn == 1:
-            return [ApplyPowerAction(power="Strength", target=player, amount=-3)]
+            from engine.game_state import game_state
+            add_actions([ApplyPowerAction(power="Strength", target=player, amount=-3)])
+            return
         else:
-            return []
-
+            return
 @register("relic")
 class Necronomicon(Relic):
     """The first Attack played each turn that costs 2 or more is played twice. When you take this Relic, become Cursed."""
@@ -119,17 +125,19 @@ class Necronomicon(Relic):
         self.rarity = RarityType.EVENT
         self.double_attack_played = False
 
-    def on_turn_start(self, player, entities) -> List[Action]:
+    def on_turn_start(self, player, entities):
         """Reset tracker at start of combat"""
-        return [LambdaAction(func=lambda: setattr(self, 'double_attack_played', False))]
-
+        from engine.game_state import game_state
+        add_actions([LambdaAction(func=lambda: setattr(self, 'double_attack_played', False))])
+        return
     def on_card_play(self, card, player, entities):
         """Track high-cost attacks and play twice"""
         if card.cost >= 2 and card.card_type == CardType.ATTACK and not self.double_attack_played:
             self.double_attack_played = True
-            return card.on_play() * 1
-        return []
-
+            for _ in range(1):
+                card.on_play()
+            return
+        return
 @register("relic")
 class NilrysCodex(Relic):
     """At end of each turn, you can choose 1 of 3 random Cards to shuffle into your Drawpile."""
@@ -138,10 +146,11 @@ class NilrysCodex(Relic):
         super().__init__()
         self.rarity = RarityType.EVENT
 
-    def on_player_turn_end(self, player, entities) -> List[Action]:
+    def on_player_turn_end(self, player, entities):
         from engine.game_state import game_state
-        return [ChooseAddRandomCardAction(pile='draw_pile', namespace=game_state.player.namespace)]
-
+        from engine.game_state import game_state
+        add_actions([ChooseAddRandomCardAction(pile='draw_pile', namespace=game_state.player.namespace)])
+        return
 @register("relic")
 class Enchiridion(Relic):
     """At start of each combat, add a random Power to your hand. It costs 0 Energy until end of turn."""
@@ -156,12 +165,16 @@ class Enchiridion(Relic):
         from engine.game_state import game_state
         from utils.types import CardType
         
-        return [AddRandomCardAction(
+        from engine.game_state import game_state
+        add_actions(
+        [AddRandomCardAction(
             pile='hand',
             card_type=CardType.POWER,
             namespace=game_state.player.namespace,
             temp_cost=0
         )]
+        )
+        return
 
 @register("relic")
 class NeowsLament(Relic):
@@ -181,9 +194,10 @@ class NeowsLament(Relic):
             for enemy in entities:
                 # Set current HP to 1, not max HP
                 enemy.hp = 1
-            return actions
-        return []
-
+            from engine.game_state import game_state
+            add_actions(actions)
+            return
+        return
 @register("relic")
 class NlothHungryFace(Relic):
     """The next non-boss chest you open is empty."""
@@ -193,7 +207,7 @@ class NlothHungryFace(Relic):
         self.rarity = RarityType.EVENT
         self.chest_consumed = False
 
-    def should_empty_chest(self, chest_type: str = None) -> bool:
+    def should_empty_chest(self, chest_type: str | None = None) -> bool:
         """The next non-boss chest opened by player is empty."""
         if self.chest_consumed:
             return False
@@ -251,9 +265,10 @@ class WarpedTongs(Relic):
         hand = game_state.player.card_manager.get_pile('hand')
         if hand:
             # Upgrade a random upgradable card in hand
-            return [UpgradeRandomCardAction(count=1, namespace=game_state.player.namespace)]
-        return []
-
+            from engine.game_state import game_state
+            add_actions([UpgradeRandomCardAction(count=1, namespace=game_state.player.namespace)])
+            return
+        return
 @register("relic")
 class RedMask(Relic):
     """At start of each combat, apply 1 Weakness to ALL enemies."""
@@ -267,8 +282,9 @@ class RedMask(Relic):
         actions = []
         for enemy in entities:
             actions.append(ApplyPowerAction(power="Weak", target=enemy, amount=1, duration=2))
-        return actions
-
+        from engine.game_state import game_state
+        add_actions(actions)
+        return
 @register("relic")
 class NlothGift(Relic):
     """Triples chance of receiving rare Cards as monster rewards."""

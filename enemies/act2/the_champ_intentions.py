@@ -1,4 +1,5 @@
 """The Champ intentions - Act 2 Boss enemy."""
+from engine.runtime_api import add_action, add_actions
 
 import random
 from typing import TYPE_CHECKING, List
@@ -21,16 +22,19 @@ class HeavySlash(Intention):
         super().__init__("Heavy Slash", enemy)
         self.base_damage = 16
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute heavy slash attack."""
         from engine.game_state import game_state
         
-        return [AttackAction(
+        from engine.game_state import game_state
+        add_actions(
+        [AttackAction(
             damage=self.base_damage,
             target=game_state.player,
             source=self.enemy,
             damage_type="attack"
         )]
+        )
 
 
 class FaceSlap(Intention):
@@ -41,7 +45,7 @@ class FaceSlap(Intention):
         self.base_damage = 12
         self.base_amount = 2
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute face slap - damage and debuffs."""
         from engine.game_state import game_state
         
@@ -64,9 +68,12 @@ class FaceSlap(Intention):
         actions.append(ApplyPowerAction(VulnerablePower(amount=self.base_amount, owner=player), player))
 
         
-        return actions
+        from engine.game_state import game_state
 
+        
+        add_actions(actions)
 
+        
 class DefensiveStance(Intention):
     """Gains 15 Block and 5 Metallicize (varies by ascension)."""
     
@@ -75,7 +82,7 @@ class DefensiveStance(Intention):
         self.base_block = 15
         self.base_metallicize = 5
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute defensive stance - gain block and metallicize."""
         from powers.definitions.metallicize import MetallicizePower
         
@@ -95,9 +102,10 @@ class DefensiveStance(Intention):
             duration=-1
         ))
         
-        return actions
-
-
+        from engine.game_state import game_state
+        
+        add_actions(actions)
+        
 class Gloat(Intention):
     """Gains 2 Strength (3 on A4+, 4 on A19+)."""
     
@@ -105,12 +113,10 @@ class Gloat(Intention):
         super().__init__("Gloat", enemy)
         self.base_strength_gain = 2
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute gloat - gain strength."""
-        return [ApplyPowerAction(StrengthPower(amount=self.base_strength_gain, owner=self.enemy), self.enemy)]
-
-
-
+        from engine.game_state import game_state
+        add_actions([ApplyPowerAction(StrengthPower(amount=self.base_strength_gain, owner=self.enemy), self.enemy)])
 class Taunt(Intention):
     """Applies 2 Weak and 2 Vulnerable."""
     
@@ -118,7 +124,7 @@ class Taunt(Intention):
         super().__init__("Taunt", enemy)
         self.base_amount = 2
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute taunt - apply debuffs."""
         from engine.game_state import game_state
         
@@ -133,9 +139,12 @@ class Taunt(Intention):
         actions.append(ApplyPowerAction(VulnerablePower(amount=self.base_amount, owner=player), player))
 
         
-        return actions
+        from engine.game_state import game_state
 
+        
+        add_actions(actions)
 
+        
 class Anger(Intention):
     """Removes all Debuffs. Gains 6 Strength (9 on A4+, 12 on A19+)."""
     
@@ -143,7 +152,7 @@ class Anger(Intention):
         super().__init__("Anger", enemy)
         self.base_strength_gain = 6
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute anger - remove debuffs and gain strength."""
         actions = []
         
@@ -161,9 +170,12 @@ class Anger(Intention):
         actions.append(ApplyPowerAction(StrengthPower(amount=self.base_strength_gain, owner=self.enemy), self.enemy))
 
         
-        return actions
+        from engine.game_state import game_state
 
+        
+        add_actions(actions)
 
+        
 class Execute(Intention):
     """Deals 10×2 damage."""
     
@@ -172,7 +184,7 @@ class Execute(Intention):
         self.base_damage = 10
         self._hits = 2
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute - double hit."""
         from engine.game_state import game_state
         
@@ -185,4 +197,7 @@ class Execute(Intention):
                 damage_type="attack"
             ))
         
-        return actions
+        from engine.game_state import game_state
+        
+        add_actions(actions)
+        

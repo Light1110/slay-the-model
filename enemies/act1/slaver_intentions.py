@@ -1,4 +1,5 @@
 """Slaver (Blue and Red) specific intentions."""
+from engine.runtime_api import add_action, add_actions
 
 import random
 from typing import List, TYPE_CHECKING
@@ -17,15 +18,16 @@ class StabIntention(Intention):
         super().__init__("stab", enemy)
         self.base_damage = damage
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Stab: deals damage to player."""
         from actions.combat import AttackAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -33,6 +35,7 @@ class StabIntention(Intention):
                 damage_type="attack",
             )
         ]
+        )
 
 
 class RakeIntention(Intention):
@@ -43,15 +46,16 @@ class RakeIntention(Intention):
         self.base_damage = 7
         self._weak_stacks = 1
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Rake: deals damage and applies Weak."""
         from actions.combat import AttackAction, ApplyPowerAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -65,6 +69,7 @@ class RakeIntention(Intention):
                 duration=self._weak_stacks
             )
         ]
+        )
 
 
 class ScrapeIntention(Intention):
@@ -75,15 +80,16 @@ class ScrapeIntention(Intention):
         self.base_damage = 8
         self._vulnerable_stacks = 1
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Scrape: deals damage and applies Vulnerable."""
         from actions.combat import AttackAction, ApplyPowerAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
-        return [
+            return
+        from engine.game_state import game_state
+        add_actions(
+        [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
@@ -97,6 +103,7 @@ class ScrapeIntention(Intention):
                 duration=self._vulnerable_stacks
             )
         ]
+        )
 
 
 class EntangleIntention(Intention):
@@ -105,17 +112,18 @@ class EntangleIntention(Intention):
     def __init__(self, enemy: 'Enemy'):
         super().__init__("entangle", enemy)
     
-    def execute(self) -> List['Action']:
+    def execute(self) -> None:
         """Execute Entangle: applies Entangled to player."""
         from actions.combat import ApplyPowerAction
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
-            return []
-        
+            return
         # Entangled is a debuff that prevents playing Attack cards for 1 turn
         # We'll use a custom power or mark it
-        return [
+        from engine.game_state import game_state
+        add_actions(
+        [
             ApplyPowerAction(
                 power="Entangled",
                 target=game_state.player,
@@ -123,3 +131,4 @@ class EntangleIntention(Intention):
                 duration=1
             )
         ]
+        )

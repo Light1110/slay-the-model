@@ -2,6 +2,7 @@
 The Guardian - Act 1 Boss
 Has Mode Shift and Sharp Hide mechanics.
 """
+from engine.runtime_api import add_action, add_actions
 from typing import List, TYPE_CHECKING
 from enemies.base import Enemy
 from utils.types import EnemyType
@@ -78,10 +79,10 @@ class TheGuardian(Enemy):
         
         return self.intentions[intention_name]
     
-    def on_damage_taken(self, damage: int, source=None, card=None, damage_type: str = "direct") -> List['Action']:
+    def on_damage_taken(self, damage: int, source=None, card=None, damage_type: str = "direct") -> None:
         """Check for Mode Shift trigger."""
-        actions = super().on_damage_taken(damage, source, card, damage_type)
-        
+        super().on_damage_taken(damage, source, card, damage_type)
+        actions = []
         if not self._in_defensive_mode:
             self._damage_taken_since_last_shift += damage
             
@@ -89,8 +90,10 @@ class TheGuardian(Enemy):
             if self._damage_taken_since_last_shift >= self._mode_shift_threshold:
                 self._trigger_mode_shift()
         
-        return actions
-    
+        from engine.game_state import game_state
+        
+        add_actions(actions)
+        
     def _trigger_mode_shift(self):
         """Trigger Mode Shift: gain block and switch to defensive mode."""
         from actions.combat import GainBlockAction

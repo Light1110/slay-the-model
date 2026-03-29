@@ -31,16 +31,13 @@ class FlyingPower(Power):
                         damage_type: str = "direct"):
         """Lose Flying on attack hit; ground and stun owner at 0 stacks."""
         if damage <= 0 or damage_type != "attack":
-            return []
-
+            return
         self.amount -= 1
         if self.amount > 0:
-            return []
-
+            return
         self.amount = 0
         if not self.owner:
-            return []
-
+            return
         # Byrd stores this as a private field; keep compatibility.
         if hasattr(self.owner, "_is_flying"):
             self.owner._is_flying = False
@@ -53,4 +50,4 @@ class FlyingPower(Power):
         if hasattr(self.owner, "_grounded_pattern_index"):
             current = getattr(self.owner, "_grounded_pattern_index", 0)
             self.owner._grounded_pattern_index = max(1, int(current))
-        return []
+        return

@@ -2,6 +2,7 @@
 Ritual power for combat effects.
 Gain Strength at end of turn.
 """
+from engine.runtime_api import add_action, add_actions
 from typing import List
 from actions.base import Action
 from actions.combat import ApplyPowerAction
@@ -26,5 +27,8 @@ class RitualPower(Power):
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
         
-    def on_turn_end(self) -> List[Action]:
-        return super().on_turn_end() + [ApplyPowerAction(StrengthPower(), self.owner, self.amount)]
+    def on_turn_end(self):
+        super().on_turn_end()
+        from engine.game_state import game_state
+        add_actions([ApplyPowerAction(StrengthPower(), self.owner, self.amount)])
+        return

@@ -3,6 +3,7 @@ from cards.ironclad.strike import Strike
 from engine.game_state import GameState
 from engine.input_protocol import InputRequest
 from utils.option import Option
+from typing import Any, cast
 
 
 class _DummyCombat:
@@ -11,7 +12,7 @@ class _DummyCombat:
 
 def test_debug_selection_prefers_attack_over_end_turn_in_combat():
     gs = GameState()
-    gs.current_combat = _DummyCombat()
+    cast(Any, gs).current_combat = _DummyCombat()
 
     request = InputRequest(
         options=[
@@ -26,7 +27,7 @@ def test_debug_selection_prefers_attack_over_end_turn_in_combat():
 
 def test_debug_selection_honors_game_state_score_override():
     gs = GameState()
-    gs.current_combat = _DummyCombat()
+    cast(Any, gs).current_combat = _DummyCombat()
 
     seen = []
 
@@ -50,7 +51,7 @@ def test_debug_selection_honors_game_state_score_override():
 
 def test_debug_selection_honors_class_level_score_override(monkeypatch):
     gs = GameState()
-    gs.current_combat = _DummyCombat()
+    cast(Any, gs).current_combat = _DummyCombat()
 
     seen = []
 
@@ -74,7 +75,7 @@ def test_debug_selection_honors_class_level_score_override(monkeypatch):
 
 def test_debug_selection_heuristics_override_can_return_none(monkeypatch):
     gs = GameState()
-    gs.current_combat = _DummyCombat()
+    cast(Any, gs).current_combat = _DummyCombat()
     gs.config.debug["select_type"] = "random"
 
     seen = []

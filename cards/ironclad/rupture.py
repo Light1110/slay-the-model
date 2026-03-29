@@ -1,6 +1,7 @@
 """
 Ironclad Uncommon Power card - Rupture
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -23,14 +24,19 @@ class Rupture(Card):
 
     upgrade_magic = {"strength_gain": 2, "strength": 2}
 
-    def on_play(self, targets: List[Creature] = []) -> List[Action]:
+    def on_play(self, targets: List[Creature] = []):
         target = targets[0] if targets else None
         from engine.game_state import game_state
 
-        actions = super().on_play(targets)
+        super().on_play(targets)
 
+        actions = []
         # Apply RupturePower
         strength_gain = self.get_magic_value("strength_gain")
         actions.append(ApplyPowerAction(power="RupturePower", target=game_state.player, amount=strength_gain))
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

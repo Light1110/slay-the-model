@@ -26,8 +26,8 @@ class NoBlockPower(Power):
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
     
-    def on_gain_block(self, amount: int, player=None, source=None, card=None) -> List['Action']:
+    def on_gain_block(self, amount: int, player=None, source=None, card=None) -> None:
         """Prevent all block gain."""
         if player == self.owner:
-            return []
-        return super().on_gain_block(amount, player, source, card)
+            return
+        super().on_gain_block(amount, player, source, card)

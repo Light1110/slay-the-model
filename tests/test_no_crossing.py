@@ -79,8 +79,8 @@ def test_no_crossing_multiple_maps():
             current_floor = map_data.get_floor(floor)
             next_floor = map_data.get_floor(floor + 1)
             
-            print(f"  Current floor ({len(current_floor)} nodes):")
-            for node in current_floor:
+            print(f"  Current floor ({len(current_floor or [])} nodes):")
+            for node in current_floor or []:
                 print(f"    Pos {node.position}: Up -> {node.connections_up}")
             
             assert False, f"Crossing detected in map {seed}"

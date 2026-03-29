@@ -1,6 +1,7 @@
 """
 Colorless Curse card - Decay
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -21,12 +22,13 @@ class Decay(Card):
     base_magic = {"turn_end_damage": 2}
     upgradeable = False
 
-    def on_player_turn_end(self) -> List[Action]:
+    def on_player_turn_end(self):
         """Deal damage at end of turn"""
         from engine.game_state import game_state
 
-        actions = super().on_player_turn_end()
+        super().on_player_turn_end()
 
+        actions = []
         damage_amount = self.get_magic_value("turn_end_damage")
         actions.append(DealDamageAction(
             damage=damage_amount,
@@ -34,4 +36,8 @@ class Decay(Card):
             damage_type='card'
         ))
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

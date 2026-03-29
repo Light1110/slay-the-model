@@ -2,6 +2,7 @@
 Brutality power for Ironclad.
 At start of your turn, lose 1 HP and draw 1 card.
 """
+from engine.runtime_api import add_action, add_actions
 from typing import List
 from powers.base import Power, StackType
 from actions.base import Action
@@ -27,9 +28,13 @@ class BrutalityPower(Power):
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
 
-    def on_turn_start(self) -> List[Action]:
+    def on_turn_start(self):
         """Lose 1 HP and draw 1 card at turn start."""
-        return [
+        from engine.game_state import game_state
+        add_actions(
+        [
             LoseHPAction(amount=1),
             DrawCardsAction(count=1),
         ]
+        )
+        return

@@ -1,4 +1,5 @@
 """Donu Boss intentions for Act 3."""
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 
@@ -16,22 +17,24 @@ class CircleOfPower(Intention):
         super().__init__("Circle of Power", enemy)
         self.base_strength_gain = 3
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute the intention - give all enemies 3 Strength."""
         from engine.game_state import game_state
         
         actions = []
+        combat = game_state.current_combat
+        if combat is None:
+            return
         # Apply Strength to all enemies
-        for enemy in game_state.current_combat.enemies:
+        for enemy in combat.enemies:
             if not enemy.is_dead:
                 actions.append(ApplyPowerAction(
                     power="strength",
                     target=enemy,
                     amount=self.base_strength_gain
                 ))
-        return actions
-
-
+        from engine.game_state import game_state
+        add_actions(actions)
 class Beam(Intention):
     """Deals 10x2 damage."""
     
@@ -40,7 +43,7 @@ class Beam(Intention):
         self.base_damage = 10
         self.base_hits = 2
     
-    def execute(self) -> List:
+    def execute(self) -> None:
         """Execute the intention."""
         from engine.game_state import game_state
         
@@ -52,4 +55,5 @@ class Beam(Intention):
                 source=self.enemy,
                 damage_type="attack"
             ))
-        return actions
+        from engine.game_state import game_state
+        add_actions(actions)

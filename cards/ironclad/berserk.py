@@ -1,6 +1,7 @@
 """
 Ironclad Rare Power card - Berserk
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -26,12 +27,13 @@ class Berserk(Card):
     base_magic = {"Vulnerable": 2, "vulnerable": 2}
     upgrade_magic = {"Vulnerable": 1, "vulnerable": 1}
 
-    def on_play(self, targets: List[Creature] = []) -> List[Action]:
+    def on_play(self, targets: List[Creature] = []):
         target = targets[0] if targets else None
         from engine.game_state import game_state
 
-        actions = super().on_play(targets)
-        
+        super().on_play(targets)
+
+        actions = []
         magic = get_magic_value(self, "Vulnerable")
 
         # Apply BerserkPower (which handles energy gain) and VulnerablePower
@@ -40,4 +42,8 @@ class Berserk(Card):
         actions.append(ApplyPowerAction(
             VulnerablePower(amount=magic, duration=magic, owner=target), target))
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

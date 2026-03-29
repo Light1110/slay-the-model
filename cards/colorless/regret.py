@@ -1,6 +1,7 @@
 """
 Colorless Curse card - Regret
 """
+from engine.runtime_api import add_action, add_actions
 
 from typing import List
 from actions.base import Action
@@ -20,12 +21,13 @@ class Regret(Card):
     base_cost = COST_UNPLAYABLE
     upgradeable = False
 
-    def on_player_turn_end(self) -> List[Action]:
+    def on_player_turn_end(self):
         """Lose 1 HP for each card in hand"""
         from engine.game_state import game_state
 
-        actions = super().on_player_turn_end()
+        super().on_player_turn_end()
 
+        actions = []
         if game_state.player and hasattr(game_state.player, "card_manager"):
             hand_cards = list(game_state.player.card_manager.get_pile("hand"))
             damage_amount = 1 * len(hand_cards)
@@ -33,4 +35,8 @@ class Regret(Card):
             if damage_amount > 0:
                 actions.append(LoseHPAction(amount=damage_amount))
 
-        return actions
+        from engine.game_state import game_state
+
+        add_actions(actions)
+
+        return

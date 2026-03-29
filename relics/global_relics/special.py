@@ -2,6 +2,7 @@
 Special Relics
 Special key items for game.
 """
+from engine.runtime_api import add_action, add_actions
 from typing import List
 from actions.base import Action
 from actions.display import DisplayTextAction
@@ -51,7 +52,7 @@ class NeowsLament(Relic):
         self.rarity = RarityType.SPECIAL
         self.stacks = 3
         
-    def on_combat_start(self, player, entities) -> List[Action]:
+    def on_combat_start(self, player, entities):
         """在前三场战斗中设置所有敌人 HP=1"""
         from engine.game_state import game_state
         
@@ -71,8 +72,10 @@ class NeowsLament(Relic):
             
             self.stacks -= 1
             
-            return actions
-        
-        return []
-    
+            from engine.game_state import game_state
+            
+            add_actions(actions)
+            
+            return
+        return
     # This relic provides benefits when certain conditions are met

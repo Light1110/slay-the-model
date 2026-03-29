@@ -2,8 +2,8 @@
 
 A choice event where you can remove a card or upgrade all Strikes and Defends.
 """
+from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
 
-from utils.result_types import BaseResult, MultipleActionsResult
 from events.base_event import Event
 from events.event_pool import register_event
 from actions.display import InputRequestAction, DisplayTextAction
@@ -17,7 +17,7 @@ from utils.option import Option
 class AncientWriting(Event):
     """Ancient Writing - remove card or upgrade Strikes/Defends."""
     
-    def trigger(self) -> BaseResult:
+    def trigger(self) -> None:
         from engine.game_state import game_state
         from cards.ironclad.strike import Strike
         from cards.ironclad.defend import Defend
@@ -59,4 +59,5 @@ class AncientWriting(Event):
         ))
         
         self.end_event()
-        return MultipleActionsResult(actions)
+        from engine.game_state import game_state
+        add_actions(actions)
