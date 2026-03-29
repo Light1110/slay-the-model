@@ -211,11 +211,15 @@ class RuntimeContext:
 
     def default_augment_human_options(self, request: InputRequest) -> List:
         """Add human-only helper options such as the in-run menu."""
+        import sys
+        from tui import is_tui_mode
+
         options = list(request.options or [])
         config = self.config
         human_config = getattr(config, "human", {}) if config is not None else {}
         show_menu = bool(getattr(human_config, "get", lambda *_args, **_kwargs: False)("show_menu_option", False))
-        if not request.allow_menu or not show_menu:
+        interactive_cli = sys.stdin.isatty() and sys.stdout.isatty()
+        if not request.allow_menu or not show_menu or not (interactive_cli or is_tui_mode()):
             return options
 
         from actions.display import MenuAction
