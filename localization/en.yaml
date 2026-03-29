@@ -120,6 +120,7 @@ ui:
     curse: Curse
   ssserpent_head_gold: 'Ssserpent Head: Gain {amount} gold!'
   received_potion: 'Received potion: {name}!'
+  received_relic: 'Received relic: {name}!'
   shop_bought_item: Bought {item_name} for {final_price} gold!
   character:
     ironclad: Ironclad
