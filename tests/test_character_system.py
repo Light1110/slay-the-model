@@ -3,6 +3,7 @@
 
 import pytest
 
+from player.character_config import get_character_config
 from player.player_factory import create_player, list_characters
 
 
@@ -10,6 +11,39 @@ def test_list_characters_returns_only_playable_characters():
     """Public character list should expose playable characters."""
     characters = list_characters()
     assert characters == ["Ironclad", "Silent"]
+
+
+def test_create_defect_character_config():
+    """Defect should be registered with the expected starter config."""
+    config = get_character_config("Defect")
+
+    assert config is not None
+    assert config.display_name == "Defect"
+    assert config.max_hp == 75
+    assert config.energy == 3
+    assert config.gold == 99
+    assert config.deck == [
+        "defect.strike",
+        "defect.strike",
+        "defect.strike",
+        "defect.strike",
+        "defect.defend",
+        "defect.defend",
+        "defect.defend",
+        "defect.defend",
+        "defect.zap",
+        "defect.dualcast",
+    ]
+    assert config.starting_relics == ["CrackedCore"]
+    assert config.orb_slots == 3
+    assert config.potion_limit == 3
+    assert config.draw_count == 5
+
+
+def test_defect_is_registered_but_not_playable_yet():
+    """Defect should stay hidden from create_player until starter cards exist."""
+    with pytest.raises(ValueError, match="Defect starter cards are not implemented yet"):
+        create_player("Defect")
 
 
 def test_create_ironclad():
@@ -71,6 +105,17 @@ def test_case_insensitive():
     for name in variations:
         player = create_player(name)
         assert player.character == expected[name.lower()]
+
+
+def test_character_config_case_insensitive():
+    """Test case-insensitive character config lookup."""
+    variations = ["Defect", "defect", "DEFECT"]
+
+    for name in variations:
+        config = get_character_config(name)
+        assert config is not None
+        assert config.display_name == "Defect"
+        assert config.orb_slots == 3
 
 
 def test_unknown_character():
