@@ -168,3 +168,19 @@ class AddOrbAction(Action):
 
         # Add the new orb
         orb_manager.add_orb(self.orb)
+
+
+@register("action")
+class IncreaseOrbSlotsAction(Action):
+    """Increase or decrease the player's orb slot count."""
+
+    def __init__(self, amount: int):
+        self.amount = amount
+
+    def execute(self) -> None:
+        from engine.game_state import game_state
+
+        if not game_state.player or not hasattr(game_state.player, "orb_manager"):
+            return
+
+        game_state.player.orb_manager.max_orb_slots += self.amount

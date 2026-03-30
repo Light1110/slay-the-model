@@ -500,6 +500,14 @@ class Combat(Localizable):
         
         # Reset and setup combat state
         self.combat_state.reset_combat_info()
+
+        if hasattr(game_state.player, "orb_manager"):
+            game_state.player.orb_manager.clear_all()
+            game_state.player.orb_manager.max_orb_slots = getattr(
+                game_state.player,
+                "base_orb_slots",
+                game_state.player.orb_manager.max_orb_slots,
+            )
         
         # Reset card manager for combat (initialize draw pile from deck)
         if hasattr(game_state.player, 'card_manager'):
