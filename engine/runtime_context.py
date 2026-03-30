@@ -108,6 +108,9 @@ class RuntimeContext:
             participants.append(player)
             participants.extend(list(getattr(player, "relics", [])))
             participants.extend(list(getattr(player, "powers", [])))
+            orb_manager = getattr(player, "orb_manager", None)
+            if orb_manager is not None:
+                participants.extend(list(getattr(orb_manager, "orbs", [])))
 
         enemy_list = list(enemies or [])
         participants.extend(enemy_list)
@@ -141,6 +144,10 @@ class RuntimeContext:
                 add_participant(relic)
             for power in list(getattr(creature, "powers", []) or []):
                 add_participant(power)
+            orb_manager = getattr(creature, "orb_manager", None)
+            if orb_manager is not None:
+                for orb in list(getattr(orb_manager, "orbs", []) or []):
+                    add_participant(orb)
 
         def add_player_cards():
             player = self.player

@@ -1,6 +1,4 @@
 # Silent Potions - Character-specific potions for Silent
-from typing import List
-from actions.base import Action
 from actions.card import AddCardAction
 from actions.combat import ApplyPowerAction
 from powers.definitions.poison import PoisonPower
@@ -22,8 +20,8 @@ class PoisonPotion(Potion):
         super().__init__()
         self._amount = 6  # Sacred Bark doubles to 12
 
-    def on_use(self, targets) -> List[Action]:
-        return [ApplyPowerAction(PoisonPower(amount=self.amount, owner=targets[0]), targets[0])]
+    def on_use(self, targets) -> None:
+        self.queue_actions([ApplyPowerAction(PoisonPower(amount=self.amount, owner=targets[0]), targets[0])])
 
 # Uncommon Potions
 @register("potion")
@@ -37,7 +35,7 @@ class CunningPotion(Potion):
         super().__init__()
         self._amount = 3  # Sacred Bark doubles to 6
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         from actions.card import AddCardAction
         from utils.random import get_random_card
         
@@ -48,7 +46,7 @@ class CunningPotion(Potion):
                 shiv_card.upgrade()  # Upgrade to Shiv+
                 actions.append(AddCardAction(card=shiv_card, dest_pile='hand'))
         
-        return actions
+        self.queue_actions(actions)
 
 # Rare Potions
 @register("potion")
@@ -62,7 +60,7 @@ class GhostInAJar(Potion):
         super().__init__()
         self._amount = 1  # Sacred Bark doubles to 2
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         from engine.game_state import game_state
-        return [ApplyPowerAction(IntangiblePower(amount=self.amount, owner=game_state.player), game_state.player)]
+        self.queue_actions([ApplyPowerAction(IntangiblePower(amount=self.amount, owner=game_state.player), game_state.player)])
 

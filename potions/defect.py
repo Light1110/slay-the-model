@@ -1,7 +1,7 @@
 # Defect Potions - Character-specific potions for Defect
-from typing import List
-from actions.base import Action, LambdaAction
+from actions.base import LambdaAction
 from actions.combat import ApplyPowerAction
+from actions.orb import AddOrbAction
 from powers.definitions.focus import FocusPower
 from orbs.dark import DarkOrb
 from player.player import Player
@@ -21,8 +21,8 @@ class FocusPotion(Potion):
         super().__init__()
         self._amount = 2  # Sacred Bark doubles to 4
 
-    def on_use(self, targets) -> List[Action]:
-        return [ApplyPowerAction(FocusPower(amount=self.amount, owner=targets[0]), targets[0])]
+    def on_use(self, targets) -> None:
+        self.queue_actions([ApplyPowerAction(FocusPower(amount=self.amount, owner=targets[0]), targets[0])])
 
 # Rare Potions
 @register("potion")
@@ -36,11 +36,12 @@ class EssenceOfDarkness(Potion):
         super().__init__()
         self._amount = 1  # Sacred Bark doubles to 2 (dark orbs per slot)
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         from engine.game_state import game_state
-        # Channel Dark orbs for each orb slot
-        return [LambdaAction(func=lambda: [game_state.player.orb_manager.add_orb(orb=DarkOrb()) \
-            for _ in range(game_state.player.orb_manager.max_orb_slots)])]
+        self.queue_actions([
+            AddOrbAction(DarkOrb())
+            for _ in range(game_state.player.orb_manager.max_orb_slots)
+        ])
 
 # Uncommon Potions
 @register("potion")
@@ -54,7 +55,16 @@ class PotionOfCapacity(Potion):
         super().__init__()
         self._amount = 3  # Sacred Bark doubles to 6
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         # Gain orb slots
-        assert isinstance(targets[0], Player), "Potion of Capacity can only be used by the player"
-        return [LambdaAction(func=lambda: setattr(targets[0].orb_manager, "max_slots", targets[0].orb_manager.max_orb_slots + self.amount))]
+        player = targets[0]
+        assert isinstance(player, Player), "Potion of Capacity can only be used by the player"
+        self.queue_actions([
+            LambdaAction(
+                func=lambda: setattr(
+                    player.orb_manager,
+                    "max_orb_slots",
+                    player.orb_manager.max_orb_slots + self.amount,
+                )
+            )
+        ])

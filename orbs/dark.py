@@ -1,6 +1,5 @@
-from typing import List
-
-from actions.base import Action, LambdaAction
+from engine.runtime_api import add_action
+from actions.base import LambdaAction
 from actions.combat import DealDamageAction
 from orbs.base import Orb
 from utils.combat import resolve_target
@@ -16,25 +15,25 @@ class DarkOrb(Orb):
     def __init__(self):
         self.charge = self.base_charge
 
-    def on_passive(self) -> List[Action]:
-        return [
+    def on_passive(self) -> None:
+        add_action(
             LambdaAction(
                 func=lambda: setattr(self, "charge", self.charge + resolve_orb_value(self.base_charge))
             )
-        ]
+        )
 
-    def on_evoke(self) -> List[Action]:
+    def on_evoke(self) -> None:
         target_list = resolve_target(self.target_type)
         target = target_list[0] if target_list else None
         if target is None:
-            return []
+            return
         damage = self.charge
         if target.get_power("Lock-On") is not None:
             damage = int(damage * 1.5)
-        return [
+        add_action(
             DealDamageAction(
                 damage=damage,
                 target=target,
                 damage_type="magic",
             )
-        ]
+        )

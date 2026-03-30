@@ -160,7 +160,7 @@ class UsePotionBHAction(Action):
                 manager = BackAttackManager()
                 manager.maybe_transfer_on_target(first_target)
 
-        actions = self.potion.on_use(self.targets)
+        self.potion.on_use(self.targets)
 
         if self.potion in game_state.player.potions:
             game_state.player.potions.remove(self.potion)
@@ -174,8 +174,6 @@ class UsePotionBHAction(Action):
         potion_name = self.potion.local("name").resolve() if isinstance(self.potion.local("name"), LocalStr) else self.potion.local("name")
         print(f"{t('combat.used_potion', default='Used potion')}: {potion_name} {t('combat.on_target', default='on')} {', '.join(target_names)}")
 
-        if actions:
-            add_actions(actions if isinstance(actions, list) else [actions])
         publish_message(
             PotionUsedMessage(
                 potion=self.potion,

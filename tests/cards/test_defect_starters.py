@@ -1,6 +1,7 @@
 from actions.base import LambdaAction
 from cards.defect.dualcast import Dualcast
 from cards.defect.zap import Zap
+from engine.runtime_api import add_action
 from orbs.base import Orb
 from orbs.lightning import LightningOrb
 from relics.character.defect import CrackedCore
@@ -13,7 +14,7 @@ class _TrackingOrb(Orb):
         self.evoke_count = 0
 
     def on_evoke(self):
-        return [LambdaAction(func=self._mark_evoke)]
+        add_action(LambdaAction(func=self._mark_evoke))
 
     def _mark_evoke(self):
         self.evoke_count += 1

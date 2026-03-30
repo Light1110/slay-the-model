@@ -1,5 +1,5 @@
 """Orb-related actions."""
-from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
+from engine.runtime_api import add_action, add_actions
 
 from actions.base import Action
 from utils.registry import register
@@ -20,20 +20,10 @@ class OrbPassiveAction(Action):
 
     def execute(self) -> None:
         """Execute the orb's passive effect"""
-        from engine.game_state import game_state
-
         if not self.orb:
             return
 
-        # Get actions from orb's passive
-        actions = self.orb.on_passive()
-
-        if actions:
-            if isinstance(actions, list):
-                add_actions(actions, to_front=True)
-                return
-            add_action(actions, to_front=True)
-            return
+        self.orb.on_passive()
 
 
 
@@ -52,57 +42,10 @@ class OrbEvokeAction(Action):
 
     def execute(self) -> None:
         """Execute the orb's evoke effect"""
-        from engine.game_state import game_state
-
         if not self.orb:
             return
 
-        # Get actions from orb's evoke
-        actions = self.orb.on_evoke()
-
-        if actions is None:
-            return
-        
-        if isinstance(actions, list):
-            add_actions(actions, to_front=True)
-            return
-        add_action(actions, to_front=True)
-
-
-@register("action")
-class TriggerOrbPassivesAction(Action):
-    """Trigger passives for all orbs with matching timing
-
-    Required:
-        timing (str): Timing to trigger ("turn_start", "turn_end", etc.)
-
-    Optional:
-        None
-    """
-    def __init__(self, timing: str):
-        self.timing = timing
-
-    def execute(self) -> None:
-        """Trigger passives for all matching orbs"""
-        from engine.game_state import game_state
-
-        if not game_state.player or not hasattr(game_state.player, 'orb_manager'):
-            return
-
-        actions_to_return = []
-
-        # Get all orbs
-        orbs = list(game_state.player.orb_manager.orbs)
-
-        # Trigger passives for matching timing
-        for orb in orbs:
-            if getattr(orb, "passive_timing", None) == self.timing:
-                action = OrbPassiveAction(orb=orb)
-                actions_to_return.append(action)
-
-        if actions_to_return:
-            add_actions(actions_to_return, to_front=True)
-            return
+        self.orb.on_evoke()
 
 
 
@@ -225,4 +168,3 @@ class AddOrbAction(Action):
 
         # Add the new orb
         orb_manager.add_orb(self.orb)
-

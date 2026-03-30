@@ -1,7 +1,7 @@
 ﻿import random
-from typing import List, Optional
-from actions.base import Action
+from typing import Iterable, List, Optional
 from entities.creature import Creature
+from engine.runtime_api import add_action, add_actions
 from localization import Localizable, t
 from utils.types import RarityType, TargetType
 
@@ -19,20 +19,23 @@ class Potion(Localizable):
     def amount(self) -> int:
         """If player has relic: Sacred Bark, potion effects are doubled"""
         from engine.game_state import game_state
-        if game_state.player and any(relic.idstr == "SacredBark" for relic in game_state.player.relics):
+        if game_state.player and any(getattr(relic, "idstr", None) == "SacredBark" for relic in game_state.player.relics):
             return self._amount * 2
         return self._amount
 
-    def on_use(self, targets: List[Creature]) -> List[Action]:
-        """Base use method to be overridden by specific potions.
-        
-        Args:
-            targets: List of resolved targets (single or multiple based on target_type)
-        
-        Returns:
-            List of actions to execute
-        """
-        return []
+    def queue_actions(self, actions: Iterable | None) -> None:
+        """Queue one or more generated actions."""
+        if actions is None:
+            return
+        if isinstance(actions, list):
+            if actions:
+                add_actions(actions)
+            return
+        add_action(actions)
+
+    def on_use(self, targets: List[Creature]) -> None:
+        """Base use method to be overridden by specific potions."""
+        return
     
     def info(self):
         """Return a stable human-readable potion summary."""

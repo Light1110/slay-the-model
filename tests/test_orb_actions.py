@@ -44,16 +44,16 @@ class TestOrbActions(unittest.TestCase):
         self.assertIsInstance(orb, LightningOrb)
 
     def test_dark_orb_on_passive(self):
-        """Test DarkOrb on_passive method returns list."""
+        """Test DarkOrb on_passive queues actions directly."""
         orb = DarkOrb()
         result = orb.on_passive()
-        self.assertIsInstance(result, list)
+        self.assertIsNone(result)
 
     def test_frost_orb_on_passive(self):
-        """Test FrostOrb on_passive method returns list."""
+        """Test FrostOrb on_passive queues actions directly."""
         orb = FrostOrb()
         result = orb.on_passive()
-        self.assertIsInstance(result, list)
+        self.assertIsNone(result)
 
     def test_orb_has_evoke_method(self):
         """Test that orbs have evoke method."""

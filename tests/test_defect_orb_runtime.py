@@ -1,5 +1,6 @@
 from actions.base import LambdaAction
 from actions.orb import AddOrbAction
+from engine.runtime_api import add_action
 from enemies.act1.cultist import Cultist
 from orbs.base import Orb
 from orbs.dark import DarkOrb
@@ -16,7 +17,7 @@ class _TrackingOrb(Orb):
         self.evoke_count = 0
 
     def on_evoke(self):
-        return [LambdaAction(func=self._mark_evoke)]
+        add_action(LambdaAction(func=self._mark_evoke))
 
     def _mark_evoke(self):
         self.evoke_count += 1
@@ -46,8 +47,7 @@ class TestDefectOrbRuntime:
         self.helper.start_combat([enemy])
         orb = FrostOrb()
 
-        for action in orb.on_passive():
-            action.execute()
+        orb.on_passive()
         self.helper.game_state.drive_actions()
 
         assert self.player.block == 2
@@ -58,8 +58,7 @@ class TestDefectOrbRuntime:
         self.helper.start_combat([enemy])
         orb = LightningOrb()
 
-        for action in orb.on_evoke():
-            action.execute()
+        orb.on_evoke()
         self.helper.game_state.drive_actions()
 
         assert enemy.hp == 32
@@ -70,14 +69,12 @@ class TestDefectOrbRuntime:
         self.player.add_power(FocusPower(amount=1, owner=self.player))
         orb = DarkOrb()
 
-        for action in orb.on_passive():
-            action.execute()
+        orb.on_passive()
         self.helper.game_state.drive_actions()
 
         assert orb.charge == 13
 
-        for action in orb.on_evoke():
-            action.execute()
+        orb.on_evoke()
         self.helper.game_state.drive_actions()
 
         assert enemy.hp == 27

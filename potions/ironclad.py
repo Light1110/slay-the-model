@@ -1,6 +1,4 @@
 # Ironclad Potions - Character-specific potions for Ironclad
-from typing import List
-from actions.base import Action
 from actions.card import ExhaustCardAction
 from actions.combat import ApplyPowerAction, HealAction
 from powers.definitions.metallicize import MetallicizePower
@@ -22,12 +20,12 @@ class BloodPotion(Potion):
         super().__init__()
         self._amount = 20  # Sacred Bark doubles to 40 (percentage)
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         from engine.game_state import game_state
         from actions.combat import HealAction
         # Calculate heal amount as percentage of max HP
         heal_amount = int(game_state.player.max_hp * (self.amount / 100.0))
-        return [HealAction(target=game_state.player, amount=heal_amount)]
+        self.queue_actions([HealAction(target=game_state.player, amount=heal_amount)])
 
 # Uncommon Potions
 @register("potion")
@@ -39,7 +37,7 @@ class Elixir(Potion):
     def __init__(self):
         super().__init__()
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         from actions.card import ExhaustCardAction
         from actions.display import InputRequestAction
         from engine.game_state import game_state
@@ -55,12 +53,12 @@ class Elixir(Potion):
         
         # Let player choose which cards to exhaust (multi-select mode)
         # Use max_select=-1 to allow selecting all hand cards
-        return [InputRequestAction(
+        self.queue_actions([InputRequestAction(
             title=self.local("name").resolve(),
             options=options,
             max_select=-1,  # Allow selecting all options
             must_select=False  # Allow stopping selection early
-        )]
+        )])
 
 # Rare Potions
 @register("potion")
@@ -73,6 +71,6 @@ class HeartOfIron(Potion):
         super().__init__()
         self._amount = 6  # Sacred Bark doubles to 12
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         from engine.game_state import game_state
-        return [ApplyPowerAction(MetallicizePower(amount=self.amount, owner=game_state.player), game_state.player)]
+        self.queue_actions([ApplyPowerAction(MetallicizePower(amount=self.amount, owner=game_state.player), game_state.player)])

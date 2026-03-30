@@ -1,6 +1,5 @@
 # Watcher Potions - Character-specific potions for Watcher
-from typing import List
-from actions.base import Action, LambdaAction
+from actions.base import LambdaAction
 from actions.card import AddCardAction
 from actions.display import InputRequestAction
 from localization import LocalStr
@@ -23,7 +22,7 @@ class BottledMiracle(Potion):
         super().__init__()
         self._amount = 2  # Sacred Bark doubles to 4
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         from actions.card import AddCardAction
         from utils.random import get_random_card
         
@@ -34,7 +33,7 @@ class BottledMiracle(Potion):
             if miracle_card:
                 actions.append(AddCardAction(card=miracle_card, dest_pile='hand'))
         
-        return actions
+        self.queue_actions(actions)
 
 # Uncommon Potions
 @register("potion")
@@ -47,21 +46,22 @@ class StancePotion(Potion):
     def __init__(self):
         super().__init__()
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         # Let player choose between Calm and Wrath
-        if not isinstance(targets[0], Player):
-            return []
+        player = targets[0]
+        if not isinstance(player, Player):
+            return
         options = [
             Option(
                 name=LocalStr("stance.calm"),
-                actions=[LambdaAction(func=lambda: targets[0].status_manager.change_to_status(StatusType.CALM))]
+                actions=[LambdaAction(func=lambda: player.status_manager.change_to_status(StatusType.CALM))]
             ),
             Option(
                 name=LocalStr("stance.wrath"),
-                actions=[LambdaAction(func=lambda: targets[0].status_manager.change_to_status(StatusType.WRATH))]
+                actions=[LambdaAction(func=lambda: player.status_manager.change_to_status(StatusType.WRATH))]
             )
         ]
-        return [InputRequestAction(options=options, title=LocalStr("stance.choose_stance"))]
+        self.queue_actions([InputRequestAction(options=options, title=LocalStr("stance.choose_stance"))])
 
 # Rare Potions
 @register("potion")
@@ -74,8 +74,8 @@ class Ambrosia(Potion):
     def __init__(self):
         super().__init__()
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         # Enter Divinity stance
         assert isinstance(targets[0], Player), "Ambrosia can only be used by the player"
         targets[0].status_manager.change_to_status(StatusType.DIVINITY)
-        return []
+        return

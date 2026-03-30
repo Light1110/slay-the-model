@@ -25,7 +25,7 @@ class AttackPotion(Potion):
         super().__init__()
         self._amount = 1  # Sacred Bark doubles to 2
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         from utils.types import CardType
         actions = []
         for _ in range(self.amount):
@@ -35,7 +35,7 @@ class AttackPotion(Potion):
                 card_type=CardType.ATTACK,
                 cost_until_end_of_turn=0  # Set temporary cost to 0 for this turn
             ))
-        return actions
+        self.queue_actions(actions)
 
 @register("potion")
 class BlockPotion(Potion):
@@ -48,9 +48,9 @@ class BlockPotion(Potion):
         super().__init__()
         self._amount = 12  # Sacred Bark doubles to 24
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         from engine.game_state import game_state
-        return [GainBlockAction(block=self.amount, target=game_state.player)]
+        self.queue_actions([GainBlockAction(block=self.amount, target=game_state.player)])
 
 @register("potion")
 class ColorlessPotion(Potion):
@@ -63,7 +63,7 @@ class ColorlessPotion(Potion):
         super().__init__()
         self._amount = 1  # Sacred Bark doubles to 2
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         from utils.types import CardType
         actions = []
         for _ in range(self.amount):
@@ -73,7 +73,7 @@ class ColorlessPotion(Potion):
                 namespace="colorless",
                 cost_until_end_of_turn=0  # Set temporary cost to 0 for this turn
             ))
-        return actions
+        self.queue_actions(actions)
 
 @register("potion")
 class DexterityPotion(Potion):
@@ -86,9 +86,9 @@ class DexterityPotion(Potion):
         super().__init__()
         self._amount = 2  # Sacred Bark doubles to 4
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         from engine.game_state import game_state
-        return [ApplyPowerAction(power="Dexterity", target=game_state.player, amount=self.amount)]
+        self.queue_actions([ApplyPowerAction(power="Dexterity", target=game_state.player, amount=self.amount)])
 
 @register("potion")
 class EnergyPotion(Potion):
@@ -101,8 +101,8 @@ class EnergyPotion(Potion):
         super().__init__()
         self._amount = 2  # Sacred Bark doubles to 4
 
-    def on_use(self, targets) -> List[Action]:
-        return [GainEnergyAction(energy=self.amount)]
+    def on_use(self, targets) -> None:
+        self.queue_actions([GainEnergyAction(energy=self.amount)])
 
 @register("potion")
 class ExplosivePotion(Potion):
@@ -115,12 +115,12 @@ class ExplosivePotion(Potion):
         super().__init__()
         self._amount = 10  # Sacred Bark doubles to 20
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         actions = []
         # targets is already resolved as list of all enemies
         for enemy in targets:
             actions.append(DealDamageAction(damage=self.amount, target=enemy))
-        return actions
+        self.queue_actions(actions)
 
 @register("potion")
 class FearPotion(Potion):
@@ -133,9 +133,9 @@ class FearPotion(Potion):
         super().__init__()
         self._amount = 3  # Sacred Bark doubles to 6
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         # Apply Vulnerable to single target enemy
-        return [ApplyPowerAction(power="Vulnerable", target=targets[0], amount=self.amount, duration=self.amount)]
+        self.queue_actions([ApplyPowerAction(power="Vulnerable", target=targets[0], amount=self.amount, duration=self.amount)])
 
 @register("potion")
 class FirePotion(Potion):
@@ -148,8 +148,8 @@ class FirePotion(Potion):
         super().__init__()
         self._amount = 20  # Sacred Bark doubles to 40
 
-    def on_use(self, targets) -> List[Action]:
-        return [DealDamageAction(damage=self.amount, target=targets[0])]
+    def on_use(self, targets) -> None:
+        self.queue_actions([DealDamageAction(damage=self.amount, target=targets[0])])
 
 @register("potion")
 class FlexPotion(Potion):
@@ -162,14 +162,14 @@ class FlexPotion(Potion):
         super().__init__()
         self._amount = 5  # Sacred Bark doubles to 10
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         from engine.game_state import game_state
         # Apply Strength power
         actions = [
             ApplyPowerAction(power="Strength", target=game_state.player, amount=self.amount),
             ApplyPowerAction(power="StrengthDown", target=game_state.player, amount=self.amount, duration=1)  # This power should handle the strength loss at end of turn
         ]
-        return actions
+        self.queue_actions(actions)
 
 @register("potion")
 class PowerPotion(Potion):
@@ -182,7 +182,7 @@ class PowerPotion(Potion):
         super().__init__()
         self._amount = 1  # Sacred Bark doubles to 2
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         from utils.types import CardType
         actions = []
         for _ in range(self.amount):
@@ -192,7 +192,7 @@ class PowerPotion(Potion):
                 card_type=CardType.POWER,
                 cost_until_end_of_turn=0  # Set temporary cost to 0 for this turn
             ))
-        return actions
+        self.queue_actions(actions)
 
 @register("potion")
 class SkillPotion(Potion):
@@ -205,7 +205,7 @@ class SkillPotion(Potion):
         super().__init__()
         self._amount = 1  # Sacred Bark doubles to 2
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         from utils.types import CardType
         actions = []
         for _ in range(self.amount):
@@ -215,7 +215,7 @@ class SkillPotion(Potion):
                 card_type=CardType.SKILL,
                 cost_until_end_of_turn=0  # Set temporary cost to 0 for this turn
             ))
-        return actions
+        self.queue_actions(actions)
 
 @register("potion")
 class SpeedPotion(Potion):
@@ -228,14 +228,14 @@ class SpeedPotion(Potion):
         super().__init__()
         self._amount = 5  # Sacred Bark doubles to 10
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         from engine.game_state import game_state
         # Apply Dexterity power
         actions = [
             ApplyPowerAction(power="Dexterity", target=game_state.player, amount=self.amount),
             ApplyPowerAction(power="DexterityDown", target=game_state.player, amount=self.amount, duration=1)  # This power should handle the dexterity loss at end of turn
         ]
-        return actions
+        self.queue_actions(actions)
 
 @register("potion")
 class StrengthPotion(Potion):
@@ -248,9 +248,9 @@ class StrengthPotion(Potion):
         super().__init__()
         self._amount = 2  # Sacred Bark doubles to 4
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         from engine.game_state import game_state
-        return [ApplyPowerAction(power="Strength", target=game_state.player, amount=self.amount)]
+        self.queue_actions([ApplyPowerAction(power="Strength", target=game_state.player, amount=self.amount)])
 
 @register("potion")
 class SwiftPotion(Potion):
@@ -263,8 +263,8 @@ class SwiftPotion(Potion):
         super().__init__()
         self._amount = 3  # Sacred Bark doubles to 6
 
-    def on_use(self, targets) -> List[Action]:
-        return [DrawCardsAction(count=self.amount)]
+    def on_use(self, targets) -> None:
+        self.queue_actions([DrawCardsAction(count=self.amount)])
 
 @register("potion")
 class WeakPotion(Potion):
@@ -277,9 +277,9 @@ class WeakPotion(Potion):
         super().__init__()
         self._amount = 3  # Sacred Bark doubles to 6
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         # Apply Weak to single target enemy
-        return [ApplyPowerAction(power="Weak", target=targets[0], amount=self.amount, duration=self.amount)]
+        self.queue_actions([ApplyPowerAction(power="Weak", target=targets[0], amount=self.amount, duration=self.amount)])
 
 # Uncommon Potions
 @register("potion")
@@ -293,9 +293,9 @@ class AncientPotion(Potion):
         super().__init__()
         self._amount = 1  # Sacred Bark doubles to 2
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         from engine.game_state import game_state
-        return [ApplyPowerAction(power="Artifact", target=game_state.player, amount=self.amount)]
+        self.queue_actions([ApplyPowerAction(power="Artifact", target=game_state.player, amount=self.amount)])
 
 @register("potion")
 class BlessingOfTheForge(Potion):
@@ -307,7 +307,7 @@ class BlessingOfTheForge(Potion):
     def __init__(self):
         super().__init__()
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         from actions.card import UpgradeCardAction
         from engine.game_state import game_state
         
@@ -317,7 +317,7 @@ class BlessingOfTheForge(Potion):
             if card.can_upgrade():
                 actions.append(UpgradeCardAction(card=card))
         
-        return actions
+        self.queue_actions(actions)
 
 @register("potion")
 class DistilledChaos(Potion):
@@ -330,7 +330,7 @@ class DistilledChaos(Potion):
         super().__init__()
         self._amount = 3  # Sacred Bark doubles to 6
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         from actions.combat import PlayCardAction
         from actions.card import RemoveCardAction, AddCardAction
         from engine.game_state import game_state
@@ -347,7 +347,7 @@ class DistilledChaos(Potion):
                     PlayCardAction(card=card, is_auto=True, ignore_energy=True)
                 ])
         
-        return actions
+        self.queue_actions(actions)
 
 @register("potion")
 class DuplicationPotion(Potion):
@@ -360,10 +360,10 @@ class DuplicationPotion(Potion):
         super().__init__()
         self._amount = 1  # Sacred Bark doubles to 2 (number of cards to duplicate)
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         # this is a power
         from engine.game_state import game_state
-        return [ApplyPowerAction(power="Duplication", target=game_state.player, amount=self.amount)]
+        self.queue_actions([ApplyPowerAction(power="Duplication", target=game_state.player, amount=self.amount)])
 
 @register("potion")
 class EssenceOfSteel(Potion):
@@ -376,9 +376,9 @@ class EssenceOfSteel(Potion):
         super().__init__()
         self._amount = 4  # Sacred Bark doubles to 8
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         from engine.game_state import game_state
-        return [ApplyPowerAction(power="PlatedArmor", target=game_state.player, amount=self.amount)]
+        self.queue_actions([ApplyPowerAction(power="PlatedArmor", target=game_state.player, amount=self.amount)])
 
 @register("potion")
 class GamblersBrew(Potion):
@@ -390,8 +390,8 @@ class GamblersBrew(Potion):
     def __init__(self):
         super().__init__()
 
-    def on_use(self, targets) -> List[Action]:
-        return [ChooseReplaceCardAction(must_select=False)]
+    def on_use(self, targets) -> None:
+        self.queue_actions([ChooseReplaceCardAction(must_select=False)])
 
 @register("potion")
 class LiquidBronze(Potion):
@@ -404,9 +404,9 @@ class LiquidBronze(Potion):
         super().__init__()
         self._amount = 3  # Sacred Bark doubles to 6
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         from engine.game_state import game_state
-        return [ApplyPowerAction(power="Thorns", target=game_state.player, amount=self.amount)]
+        self.queue_actions([ApplyPowerAction(power="Thorns", target=game_state.player, amount=self.amount)])
 
 @register("potion")
 class LiquidMemories(Potion):
@@ -419,7 +419,7 @@ class LiquidMemories(Potion):
         super().__init__()
         self._amount = 1  # Sacred Bark doubles to 2
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         from actions.card import MoveCardAction, SetCostUntilEndOfTurnAction
         from actions.display import InputRequestAction
         from engine.game_state import game_state
@@ -444,7 +444,7 @@ class LiquidMemories(Potion):
         ))
         
         # Let player choose which card to return to hand
-        return [InputRequestAction(title="Liquid Memories", options=options)]
+        self.queue_actions([InputRequestAction(title="Liquid Memories", options=options)])
 
 @register("potion")
 class RegenPotion(Potion):
@@ -457,9 +457,9 @@ class RegenPotion(Potion):
         super().__init__()
         self._amount = 5  # Sacred Bark doubles to 10
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         from engine.game_state import game_state
-        return [ApplyPowerAction(power="Regeneration", target=game_state.player, amount=self.amount)]
+        self.queue_actions([ApplyPowerAction(power="Regeneration", target=game_state.player, amount=self.amount)])
 
 @register("potion")
 class SmokeBomb(Potion):
@@ -471,12 +471,12 @@ class SmokeBomb(Potion):
     def __init__(self):
         super().__init__()
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         from engine.game_state import game_state
         # Cannot use Smoke Bomb while Surrounded (Spire Shield + Spear elite)
         if game_state.player and game_state.player.has_power("Surrounded"):
-            return []  # Blocked by Surrounded
-        return [EscapeAction()]
+            return  # Blocked by Surrounded
+        self.queue_actions([EscapeAction()])
 
 # Rare Potions
 @register("potion")
@@ -491,8 +491,8 @@ class FairyInABottle(Potion):
         super().__init__()
         self._amount = 30  # Sacred Bark doubles to 60 (percentage)
 
-    def on_use(self, targets) -> List[Action]:
-        return [HealAction(target=targets[0], amount=int(targets[0].max_hp * (self.amount / 100.0)))]
+    def on_use(self, targets) -> None:
+        self.queue_actions([HealAction(target=targets[0], amount=int(targets[0].max_hp * (self.amount / 100.0)))])
 
 @register("potion")
 class FruitJuice(Potion):
@@ -505,9 +505,9 @@ class FruitJuice(Potion):
         super().__init__()
         self._amount = 5  # Sacred Bark doubles to 10
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         from actions.combat import ModifyMaxHpAction
-        return [ModifyMaxHpAction(amount=self.amount)]
+        self.queue_actions([ModifyMaxHpAction(amount=self.amount)])
 
 @register("potion")
 class SneckoOil(Potion):
@@ -520,7 +520,7 @@ class SneckoOil(Potion):
         super().__init__()
         self._amount = 5  # Sacred Bark doubles to 10
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         from actions.card import DrawCardsAction
         from engine.game_state import game_state
         
@@ -529,7 +529,7 @@ class SneckoOil(Potion):
             DrawCardsAction(count=self.amount),
             LambdaAction(func=lambda: self.randomize_costs(game_state))
         ]
-        return actions
+        self.queue_actions(actions)
     
     def randomize_costs(self, game_state):
         import random as rd
@@ -549,9 +549,9 @@ class CultistPotion(Potion):
         super().__init__()
         self._amount = 1  # Sacred Bark doubles to 2
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         from engine.game_state import game_state
-        return [ApplyPowerAction(power="Ritual", target=game_state.player, amount=self.amount, duration=-1)]
+        self.queue_actions([ApplyPowerAction(power="Ritual", target=game_state.player, amount=self.amount, duration=-1)])
 
 @register("potion")
 class EntropicBrew(Potion):
@@ -563,7 +563,7 @@ class EntropicBrew(Potion):
     def __init__(self):
         super().__init__()
 
-    def on_use(self, targets) -> List[Action]:
+    def on_use(self, targets) -> None:
         from engine.game_state import game_state
         
         actions = []
@@ -572,4 +572,4 @@ class EntropicBrew(Potion):
         for _ in range(game_state.player.potions.limit - len(game_state.player.potions)):
             actions.append(AddRandomPotionAction(game_state.player.character))
             
-        return actions
+        self.queue_actions(actions)
