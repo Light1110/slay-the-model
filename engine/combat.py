@@ -1,4 +1,4 @@
-"""
+﻿"""
 Combat logic class - independent from rooms.
 Can be triggered by CombatRoom or Events.
 Uses global action queue for action management.
@@ -364,7 +364,6 @@ class Combat(Localizable):
                     continue
                 game_state.action_queue.add_action(DiscardCardAction(card=card, source_pile="hand", trigger_effects=False))
 
-        # ! 原实现有误，人物格挡清零是在回合开始
 
         result = game_state.drive_actions()
         if result is not None:
