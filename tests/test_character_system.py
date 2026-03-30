@@ -10,7 +10,7 @@ from player.player_factory import create_player, list_characters
 def test_list_characters_returns_only_playable_characters():
     """Public character list should expose playable characters."""
     characters = list_characters()
-    assert characters == ["Ironclad", "Silent"]
+    assert characters == ["Ironclad", "Silent", "Defect"]
 
 
 def test_create_defect_character_config():
@@ -40,10 +40,32 @@ def test_create_defect_character_config():
     assert config.draw_count == 5
 
 
-def test_defect_is_registered_but_not_playable_yet():
-    """Defect should stay hidden from create_player until starter cards exist."""
-    with pytest.raises(ValueError, match="Defect starter cards are not implemented yet"):
-        create_player("Defect")
+def test_create_defect():
+    """Defect should be a playable character with the expected starter kit."""
+    player = create_player("Defect")
+    deck_names = [card.__class__.__name__ for card in player.card_manager.deck]
+    relic_names = [r.__class__.__name__ for r in player.relics]
+
+    checks = [
+        (player.character == "Defect", f"Character name: {player.character} != Defect"),
+        (player.max_hp == 75, f"Max HP: {player.max_hp} != 75"),
+        (player.energy == 3, f"Energy: {player.energy} != 3"),
+        (player.gold == 99, f"Gold: {player.gold} != 99"),
+        (player.namespace == "defect", f"Namespace: {player.namespace} != defect"),
+        (player.base_draw_count == 5, f"Draw count: {player.base_draw_count} != 5"),
+        (player.orb_manager.max_orb_slots == 3, f"Orb slots: {player.orb_manager.max_orb_slots} != 3"),
+        (player.potion_limit == 3, f"Potion limit: {player.potion_limit} != 3"),
+        (len(player.card_manager.deck) == 10, f"Deck size: {len(player.card_manager.deck)} != 10"),
+        (deck_names.count("Strike") == 4, f"Defect should start with 4 Strikes, got {deck_names}"),
+        (deck_names.count("Defend") == 4, f"Defect should start with 4 Defends, got {deck_names}"),
+        ("Zap" in deck_names, f"Zap missing from deck: {deck_names}"),
+        ("Dualcast" in deck_names, f"Dualcast missing from deck: {deck_names}"),
+        (len(player.relics) == 1, f"Relics count: {len(player.relics)} != 1"),
+        ("CrackedCore" in relic_names, f"CrackedCore not in relics: {relic_names}"),
+    ]
+
+    failed = [msg for passed, msg in checks if not passed]
+    assert not failed, "; ".join(failed)
 
 
 def test_create_ironclad():
@@ -95,11 +117,16 @@ def test_create_silent():
 
 def test_case_insensitive():
     """Test case-insensitive character name handling."""
-    variations = ["Ironclad", "ironclad", "IRONCLAD", "Silent", "silent", "SILENT"]
+    variations = [
+        "Ironclad", "ironclad", "IRONCLAD",
+        "Silent", "silent", "SILENT",
+        "Defect", "defect", "DEFECT",
+    ]
 
     expected = {
         "ironclad": "Ironclad",
         "silent": "Silent",
+        "defect": "Defect",
     }
 
     for name in variations:

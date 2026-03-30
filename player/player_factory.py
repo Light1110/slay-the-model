@@ -63,6 +63,8 @@ def create_player(character=None):
     player.namespace = get_namespace_for_character(char_config.display_name)
     player._gold = char_config.gold
     player.base_draw_count = char_config.draw_count
+    player.orb_manager.max_orb_slots = char_config.orb_slots
+    player.potion_limit = char_config.potion_limit
 
     starting_deck = []
     for card_id in char_config.deck:

@@ -24,8 +24,7 @@ from player.character_config import register_character
     orb_slots=3,
     potion_limit=3,
     draw_count=5,
-    playable=False,
-    unplayable_reason="Defect starter cards are not implemented yet",
+    playable=True,
 )
 class DefectConfig:
     """Defect character configuration."""

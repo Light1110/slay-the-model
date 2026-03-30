@@ -1,13 +1,15 @@
 from actions.base import LambdaAction
 from cards.defect.dualcast import Dualcast
 from cards.defect.zap import Zap
+from orbs.base import Orb
 from orbs.lightning import LightningOrb
 from relics.character.defect import CrackedCore
 from tests.test_combat_utils import create_test_helper
 
 
-class _TrackingOrb:
+class _TrackingOrb(Orb):
     def __init__(self):
+        super().__init__()
         self.evoke_count = 0
 
     def on_evoke(self):

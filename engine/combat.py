@@ -11,6 +11,7 @@ from actions.base import Action
 from actions.card import DiscardCardAction
 from actions.combat import EndTurnAction
 from actions.display import DisplayTextAction, InputRequestAction
+from actions.orb import TriggerOrbPassivesAction
 from enemies.base import Enemy
 from utils.option import Option
 from utils.result_types import GameTerminalState
@@ -342,6 +343,9 @@ class Combat(Localizable):
             )
         )
 
+        if hasattr(game_state.player, "orb_manager"):
+            game_state.action_queue.add_action(TriggerOrbPassivesAction(timing="turn_end"))
+
         # Process player powers: remove expired ones after the turn-end hooks have ticked durations.
         powers_to_remove = []
         for power in game_state.player.powers:
@@ -620,6 +624,9 @@ class Combat(Localizable):
 
         # Reset energy
         game_state.player.energy = game_state.player.max_energy
+
+        if hasattr(game_state.player, "orb_manager"):
+            game_state.action_queue.add_action(TriggerOrbPassivesAction(timing="turn_start"))
 
         # Increment turn counter
         self.combat_state.combat_turn += 1
