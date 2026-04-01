@@ -1671,6 +1671,9 @@ powers:
   ThieveryPower:
     name: Thievery
     description: Steals {amount} gold when attacking. Gold returned on death.
+  ThornsPower:
+    name: Thorns
+    description: When attacked, deal damage back.
   SlowPower:
     name: Slow
     description: Whenever you play a card, this enemy receives 10% more damage from Attacks this turn.

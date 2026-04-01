@@ -1633,6 +1633,9 @@ powers:
   ThieveryPower:
     name: 偷窃
     description: 攻击时偷取 {amount} 金币。死亡时追回。
+  ThornsPower:
+    name: 荆棘
+    description: 受到攻击时，对攻击者造成伤害。
   SlowPower:
     name: 缓慢
     description: 每当你打出一张牌，本回合该敌人受到的攻击伤害增加 10%。
