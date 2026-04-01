@@ -1586,7 +1586,7 @@ cards:
       description: Deal {damage} damage. If Fatal, permanently increase this card's damage by {magic.damage_increase}. Exhaust.
     SadisticNature:
       name: Sadistic Nature
-      description: Whenever you apply a debuff to an enemy, deal {damage} damage.
+      description: Whenever you apply a debuff to an enemy, deal {magic.damage_on_debuff} damage.
     SecretTechnique:
       name: Secret Technique
       description: Put a Skill from your draw pile into your hand. Exhaust.

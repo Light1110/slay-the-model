@@ -1551,7 +1551,7 @@ cards:
       description: 造成 {damage} 点伤害。如果斩杀，永久增加此牌 {magic.damage_increase} 点伤害。消耗。
     SadisticNature:
       name: 残虐天性
-      description: 每当对敌人施加负面效果时，造成 {damage} 点伤害。
+      description: 每当对敌人施加负面效果时，造成 {magic.damage_on_debuff} 点伤害。
     SecretTechnique:
       name: 秘密技法
       description: 从抽牌堆将一张技能牌加入手牌。消耗。
