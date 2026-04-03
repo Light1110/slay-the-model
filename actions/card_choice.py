@@ -782,7 +782,7 @@ class ChooseObtainCardAction(Action):
     def __init__(self, total: int = 3, namespace: Optional[str] = None, 
                  encounter_type: str = "normal", use_rolling_offset: bool = False,
                  exclude_set: Optional[List[str]] = None, pile: str = "deck",
-                 allow_upgraded: bool = False):
+                 allow_upgraded: bool = False, can_skip: bool = True):
         self.total = total
         self.namespace = namespace
         self.encounter_type = encounter_type
@@ -790,6 +790,7 @@ class ChooseObtainCardAction(Action):
         self.exclude_set = exclude_set or []
         self.pile = pile
         self.allow_upgraded = allow_upgraded
+        self.can_skip = can_skip
     
     def execute(self) -> None:
         from engine.game_state import game_state
@@ -852,7 +853,7 @@ class ChooseObtainCardAction(Action):
             title = LocalStr("ui.choose_random_card_to_add"),
             options = options,
             max_select = 1,
-            must_select = False,  # Allow skipping if none of the options are desirable.
+            must_select = not self.can_skip,
         )
         add_action(select_action, to_front=True)
 

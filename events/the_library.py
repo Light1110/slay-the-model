@@ -43,6 +43,7 @@ class TheLibrary(Event):
                     namespace=game_state.player.namespace,
                     encounter_type="shop",
                     use_rolling_offset=False,
+                    can_skip=False
                 )]
             ),
             Option(

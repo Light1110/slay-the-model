@@ -2,7 +2,7 @@ from types import SimpleNamespace
 from typing import Any, cast
 
 from actions.base import LambdaAction
-from actions.display import InputRequestAction
+from actions.display import InputRequestAction, MenuAction
 from engine.game_state import GameState, game_state
 from engine.input_protocol import InputRequest, InputSubmission
 from engine.runtime_context import RuntimeContext
@@ -160,3 +160,61 @@ def test_parse_selection_input_override_can_return_none(monkeypatch):
 
     assert len(submission.actions) == 1
     assert calls == [("first", 1, 1, True), ("second", 1, 1, True)]
+
+
+def test_human_selection_accepts_menu_command_alias(monkeypatch):
+    gs = GameState()
+    gs.config.mode = "manual"
+    gs.config.auto_select = False
+
+    monkeypatch.setattr("builtins.input", lambda _prompt: "deck")
+
+    submission = gs.resolve_input_request(
+        InputRequest(
+            options=[
+                Option(
+                    name=LocalStr("ui.menu_info_deck", default="Info: deck"),
+                    actions=[LambdaAction(lambda: None)],
+                    commands=["deck"],
+                )
+            ],
+            max_select=1,
+            must_select=True,
+        )
+    )
+
+    assert len(submission.actions) == 1
+
+
+def test_human_selection_open_menu_returns_menu_action(monkeypatch):
+    gs = GameState()
+    gs.config.mode = "manual"
+    gs.config.auto_select = False
+    gs.config.human["show_menu_option"] = True
+
+    class _InteractiveStream:
+        def isatty(self):
+            return True
+
+        def write(self, _text):
+            return None
+
+        def flush(self):
+            return None
+
+    monkeypatch.setattr("sys.stdin", _InteractiveStream())
+    monkeypatch.setattr("sys.stdout", _InteractiveStream())
+    monkeypatch.setattr("builtins.input", lambda _prompt: "2")
+    monkeypatch.setattr("tui.is_tui_mode", lambda: False)
+    monkeypatch.setattr("tui.print_utils.tui_print", lambda *_args, **_kwargs: None)
+
+    submission = gs.resolve_input_request(
+        InputRequest(
+            options=[Option(name="Only", actions=[LambdaAction(lambda: None)])],
+            max_select=1,
+            must_select=True,
+        )
+    )
+
+    assert len(submission.actions) == 1
+    assert isinstance(submission.actions[0], MenuAction)

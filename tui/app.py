@@ -19,6 +19,7 @@ from rich.console import Console
 
 from localization import resolve_text
 from . import set_app, get_app
+from utils.option import match_option_command
 
 
 class DisplayPanel(Widget):
@@ -183,6 +184,10 @@ class SelectionPanel(Widget):
     
     def _parse_indices(self, raw_value: str) -> Optional[List[int]]:
         """Parse comma-separated option numbers into zero-based indices."""
+        command_match = match_option_command(raw_value, self._options_data)
+        if command_match is not None:
+            return command_match
+
         if not raw_value:
             self._show_validation_error("Input cannot be empty.")
             return None

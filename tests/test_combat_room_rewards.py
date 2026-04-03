@@ -3,11 +3,11 @@
 import unittest
 from unittest.mock import Mock
 
-from actions.card import ChooseAddRandomCardAction
+from actions.card import ChooseAddRandomCardAction, ChooseObtainCardAction
 from actions.reward import AddGoldAction, AddRandomPotionAction
 from engine.game_state import game_state
 from rooms.combat import CombatRoom
-from utils.types import RoomType
+from utils.types import CombatType, RoomType
 
 
 class TestCombatRoomRewards(unittest.TestCase):
@@ -46,6 +46,19 @@ class TestCombatRoomRewards(unittest.TestCase):
                              for a in actions))
         self.assertFalse(any(isinstance(a, AddRandomPotionAction)
                              for a in actions))
+
+    def test_normal_combat_card_reward_can_skip(self):
+        """Normal combat rewards should expose an explicit skip option."""
+        game_state.current_act = 1
+        game_state.player.namespace = "ironclad"
+        room = CombatRoom(enemies=[], room_type=RoomType.MONSTER)
+        room.combat = Mock(combat_type=CombatType.NORMAL)
+
+        actions = room._handle_victory()
+
+        card_rewards = [a for a in actions if isinstance(a, ChooseObtainCardAction)]
+        self.assertEqual(len(card_rewards), 1)
+        self.assertTrue(card_rewards[0].can_skip)
 
 
 if __name__ == "__main__":

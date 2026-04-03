@@ -134,6 +134,7 @@ class MenuAction(Action):
                     LambdaAction(func=self._show_player_info, args=[game_state]),
                     MenuAction(self.parent_request),
                 ],
+                commands=["player"],
             ),
             Option(
                 name=LocalStr("ui.menu_info_deck", default="Info: deck"),
@@ -141,6 +142,7 @@ class MenuAction(Action):
                     LambdaAction(func=self._show_deck_info, args=[game_state]),
                     MenuAction(self.parent_request),
                 ],
+                commands=["deck"],
             ),
             Option(
                 name=LocalStr("ui.menu_info_relics", default="Info: relics"),
@@ -148,6 +150,7 @@ class MenuAction(Action):
                     LambdaAction(func=self._show_relics_info, args=[game_state]),
                     MenuAction(self.parent_request),
                 ],
+                commands=["relics"],
             ),
             Option(
                 name=LocalStr("ui.menu_save", default="Save"),
@@ -155,14 +158,17 @@ class MenuAction(Action):
                     LambdaAction(func=self._save_game, args=[game_state]),
                     MenuAction(self.parent_request),
                 ],
+                commands=["save"],
             ),
             Option(
                 name=LocalStr("ui.menu_return", default="Return"),
                 actions=[ResumeInputRequestAction(self.parent_request)],
+                commands=["return", "back"],
             ),
             Option(
                 name=LocalStr("ui.menu_exit", default="Exit"),
                 actions=[LambdaAction(func=self._exit_game)],
+                commands=["exit", "quit"],
             ),
         ]
         request_input(

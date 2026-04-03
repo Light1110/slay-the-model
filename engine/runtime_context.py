@@ -3,7 +3,7 @@ import sys
 from typing import List, Optional, cast
 
 from engine.input_protocol import InputRequest, InputSubmission
-from utils.option import Option
+from utils.option import Option, match_option_command
 
 NO_OVERRIDE = object()
 
@@ -204,6 +204,7 @@ class RuntimeContext:
             return self.default_build_submission(options, [0])
 
         mode = str(getattr(config, "mode", "human"))
+        submission_options = options
         if mode == "ai":
             selected_indices_obj = self._call_game_state_override("_resolve_ai_selection", request)
             if selected_indices_obj is NO_OVERRIDE:
@@ -217,15 +218,22 @@ class RuntimeContext:
             else:
                 selected_indices = self._coerce_selected_indices(selected_indices_obj)
         else:
+            options_obj = self._call_game_state_override("_augment_human_options", request)
+            if options_obj is NO_OVERRIDE:
+                submission_options = cast(List[Option], self.default_augment_human_options(request))
+            elif isinstance(options_obj, list):
+                submission_options = cast(List[Option], options_obj)
+            else:
+                submission_options = []
             selected_indices_obj = self._call_game_state_override("_resolve_human_selection", request)
             if selected_indices_obj is NO_OVERRIDE:
                 selected_indices = self.default_resolve_human_selection(request)
             else:
                 selected_indices = self._coerce_selected_indices(selected_indices_obj)
 
-        submission_obj = self._call_game_state_override("_build_submission", options, selected_indices)
+        submission_obj = self._call_game_state_override("_build_submission", submission_options, selected_indices)
         if submission_obj is NO_OVERRIDE:
-            return self.default_build_submission(options, selected_indices)
+            return self.default_build_submission(submission_options, selected_indices)
         return self._coerce_submission(submission_obj)
 
     def default_augment_human_options(self, request: InputRequest) -> List:
@@ -291,6 +299,9 @@ class RuntimeContext:
                 prompt = t("ui.select_prompt", default=f"Select (0-{len(options)}): ", count=len(options))
 
             raw = input(prompt)
+            command_match = match_option_command(raw, options)
+            if command_match is not None:
+                return command_match
             parsed_obj = self._call_game_state_override(
                 "_parse_selection_input",
                 raw_input=raw,
