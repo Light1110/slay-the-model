@@ -1,3 +1,5 @@
+from typing import cast
+
 from actions.combat_cards import PlayCardAction, PlayCardBHAction
 from actions.display import InputRequestAction
 from cards.ironclad.bash import Bash
@@ -43,6 +45,7 @@ def test_single_target_selection_shows_target_specific_damage_and_cancel_option(
 
     queued = game_state.action_queue.peek_next()
     assert isinstance(queued, InputRequestAction)
+    queued = cast(InputRequestAction, queued)
     assert len(queued.request.options) == 2
     option_text = str(queued.request.options[0].name)
     assert "Slime" in option_text
@@ -63,6 +66,7 @@ def test_target_selection_option_executes_selected_target_action():
 
     request = game_state.action_queue.peek_next()
     assert isinstance(request, InputRequestAction)
+    request = cast(InputRequestAction, request)
 
     selected_action = request.request.options[0].actions[0]
     assert isinstance(selected_action, PlayCardBHAction)

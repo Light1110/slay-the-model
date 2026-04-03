@@ -1,7 +1,9 @@
 from types import SimpleNamespace
+from typing import cast
 
 from cards.ironclad.bash import Bash
 from cards.ironclad.defend import Defend
+from engine.combat import Combat
 from engine.game_state import game_state
 from player.player import Player
 from powers.definitions.frail import FrailPower
@@ -45,7 +47,7 @@ def test_display_combat_uses_dynamic_hand_values_and_groups_player_state_first()
         is_dead=lambda: False,
         local=lambda field: SimpleNamespace(resolve=lambda: "Training Dummy"),
     )
-    combat = SimpleNamespace(enemies=[enemy])
+    combat = cast(Combat, SimpleNamespace(enemies=[enemy]))
 
     app = _RecordingApp()
     DisplayHandler(app).display_combat(combat, game_state)
