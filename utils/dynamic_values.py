@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 # ============ Card Value Resolution ============
 
-def resolve_card_value(card, value_type: str) -> int:
+def resolve_card_value(card, value_type: str, target: Optional[Creature] = None) -> int:
     """
     Resolve dynamic card value
     
@@ -40,7 +40,7 @@ def resolve_card_value(card, value_type: str) -> int:
     
     # Resolve different value types
     if value_type == 'damage':
-        return resolve_card_damage(card)
+        return resolve_card_damage(card, target=target)
     elif value_type == 'block':
         return resolve_card_block(card)
     else:
@@ -58,7 +58,7 @@ def resolve_card_value(card, value_type: str) -> int:
                 return 0
 
 
-def resolve_card_damage(card: 'Card') -> int:
+def resolve_card_damage(card: 'Card', target: Optional[Creature] = None) -> int:
     """
     Resolve damage value for card preview (only considers attacker's abilities).
     
@@ -87,8 +87,7 @@ def resolve_card_damage(card: 'Card') -> int:
             # Heavy Blade: extra strength bonus added to base
             base_damage += (strength_mult - 1) * strength_power.amount
     
-    # Use unified pipeline with no target (preview mode)
-    return resolve_potential_damage(base_damage, player, target=None, card=card)
+    return resolve_potential_damage(base_damage, player, target=target, card=card)
 
 
 def resolve_potential_damage(base_damage: int, attacker: Creature, 

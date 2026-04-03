@@ -12,6 +12,22 @@ if TYPE_CHECKING:
     from cards.base import Card
 
 
+def _build_enemy_target_option_name(card: "Card", enemy: Creature) -> LocalStr:
+    enemy_name = getattr(enemy, "name", getattr(enemy, "character", "Unknown"))
+    if isinstance(enemy_name, LocalStr):
+        enemy_name = enemy_name.resolve()
+
+    preview_parts = [f"HP: {enemy.hp}/{enemy.max_hp}"]
+    if getattr(enemy, "block", 0) > 0:
+        preview_parts.append(f"Block: {enemy.block}")
+    preview_text = card.get_combat_description(target=enemy).resolve()
+
+    return LocalStr(
+        "combat.select_enemy_option",
+        default=f"{enemy_name} ({', '.join(preview_parts)})\n  -> {preview_text}",
+    )
+
+
 @register("action")
 class AttackAction(Action):
     """Publish attack hooks before dealing damage."""
@@ -80,18 +96,12 @@ class PlayCardAction(Action):
 
         assert self.card.target_type is not None
         targets = [target for target in resolve_target(self.card.target_type) if target is not None]
-        if self.card.target_type == TargetType.ENEMY_SELECT and len(targets) > 1:
+        if self.card.target_type == TargetType.ENEMY_SELECT and targets:
             options = []
             for enemy in targets:
-                enemy_name = getattr(enemy, "name", getattr(enemy, "character", "Unknown"))
-                if isinstance(enemy_name, LocalStr):
-                    enemy_name = enemy_name.resolve()
                 options.append(
                     Option(
-                        name=LocalStr(
-                            "combat.select_enemy_option",
-                            default=f"{enemy_name} (HP: {enemy.hp}/{enemy.max_hp})",
-                        ),
+                        name=_build_enemy_target_option_name(self.card, enemy),
                         actions=[
                             PlayCardBHAction(
                                 card=self.card,
@@ -101,6 +111,13 @@ class PlayCardAction(Action):
                         ],
                     )
                 )
+            options.append(
+                Option(
+                    name=LocalStr("ui.cancel_target_selection", default="Cancel"),
+                    actions=[],
+                    commands=["cancel", "back"],
+                )
+            )
             add_action(
                 InputRequestAction(
                     title=LocalStr("combat.select_target", default="Select Target"),

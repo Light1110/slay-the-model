@@ -276,9 +276,18 @@ class Card(Localizable):
     @property
     def combat_description(self) -> BaseLocalStr:
         """获取战斗描述（战斗中显示，包含动态值）"""
-        return self._get_description("combat_description", fallback="description")
+        return self.get_combat_description()
+
+    def get_combat_description(self, target: Optional[Creature] = None) -> BaseLocalStr:
+        """Get combat description optionally resolved for a specific target."""
+        return self._get_description("combat_description", fallback="description", target=target)
     
-    def _get_description(self, desc_key: str, fallback: Optional[str] = None) -> BaseLocalStr:
+    def _get_description(
+        self,
+        desc_key: str,
+        fallback: Optional[str] = None,
+        target: Optional[Creature] = None,
+    ) -> BaseLocalStr:
         """
         获取描述模板并动态替换变量
         
@@ -312,7 +321,7 @@ class Card(Localizable):
         value_types = ['damage', 'block', 'heal', 'draw', 'energy_gain', 'attack_times']
         for vt in value_types:
             if is_combat_description:
-                variables[vt] = resolve_card_value(self, vt)
+                variables[vt] = resolve_card_value(self, vt, target=target)
             else:
                 variables[vt] = getattr(self, vt)
         
@@ -325,7 +334,7 @@ class Card(Localizable):
         return self.local(desc_key, **variables)
         
     
-    def info(self) -> BaseLocalStr:
+    def info(self, target: Optional[Creature] = None) -> BaseLocalStr:
         """
         获取战斗中的完整信息显示
         
@@ -335,7 +344,7 @@ class Card(Localizable):
         """
         from utils.dynamic_values import resolve_card_value
         
-        cost = resolve_card_value(self, 'cost')
+        cost = resolve_card_value(self, 'cost', target=target)
         cost_str = str(cost)
         if self._cost == COST_X:
             cost_str = "X"
@@ -344,7 +353,7 @@ class Card(Localizable):
         
         # 获取战斗描述（如果有的话）
         if self.has_local("combat_description"):
-            desc = self._get_description("combat_description")
+            desc = self._get_description("combat_description", target=target)
         else:
             desc = self.description
         

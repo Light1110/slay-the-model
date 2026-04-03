@@ -39,6 +39,7 @@ class DisplayPanel(Widget):
         """Update player info section."""
         hp_bar = self._make_hp_bar(player.hp, player.max_hp)
         energy_str = f"Energy: {player.energy}/{player.max_energy}"
+        block_str = f"Block: {player.block}"
         gold_str = f"Gold: {player.gold}"
         floor_str = f"Floor: {gs.current_floor + 1}"
         
@@ -52,13 +53,15 @@ class DisplayPanel(Widget):
         # Deck info
         # deck_str = f"Deck: {len(player.deck)} cards"
         
-        self.player_info = f"\n{hp_bar}\n{energy_str} | {gold_str} | {floor_str}\n{relics_str}"
+        self.player_info = (
+            f"\n{hp_bar}\n{energy_str} | {block_str} | {gold_str} | {floor_str}\n{relics_str}"
+        )
         self._refresh_display()
     
     def _make_hp_bar(self, hp: int, max_hp: int, width: int = 20) -> str:
-        """Create an HP bar visualization."""
+        """Create an ASCII-safe HP bar visualization."""
         filled = int((hp / max_hp) * width) if max_hp > 0 else 0
-        bar = "█" * filled + "░" * (width - filled)
+        bar = "#" * filled + "." * (width - filled)
         return f"HP: [{bar}] {hp}/{max_hp}"
     
     def update_content(self, content: str):
