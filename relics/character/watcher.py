@@ -1,7 +1,5 @@
 """Watcher-specific relics."""
 
-from typing import Any
-
 from actions.card import AddCardAction
 from actions.combat import GainBlockAction
 from actions.combat_status import ApplyPowerAction
@@ -9,33 +7,13 @@ from actions.watcher import ChangeStanceAction, GainMantraAction, ScryAction
 from engine.runtime_api import add_action
 from powers.definitions.dexterity import DexterityPower
 from powers.definitions.temporary_dexterity import TemporaryDexterityPower
-from cards.base import RawLocalStr
 from relics.base import Relic
 from utils.registry import register
 from utils.types import RarityType, StatusType, CardType
 
 
-class _SafeFormatDict(dict[str, Any]):
-    def __missing__(self, key: str) -> str:
-        return "{" + key + "}"
-
-
 class WatcherRelic(Relic):
-    text_name = ""
-    text_description = ""
-
-    def __init__(self):
-        super().__init__()
-        self.name = self.text_name or self.__class__.__name__
-
-    def local(self, field: str, **kwargs):
-        text = self.text_name if field == "name" else self.text_description if field == "description" else ""
-        if not text:
-            return RawLocalStr("")
-        try:
-            return RawLocalStr(text.format_map(_SafeFormatDict(kwargs)))
-        except Exception:
-            return RawLocalStr(text)
+    pass
 
 
 @register("relic")

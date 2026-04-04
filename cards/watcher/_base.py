@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import random
-from typing import Any, List
+from typing import List
 
 from actions.card import AddCardAction, DrawCardsAction
 from actions.card_choice import ChooseAddRandomCardAction, ChooseCardLambdaAction, MoveCardAction, SetCostUntilEndOfTurnAction
@@ -47,35 +47,6 @@ from utils.registry import register
 from utils.types import CardType, RarityType, StatusType, TargetType
 
 
-class _SafeFormatDict(dict[str, Any]):
-    def __missing__(self, key: str) -> str:
-        return "{" + key + "}"
-
-
-class StaticTextMixin:
-    def _text_for_field(self, field: str) -> str:
-        mapping = {
-            "name": getattr(self, "text_name", ""),
-            "description": getattr(self, "text_description", ""),
-            "upgrade_description": getattr(self, "text_upgrade_description", ""),
-            "combat_description": getattr(self, "text_combat_description", "") or getattr(self, "text_description", ""),
-            "upgrade_combat_description": getattr(self, "text_upgrade_combat_description", "") or getattr(self, "text_upgrade_description", ""),
-        }
-        return mapping.get(field, "")
-
-    def local(self, field: str, **kwargs: Any) -> RawLocalStr:
-        template = self._text_for_field(field)
-        if not template:
-            return RawLocalStr("")
-        try:
-            return RawLocalStr(template.format_map(_SafeFormatDict(kwargs)))
-        except Exception:
-            return RawLocalStr(template)
-
-    def has_local(self, field: str) -> bool:
-        return bool(self._text_for_field(field))
-
-
 def _player():
     from engine.game_state import game_state
 
@@ -101,9 +72,8 @@ def _last_played_card():
     return discard[-1] if discard else None
 
 
-class WatcherCard(StaticTextMixin, Card):
-    text_name = ""
-    text_description = ""
+class WatcherCard(Card):
+    pass
 
 
 class WatcherAttack(WatcherCard):
@@ -123,7 +93,6 @@ class WatcherPowerCard(WatcherCard):
 
 __all__ = [
     "AddCardAction",
-    "Any",
     "ApplyPowerAction",
     "AttackAction",
     "BattleHymnPower",
@@ -170,7 +139,6 @@ __all__ = [
     "ScryMessage",
     "SetCostUntilEndOfTurnAction",
     "SkipEnemyTurnAction",
-    "StaticTextMixin",
     "StatusType",
     "StanceChangedMessage",
     "StrengthPower",
