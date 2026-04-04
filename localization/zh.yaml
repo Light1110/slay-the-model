@@ -628,6 +628,8 @@ combat:
   enemy_killed: '{target_name} 已被击败！'
   deck: 牌组
   hand: 手牌
+  hand_full: 已满
+  hand_full_no_draw: 手牌已满，无法继续抽牌。
   discard_non_zero_cost_drawn: 弃掉 {count} 张抽出的卡牌（消耗为 0）。
   gain_energy: 获得 {amount} 点能量
   double_energy: 双倍能量增加 {amount} 点能量（共 {total} 点）。

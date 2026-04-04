@@ -712,6 +712,8 @@ combat:
   thievery_return: Recovered {amount} stolen gold!
   looter_escape: '{enemy} escapes with your gold!'
   hand: Hand
+  hand_full: is full
+  hand_full_no_draw: Hand is full. Cannot draw cards.
   powers: Powers
   relics: Relics
   potions: Potions
