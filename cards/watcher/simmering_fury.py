@@ -9,6 +9,7 @@ class SimmeringFury(WatcherSkill):
     text_name = "Simmering Fury"
     text_description = "Enter Wrath. Next turn, draw {magic.next_draw} cards."
 
+    # todo: 效果错误。应当是：在下一个回合，进入愤怒并抽牌
     def on_play(self, targets: List = []):
         player = _player()
         add_actions(

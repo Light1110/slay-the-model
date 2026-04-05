@@ -4,7 +4,8 @@ from cards.watcher._base import *
 class Worship(WatcherSkill):
     rarity = RarityType.UNCOMMON
     base_cost = 2
-    upgrade_cost = 1
+    base_innate = False
+    upgrade_innate = True
     text_name = "Worship"
     text_description = "Gain 5 Mantra."
 

@@ -9,6 +9,7 @@ class FearNoEvil(WatcherAttack):
     text_name = "Fear No Evil"
     text_description = "Deal {damage} damage. If the enemy intends to attack, gain 2 Energy."
 
+    # todo: 效果错误。不是加能量，而是进入平静
     def on_play(self, targets: List = []):
         target = targets[0] if targets else None
         super().on_play(targets)

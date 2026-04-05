@@ -9,6 +9,7 @@ class Brilliance(WatcherAttack):
     text_name = "Brilliance"
     text_description = "Deal {damage} damage. Deals more damage for your Mantra."
 
+    # todo: 重载 damage property
     def on_play(self, targets: List = []):
         mantra = _player().get_power("Mantra")
         if mantra is not None:

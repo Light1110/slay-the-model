@@ -4,6 +4,7 @@ from cards.watcher._base import *
 class Scrawl(WatcherSkill):
     rarity = RarityType.RARE
     base_cost = 1
+    upgrade_cost = 0
     base_exhaust = True
     text_name = "Scrawl"
     text_description = "Draw cards until your hand is full. Exhaust."

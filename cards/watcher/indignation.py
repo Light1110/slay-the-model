@@ -10,6 +10,7 @@ class Indignation(WatcherSkill):
     text_name = "Indignation"
     text_description = "Apply {magic.vuln} Vulnerable."
 
+    # todo: 效果不对。应为：若不在愤怒，则进入愤怒；若已在愤怒，对所有敌人施加易伤
     def on_play(self, targets: List = []):
         target = targets[0] if targets else None
         if target is None:

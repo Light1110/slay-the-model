@@ -9,6 +9,7 @@ class Wallop(WatcherAttack):
     text_name = "Wallop"
     text_description = "Deal {damage} damage. Gain Block equal to damage dealt."
 
+    # todo: 通过 on_damage_dealt
     def on_play(self, targets: List = []):
         target = targets[0] if targets else None
         super().on_play(targets)

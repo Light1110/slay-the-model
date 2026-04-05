@@ -98,6 +98,7 @@ class VioletLotus(WatcherRelic):
     text_description = "Whenever you exit Calm, gain an additional Energy."
 
 
+# todo: 效果错误。Whenever you shuffle your draw pile, Scry 3.
 @register("relic")
 class Melange(WatcherRelic):
     rarity = RarityType.SHOP

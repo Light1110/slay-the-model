@@ -9,6 +9,7 @@ class Omniscience(WatcherSkill):
     text_name = "Omniscience"
     text_description = "Choose a card in your hand. Play it twice. Exhaust."
 
+    # todo: 效果不完善。两次打出的这张牌，会被消耗
     def on_play(self, targets: List = []):
         options = []
         for card in list(_player().card_manager.get_pile("hand")):

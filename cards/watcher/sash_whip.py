@@ -13,7 +13,7 @@ class SashWhip(WatcherAttack):
 
     def on_play(self, targets: List = []):
         target = targets[0] if targets else None
-        previous = _last_played_card()
+        previous = _last_played_card() # todo: 同理...从历史记录里找
         super().on_play(targets)
         if target is None or previous is None or getattr(previous, "card_type", None) != CardType.ATTACK:
             return

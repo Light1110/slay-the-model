@@ -10,6 +10,7 @@ class Expunger(WatcherAttack):
     text_description = "Deal {damage} damage X times. Exhaust."
 
     def __init__(self, hits: int = 1, **kwargs):
+        # todo： 应当设置 attack_times
         self.hits = max(1, hits)
         super().__init__(**kwargs)
 

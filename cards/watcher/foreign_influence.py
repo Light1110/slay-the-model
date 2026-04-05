@@ -8,5 +8,6 @@ class ForeignInfluence(WatcherSkill):
     text_name = "Foreign Influence"
     text_description = "Choose 1 of 3 attacks from any color to add to your hand. It costs 0 this turn. Exhaust."
 
+    # todo: 只有升级下，本回合费用为0
     def on_play(self, targets: List = []):
         add_action(ChooseAddRandomCardAction(total=3, card_type=CardType.ATTACK, cost_until_end_of_turn=0))

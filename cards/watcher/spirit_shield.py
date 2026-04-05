@@ -9,6 +9,7 @@ class SpiritShield(WatcherSkill):
     text_name = "Spirit Shield"
     text_description = "Gain Block equal to {magic.per_card} for each card in your hand."
 
+    # todo: 重载 block property
     def on_play(self, targets: List = []):
         amount = len(_player().card_manager.get_pile("hand")) * self.get_magic_value("per_card")
         add_action(GainBlockAction(amount, target=_player()))

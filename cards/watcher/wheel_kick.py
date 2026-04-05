@@ -9,7 +9,3 @@ class WheelKick(WatcherAttack):
     base_draw = 2
     text_name = "Wheel Kick"
     text_description = "Deal {damage} damage. Draw {draw} cards."
-
-    def on_play(self, targets: List = []):
-        super().on_play(targets)
-        add_action(DrawCardsAction(self.draw))

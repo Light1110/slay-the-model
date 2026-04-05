@@ -14,6 +14,7 @@ class CrushJoints(WatcherAttack):
     def on_play(self, targets: List = []):
         target = targets[0] if targets else None
         super().on_play(targets)
+        # todo: 上一张打出的牌，应当从combat_state的历史记录里找，而不是弃牌堆
         previous = _last_played_card()
         if target is None or previous is None or getattr(previous, "card_type", None) != CardType.SKILL:
             return

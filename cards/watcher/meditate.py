@@ -10,6 +10,7 @@ class Meditate(WatcherSkill):
     text_name = "Meditate"
     text_description = "Put up to {magic.pick} cards from your discard pile into your hand. Enter Calm. Exhaust."
 
+    # todo: 效果错误。没有消耗词条。打出后的效果时，... 最后结束回合
     def on_play(self, targets: List = []):
         add_action(ChangeStanceAction(StatusType.CALM))
         add_action(
