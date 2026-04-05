@@ -1,7 +1,9 @@
 from cards.watcher._base import *
 
 @register("card")
-class Judgment(WatcherSkill):
+class Judgment(Card):
+    card_type = CardType.SKILL
+    target_type = TargetType.SELF
     rarity = RarityType.RARE
     target_type = TargetType.ENEMY_SELECT
     base_cost = 1

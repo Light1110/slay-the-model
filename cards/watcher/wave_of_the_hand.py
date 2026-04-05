@@ -1,7 +1,9 @@
 from cards.watcher._base import *
 
 @register("card")
-class WaveOfTheHand(WatcherPowerCard):
+class WaveOfTheHand(Card):
+    card_type = CardType.POWER
+    target_type = TargetType.SELF
     rarity = RarityType.UNCOMMON
     base_cost = 1
     base_magic = {"weak": 1}

@@ -1,7 +1,9 @@
 from cards.watcher._base import *
 
 @register("card")
-class Vault(WatcherSkill):
+class Vault(Card):
+    card_type = CardType.SKILL
+    target_type = TargetType.SELF
     rarity = RarityType.RARE
     base_cost = 3
     upgrade_cost = 2

@@ -1,7 +1,9 @@
 from cards.watcher._base import *
 
 @register("card")
-class Miracle(WatcherSkill):
+class Miracle(Card):
+    card_type = CardType.SKILL
+    target_type = TargetType.SELF
     rarity = RarityType.SPECIAL
     base_cost = 0
     base_energy_gain = 1

@@ -1,7 +1,9 @@
 from cards.watcher._base import *
 
 @register("card")
-class Ragnarok(WatcherAttack):
+class Ragnarok(Card):
+    card_type = CardType.ATTACK
+    target_type = TargetType.ENEMY_SELECT
     rarity = RarityType.RARE
     base_cost = 3
     base_damage = 5

@@ -1,7 +1,9 @@
 from cards.watcher._base import *
 
 @register("card")
-class Omega(WatcherPowerCard):
+class Omega(Card):
+    card_type = CardType.POWER
+    target_type = TargetType.SELF
     rarity = RarityType.SPECIAL
     base_cost = 3
     base_exhaust = True

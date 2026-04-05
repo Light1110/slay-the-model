@@ -1,7 +1,9 @@
 from cards.watcher._base import *
 
 @register("card")
-class ForeignInfluence(WatcherSkill):
+class ForeignInfluence(Card):
+    card_type = CardType.SKILL
+    target_type = TargetType.SELF
     rarity = RarityType.UNCOMMON
     base_cost = 0
     base_exhaust = True

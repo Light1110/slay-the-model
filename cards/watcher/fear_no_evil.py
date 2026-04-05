@@ -1,7 +1,9 @@
 from cards.watcher._base import *
 
 @register("card")
-class FearNoEvil(WatcherAttack):
+class FearNoEvil(Card):
+    card_type = CardType.ATTACK
+    target_type = TargetType.ENEMY_SELECT
     rarity = RarityType.UNCOMMON
     base_cost = 1
     base_damage = 8

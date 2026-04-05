@@ -1,7 +1,9 @@
 from cards.watcher._base import *
 
 @register("card")
-class Consecrate(WatcherAttack):
+class Consecrate(Card):
+    card_type = CardType.ATTACK
+    target_type = TargetType.ENEMY_SELECT
     rarity = RarityType.COMMON
     target_type = TargetType.ENEMY_ALL
     base_cost = 0

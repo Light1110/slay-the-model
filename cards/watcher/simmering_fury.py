@@ -1,7 +1,9 @@
 from cards.watcher._base import *
 
 @register("card")
-class SimmeringFury(WatcherSkill):
+class SimmeringFury(Card):
+    card_type = CardType.SKILL
+    target_type = TargetType.SELF
     rarity = RarityType.UNCOMMON
     base_cost = 1
     base_magic = {"next_draw": 2}

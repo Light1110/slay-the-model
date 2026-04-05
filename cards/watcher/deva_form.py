@@ -1,7 +1,9 @@
 from cards.watcher._base import *
 
 @register("card")
-class DevaForm(WatcherPowerCard):
+class DevaForm(Card):
+    card_type = CardType.POWER
+    target_type = TargetType.SELF
     rarity = RarityType.RARE
     base_cost = 3
     text_name = "Deva Form"

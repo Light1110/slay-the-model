@@ -1,7 +1,9 @@
 from cards.watcher._base import *
 
 @register("card")
-class Vigilance(WatcherSkill):
+class Vigilance(Card):
+    card_type = CardType.SKILL
+    target_type = TargetType.SELF
     rarity = RarityType.STARTER
     base_cost = 2
     base_block = 8

@@ -1,7 +1,9 @@
 from cards.watcher._base import *
 
 @register("card")
-class MasterReality(WatcherPowerCard):
+class MasterReality(Card):
+    card_type = CardType.POWER
+    target_type = TargetType.SELF
     rarity = RarityType.RARE
     base_cost = 1
     text_name = "Master Reality"

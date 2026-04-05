@@ -1,7 +1,9 @@
 from cards.watcher._base import *
 
 @register("card")
-class Omniscience(WatcherSkill):
+class Omniscience(Card):
+    card_type = CardType.SKILL
+    target_type = TargetType.SELF
     rarity = RarityType.RARE
     base_cost = 4
     upgrade_cost = 3

@@ -1,7 +1,9 @@
 from cards.watcher._base import *
 
 @register("card")
-class ThroughViolence(WatcherAttack):
+class ThroughViolence(Card):
+    card_type = CardType.ATTACK
+    target_type = TargetType.ENEMY_SELECT
     rarity = RarityType.SPECIAL
     base_cost = 0
     base_damage = 20

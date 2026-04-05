@@ -1,7 +1,9 @@
 from cards.watcher._base import *
 
 @register("card")
-class Swivel(WatcherSkill):
+class Swivel(Card):
+    card_type = CardType.SKILL
+    target_type = TargetType.SELF
     rarity = RarityType.UNCOMMON
     base_cost = 2
     base_block = 8

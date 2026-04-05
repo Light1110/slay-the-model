@@ -1,7 +1,9 @@
 from cards.watcher._base import *
 
 @register("card")
-class LessonLearned(WatcherAttack):
+class LessonLearned(Card):
+    card_type = CardType.ATTACK
+    target_type = TargetType.ENEMY_SELECT
     rarity = RarityType.RARE
     base_cost = 2
     base_damage = 10

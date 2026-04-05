@@ -1,7 +1,9 @@
 from cards.watcher._base import *
 
 @register("card")
-class Halt(WatcherSkill):
+class Halt(Card):
+    card_type = CardType.SKILL
+    target_type = TargetType.SELF
     rarity = RarityType.COMMON
     base_cost = 0
     base_block = 3

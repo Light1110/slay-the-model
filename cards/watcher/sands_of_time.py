@@ -1,7 +1,9 @@
 from cards.watcher._base import *
 
 @register("card")
-class SandsOfTime(WatcherAttack):
+class SandsOfTime(Card):
+    card_type = CardType.ATTACK
+    target_type = TargetType.ENEMY_SELECT
     rarity = RarityType.UNCOMMON
     base_cost = 4
     base_damage = 20

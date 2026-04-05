@@ -1,7 +1,9 @@
 from cards.watcher._base import *
 
 @register("card")
-class Nirvana(WatcherPowerCard):
+class Nirvana(Card):
+    card_type = CardType.POWER
+    target_type = TargetType.SELF
     rarity = RarityType.UNCOMMON
     base_cost = 1
     base_magic = {"block": 3}

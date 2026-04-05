@@ -12,12 +12,8 @@ from utils.registry import register
 from utils.types import RarityType, StatusType, CardType
 
 
-class WatcherRelic(Relic):
-    pass
-
-
 @register("relic")
-class PureWater(WatcherRelic):
+class PureWater(Relic):
     rarity = RarityType.COMMON
     text_name = "Pure Water"
     text_description = "At the start of each combat, add 1 Miracle to your hand."
@@ -29,7 +25,7 @@ class PureWater(WatcherRelic):
 
 
 @register("relic")
-class Damaru(WatcherRelic):
+class Damaru(Relic):
     rarity = RarityType.COMMON
     text_name = "Damaru"
     text_description = "At the start of your turn, gain 1 Mantra."
@@ -39,7 +35,7 @@ class Damaru(WatcherRelic):
 
 
 @register("relic")
-class Duality(WatcherRelic):
+class Duality(Relic):
     rarity = RarityType.UNCOMMON
     text_name = "Duality"
     text_description = "Whenever you play an Attack, gain 1 temporary Dexterity."
@@ -52,7 +48,7 @@ class Duality(WatcherRelic):
 
 
 @register("relic")
-class TeardropLocket(WatcherRelic):
+class TeardropLocket(Relic):
     rarity = RarityType.UNCOMMON
     text_name = "Teardrop Locket"
     text_description = "Start each combat in Calm."
@@ -62,7 +58,7 @@ class TeardropLocket(WatcherRelic):
 
 
 @register("relic")
-class CloakClasp(WatcherRelic):
+class CloakClasp(Relic):
     rarity = RarityType.RARE
     text_name = "Cloak Clasp"
     text_description = "At the end of your turn, gain 1 Block for each card in your hand."
@@ -72,14 +68,14 @@ class CloakClasp(WatcherRelic):
 
 
 @register("relic")
-class GoldenEye(WatcherRelic):
+class GoldenEye(Relic):
     rarity = RarityType.SHOP
     text_name = "Golden Eye"
     text_description = "Whenever you Scry, Scry 2 additional cards."
 
 
 @register("relic")
-class HolyWater(WatcherRelic):
+class HolyWater(Relic):
     rarity = RarityType.BOSS
     text_name = "Holy Water"
     text_description = "At the start of each combat, add 3 Miracles to your hand."
@@ -92,7 +88,7 @@ class HolyWater(WatcherRelic):
 
 
 @register("relic")
-class VioletLotus(WatcherRelic):
+class VioletLotus(Relic):
     rarity = RarityType.BOSS
     text_name = "Violet Lotus"
     text_description = "Whenever you exit Calm, gain an additional Energy."
@@ -100,7 +96,7 @@ class VioletLotus(WatcherRelic):
 
 # todo: 效果错误。Whenever you shuffle your draw pile, Scry 3.
 @register("relic")
-class Melange(WatcherRelic):
+class Melange(Relic):
     rarity = RarityType.SHOP
     text_name = "Melange"
     text_description = "On use, Scry 3."

@@ -1,7 +1,9 @@
 from cards.watcher._base import *
 
 @register("card")
-class DeusExMachina(WatcherSkill):
+class DeusExMachina(Card):
+    card_type = CardType.SKILL
+    target_type = TargetType.SELF
     rarity = RarityType.RARE
     base_cost = COST_UNPLAYABLE
     base_exhaust = True

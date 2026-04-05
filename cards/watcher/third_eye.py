@@ -1,7 +1,9 @@
 from cards.watcher._base import *
 
 @register("card")
-class ThirdEye(WatcherSkill):
+class ThirdEye(Card):
+    card_type = CardType.SKILL
+    target_type = TargetType.SELF
     rarity = RarityType.COMMON
     base_cost = 1
     base_block = 7

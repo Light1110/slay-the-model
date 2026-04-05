@@ -1,7 +1,9 @@
 from cards.watcher._base import *
 
 @register("card")
-class Tranquility(WatcherSkill):
+class Tranquility(Card):
+    card_type = CardType.SKILL
+    target_type = TargetType.SELF
     rarity = RarityType.COMMON
     base_cost = 1
     upgrade_cost = 0

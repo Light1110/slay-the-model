@@ -1,7 +1,9 @@
 from cards.watcher._base import *
 
 @register("card")
-class Indignation(WatcherSkill):
+class Indignation(Card):
+    card_type = CardType.SKILL
+    target_type = TargetType.SELF
     rarity = RarityType.UNCOMMON
     target_type = TargetType.ENEMY_SELECT
     base_cost = 1

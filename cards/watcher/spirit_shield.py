@@ -1,7 +1,9 @@
 from cards.watcher._base import *
 
 @register("card")
-class SpiritShield(WatcherSkill):
+class SpiritShield(Card):
+    card_type = CardType.SKILL
+    target_type = TargetType.SELF
     rarity = RarityType.RARE
     base_cost = 2
     base_magic = {"per_card": 3}

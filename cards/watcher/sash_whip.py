@@ -1,7 +1,9 @@
 from cards.watcher._base import *
 
 @register("card")
-class SashWhip(WatcherAttack):
+class SashWhip(Card):
+    card_type = CardType.ATTACK
+    target_type = TargetType.ENEMY_SELECT
     rarity = RarityType.COMMON
     base_cost = 1
     base_damage = 8

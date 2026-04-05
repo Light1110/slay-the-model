@@ -1,7 +1,9 @@
 from cards.watcher._base import *
 
 @register("card")
-class Eruption(WatcherAttack):
+class Eruption(Card):
+    card_type = CardType.ATTACK
+    target_type = TargetType.ENEMY_SELECT
     rarity = RarityType.STARTER
     base_cost = 2
     upgrade_cost = 1

@@ -1,7 +1,9 @@
 from cards.watcher._base import *
 
 @register("card")
-class Wish(WatcherSkill):
+class Wish(Card):
+    card_type = CardType.SKILL
+    target_type = TargetType.SELF
     rarity = RarityType.RARE
     base_cost = 3
     base_exhaust = True

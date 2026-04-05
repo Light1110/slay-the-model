@@ -1,7 +1,9 @@
 from cards.watcher._base import *
 
 @register("card")
-class Weave(WatcherAttack):
+class Weave(Card):
+    card_type = CardType.ATTACK
+    target_type = TargetType.ENEMY_SELECT
     rarity = RarityType.UNCOMMON
     base_cost = 0
     base_damage = 4

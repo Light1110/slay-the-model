@@ -72,25 +72,6 @@ def _last_played_card():
     return discard[-1] if discard else None
 
 
-class WatcherCard(Card):
-    pass
-
-
-class WatcherAttack(WatcherCard):
-    card_type = CardType.ATTACK
-    target_type = TargetType.ENEMY_SELECT
-
-
-class WatcherSkill(WatcherCard):
-    card_type = CardType.SKILL
-    target_type = TargetType.SELF
-
-
-class WatcherPowerCard(WatcherCard):
-    card_type = CardType.POWER
-    target_type = TargetType.SELF
-
-
 __all__ = [
     "AddCardAction",
     "ApplyPowerAction",
@@ -146,10 +127,6 @@ __all__ = [
     "TargetType",
     "TriggerMarkAction",
     "VulnerablePower",
-    "WatcherAttack",
-    "WatcherCard",
-    "WatcherPowerCard",
-    "WatcherSkill",
     "WaveOfTheHandPower",
     "WeakPower",
     "WreathOfFlamePower",
