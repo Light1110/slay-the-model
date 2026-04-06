@@ -1495,6 +1495,30 @@ cards:
     Burn:
       name: Burn
       description: Unplayable. At the end of your turn, take {damage} damage.
+    Miracle:
+      name: Miracle
+      description: Gain {energy_gain} Energy. Exhaust.
+    Smite:
+      name: Smite
+      description: Retain. Deal {damage} damage. Exhaust.
+    Safety:
+      name: Safety
+      description: Retain. Gain {block} Block. Exhaust.
+    Insight:
+      name: Insight
+      description: Retain. Draw {draw} cards. Exhaust.
+    ThroughViolence:
+      name: Through Violence
+      description: Retain. Deal {damage} damage. Exhaust.
+    Expunger:
+      name: Expunger
+      description: Deal {damage} damage X times. Exhaust.
+    Beta:
+      name: Beta
+      description: Shuffle an Omega into your draw pile. Exhaust.
+    Omega:
+      name: Omega
+      description: At the end of your turn, deal 50 damage to ALL enemies.
     Chrysalis:
       name: Chrysalis
       description: Shuffle {magic.cards} random Skills into your draw pile. They cost 0 this combat. Exhaust.
@@ -1627,6 +1651,256 @@ cards:
     Writhe:
       name: Writhe
       description: Unplayable. Innate.
+  watcher:
+    Alpha:
+      name: 'Alpha'
+      description: 'Shuffle a Beta into your draw pile. Exhaust.'
+    BattleHymn:
+      name: 'Battle Hymn'
+      description: 'At the start of your turn, add a Smite into your hand.'
+    Beta:
+      name: 'Beta'
+      description: 'Shuffle an Omega into your draw pile. Exhaust.'
+    Blasphemy:
+      name: 'Blasphemy'
+      description: 'Enter Divinity. Die next turn. Exhaust.'
+    BowlingBash:
+      name: 'Bowling Bash'
+      description: 'Deal {damage} damage for each enemy in combat.'
+    Brilliance:
+      name: 'Brilliance'
+      description: 'Deal {damage} damage. Deals more damage for your Mantra.'
+    CarveReality:
+      name: 'Carve Reality'
+      description: 'Deal {damage} damage. Add a Smite into your hand.'
+    Collect:
+      name: 'Collect'
+      description: 'Put Miracle+ into your hand at the start of your next X turns. Exhaust.'
+    Conclude:
+      name: 'Conclude'
+      description: 'Deal {damage} damage to ALL enemies. End your turn.'
+    ConjureBlade:
+      name: 'Conjure Blade'
+      description: 'Shuffle an Expunger into your draw pile. Exhaust.'
+    Consecrate:
+      name: 'Consecrate'
+      description: 'Deal {damage} damage to ALL enemies.'
+    Crescendo:
+      name: 'Crescendo'
+      description: 'Retain. Enter Wrath. Exhaust.'
+    CrushJoints:
+      name: 'Crush Joints'
+      description: 'Deal {damage} damage. If the previous card played this turn was a Skill, apply {magic.vuln} Vulnerable.'
+    CutThroughFate:
+      name: 'Cut Through Fate'
+      description: 'Deal {damage} damage. Scry {magic.scry}. Draw {draw} card.'
+    DeceiveReality:
+      name: 'Deceive Reality'
+      description: 'Gain {block} Block. Add a Safety into your hand.'
+    Defend:
+      name: 'Defend'
+      description: 'Gain {block} Block.'
+    DeusExMachina:
+      name: 'Deus Ex Machina'
+      description: 'Unplayable. When drawn, add {magic.count} Miracles to your hand. Exhaust.'
+    DevaForm:
+      name: 'Deva Form'
+      description: 'At the start of your turn, gain Energy and increase this effect.'
+    Devotion:
+      name: 'Devotion'
+      description: 'At the start of your turn, gain {magic.mantra} Mantra.'
+    EmptyBody:
+      name: 'Empty Body'
+      description: 'Gain {block} Block. Exit your stance.'
+    EmptyFist:
+      name: 'Empty Fist'
+      description: 'Deal {damage} damage. Exit your stance.'
+    EmptyMind:
+      name: 'Empty Mind'
+      description: 'Exit your stance. Draw {draw} cards.'
+    Eruption:
+      name: 'Eruption'
+      description: 'Deal {damage} damage. Enter Wrath.'
+    Establishment:
+      name: 'Establishment'
+      description: 'At the end of your turn, reduce the cost of retained cards by 1.'
+    Evaluate:
+      name: 'Evaluate'
+      description: 'Gain {block} Block. Shuffle an Insight into your draw pile.'
+    Expunger:
+      name: 'Expunger'
+      description: 'Deal {damage} damage X times. Exhaust.'
+    Fasting:
+      name: 'Fasting'
+      description: 'Gain {magic.stat} Strength and Dexterity. Gain 1 less Energy at the start of each turn.'
+    FearNoEvil:
+      name: 'Fear No Evil'
+      description: 'Deal {damage} damage. If the enemy intends to attack, gain 2 Energy.'
+    FlurryOfBlows:
+      name: 'Flurry of Blows'
+      description: 'Deal {damage} damage. Whenever you change stances, return this from your discard pile to your hand.'
+    FlyingSleeves:
+      name: 'Flying Sleeves'
+      description: 'Retain. Deal {damage} damage {attack_times} times.'
+    FollowUp:
+      name: 'Follow-Up'
+      description: 'Deal {damage} damage. If the previous card played this turn was an Attack, gain 1 Energy.'
+    ForeignInfluence:
+      name: 'Foreign Influence'
+      description: 'Choose 1 of 3 attacks from any color to add to your hand. It costs 0 this turn. Exhaust.'
+    Foresight:
+      name: 'Foresight'
+      description: 'At the start of your turn, Scry {magic.scry}.'
+    Halt:
+      name: 'Halt'
+      description: 'Gain {block} Block. If you are in Wrath, gain {magic.wrath_block} more.'
+    Indignation:
+      name: 'Indignation'
+      description: 'Apply {magic.vuln} Vulnerable.'
+    InnerPeace:
+      name: 'Inner Peace'
+      description: 'Enter Calm. If you are already in Calm, draw {draw} cards.'
+    Insight:
+      name: 'Insight'
+      description: 'Retain. Draw {draw} cards. Exhaust.'
+    Judgment:
+      name: 'Judgment'
+      description: 'If the enemy has {magic.threshold} HP or less, it dies.'
+    JustLucky:
+      name: 'Just Lucky'
+      description: 'Deal {damage} damage. Scry 1. Gain {block} Block.'
+    LessonLearned:
+      name: 'Lesson Learned'
+      description: 'Deal {damage} damage. If Fatal, upgrade a card in your deck.'
+    LikeWater:
+      name: 'Like Water'
+      description: 'At the end of your turn, if you are in Calm, gain {magic.block} Block.'
+    MasterReality:
+      name: 'Master Reality'
+      description: 'Whenever a card is created during combat, upgrade it.'
+    Meditate:
+      name: 'Meditate'
+      description: 'Put up to {magic.pick} cards from your discard pile into your hand. Enter Calm. Exhaust.'
+    MentalFortress:
+      name: 'Mental Fortress'
+      description: 'Whenever you change stances, gain {magic.block} Block.'
+    Miracle:
+      name: 'Miracle'
+      description: 'Gain {energy_gain} Energy. Exhaust.'
+    Nirvana:
+      name: 'Nirvana'
+      description: 'Whenever you Scry, gain {magic.block} Block.'
+    Omega:
+      name: 'Omega'
+      description: 'At the end of your turn, deal 50 damage to ALL enemies.'
+    Omniscience:
+      name: 'Omniscience'
+      description: 'Choose a card in your hand. Play it twice. Exhaust.'
+    Perseverance:
+      name: 'Perseverance'
+      description: 'Retain. Gain {block} Block. When retained, this gains {magic.retain_gain} Block.'
+    Pray:
+      name: 'Pray'
+      description: 'Gain {block} Block. Gain 3 Mantra.'
+    PressurePoints:
+      name: 'Pressure Points'
+      description: 'Apply {magic.mark} Mark. ALL enemies lose HP equal to their Mark.'
+    Prostrate:
+      name: 'Prostrate'
+      description: 'Gain {block} Block. Gain 2 Mantra. Exhaust.'
+    Protect:
+      name: 'Protect'
+      description: 'Retain. Gain {block} Block.'
+    Ragnarok:
+      name: 'Ragnarok'
+      description: 'Deal {damage} damage to a random enemy {attack_times} times.'
+    ReachHeaven:
+      name: 'Reach Heaven'
+      description: 'Deal {damage} damage. Shuffle a Through Violence into your draw pile.'
+    Rushdown:
+      name: 'Rushdown'
+      description: 'Whenever you enter Wrath, draw {magic.draw} cards.'
+    Safety:
+      name: 'Safety'
+      description: 'Retain. Gain {block} Block. Exhaust.'
+    Sanctity:
+      name: 'Sanctity'
+      description: 'Gain {block} Block. If you are in Calm, draw 2 cards.'
+    SandsOfTime:
+      name: 'Sands of Time'
+      description: 'Retain. Deal {damage} damage. Retaining this card reduces its cost by 1.'
+    SashWhip:
+      name: 'Sash Whip'
+      description: 'Deal {damage} damage. If the previous card played this turn was an Attack, apply {magic.weak} Weak.'
+    Scrawl:
+      name: 'Scrawl'
+      description: 'Draw cards until your hand is full. Exhaust.'
+    SignatureMove:
+      name: 'Signature Move'
+      description: 'Can only be played if this is the only Attack in your hand. Deal {damage} damage.'
+    SimmeringFury:
+      name: 'Simmering Fury'
+      description: 'Enter Wrath. Next turn, draw {magic.next_draw} cards.'
+    Smite:
+      name: 'Smite'
+      description: 'Retain. Deal {damage} damage. Exhaust.'
+    SpiritShield:
+      name: 'Spirit Shield'
+      description: 'Gain Block equal to {magic.per_card} for each card in your hand.'
+    Strike:
+      name: 'Strike'
+      description: 'Deal {damage} damage.'
+    Study:
+      name: 'Study'
+      description: 'At the end of your turn, shuffle {magic.amount} Insight into your draw pile.'
+    Swivel:
+      name: 'Swivel'
+      description: 'Gain {block} Block. Your next Attack this turn costs 0.'
+    TalkToTheHand:
+      name: 'Talk to the Hand'
+      description: 'Deal {damage} damage. Apply a debuff that gives you {magic.block} Block whenever you attack that enemy.'
+    Tantrum:
+      name: 'Tantrum'
+      description: 'Deal {damage} damage {attack_times} times. Enter Wrath.'
+    ThirdEye:
+      name: 'Third Eye'
+      description: 'Gain {block} Block. Scry {magic.scry}.'
+    ThroughViolence:
+      name: 'Through Violence'
+      description: 'Retain. Deal {damage} damage. Exhaust.'
+    Tranquility:
+      name: 'Tranquility'
+      description: 'Retain. Enter Calm. Exhaust.'
+    Vault:
+      name: 'Vault'
+      description: 'End your turn. Take another turn after this one.'
+    Vigilance:
+      name: 'Vigilance'
+      description: 'Gain {block} Block. Enter Calm.'
+    Wallop:
+      name: 'Wallop'
+      description: 'Deal {damage} damage. Gain Block equal to damage dealt.'
+    WaveOfTheHand:
+      name: 'Wave of the Hand'
+      description: 'Whenever you gain Block this turn, apply {magic.weak} Weak to ALL enemies.'
+    Weave:
+      name: 'Weave'
+      description: 'Deal {damage} damage. Whenever you Scry, return this from your discard pile to your hand.'
+    WheelKick:
+      name: 'Wheel Kick'
+      description: 'Deal {damage} damage. Draw {draw} cards.'
+    WindmillStrike:
+      name: 'Windmill Strike'
+      description: 'Retain. Deal {damage} damage. Retaining this card increases its damage by {magic.gain}.'
+    Wish:
+      name: 'Wish'
+      description: 'Choose one: Gain Gold, Strength, or Plated Armor. Exhaust.'
+    Worship:
+      name: 'Worship'
+      description: 'Gain 5 Mantra.'
+    WreathOfFlame:
+      name: 'Wreath of Flame'
+      description: 'Your next Attack deals {magic.bonus} additional damage.'
 powers:
   EnragePower:
     name: Enrage
@@ -1874,7 +2148,97 @@ potions:
   EntropicBrew:
     name: Entropic Brew
     description: Add 3 random potions to your inventory.
+  BattleHymnPower:
+    name: 'Battle Hymn'
+    description: 'At the start of your turn, add a Smite into your hand.'
+  BlasphemerPower:
+    name: 'Blasphemer'
+    description: 'At the start of your next turn, die.'
+  CollectPower:
+    name: 'Collect'
+    description: 'At the start of your turn, add Miracle+ to your hand.'
+  DevaPower:
+    name: 'Deva'
+    description: 'At the start of your turn, gain Energy, then increase this by 1.'
+  DevotionPower:
+    name: 'Devotion'
+    description: 'At the start of your turn, gain {amount} Mantra.'
+  EstablishmentPower:
+    name: 'Establishment'
+    description: 'At the end of your turn, reduce the cost of retained cards by 1.'
+  FastingPower:
+    name: 'Fasting'
+    description: 'Gain 1 less Energy at the start of each turn.'
+  ForesightPower:
+    name: 'Foresight'
+    description: 'At the start of your turn, Scry {amount}.'
+  LikeWaterPower:
+    name: 'Like Water'
+    description: 'At the end of your turn, if you are in Calm, gain {amount} Block.'
+  MantraPower:
+    name: 'Mantra'
+    description: 'When this reaches 10, enter Divinity.'
+  MarkPower:
+    name: 'Mark'
+    description: 'When triggered, lose HP equal to Mark.'
+  MasterRealityPower:
+    name: 'Master Reality'
+    description: 'Whenever a card is created during combat, upgrade it.'
+  MentalFortressPower:
+    name: 'Mental Fortress'
+    description: 'Whenever you change stances, gain {amount} Block.'
+  NirvanaPower:
+    name: 'Nirvana'
+    description: 'Whenever you Scry, gain {amount} Block.'
+  OmegaPower:
+    name: 'Omega'
+    description: 'At the end of your turn, deal {amount} damage to ALL enemies.'
+  RushdownPower:
+    name: 'Rushdown'
+    description: 'Whenever you enter Wrath, draw {amount} card(s).'
+  StudyPower:
+    name: 'Study'
+    description: 'At the end of your turn, shuffle {amount} Insight into your draw pile.'
+  TalkToTheHandPower:
+    name: 'Talk to the Hand'
+    description: 'Whenever you attack this enemy, gain {amount} Block.'
+  TemporaryDexterityPower:
+    name: 'Temporary Dexterity'
+    description: 'Dexterity this turn.'
+  WaveOfTheHandPower:
+    name: 'Wave of the Hand'
+    description: 'Whenever you gain Block this turn, apply {amount} Weak to all enemies.'
+  WreathOfFlamePower:
+    name: 'Wreath of Flame'
+    description: 'Your next Attack deals {amount} additional damage.'
 relics:
+  PureWater:
+    name: 'Pure Water'
+    description: 'At the start of each combat, add 1 Miracle to your hand.'
+  Damaru:
+    name: 'Damaru'
+    description: 'At the start of your turn, gain 1 Mantra.'
+  Duality:
+    name: 'Duality'
+    description: 'Whenever you play an Attack, gain 1 temporary Dexterity.'
+  TeardropLocket:
+    name: 'Teardrop Locket'
+    description: 'Start each combat in Calm.'
+  CloakClasp:
+    name: 'Cloak Clasp'
+    description: 'At the end of your turn, gain 1 Block for each card in your hand.'
+  GoldenEye:
+    name: 'Golden Eye'
+    description: 'Whenever you Scry, Scry 2 additional cards.'
+  HolyWater:
+    name: 'Holy Water'
+    description: 'At the start of each combat, add 3 Miracles to your hand.'
+  VioletLotus:
+    name: 'Violet Lotus'
+    description: 'Whenever you exit Calm, gain an additional Energy.'
+  Melange:
+    name: 'Melange'
+    description: 'On use, Scry 3.'
   AncientTeaSet:
     name: Ancient Tea Set
     description: Whenever you enter a Rest Site, start the next combat with 2 additional Energy.
