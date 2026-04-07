@@ -15,6 +15,7 @@ class BloodPotion(Potion):
     rarity = RarityType.COMMON
     category = "Ironclad"
     name = "Blood Potion"
+    can_be_used_out_of_combat = True
 
     def __init__(self):
         super().__init__()

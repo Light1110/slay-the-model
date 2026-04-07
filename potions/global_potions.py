@@ -500,6 +500,7 @@ class FruitJuice(Potion):
     rarity = RarityType.RARE
     category = "Global"
     name = "Fruit Juice"
+    can_be_used_out_of_combat = True
 
     def __init__(self):
         super().__init__()

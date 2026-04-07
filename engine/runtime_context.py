@@ -100,6 +100,53 @@ class RuntimeContext:
             return value
         return InputSubmission([])
 
+    def _augment_noncombat_potion_options(self, request: InputRequest) -> InputRequest:
+        """Append non-combat potion options to a selection request when applicable."""
+        from actions.combat import UsePotionAction
+        from actions.display import ResumeInputRequestAction
+        from localization import LocalStr
+
+        if request.request_type != "selection" or self.current_combat is not None:
+            return request
+
+        player = self.player
+        if player is None:
+            return request
+
+        base_options = list(request.options or [])
+        augmented_options = list(base_options)
+        for potion in list(getattr(player, "potions", []) or []):
+            if not getattr(potion, "can_be_used_actively", True):
+                continue
+            if not getattr(potion, "can_be_used_out_of_combat", False):
+                continue
+            augmented_options.append(
+                Option(
+                    name=LocalStr(
+                        "ui.use_potion_option",
+                        default=f"Use potion: {potion.local('name').resolve()}",
+                    ),
+                    actions=[
+                        UsePotionAction(potion=potion, target=player),
+                        ResumeInputRequestAction(request),
+                    ],
+                    commands=[f"potion{len(augmented_options)}", getattr(potion, "idstr", "")],
+                )
+            )
+
+        if len(augmented_options) == len(base_options):
+            return request
+
+        return InputRequest(
+            title=request.title,
+            options=augmented_options,
+            max_select=request.max_select,
+            must_select=request.must_select,
+            context=dict(request.context or {}),
+            request_type=request.request_type,
+            allow_menu=request.allow_menu,
+        )
+
     def message_participants(self, enemies=None, include_hand=False, hand=None) -> List:
         """Build the standard runtime participant list for message dispatch."""
         participants = []
@@ -192,6 +239,7 @@ class RuntimeContext:
 
     def resolve_input_request(self, request: InputRequest) -> InputSubmission:
         """Resolve one declarative input request based on the configured mode."""
+        request = self._augment_noncombat_potion_options(request)
         if request.request_type != "selection":
             return InputSubmission([])
 
@@ -239,9 +287,12 @@ class RuntimeContext:
     def default_augment_human_options(self, request: InputRequest) -> List:
         """Add human-only helper options such as the in-run menu."""
         import sys
+        from localization import LocalStr
         from tui import is_tui_mode
 
+        request = self._augment_noncombat_potion_options(request)
         options = list(request.options or [])
+
         config = self.config
         human_config = getattr(config, "human", {}) if config is not None else {}
         show_menu = bool(getattr(human_config, "get", lambda *_args, **_kwargs: False)("show_menu_option", False))
@@ -251,7 +302,6 @@ class RuntimeContext:
 
         from actions.display import MenuAction
         from localization import LocalStr
-        from utils.option import Option
 
         options.append(
             Option(

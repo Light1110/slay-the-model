@@ -10,6 +10,7 @@ class Potion(Localizable):
     rarity = RarityType.COMMON
     category = "Global"
     can_be_used_actively = True  # Default: can be used actively, override if passive only
+    can_be_used_out_of_combat = False
     target_type = TargetType.SELF  # Default: targets the player
 
     def __init__(self):
