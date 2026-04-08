@@ -59,7 +59,7 @@ class TestDefectStarters:
 
         assert len(self.player.orb_manager.orbs) == 0
 
-        relic.on_combat_start(self.player, [])
+        relic.on_combat_start(self.player)
         self.helper.game_state.drive_actions()
 
         assert len(self.player.orb_manager.orbs) == 1

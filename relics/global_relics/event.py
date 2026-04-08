@@ -31,7 +31,7 @@ class FaceOfCleric(Relic):
         super().__init__()
         self.rarity = RarityType.EVENT
 
-    def on_combat_end(self, player, entities):
+    def on_combat_end(self, player):
         """Raise Max HP by 1 after combat"""
         from actions.combat import ModifyMaxHpAction
         from engine.game_state import game_state
@@ -70,10 +70,10 @@ class GremlinVisage(Relic):
         super().__init__()
         self.rarity = RarityType.EVENT
 
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         """Apply 1 Weak at start of combat"""
         actions = []
-        for enemy in entities:
+        for enemy in self.combat_enemies():
             actions.append(ApplyPowerAction(power="Weak", target=enemy, amount=1, duration=2))
         from engine.game_state import game_state
         add_actions(actions)
@@ -98,12 +98,12 @@ class MutagenicStrength(Relic):
         super().__init__()
         self.rarity = RarityType.EVENT
 
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         """Gain 3 Strength at combat start (will be removed at turn end)"""
         from engine.game_state import game_state
         add_actions([ApplyPowerAction(power="Strength", target=player, amount=3)])
         return
-    def on_player_turn_end(self, player, entities):
+    def on_player_turn_end(self, player):
         """Remove all Strength at turn end"""
         from actions.combat import RemovePowerAction
         # Remove all gained Strength (would need to track amount gained)
@@ -125,7 +125,7 @@ class Necronomicon(Relic):
         self.rarity = RarityType.EVENT
         self.double_attack_played = False
 
-    def on_turn_start(self, player, entities):
+    def on_turn_start(self, player):
         """Reset tracker at start of combat"""
         from engine.game_state import game_state
         add_actions([LambdaAction(func=lambda: setattr(self, 'double_attack_played', False))])
@@ -146,7 +146,7 @@ class NilrysCodex(Relic):
         super().__init__()
         self.rarity = RarityType.EVENT
 
-    def on_player_turn_end(self, player, entities):
+    def on_player_turn_end(self, player):
         from engine.game_state import game_state
         from engine.game_state import game_state
         add_actions([ChooseAddRandomCardAction(pile='draw_pile', namespace=game_state.player.namespace)])
@@ -159,7 +159,7 @@ class Enchiridion(Relic):
         super().__init__()
         self.rarity = RarityType.EVENT
 
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         """Add a random Power to hand with 0 cost"""
         from actions.card import AddRandomCardAction
         from engine.game_state import game_state
@@ -186,12 +186,12 @@ class NeowsLament(Relic):
         self.combat_count = 0
         self.uses_remaining = 3
 
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         """Set enemy HP to 1 for first 3 combats"""
         if self.uses_remaining > 0:
             self.uses_remaining -= 1
             actions = []
-            for enemy in entities:
+            for enemy in self.combat_enemies():
                 # Set current HP to 1, not max HP
                 enemy.hp = 1
             from engine.game_state import game_state
@@ -257,7 +257,7 @@ class WarpedTongs(Relic):
         super().__init__()
         self.rarity = RarityType.EVENT
         
-    def on_player_turn_start(self, player, entities):
+    def on_player_turn_start(self, player):
         """Upgrade a random card in hand for rest of combat"""
         from actions.card import UpgradeRandomCardAction
         from engine.game_state import game_state
@@ -277,10 +277,10 @@ class RedMask(Relic):
         super().__init__()
         self.rarity = RarityType.EVENT
 
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         """Apply 1 Weak to all enemies at start of combat"""
         actions = []
-        for enemy in entities:
+        for enemy in self.combat_enemies():
             actions.append(ApplyPowerAction(power="Weak", target=enemy, amount=1, duration=2))
         from engine.game_state import game_state
         add_actions(actions)

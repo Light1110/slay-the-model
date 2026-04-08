@@ -26,7 +26,7 @@ class TestPenNib(unittest.TestCase):
     def test_pen_nib_resets_on_combat_start(self):
         """Test attack counter resets on combat start."""
         self.pen_nib.attacks_played = 15
-        self.pen_nib.on_combat_start(self.player, self.entities)
+        self.pen_nib.on_combat_start(self.player)
         
         self.assertEqual(self.pen_nib.attacks_played, 0)
         self.assertTrue(game_state.action_queue.is_empty())

@@ -7,6 +7,7 @@ from cards.watcher import (
     Indignation,
     Meditate,
     Omniscience,
+    Perseverance,
     SimmeringFury,
     SpiritShield,
     Swivel,
@@ -227,3 +228,17 @@ def test_simmering_fury_enters_wrath_and_draws_next_turn_not_now():
 
     assert player.status_manager.status == StatusType.WRATH
     assert len(player.card_manager.get_pile("hand")) == 2
+
+
+def test_perseverance_leaves_hand_when_played_despite_retain():
+    helper = create_test_helper()
+    player = helper.create_player(energy=10)
+    enemy = helper.create_enemy(Cultist, hp=30)
+    helper.start_combat([enemy])
+
+    card = Perseverance()
+    helper.add_card_to_hand(card)
+
+    assert helper.play_card(card) is True
+    assert card not in player.card_manager.get_pile("hand")
+    assert card in player.card_manager.get_pile("discard_pile")

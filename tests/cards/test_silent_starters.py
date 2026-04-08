@@ -53,7 +53,7 @@ class TestSilentStarters:
 
         assert len(self.player.card_manager.piles["hand"]) == 0
 
-        relic.on_combat_start(self.player, [])
+        relic.on_combat_start(self.player)
         self.helper.game_state.drive_actions()
 
         assert len(self.player.card_manager.piles["hand"]) == 2

@@ -8,13 +8,13 @@ from tests.test_combat_utils import create_test_helper
 
 class _HealingRelic(Relic):
     @subscribe(HealedMessage, priority=MessagePriority.PLAYER_RELIC)
-    def on_healed(self, heal_amount, player, entities):
+    def on_healed(self, heal_amount, player):
         return [GainBlockAction(block=heal_amount, target=player)]
 
 
 class _ShopRelic(Relic):
     @subscribe(ShopEnteredMessage, priority=MessagePriority.PLAYER_RELIC)
-    def on_shop_enter(self, player, entities=None):
+    def on_shop_enter(self, player):
         return [GainBlockAction(block=6, target=player)]
 
 

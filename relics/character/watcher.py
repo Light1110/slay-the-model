@@ -18,7 +18,7 @@ class PureWater(Relic):
     text_name = "Pure Water"
     text_description = "At the start of each combat, add 1 Miracle to your hand."
 
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         from cards.colorless.miracle import Miracle
 
         add_action(AddCardAction(Miracle(), dest_pile="hand"))
@@ -30,7 +30,7 @@ class Damaru(Relic):
     text_name = "Damaru"
     text_description = "At the start of your turn, gain 1 Mantra."
 
-    def on_player_turn_start(self, player, entities):
+    def on_player_turn_start(self, player):
         add_action(GainMantraAction(1))
 
 
@@ -53,7 +53,7 @@ class TeardropLocket(Relic):
     text_name = "Teardrop Locket"
     text_description = "Start each combat in Calm."
 
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         add_action(ChangeStanceAction(StatusType.CALM))
 
 
@@ -63,7 +63,7 @@ class CloakClasp(Relic):
     text_name = "Cloak Clasp"
     text_description = "At the end of your turn, gain 1 Block for each card in your hand."
 
-    def on_player_turn_end(self, player, entities):
+    def on_player_turn_end(self, player):
         add_action(GainBlockAction(len(player.card_manager.get_pile("hand")), target=player))
 
 
@@ -80,7 +80,7 @@ class HolyWater(Relic):
     text_name = "Holy Water"
     text_description = "At the start of each combat, add 3 Miracles to your hand."
 
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         from cards.colorless.miracle import Miracle
 
         for _ in range(3):

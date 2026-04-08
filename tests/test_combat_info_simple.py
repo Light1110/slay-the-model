@@ -80,14 +80,12 @@ def test_combat_snapshot_uses_runtime_event_layer(monkeypatch):
 
 
 def test_combat_snapshot_includes_player_stance_and_orbs(monkeypatch):
-    import types
-
     from engine import runtime_presenter
     from engine.combat import Combat
     from engine.game_state import game_state
     from engine.runtime_events import drain_runtime_events
     from engine.runtime_presenter import flush_runtime_events
-    from localization import current_language, set_language
+    from localization import current_language, set_language, t
     from orbs.dark import DarkOrb
     from orbs.frost import FrostOrb
     from orbs.lightning import LightningOrb
@@ -154,18 +152,18 @@ def test_combat_snapshot_includes_player_stance_and_orbs(monkeypatch):
         flush_runtime_events()
 
         output = "".join(rendered)
-        assert "姿态" in output
-        assert "愤怒" in output
-        assert "充能球" in output
-        assert "闪电球" in output
-        assert "被动: 3" in output
-        assert "主动: 8" in output
-        assert "冰霜球" in output
-        assert "被动: 2" in output
-        assert "主动: 5" in output
-        assert "黑暗球" in output
-        assert "被动: 6" in output
-        assert "主动: 6" in output
+        assert t("ui.stance", default="姿态") in output
+        assert t("ui.status.wrath", default="愤怒") in output
+        assert t("ui.orbs", default="充能球") in output
+        assert t("orbs.LightningOrb.name", default="闪电球") in output
+        assert f"{t('ui.passive', default='被动')}: 3" in output
+        assert f"{t('ui.evoke', default='主动')}: 8" in output
+        assert t("orbs.FrostOrb.name", default="冰霜球") in output
+        assert f"{t('ui.passive', default='被动')}: 2" in output
+        assert f"{t('ui.evoke', default='主动')}: 5" in output
+        assert t("orbs.DarkOrb.name", default="黑暗球") in output
+        assert f"{t('ui.passive', default='被动')}: 6" in output
+        assert f"{t('ui.evoke', default='主动')}: 6" in output
         assert "orbs.LightningOrb.name" not in output
     finally:
         drain_runtime_events()

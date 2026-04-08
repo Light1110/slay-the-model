@@ -204,13 +204,6 @@ class DiscardCardAction(Action):
         from engine.game_state import game_state
         from engine.messages import CardDiscardedMessage
         if self.card and game_state.player and hasattr(game_state.player, "card_manager"):
-            if (
-                not self.trigger_effects
-                and (getattr(self.card, "retain", False) or getattr(self.card, "retain_this_turn", False))
-            ):
-                if getattr(self.card, "retain_this_turn", False):
-                    setattr(self.card, "retain_this_turn", False)
-                return
             # Find source pile if not specified
             if self.source_pile is None:
                 self.source_pile = game_state.player.card_manager.get_card_location(self.card)

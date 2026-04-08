@@ -27,7 +27,6 @@ class BloodForBlood(Card):
         damage: int,
         source: Optional[Creature] = None,
         player: Optional[Creature] = None,
-        entities=None,
     ):
         """Track HP taken to reduce card cost"""
         from engine.game_state import game_state

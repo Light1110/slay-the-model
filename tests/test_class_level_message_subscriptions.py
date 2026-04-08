@@ -41,7 +41,7 @@ class _CombatStartRelic(Relic):
         self.triggered = False
 
     @subscribe(CombatStartedMessage, priority=MessagePriority.PLAYER_RELIC)
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         self.triggered = True
         return [GainBlockAction(block=3, target=player)]
 
@@ -81,12 +81,12 @@ class _TurnEndRelic(Relic):
         self.combat_ended = False
 
     @subscribe(PlayerTurnEndedMessage, priority=MessagePriority.PLAYER_RELIC)
-    def on_player_turn_end(self, player, entities):
+    def on_player_turn_end(self, player):
         self.turn_ended = True
         return [GainBlockAction(block=4, target=player)]
 
     @subscribe(CombatEndedMessage, priority=MessagePriority.PLAYER_RELIC)
-    def on_combat_end(self, player, entities):
+    def on_combat_end(self, player):
         self.combat_ended = True
         return [GainBlockAction(block=1, target=player)]
 
@@ -105,7 +105,7 @@ class _TurnEndPower(Power):
         return [GainBlockAction(block=5, target=self.owner)]
 
     @subscribe(CombatEndedMessage, priority=MessagePriority.PLAYER_POWER)
-    def on_combat_end(self, owner, entities):
+    def on_combat_end(self, owner):
         self.combat_ended = True
         return [GainBlockAction(block=2, target=owner)]
 
@@ -138,7 +138,7 @@ class _EconomyRelic(Relic):
         self.shuffle_triggered = True
         return [GainBlockAction(block=2, target=game_state.player)]
 
-    def on_use_potion(self, potion, player, entities):
+    def on_use_potion(self, potion, player):
         self.potion_triggered = True
         return [GainBlockAction(block=3, target=player)]
 
@@ -183,11 +183,11 @@ class _LifecycleRelic(Relic):
         self.added_triggered = False
         self._target_player: Player | None = None
 
-    def on_card_draw(self, card, player, entities):
+    def on_card_draw(self, card, player):
         self.draw_triggered = True
         return [GainBlockAction(block=6, target=player)]
 
-    def on_card_discard(self, card, player, entities):
+    def on_card_discard(self, card, player):
         self.discard_triggered = True
         return [GainBlockAction(block=7, target=player)]
 
@@ -282,19 +282,19 @@ class _ReactionRelic(Relic):
         self.heal_triggered = False
         self.power_added_triggered = False
 
-    def on_damage_dealt(self, damage, target, player, entities):
+    def on_damage_dealt(self, damage, target, player):
         self.damage_dealt_triggered = True
         return []
 
-    def on_damage_taken(self, damage, source, player, entities):
+    def on_damage_taken(self, damage, source, player):
         self.damage_taken_triggered = True
         return []
 
-    def on_heal(self, heal_amount, player, entities):
+    def on_heal(self, heal_amount, player):
         self.heal_triggered = True
         return []
 
-    def on_apply_power(self, power, target, player, entities):
+    def on_apply_power(self, power, target, player):
         self.power_added_triggered = True
         return []
 

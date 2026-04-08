@@ -13,7 +13,7 @@ class _ShopEnterRelic(Relic):
         self.triggered = False
 
     @subscribe(ShopEnteredMessage, priority=MessagePriority.PLAYER_RELIC)
-    def on_shop_enter(self, player, entities=None):
+    def on_shop_enter(self, player):
         self.triggered = True
         return [GainBlockAction(block=6, target=player)]
 

@@ -20,7 +20,7 @@ class RingOfTheSnake(Relic):
         super().__init__()
         self.rarity = RarityType.COMMON
 
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         add_actions([DrawCardsAction(count=2)])
         return
 
@@ -33,7 +33,7 @@ class SneckoSkull(Relic):
         super().__init__()
         self.rarity = RarityType.COMMON
 
-    def on_apply_power(self, power, target, player, entities):
+    def on_apply_power(self, power, target, player):
         if isinstance(power, PoisonPower):
             applied_poison = target.get_power("Poison")
             if applied_poison is not None:
@@ -49,7 +49,7 @@ class NinjaScroll(Relic):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
 
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         add_actions([
             AddCardAction(card=Shiv(), dest_pile="hand")
             for _ in range(3)
@@ -82,7 +82,7 @@ class TheSpecimen(Relic):
         super().__init__()
         self.rarity = RarityType.RARE
 
-    def on_damage_dealt(self, damage, target, player, entities):
+    def on_damage_dealt(self, damage, target, player):
         if target.is_dead():
             poison_amount = 0
             for power in target.powers:
@@ -90,7 +90,7 @@ class TheSpecimen(Relic):
                     poison_amount = power.amount
                     break
             if poison_amount > 0:
-                alive_enemies = [enemy for enemy in entities if not enemy.is_dead()]
+                alive_enemies = self.alive_enemies()
                 if alive_enemies:
                     import random
 
@@ -109,7 +109,7 @@ class Tingsha(Relic):
         super().__init__()
         self.rarity = RarityType.RARE
 
-    def on_card_discard(self, card, player, entities):
+    def on_card_discard(self, card, player):
         from engine.game_state import game_state
 
         assert game_state.current_combat is not None
@@ -130,7 +130,7 @@ class ToughBandages(Relic):
         super().__init__()
         self.rarity = RarityType.RARE
 
-    def on_card_discard(self, card, player, entities):
+    def on_card_discard(self, card, player):
         add_actions([GainBlockAction(block=3, target=player)])
         return
 
@@ -144,11 +144,11 @@ class HoveringKite(Relic):
         self.rarity = RarityType.BOSS
         self.discarded_this_turn = False
 
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         add_actions([LambdaAction(func=lambda: setattr(self, "discarded_this_turn", False))])
         return
 
-    def on_card_discard(self, card, player, entities):
+    def on_card_discard(self, card, player):
         if not self.discarded_this_turn:
             self.discarded_this_turn = True
             add_actions([GainEnergyAction(energy=1)])
@@ -163,7 +163,7 @@ class RingOfTheSerpent(Relic):
         super().__init__()
         self.rarity = RarityType.BOSS
 
-    def on_player_turn_start(self, player, entities):
+    def on_player_turn_start(self, player):
         add_actions([DrawCardsAction(count=1)])
         return
 
@@ -190,9 +190,9 @@ class TwistedFunnel(Relic):
         super().__init__()
         self.rarity = RarityType.SHOP
 
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         add_actions([
             ApplyPowerAction(power="Poison", target=enemy, amount=4, duration=3)
-            for enemy in entities
+            for enemy in self.combat_enemies()
         ])
         return

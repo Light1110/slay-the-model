@@ -23,7 +23,7 @@ class HornCleat(Relic):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
 
-    def on_player_turn_start(self, player, entities):
+    def on_player_turn_start(self, player):
         """At the start of your 2nd turn, gain 14 Block."""
         from engine.game_state import game_state
         if game_state.current_combat is not None:
@@ -68,7 +68,7 @@ class BottledFlame(Relic):
         from engine.game_state import game_state
         add_actions([BottledCardInputRequestAction(self, CardType.ATTACK)])
         return
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         """Add selected card to hand at start of combat."""
         if self.selected_card:
             # Add a copy of selected card to hand
@@ -91,7 +91,7 @@ class BottledLightning(Relic):
         from engine.game_state import game_state
         add_actions([BottledCardInputRequestAction(self, CardType.SKILL)])
         return
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         """Add selected card to hand at start of combat."""
         if self.selected_card:
             # Add a copy of selected card to hand
@@ -114,7 +114,7 @@ class BottledTornado(Relic):
         from engine.game_state import game_state
         add_actions([BottledCardInputRequestAction(self, CardType.POWER)])
         return
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         """Add selected card to hand at start of combat."""
         if self.selected_card:
             # Add a copy of selected card to hand
@@ -174,7 +174,7 @@ class GremlinHorn(Relic):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
     
-    def on_damage_dealt(self, damage, target, player, entities):
+    def on_damage_dealt(self, damage, target, player):
         """When an enemy dies, gain energy and draw card"""
         if target.is_dead():
             from engine.game_state import game_state
@@ -213,7 +213,7 @@ class Kunai(Relic):
         self.rarity = RarityType.UNCOMMON
         self.attacks_played_this_turn = 0
     
-    def on_player_turn_start(self, player, entities):
+    def on_player_turn_start(self, player):
         """Reset attack counter at start of each turn"""
         self.attacks_played_this_turn = 0
         return
@@ -235,7 +235,7 @@ class LetterOpener(Relic):
         self.rarity = RarityType.UNCOMMON
         self.skills_played_this_turn = 0
     
-    def on_player_turn_start(self, player, entities):
+    def on_player_turn_start(self, player):
         """Reset skill counter at start of each turn"""
         self.skills_played_this_turn = 0
         return
@@ -321,7 +321,7 @@ class MeatOnBone(Relic):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
     
-    def on_combat_end(self, player, entities):
+    def on_combat_end(self, player):
         """Heal if HP at or below 50% at combat end"""
         if player and player.hp <= (player.max_hp / 2):
             from engine.game_state import game_state
@@ -336,10 +336,10 @@ class MercuryHourglass(Relic):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
     
-    def on_player_turn_start(self, player, entities):
+    def on_player_turn_start(self, player):
         """Deal 3 damage to all enemies at turn start"""
         actions = []
-        for enemy in entities:
+        for enemy in self.combat_enemies():
             actions.append(DealDamageAction(damage=3, target=enemy))
         from engine.game_state import game_state
         add_actions(actions)
@@ -387,7 +387,7 @@ class OrnamentalFan(Relic):
         self.rarity = RarityType.UNCOMMON
         self.attacks_played_this_turn = 0
     
-    def on_player_turn_start(self, player, entities):
+    def on_player_turn_start(self, player):
         """Reset attack counter at start of each turn"""
         self.attacks_played_this_turn = 0
         return
@@ -408,7 +408,7 @@ class Pantograph(Relic):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
     
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         """Heal 25 HP at start of boss combat"""
         from engine.game_state import game_state
         from utils.types import CombatType
@@ -473,12 +473,12 @@ class SelfFormingClay(Relic):
         self.rarity = RarityType.UNCOMMON
         self.block_gain_next_turn = 0
     
-    def on_damage_taken(self, damage, source, player, entities):
+    def on_damage_taken(self, damage, source, player):
         """Track HP loss to gain Block next turn"""
         if damage > 0:
             self.block_gain_next_turn = 3
         return
-    def on_player_turn_start(self, player, entities):
+    def on_player_turn_start(self, player):
         """Gain Block if HP was lost last turn"""
         if self.block_gain_next_turn > 0:
             block = self.block_gain_next_turn
@@ -496,7 +496,7 @@ class Shuriken(Relic):
         self.rarity = RarityType.UNCOMMON
         self.attacks_played_this_turn = 0
     
-    def on_player_turn_start(self, player, entities):
+    def on_player_turn_start(self, player):
         """Reset attack counter at start of each turn"""
         self.attacks_played_this_turn = 0
         return

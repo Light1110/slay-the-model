@@ -14,7 +14,7 @@ class _EliteVictoryRelic(Relic):
         self.triggered = False
 
     @subscribe(EliteVictoryMessage, priority=MessagePriority.PLAYER_RELIC)
-    def on_elite_victory(self, player, entities):
+    def on_elite_victory(self, player):
         self.triggered = True
         return [GainBlockAction(block=8, target=player)]
 

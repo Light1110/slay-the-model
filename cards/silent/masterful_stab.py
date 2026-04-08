@@ -15,7 +15,7 @@ class MasterfulStab(Card):
 
     upgrade_damage = 16
 
-    def on_damage_taken(self, damage: int, source=None, player=None, entities=None):
+    def on_damage_taken(self, damage: int, source=None, player=None):
         from engine.game_state import game_state
 
         if player is game_state.player and damage > 0:

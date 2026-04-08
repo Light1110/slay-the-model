@@ -290,8 +290,8 @@ class Power(Localizable):
         return
 
     @subscribe(CardDrawnMessage, priority=MessagePriority.PLAYER_POWER)
-    def on_draw_card(self, card: Any, player: Any, entities: List[Any]):
-        """Called when a card is drawn, with full combat context."""
+    def on_draw_card(self, card: Any, player: Any):
+        """Called when a card is drawn, with owner context."""
         return
 
     @subscribe(CardExhaustedMessage, priority=MessagePriority.REACTION)
@@ -305,7 +305,7 @@ class Power(Localizable):
         return
 
     @subscribe(HealedMessage, priority=MessagePriority.REACTION)
-    def on_heal(self, amount: int, player: Any = None, entities: List[Any] | None = None):
+    def on_heal(self, amount: int, player: Any = None):
         """Called when healing occurs."""
         return
 
@@ -315,7 +315,7 @@ class Power(Localizable):
         return
     
     @subscribe(CombatEndedMessage, priority=MessagePriority.PLAYER_POWER)
-    def on_combat_end(self, owner, entities):
+    def on_combat_end(self, owner):
         """Called at end of combat.
         
         Returns:

@@ -52,7 +52,7 @@ class NeowsLament(Relic):
         self.rarity = RarityType.SPECIAL
         self.stacks = 3
         
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         """在前三场战斗中设置所有敌人 HP=1"""
         from engine.game_state import game_state
         
@@ -61,7 +61,7 @@ class NeowsLament(Relic):
             actions = []
             
             # 设置所有敌人的 HP 和最大 HP 为 1
-            for enemy in entities:
+            for enemy in self.combat_enemies():
                 if hasattr(enemy, 'hp'):
                     enemy.hp = 1
                     

@@ -191,7 +191,7 @@ def _build_contracts() -> dict[type[GameMessage], MessageContract]:
         CombatStartedMessage: MessageContract(
             message_type=CombatStartedMessage,
             default_variants=(
-                _VARIANT(("player", "entities"), _bind(_OWNER, _ENEMIES)),
+                _VARIANT(("player",), _bind(_OWNER)),
                 _VARIANT(("floor",), _bind(_FLOOR)),
                 _VARIANT(("message",), _bind(_MESSAGE)),
                 _VARIANT((), _bind()),
@@ -200,8 +200,8 @@ def _build_contracts() -> dict[type[GameMessage], MessageContract]:
         CombatEndedMessage: MessageContract(
             message_type=CombatEndedMessage,
             default_variants=(
-                _VARIANT(("player", "entities"), _bind(_OWNER, _ENEMIES)),
-                _VARIANT(("owner", "entities"), _bind(_OWNER, _ENEMIES)),
+                _VARIANT(("player",), _bind(_OWNER)),
+                _VARIANT(("owner",), _bind(_OWNER)),
                 _VARIANT(("message",), _bind(_MESSAGE)),
                 _VARIANT((), _bind()),
             ),
@@ -209,7 +209,7 @@ def _build_contracts() -> dict[type[GameMessage], MessageContract]:
         PlayerTurnStartedMessage: MessageContract(
             message_type=PlayerTurnStartedMessage,
             default_variants=(
-                _VARIANT(("player", "entities"), _bind(_OWNER, _ENEMIES)),
+                _VARIANT(("player",), _bind(_OWNER)),
                 _VARIANT(("message",), _bind(_MESSAGE)),
                 _VARIANT((), _bind()),
             ),
@@ -217,7 +217,7 @@ def _build_contracts() -> dict[type[GameMessage], MessageContract]:
         PlayerTurnEndedMessage: MessageContract(
             message_type=PlayerTurnEndedMessage,
             default_variants=(
-                _VARIANT(("player", "entities"), _bind(_OWNER, _ENEMIES)),
+                _VARIANT(("player",), _bind(_OWNER)),
                 _VARIANT(("message",), _bind(_MESSAGE)),
                 _VARIANT((), _bind()),
             ),
@@ -264,7 +264,6 @@ def _build_contracts() -> dict[type[GameMessage], MessageContract]:
         PotionUsedMessage: MessageContract(
             message_type=PotionUsedMessage,
             default_variants=(
-                _VARIANT(("potion", "player", "entities"), _bind(_POTION, _OWNER, _ENTITIES_FROM_MESSAGE)),
                 _VARIANT(("potion", "player"), _bind(_POTION, _OWNER)),
                 _VARIANT(("message",), _bind(_MESSAGE)),
                 _VARIANT((), _bind()),
@@ -273,7 +272,7 @@ def _build_contracts() -> dict[type[GameMessage], MessageContract]:
         CardDrawnMessage: MessageContract(
             message_type=CardDrawnMessage,
             default_variants=(
-                _VARIANT(("card", "player", "entities"), _bind(_CARD, _OWNER, _ENTITIES_FROM_STATE)),
+                _VARIANT(("card", "player"), _bind(_CARD, _OWNER)),
                 _VARIANT(("card",), _bind(_CARD)),
                 _VARIANT(("message",), _bind(_MESSAGE)),
                 _VARIANT((), _bind()),
@@ -282,7 +281,7 @@ def _build_contracts() -> dict[type[GameMessage], MessageContract]:
         CardDiscardedMessage: MessageContract(
             message_type=CardDiscardedMessage,
             default_variants=(
-                _VARIANT(("card", "player", "entities"), _bind(_CARD, _OWNER, _ENTITIES_FROM_STATE)),
+                _VARIANT(("card", "player"), _bind(_CARD, _OWNER)),
                 _VARIANT(("card",), _bind(_CARD)),
                 _VARIANT(("message",), _bind(_MESSAGE)),
                 _VARIANT((), _bind()),
@@ -329,7 +328,7 @@ def _build_contracts() -> dict[type[GameMessage], MessageContract]:
         PowerAppliedMessage: MessageContract(
             message_type=PowerAppliedMessage,
             default_variants=(
-                _VARIANT(("power", "target", "player", "entities"), _bind(_POWER, _TARGET, _OWNER, _ENTITIES_FROM_MESSAGE)),
+                _VARIANT(("power", "target", "player"), _bind(_POWER, _TARGET, _OWNER)),
                 _VARIANT(("power", "owner"), _bind(_POWER, _OWNER)),
                 _VARIANT(("power", "source"), _bind(_POWER, _OWNER)),
                 _VARIANT(("power", "target"), _bind(_POWER, _TARGET)),
@@ -341,8 +340,8 @@ def _build_contracts() -> dict[type[GameMessage], MessageContract]:
         HealedMessage: MessageContract(
             message_type=HealedMessage,
             default_variants=(
-                _VARIANT(("heal_amount", "player", "entities"), _bind_with_previous_hp(_AMOUNT, _TARGET, _ENTITIES_FROM_STATE)),
-                _VARIANT(("amount", "player", "entities"), _bind_with_previous_hp(_AMOUNT, _TARGET, _ENTITIES_FROM_STATE)),
+                _VARIANT(("heal_amount", "player"), _bind_with_previous_hp(_AMOUNT, _TARGET)),
+                _VARIANT(("amount", "player"), _bind_with_previous_hp(_AMOUNT, _TARGET)),
                 _VARIANT(("amount",), _bind_with_previous_hp(_AMOUNT)),
                 _VARIANT(("message",), _bind_with_previous_hp(_MESSAGE)),
                 _VARIANT((), _bind_with_previous_hp()),
@@ -402,8 +401,8 @@ def _build_contracts() -> dict[type[GameMessage], MessageContract]:
                         _subscriber_is_target,
                     ),
                     _VARIANT(
-                        ("damage", "source", "player", "entities"),
-                        _bind(_AMOUNT, _SOURCE, _player_entity, _ENTITIES_FROM_STATE),
+                        ("damage", "source", "player"),
+                        _bind(_AMOUNT, _SOURCE, _player_entity),
                         _player_available,
                     ),
                 ),
@@ -420,8 +419,8 @@ def _build_contracts() -> dict[type[GameMessage], MessageContract]:
                         _subscriber_is_source_or_card,
                     ),
                     _VARIANT(
-                        ("damage", "target", "player", "entities"),
-                        _bind(_AMOUNT, _TARGET, _player_entity, _ENTITIES_FROM_STATE),
+                        ("damage", "target", "player"),
+                        _bind(_AMOUNT, _TARGET, _player_entity),
                         _player_available,
                     ),
                 ),
@@ -446,8 +445,6 @@ def _build_contracts() -> dict[type[GameMessage], MessageContract]:
         ShopEnteredMessage: MessageContract(
             message_type=ShopEnteredMessage,
             default_variants=(
-                _VARIANT(("player", "entities"), _bind(_OWNER, _ENTITIES_FROM_MESSAGE)),
-                _VARIANT(("owner", "entities"), _bind(_OWNER, _ENTITIES_FROM_MESSAGE)),
                 _VARIANT(("player",), _bind(_OWNER)),
                 _VARIANT(("owner",), _bind(_OWNER)),
                 _VARIANT(("message",), _bind(_MESSAGE)),
@@ -457,8 +454,6 @@ def _build_contracts() -> dict[type[GameMessage], MessageContract]:
         EliteVictoryMessage: MessageContract(
             message_type=EliteVictoryMessage,
             default_variants=(
-                _VARIANT(("player", "entities"), _bind(_OWNER, _ENTITIES_FROM_MESSAGE)),
-                _VARIANT(("owner", "entities"), _bind(_OWNER, _ENTITIES_FROM_MESSAGE)),
                 _VARIANT(("player",), _bind(_OWNER)),
                 _VARIANT(("owner",), _bind(_OWNER)),
                 _VARIANT(("message",), _bind(_MESSAGE)),

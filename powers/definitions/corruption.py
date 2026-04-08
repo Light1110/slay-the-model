@@ -25,7 +25,7 @@ class CorruptionPower(Power):
         """
         super().__init__(amount=0, duration=-1, owner=owner)
 
-    def on_draw_card(self, card, player, entities):
+    def on_draw_card(self, card, player):
         """Modify skill costs to 0."""
         from cards.base import Card
         if TYPE_CHECKING:

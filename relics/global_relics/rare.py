@@ -38,7 +38,7 @@ class CaptainsWheel(Relic):
         super().__init__()
         self.rarity = RarityType.RARE
 
-    def on_player_turn_start(self, player, entities):
+    def on_player_turn_start(self, player):
         """At the start of your 3rd turn, gain 18 Block"""
         from engine.game_state import game_state
         if game_state.current_combat is not None:
@@ -72,7 +72,7 @@ class DuVuDoll(Relic):
         super().__init__()
         self.rarity = RarityType.RARE
 
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         """Gain additional Strength based on curses in deck"""
         from engine.game_state import game_state
         # Count curses in draw pile
@@ -92,7 +92,7 @@ class FossilizedHelix(Relic):
         super().__init__()
         self.rarity = RarityType.RARE
     
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         """Apply Buffer power at combat start"""
         from engine.game_state import game_state
         add_actions([ApplyPowerAction(power="Buffer", target=player, amount=1, duration=-1)])
@@ -142,13 +142,13 @@ class IceCream(Relic):
         self.rarity = RarityType.RARE
         self.conserved_energy = 0
 
-    def on_player_turn_end(self, player, entities):
+    def on_player_turn_end(self, player):
         """Store remaining energy at end of turn"""
         from engine.game_state import game_state
         if game_state.current_combat is not None:
             self.conserved_energy = game_state.player.energy
         return
-    def on_player_turn_start(self, player, entities):
+    def on_player_turn_start(self, player):
         """Add conserved energy at start of turn"""
         actions = []
         if self.conserved_energy > 0:
@@ -166,7 +166,7 @@ class LizardTail(Relic):
         self.rarity = RarityType.RARE
         self.can_revive = True
 
-    def on_death(self, damage, source, player, entities):
+    def on_death(self, damage, source, player):
         """Revive when would die"""
         from engine.game_state import game_state
         if self.can_revive:
@@ -227,12 +227,12 @@ class Pocketwatch(Relic):
         """Track cards played"""
         self.cards_played_this_turn += 1
         return
-    def on_player_turn_end(self, player, entities):
+    def on_player_turn_end(self, player):
         """Check cards played and set extra draw"""
         if self.cards_played_this_turn <= 3:
             self.extra_draw_next_turn = True
         return
-    def on_player_turn_start(self, player, entities):
+    def on_player_turn_start(self, player):
         """Draw extra cards if condition met"""
         action = []
         if self.extra_draw_next_turn:
@@ -278,13 +278,13 @@ class StoneCalendar(Relic):
         super().__init__()
         self.rarity = RarityType.RARE
 
-    def on_player_turn_end(self, player, entities):
+    def on_player_turn_end(self, player):
         """Deal 52 damage at turn 7"""
         from engine.game_state import game_state
         if game_state.current_combat is not None:
             if game_state.current_combat.combat_state.combat_turn == 7:
                 actions = []
-                for enemy in entities:
+                for enemy in self.combat_enemies():
                     actions.append(DealDamageAction(damage=52, target=enemy))
                 from engine.game_state import game_state
                 add_actions(actions)
@@ -298,7 +298,7 @@ class ThreadAndNeedle(Relic):
         super().__init__()
         self.rarity = RarityType.RARE
 
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         """Gain 4 Plated Armor at start of combat"""
         from engine.game_state import game_state
         add_actions([ApplyPowerAction(power="PlatedArmor", target=player, amount=4)])
@@ -381,7 +381,7 @@ class UnceasingTop(Relic):
                 add_actions([DrawCardsAction(count=1)])
                 return
         return
-    def on_player_turn_start(self, player, entities):
+    def on_player_turn_start(self, player):
         """Reset tracker at start of turn"""
         self.triggered_this_empty = False
         return

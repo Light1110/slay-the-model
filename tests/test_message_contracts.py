@@ -64,7 +64,8 @@ def test_contract_registry_exposes_declared_variants():
 
     assert contract.message_type is CardDrawnMessage
     assert ("message",) in {variant.param_names for variant in contract.default_variants}
-    assert ("card", "player", "entities") in {variant.param_names for variant in contract.default_variants}
+    assert ("card", "player") in {variant.param_names for variant in contract.default_variants}
+    assert ("card", "player", "entities") not in {variant.param_names for variant in contract.default_variants}
 
 
 def test_card_played_contract_uses_targets_form():

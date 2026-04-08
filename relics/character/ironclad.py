@@ -22,7 +22,7 @@ class BurningBlood(Relic):
         super().__init__()
         self.rarity = RarityType.COMMON
 
-    def on_combat_end(self, player, entities):
+    def on_combat_end(self, player):
         """Heal 6 HP at combat end"""
         from engine.game_state import game_state
         add_actions([HealAction(amount=6)])
@@ -37,7 +37,7 @@ class RedSkull(Relic):
         self.rarity = RarityType.COMMON
         self.strength_applied = False
         
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         self.strength_applied = False
         # Check if HP is already <= 50% at combat start
         if player.hp <= player.max_hp // 2:
@@ -46,7 +46,7 @@ class RedSkull(Relic):
             add_actions([ApplyPowerAction(StrengthPower(amount=3, owner=player), player)])
             return
         return
-    def on_damage_taken(self, damage, source, player, entities):
+    def on_damage_taken(self, damage, source, player):
         """Check if HP dropped to 50% or below"""
         if not self.strength_applied and player.hp <= player.max_hp // 2:
             self.strength_applied = True
@@ -54,7 +54,7 @@ class RedSkull(Relic):
             add_actions([ApplyPowerAction(StrengthPower(amount=3, owner=player), player)])
             return
         return
-    def on_heal(self, heal_amount, player, entities):
+    def on_heal(self, heal_amount, player):
         """Check if HP went above 50% after heal, remove Strength if so"""
         if self.strength_applied:
             # Calculate HP after heal (before actual HP change)
@@ -76,7 +76,7 @@ class ChampionBelt(Relic):
         super().__init__()
         self.rarity = RarityType.RARE
 
-    def on_apply_power(self, power, target, player, entities):
+    def on_apply_power(self, power, target, player):
         from powers.definitions.vulnerable import VulnerablePower
         from actions.combat import ApplyPowerAction
         
@@ -136,7 +136,7 @@ class BlackBlood(Relic):
         super().__init__()
         self.rarity = RarityType.BOSS
 
-    def on_combat_end(self, player, entities):
+    def on_combat_end(self, player):
         """Heal 12 HP at combat end"""
         from engine.game_state import game_state
         add_actions([HealAction(amount=12)])
@@ -149,7 +149,7 @@ class Runicube(Relic):
         super().__init__()
         self.rarity = RarityType.BOSS
 
-    def on_damage_taken(self, damage, source, player, entities):
+    def on_damage_taken(self, damage, source, player):
         """Draw 1 card when taking damage"""
         if damage > 0:
             from engine.game_state import game_state
@@ -165,7 +165,7 @@ class BrimStone(Relic):
         super().__init__()
         self.rarity = RarityType.SHOP
 
-    def on_player_turn_start(self, player, entities):
+    def on_player_turn_start(self, player):
         """Gain 2 Strength for player, 1 Strength for all enemies"""
         from engine.game_state import game_state
         combat = game_state.current_combat
@@ -191,7 +191,7 @@ class OrangePellets(Relic):
         self.attack_count = 0
         self.skill_count = 0
     
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         """Reset counters at start of combat"""
         from engine.game_state import game_state
         add_actions([LambdaAction(func=lambda: self._reset_counters())])

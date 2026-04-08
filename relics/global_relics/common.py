@@ -32,7 +32,7 @@ class Akabeko(Relic):
         # Track if first attack has been played this combat
         self.first_attack_played = False
     
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         """Reset first attack tracker at start of combat"""
         self.first_attack_played = False
         return
@@ -55,7 +55,7 @@ class Anchor(Relic):
         super().__init__()
         self.rarity = RarityType.COMMON
     
-    def on_player_turn_start(self, player, entities):
+    def on_player_turn_start(self, player):
         from engine.game_state import game_state
         if (game_state.current_combat is not None and 
             game_state.current_combat.combat_state.combat_turn == 1):
@@ -72,7 +72,7 @@ class AncientTeaSet(Relic):
         self.rarity = RarityType.COMMON
         self.is_rest_last_room = False
         
-    def on_player_turn_start(self, player, entities):
+    def on_player_turn_start(self, player):
         """Gain 1 Energy on first turn"""
         if self.is_rest_last_room:
             self.is_rest_last_room = False  # Reset flag after use
@@ -88,7 +88,7 @@ class BagOfPreparation(Relic):
         super().__init__()
         self.rarity = RarityType.COMMON
     
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         """Draw 2 additional cards at the start of combat"""
         from engine.game_state import game_state
         add_actions([DrawCardsAction(count=2)])
@@ -101,7 +101,7 @@ class Vajra(Relic):
         super().__init__()
         self.rarity = RarityType.COMMON
     
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         """Gain 1 Strength at start of combat"""
         from engine.game_state import game_state
         add_actions([ApplyPowerAction(StrengthPower(amount=1, owner=player), player)])
@@ -117,7 +117,7 @@ class ArtOfWar(Relic):
         self.attack_played_this_turn = False
         self.extra_energy_next_turn = False
     
-    def on_player_turn_start(self, player, entities):
+    def on_player_turn_start(self, player):
         """Grant extra energy if no attacks were played last turn"""
         actions = []
         if self.extra_energy_next_turn:
@@ -134,7 +134,7 @@ class ArtOfWar(Relic):
         if card.card_type == CardType.ATTACK:
             self.attack_played_this_turn = True
         return
-    def on_player_turn_end(self, player, entities):
+    def on_player_turn_end(self, player):
         """Check if no attacks were played this turn"""
         if not self.attack_played_this_turn:
             self.extra_energy_next_turn = True
@@ -147,10 +147,10 @@ class BagOfMarbles(Relic):
         super().__init__()
         self.rarity = RarityType.COMMON
     
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         """Apply Vulnerable to all enemies at start of combat"""
         actions = []
-        for enemy in entities:
+        for enemy in self.combat_enemies():
             actions.append(ApplyPowerAction(VulnerablePower(amount=1, owner=enemy), enemy))
 
         from engine.game_state import game_state
@@ -166,7 +166,7 @@ class BloodVial(Relic):
         super().__init__()
         self.rarity = RarityType.COMMON
     
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         """Heal 2 HP at start of combat"""
         from engine.game_state import game_state
         add_actions([HealAction(amount=2)])
@@ -179,7 +179,7 @@ class BronzeScales(Relic):
         super().__init__()
         self.rarity = RarityType.COMMON
     
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         """Gain 3 Thorns at start of combat"""
         from engine.game_state import game_state
         add_actions([ApplyPowerAction(ThornsPower(amount=3, owner=player), player)])
@@ -193,12 +193,12 @@ class CentennialPuzzle(Relic):
         self.rarity = RarityType.COMMON
         self.first_loss_occurred = False
     
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         """Reset tracker at start of combat"""
         from engine.game_state import game_state
         add_actions([LambdaAction(func=lambda: setattr(self, 'first_loss_occurred', False))])
         return
-    def on_damage_taken(self, damage, source, player, entities):
+    def on_damage_taken(self, damage, source, player):
         """Draw 3 cards on first HP loss each combat"""
         if damage > 0 and not self.first_loss_occurred:
             self.first_loss_occurred = True
@@ -241,7 +241,7 @@ class HappyFlower(Relic):
     
     # doesn't need to reset in a new combat
     
-    def on_player_turn_end(self, player, entities):
+    def on_player_turn_end(self, player):
         """Check if we've reached 3 turns"""
         self.turn_counter += 1
         if self.turn_counter % 3 == 0 and self.turn_counter > 0:
@@ -268,7 +268,7 @@ class Lantern(Relic):
         super().__init__()
         self.rarity = RarityType.COMMON
     
-    def on_player_turn_start(self, player, entities):
+    def on_player_turn_start(self, player):
         """Gain 1 Energy on first turn"""
         from engine.game_state import game_state
         if (game_state.current_combat is not None and 
@@ -287,7 +287,7 @@ class MawBank(Relic):
         self.still_working = True
         self._shop_spend_baseline = None
     
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         """Gain 12 Gold while active and disable after shop spending."""
         from engine.game_state import game_state
         from actions.reward import AddGoldAction
@@ -311,7 +311,7 @@ class MealTicket(Relic):
         super().__init__()
         self.rarity = RarityType.COMMON
 
-    def on_shop_enter(self, player, entities=None):
+    def on_shop_enter(self, player):
         """Heal 15 HP when entering a shop room."""
         from engine.game_state import game_state
         add_actions([HealAction(amount=15, target=player)])
@@ -344,7 +344,7 @@ class OddlySmoothStone(Relic):
         super().__init__()
         self.rarity = RarityType.COMMON
     
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         """Gain 1 Dexterity at start of combat"""
         from engine.game_state import game_state
         add_actions([ApplyPowerAction(DexterityPower(amount=1, owner=player), player)])
@@ -374,7 +374,7 @@ class Orichalcum(Relic):
         super().__init__()
         self.rarity = RarityType.COMMON
     
-    def on_player_turn_end(self, player, entities):
+    def on_player_turn_end(self, player):
         """Gain 6 Block if you ended turn without Block"""
         from engine.game_state import game_state
         if game_state.player and game_state.player.block == 0:
@@ -391,7 +391,7 @@ class PenNib(Relic):
         self.rarity = RarityType.COMMON
         self.attacks_played = 0
     
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         """Reset tracker at start of combat"""
         self.attacks_played = 0
         return
@@ -505,7 +505,7 @@ class ToyOrnithopter(Relic):
         super().__init__()
         self.rarity = RarityType.COMMON
 
-    def on_use_potion(self, potion, player, entities):
+    def on_use_potion(self, potion, player):
         """Heal 5 HP whenever a potion is consumed."""
         from engine.game_state import game_state
         add_actions([HealAction(amount=5, target=player)])

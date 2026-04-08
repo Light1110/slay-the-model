@@ -37,7 +37,7 @@ class CrackedCore(Relic):
         super().__init__()
         self.rarity = RarityType.COMMON
 
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         add_action(AddOrbAction(LightningOrb()))
 
 
@@ -49,7 +49,7 @@ class DataDisk(Relic):
         super().__init__()
         self.rarity = RarityType.COMMON
 
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         add_action(ApplyPowerAction(FocusPower(amount=1, owner=player), player))
 
 
@@ -61,10 +61,10 @@ class GoldPlatedCables(Relic):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
 
-    def on_player_turn_start(self, player, entities):
+    def on_player_turn_start(self, player):
         _trigger_rightmost_orb_passive(player, timing="turn_start")
 
-    def on_player_turn_end(self, player, entities):
+    def on_player_turn_end(self, player):
         _trigger_rightmost_orb_passive(player, timing="turn_end")
 
 
@@ -76,7 +76,7 @@ class SymbioticVirus(Relic):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
 
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         add_action(AddOrbAction(DarkOrb()))
 
 
@@ -89,10 +89,10 @@ class EmotionChip(Relic):
         self.rarity = RarityType.RARE
         self._lost_hp_since_last_turn = False
 
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         self._lost_hp_since_last_turn = False
 
-    def on_damage_taken(self, damage, source, player, entities):
+    def on_damage_taken(self, damage, source, player):
         if damage > 0:
             self._lost_hp_since_last_turn = True
 
@@ -101,7 +101,7 @@ class EmotionChip(Relic):
         if amount > 0:
             self._lost_hp_since_last_turn = True
 
-    def on_player_turn_start(self, player, entities):
+    def on_player_turn_start(self, player):
         if not self._lost_hp_since_last_turn:
             return
         self._lost_hp_since_last_turn = False
@@ -116,7 +116,7 @@ class FrozenCore(Relic):
         super().__init__()
         self.rarity = RarityType.BOSS
 
-    def on_player_turn_end(self, player, entities):
+    def on_player_turn_end(self, player):
         if len(player.orb_manager.orbs) < player.orb_manager.max_orb_slots:
             add_action(AddOrbAction(FrostOrb()))
 
@@ -130,10 +130,10 @@ class Inserter(Relic):
         self.rarity = RarityType.BOSS
         self.counter = 0
 
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         self.counter = 0
 
-    def on_player_turn_start(self, player, entities):
+    def on_player_turn_start(self, player):
         self.counter += 1
         if self.counter % 2 == 0:
             add_action(IncreaseOrbSlotsAction(amount=1))
@@ -147,7 +147,7 @@ class NuclearBattery(Relic):
         super().__init__()
         self.rarity = RarityType.BOSS
 
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         add_action(AddOrbAction(PlasmaOrb()))
 
 
@@ -159,5 +159,5 @@ class RunicCapacitor(Relic):
         super().__init__()
         self.rarity = RarityType.SHOP
 
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, player):
         add_action(IncreaseOrbSlotsAction(amount=3))
