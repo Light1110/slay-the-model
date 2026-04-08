@@ -1,6 +1,6 @@
 from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from actions.base import Action
 from entities.creature import Creature
@@ -8,6 +8,32 @@ from localization import LocalStr, t
 from utils.registry import register
 if TYPE_CHECKING:
     from enemies.base import Enemy
+
+
+def _apply_capping_damage_taken_modifiers(target: Creature | None, amount: int, source=None) -> int:
+    """Apply only final capping hooks such as Intangible to HP loss."""
+    from player.player import Player
+    from utils.damage_phase import DamagePhase
+
+    if target is None:
+        return max(0, int(amount))
+
+    damage = int(amount)
+    if hasattr(target, "powers"):
+        for power in target.powers:
+            if getattr(power, "modify_phase", DamagePhase.ADDITIVE) == DamagePhase.CAPPING:
+                modify_damage_taken = getattr(power, "modify_damage_taken", None)
+                if callable(modify_damage_taken):
+                    damage = cast(Any, modify_damage_taken)(damage)
+
+    if isinstance(target, Player) and hasattr(target, "relics"):
+        for relic in target.relics:
+            if getattr(relic, "modify_phase", DamagePhase.ADDITIVE) == DamagePhase.CAPPING:
+                modify_damage_taken = getattr(relic, "modify_damage_taken", None)
+                if callable(modify_damage_taken):
+                    damage = cast(Any, modify_damage_taken)(damage, source=source)
+
+    return max(0, int(damage))
 
 
 def _localize_character_name(raw_name: str) -> str:
@@ -87,6 +113,12 @@ class LoseHPAction(Action):
             else:
                 hp_loss = self.amount() if callable(self.amount) else (self.amount or 0)
 
+            hp_loss = _apply_capping_damage_taken_modifiers(
+                lose_target,
+                hp_loss,
+                source=self.source,
+            )
+
             if lose_target.try_prevent_damage(hp_loss):
                 print(t("ui.hp_loss_prevented", default="HP loss prevented.", amount=hp_loss))
                 return
@@ -109,10 +141,10 @@ class LoseHPAction(Action):
 class DealDamageAction(Action):
     """Deal damage to a target creature."""
 
-    def __init__(self, damage: int, target: Creature, damage_type: str = "direct", card=None, source=None):
+    def __init__(self, damage: int, target: Creature, damage_type: str = "direct", card=None, source=None, direct: bool | None = None):
         self.damage = damage
         self.target = target
-        self.damage_type = damage_type
+        self.damage_type = "direct" if direct else damage_type
         self.card = card
         self.source = source
 
@@ -134,7 +166,11 @@ class DealDamageAction(Action):
             if isinstance(damage_amount, list):
                 damage_amount = damage_amount[0] if damage_amount else 0
 
-        if hasattr(self.target, "try_prevent_damage") and self.target.try_prevent_damage(damage_amount):
+        block_absorbed = min(self.target.block, damage_amount)
+        hp_loss = damage_amount - block_absorbed
+
+        if hp_loss > 0 and hasattr(self.target, "try_prevent_damage") and self.target.try_prevent_damage(hp_loss):
+            self.target.block -= block_absorbed
             target_name = getattr(self.target, "name", getattr(self.target, "character", "Unknown"))
             target_name = _localize_character_name(target_name)
             print(t("combat.buffer_prevented", default="{target_name}'s Buffer prevented the damage!", target_name=target_name))

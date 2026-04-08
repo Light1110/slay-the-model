@@ -26,8 +26,8 @@ class DemonFormPower(Power):
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
 
-    def on_turn_start(self):
-        """Gain Strength at end of turn."""
+    def on_turn_start_post_draw(self):
+        """Gain Strength after the normal turn draw."""
         from actions.combat import ApplyPowerAction
         from engine.game_state import game_state
         from powers.definitions.strength import StrengthPower

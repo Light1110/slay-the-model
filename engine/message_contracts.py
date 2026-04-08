@@ -24,6 +24,7 @@ from engine.messages import (
     GoldGainedMessage,
     HealedMessage,
     HpLostMessage,
+    PlayerTurnPostDrawMessage,
     PlayerTurnEndedMessage,
     PlayerTurnStartedMessage,
     PotionUsedMessage,
@@ -216,6 +217,14 @@ def _build_contracts() -> dict[type[GameMessage], MessageContract]:
         ),
         PlayerTurnEndedMessage: MessageContract(
             message_type=PlayerTurnEndedMessage,
+            default_variants=(
+                _VARIANT(("player",), _bind(_OWNER)),
+                _VARIANT(("message",), _bind(_MESSAGE)),
+                _VARIANT((), _bind()),
+            ),
+        ),
+        PlayerTurnPostDrawMessage: MessageContract(
+            message_type=PlayerTurnPostDrawMessage,
             default_variants=(
                 _VARIANT(("player",), _bind(_OWNER)),
                 _VARIANT(("message",), _bind(_MESSAGE)),

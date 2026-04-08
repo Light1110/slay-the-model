@@ -16,6 +16,7 @@ from engine.messages import (
     HealedMessage,
     HpLostMessage,
     RelicObtainedMessage,
+    PlayerTurnPostDrawMessage,
     PlayerTurnEndedMessage,
     PlayerTurnStartedMessage,
     PotionUsedMessage,
@@ -205,6 +206,11 @@ class Relic(Localizable):
         Returns:
             List of actions to execute when damage is dealt
         """
+        return
+
+    @subscribe(PlayerTurnPostDrawMessage, priority=MessagePriority.PLAYER_RELIC)
+    def on_player_turn_post_draw(self, player):
+        """Called after the player's normal start-of-turn draw resolves."""
         return
 
     @subscribe(DamageResolvedMessage, priority=MessagePriority.REACTION)

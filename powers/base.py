@@ -16,6 +16,7 @@ from engine.messages import (
     DamageResolvedMessage,
     HealedMessage,
     HpLostMessage,
+    PlayerTurnPostDrawMessage,
     PlayerTurnEndedMessage,
     PlayerTurnStartedMessage,
     PowerAppliedMessage,
@@ -177,6 +178,11 @@ class Power(Localizable):
         Returns:
             List of actions to execute at turn start
         """
+        return
+
+    @subscribe(PlayerTurnPostDrawMessage, priority=MessagePriority.PLAYER_POWER)
+    def on_turn_start_post_draw(self):
+        """Called after the normal start-of-turn draw resolves."""
         return
     
     @subscribe(PlayerTurnEndedMessage, priority=MessagePriority.PLAYER_POWER)

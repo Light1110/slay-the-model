@@ -19,6 +19,7 @@ from localization import LocalStr, Localizable, t
 from engine.messages import (
     CombatEndedMessage,
     CombatStartedMessage,
+    PlayerTurnPostDrawMessage,
     PlayerTurnEndedMessage,
     PlayerTurnStartedMessage,
 )
@@ -405,11 +406,11 @@ class Combat(Localizable):
         powers_to_remove = []
         for power in game_state.player.powers:
             if power.duration == 0:
-                powers_to_remove.append(power.name)
+                powers_to_remove.append(power)
         
         # Remove expired powers
-        for power_name in powers_to_remove:
-            game_state.player.remove_power(power_name)
+        for power in powers_to_remove:
+            game_state.player.remove_power(power)
 
         # End-of-turn hand resolution: Ethereal cards exhaust; then discard non-retained
         # (Runic Pyramid only prevents discarding non-Ethereal cards, not Ethereal exhaust).
@@ -504,7 +505,7 @@ class Combat(Localizable):
                 
                 # Remove power if duration reached 0
                 if power.duration == 0:
-                    enemy.remove_power(power.name)
+                    enemy.remove_power(power)
 
     @staticmethod
     def _safe_localized_name(localizable) -> str:
@@ -694,11 +695,26 @@ class Combat(Localizable):
         if self.combat_state.combat_turn == 0:
             opening_hand_count = len(game_state.player.card_manager.get_pile("hand"))
             draw_count = max(0, draw_count - opening_hand_count)
+
+        alive_enemies = [e for e in self.enemies if e.hp > 0]
+        publish_message(
+            PlayerTurnStartedMessage(
+                owner=game_state.player,
+                enemies=alive_enemies,
+            )
+        )
         
         if draw_count > 0:
             tui_print(f"\n{t('combat.draw_cards', count=draw_count, default=f'Draw {draw_count} cards')}")
             from actions.card import DrawCardsAction
             game_state.action_queue.add_action(DrawCardsAction(count=draw_count))
+
+        publish_message(
+            PlayerTurnPostDrawMessage(
+                owner=game_state.player,
+                enemies=alive_enemies,
+            )
+        )
 
         # Reset energy
         game_state.player.energy = game_state.player.max_energy
@@ -709,14 +725,6 @@ class Combat(Localizable):
         # Increment turn counter
         self.combat_state.combat_turn += 1
         self.combat_state.current_phase = "player_action"
-        
-        alive_enemies = [e for e in self.enemies if e.hp > 0]
-        publish_message(
-            PlayerTurnStartedMessage(
-                owner=game_state.player,
-                enemies=alive_enemies,
-            )
-        )
         if getattr(self.combat_state, "preserve_enemy_intent_once", False):
             self.combat_state.preserve_enemy_intent_once = False
 

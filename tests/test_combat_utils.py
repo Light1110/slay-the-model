@@ -47,8 +47,8 @@ class CombatTestHelper:
         """Create a fresh player with specified stats."""
         self._reset_game_state()
         player = self.game_state.player
-        player.hp = hp
         player.max_hp = max_hp
+        player.hp = hp
         player.max_energy = max_energy if max_energy is not None else energy
         player.energy = energy
         player.relics = []  # Clear relics to avoid interference with tests

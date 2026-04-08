@@ -41,7 +41,7 @@ class TheBombPower(Power):
                     explosion_actions.append(DealDamageAction(
                         damage=self.amount,
                         target=enemy,
-                        direct=True
+                        damage_type="direct"
                     ))
                 return explosion_actions
 

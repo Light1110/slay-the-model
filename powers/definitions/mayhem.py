@@ -33,10 +33,12 @@ class MayhemPower(Power):
 
         # Get top card from draw pile
         if game_state.player and hasattr(game_state.player, "card_manager"):
-            draw_cards = list(game_state.player.card_manager.get_pile("draw_pile"))
+            card_manager = game_state.player.card_manager
+            draw_cards = list(card_manager.get_pile("draw_pile"))
             if draw_cards:
-                top_card = draw_cards[0]  # ? First card is top
-                from engine.game_state import game_state
+                top_card = draw_cards[-1]
+                if card_manager.get_card_location(top_card) == "draw_pile":
+                    card_manager.move_to(top_card, "hand", "draw_pile")
                 add_actions([PlayCardAction(card=top_card, is_auto=True, ignore_energy=True)])
                 return
         return

@@ -39,10 +39,10 @@ class StrengthDownPower(Power):
         
         if self.owner:
             actions.append(ApplyPowerAction(
-                StrengthPower(amount=self.amount, owner=self.owner),
+                StrengthPower(amount=-self.amount, owner=self.owner),
                 self.owner
             ))
-            self.owner.remove_power(self.name)
+            self.owner.remove_power(self)
         
         add_actions(actions)
         

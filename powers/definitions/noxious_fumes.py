@@ -17,7 +17,7 @@ class NoxiousFumesPower(Power):
     def __init__(self, amount: int = 2, duration: int = -1, owner=None):
         super().__init__(amount=amount, duration=duration, owner=owner)
 
-    def on_turn_start(self):
+    def on_turn_start_post_draw(self):
         from engine.game_state import game_state
 
         if game_state.current_combat is None:

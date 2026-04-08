@@ -102,7 +102,7 @@ class TestSilentAdvancedExpansion:
         self.helper.add_card_to_hand(card)
         assert self.helper.play_card(card)
         strength = enemy.get_power('Strength')
-        down = enemy.get_power('Strength Down')
+        down = enemy.get_power('Strength Up')
         assert strength is not None
         assert strength.amount == -6
         assert down is not None

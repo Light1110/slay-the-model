@@ -28,9 +28,8 @@ class BrutalityPower(Power):
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
 
-    def on_turn_start(self):
-        """Lose 1 HP and draw 1 card at turn start."""
-        from engine.game_state import game_state
+    def on_turn_start_post_draw(self):
+        """Lose 1 HP and draw 1 card after the normal turn draw."""
         add_actions(
         [
             LoseHPAction(amount=1),

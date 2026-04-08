@@ -81,7 +81,15 @@ class CardAddedToPileMessage(GameMessage):
 
 @dataclass(frozen=True)
 class PlayerTurnStartedMessage(GameMessage):
-    """The player turn start boundary has already been reached."""
+    """The player turn start boundary has been reached before normal draw."""
+
+    owner: "Creature"
+    enemies: List["Creature"]
+
+
+@dataclass(frozen=True)
+class PlayerTurnPostDrawMessage(GameMessage):
+    """The player turn has reached the post-draw boundary."""
 
     owner: "Creature"
     enemies: List["Creature"]
@@ -253,6 +261,7 @@ EXPLICIT_SUBSCRIPTION_MESSAGE_TYPES = (
     GoldGainedMessage,
     HealedMessage,
     HpLostMessage,
+    PlayerTurnPostDrawMessage,
     PlayerTurnEndedMessage,
     PlayerTurnStartedMessage,
     PotionUsedMessage,

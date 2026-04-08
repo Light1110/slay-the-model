@@ -11,7 +11,7 @@ class NoDrawPower(Power):
     name = "No Draw"
     description = "Cannot draw cards this turn."
     stack_type = StackType.DURATION
-    is_buff = True
+    is_buff = False
     prevents_draw = True
 
     def __init__(self, amount: int = 0, duration: int = 1, owner=None):

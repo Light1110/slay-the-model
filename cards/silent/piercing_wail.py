@@ -6,7 +6,7 @@ from actions.combat import ApplyPowerAction
 from cards.base import Card
 from entities.creature import Creature
 from powers.definitions.strength import StrengthPower
-from powers.definitions.strength_down import StrengthDownPower
+from powers.definitions.strength_up import StrengthUpPower
 from utils.registry import register
 from utils.types import CardType, RarityType, TargetType
 
@@ -35,5 +35,5 @@ class PiercingWail(Card):
             if enemy.hp <= 0:
                 continue
             actions.append(ApplyPowerAction(StrengthPower(amount=-strength_loss, owner=enemy), enemy))
-            actions.append(ApplyPowerAction(StrengthDownPower(amount=strength_loss, duration=1, owner=enemy), enemy))
+            actions.append(ApplyPowerAction(StrengthUpPower(amount=strength_loss, duration=1, owner=enemy), enemy))
         add_actions(actions)

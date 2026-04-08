@@ -1,5 +1,6 @@
 """Base creature entity shared by player and enemies."""
 
+import re
 from typing import List, Optional, TYPE_CHECKING, Any
 
 from engine.messages import (
@@ -32,6 +33,11 @@ class Creature(Localizable):
         self._hp = max_hp
         self._block = 0
         self.powers: List[Any] = list(powers or [])
+
+    @staticmethod
+    def _power_identity(power: Any) -> str:
+        """Canonical key for stacking/lookup decisions."""
+        return str(getattr(power, "idstr", power.__class__.__name__))
 
     @property
     def max_hp(self) -> int:
@@ -180,9 +186,10 @@ class Creature(Localizable):
             return
         
         from powers.base import StackType
+        power_id = self._power_identity(power)
         
         for existing in self.powers:
-            if existing.name == power.name:
+            if self._power_identity(existing) == power_id:
                 # Handle based on stack type
                 if power.stack_type == StackType.PRESENCE:
                     # Presence powers don't stack - refresh duration if longer
@@ -217,14 +224,22 @@ class Creature(Localizable):
         power.owner = self
         self.powers.append(power)
 
-    def remove_power(self, power_name: str) -> None:
-        # print(f"[DEBUG] remove_power called: power_name={power_name}, current powers={[p.name for p in self.powers]}")
-        self.powers = [p for p in self.powers if p.name != power_name and p.__class__.__name__ != power_name]
-        # Also try to match by removing the "Power" suffix
-        import re
+    def remove_power(self, power_or_name) -> None:
+        if power_or_name is None:
+            return
+        if power_or_name in self.powers:
+            self.powers = [p for p in self.powers if p is not power_or_name]
+            return
+
+        power_name = str(power_or_name)
         base_name = re.sub(r"Power$", "", power_name)
-        self.powers = [p for p in self.powers if p.name != base_name]
-        # print(f"[DEBUG] After removal: powers={[p.name for p in self.powers]}")
+        self.powers = [
+            p for p in self.powers
+            if p.name != power_name
+            and p.__class__.__name__ != power_name
+            and self._power_identity(p) != power_name
+            and p.name != base_name
+        ]
 
     def get_power(self, power_name: str):
         if not power_name:

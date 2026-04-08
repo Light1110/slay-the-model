@@ -58,7 +58,7 @@ class Anchor(Relic):
     def on_player_turn_start(self, player):
         from engine.game_state import game_state
         if (game_state.current_combat is not None and 
-            game_state.current_combat.combat_state.combat_turn == 1):
+            game_state.current_combat.combat_state.combat_turn == 0):
             from engine.game_state import game_state
             add_actions([GainBlockAction(block=10, target=player)])
             return
@@ -272,7 +272,7 @@ class Lantern(Relic):
         """Gain 1 Energy on first turn"""
         from engine.game_state import game_state
         if (game_state.current_combat is not None and 
-            game_state.current_combat.combat_state.combat_turn == 1):
+            game_state.current_combat.combat_state.combat_turn == 0):
             from engine.game_state import game_state
             add_actions([GainEnergyAction(energy=1)])
             return

@@ -109,8 +109,7 @@ def test_healed_message_runs_red_skull_response():
     player.relics = [red_skull]
     enemy = helper.create_enemy(Cultist, hp=30)
     helper.start_combat([enemy])
-    red_skull.strength_applied = True
-    ApplyPowerAction(power="Strength", target=player, amount=3).execute()
+    helper.game_state.drive_actions()
 
     helper.game_state.publish_message(
         HealedMessage(target=player, amount=10, previous_hp=35, new_hp=45),
@@ -129,8 +128,7 @@ def test_heal_action_does_not_use_direct_red_skull_fallback(monkeypatch):
     player.relics = [red_skull]
     enemy = helper.create_enemy(Cultist, hp=30)
     helper.start_combat([enemy])
-    red_skull.strength_applied = True
-    ApplyPowerAction(power="Strength", target=player, amount=3).execute()
+    helper.game_state.drive_actions()
 
     monkeypatch.setattr(helper.game_state, "publish_message", lambda message, *args, **kwargs: [])
 

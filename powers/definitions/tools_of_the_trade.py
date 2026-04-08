@@ -15,7 +15,7 @@ class ToolsOfTheTradePower(Power):
     def __init__(self, amount: int = 1, duration: int = -1, owner=None):
         super().__init__(amount=amount, duration=duration, owner=owner)
 
-    def on_turn_start(self):
+    def on_turn_start_post_draw(self):
         from engine.runtime_api import add_actions
 
         add_actions([DrawCardsAction(count=1), ChooseDiscardCardAction(pile='hand', amount=1)])
