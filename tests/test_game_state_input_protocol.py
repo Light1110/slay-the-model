@@ -273,7 +273,7 @@ def test_human_options_do_not_add_out_of_combat_potions_during_combat(monkeypatc
     gs.config.mode = "manual"
     gs.config.auto_select = False
     gs.player.potions.append(BloodPotion())
-    gs.current_combat = object()
+    cast(Any, gs).current_combat = object()
 
     class _InteractiveStream:
         def isatty(self):
@@ -349,7 +349,7 @@ def test_ai_selection_receives_out_of_combat_potion_options():
             seen["max_select"] = max_select
             return [1]
 
-    gs.decision_engine = StubDecisionEngine()
+    cast(Any, gs).decision_engine = StubDecisionEngine()
 
     submission = gs.resolve_input_request(
         InputRequest(
@@ -363,7 +363,8 @@ def test_ai_selection_receives_out_of_combat_potion_options():
     assert len(seen["option_text"]) == 2
     assert "Fruit Juice" in seen["option_text"][1]
     assert isinstance(submission.actions[0], UsePotionAction)
-    assert submission.actions[0].potion.__class__.__name__ == "FruitJuice"
+    selected_action = cast(UsePotionAction, submission.actions[0])
+    assert selected_action.potion.__class__.__name__ == "FruitJuice"
 
 
 def test_choose_upgrade_all_does_not_create_input_request():
