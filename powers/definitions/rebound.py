@@ -1,10 +1,8 @@
 """Defect Rebound power."""
 
-from engine.runtime_api import add_action
-from actions.card import MoveCardAction
 from powers.base import Power, StackType
 from utils.registry import register
-from utils.types import PilePosType
+from utils.types import CardType
 
 
 @register("power")
@@ -17,5 +15,6 @@ class ReboundPower(Power):
     def on_card_play(self, card, player, targets):
         if self.owner is None:
             return
-        add_action(MoveCardAction(card=card, src_pile="discard_pile", dst_pile="draw_pile", position=PilePosType.TOP))
+        if getattr(card, "card_type", None) != CardType.POWER:
+            setattr(card, "_rebound_to_draw", True)
         self.owner.remove_power(self.name)

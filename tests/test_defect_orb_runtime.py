@@ -29,18 +29,22 @@ class TestDefectOrbRuntime:
         self.player = self.helper.create_player(hp=75, max_hp=75, energy=3)
         self.player.namespace = "defect"
 
-    def test_add_orb_evokes_rightmost_when_slots_are_full(self):
+    def test_add_orb_evokes_leftmost_when_slots_are_full(self):
         self.helper.start_combat([])
-        self.player.orb_manager.max_orb_slots = 1
+        self.player.orb_manager.max_orb_slots = 2
         original = _TrackingOrb()
+        retained = _TrackingOrb()
         self.player.orb_manager.add_orb(original)
+        self.player.orb_manager.add_orb(retained)
 
         AddOrbAction(LightningOrb()).execute()
         self.helper.game_state.drive_actions()
 
         assert original.evoke_count == 1
-        assert len(self.player.orb_manager.orbs) == 1
-        assert isinstance(self.player.orb_manager.orbs[0], LightningOrb)
+        assert retained.evoke_count == 0
+        assert len(self.player.orb_manager.orbs) == 2
+        assert self.player.orb_manager.orbs[0] is retained
+        assert isinstance(self.player.orb_manager.orbs[1], LightningOrb)
 
     def test_frost_passive_gains_block_for_player(self):
         enemy = self.helper.create_enemy(Cultist, hp=40)

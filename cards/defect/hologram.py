@@ -12,7 +12,7 @@ from utils.types import CardType, RarityType
 @register("card")
 class Hologram(Card):
     card_type = CardType.SKILL
-    rarity = RarityType.UNCOMMON
+    rarity = RarityType.COMMON
 
     base_cost = 1
     base_block = 3

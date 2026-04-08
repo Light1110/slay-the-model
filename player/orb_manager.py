@@ -28,7 +28,7 @@ class OrbManager:
         self._max_orb_slots = value
 
     def add_orb(self, orb: Orb):
-        """Add an orb. If max slots exceeded, evoke rightmost orb first.
+        """Add an orb. If max slots exceeded, evoke leftmost orb first.
         
         Args:
             orb: Orb instance to add
@@ -40,8 +40,8 @@ class OrbManager:
             return
             
         if len(self._orbs) >= self._max_orb_slots:
-            # Evoke rightmost orb first
-            self.evoke_orb(index=-1)
+            # Evoke leftmost orb first
+            self.evoke_orb(index=0)
             
         self._orbs.append(orb)
         return

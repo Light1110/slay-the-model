@@ -17,7 +17,7 @@ from player.player import Player
 from player.card_manager import CardManager
 from engine.combat import Combat
 from engine.game_state import GameState
-from utils.types import TargetType, CardType
+from utils.types import TargetType, CardType, PilePosType
 from engine.messages import CardPlayedMessage
 class CombatTestHelper:
     """Helper class for setting up and running combat tests."""
@@ -223,7 +223,10 @@ class CombatTestHelper:
                     
         # Only place the card if on_play actions did not already move it.
         if player.card_manager.get_card_location(card) is None:
-            if card.exhaust:
+            if getattr(card, "_rebound_to_draw", False):
+                setattr(card, "_rebound_to_draw", False)
+                player.card_manager.add_to_pile(card, 'draw_pile', PilePosType.TOP)
+            elif card.exhaust:
                 player.card_manager.piles['exhaust_pile'].append(card)
             else:
                 player.card_manager.piles['discard_pile'].append(card)

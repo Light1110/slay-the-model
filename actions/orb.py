@@ -26,6 +26,25 @@ class OrbEvokeAction(Action):
 
 
 @register("action")
+class ChannelOrbAction(Action):
+    def __init__(self, orb):
+        self.orb = orb
+
+    def execute(self) -> None:
+        from engine.game_state import game_state
+
+        if not game_state.player or not hasattr(game_state.player, "orb_manager"):
+            return
+
+        orb_manager = game_state.player.orb_manager
+        orb_manager.add_orb(self.orb)
+        if game_state.current_combat is not None:
+            orb_name = self.orb.__class__.__name__.replace("Orb", "")
+            history = game_state.current_combat.combat_state.orb_history
+            history[orb_name] = history.get(orb_name, 0) + 1
+
+
+@register("action")
 class EvokeOrbAction(Action):
     def __init__(self, index: int = 0, times: int = 1):
         self.index = index
@@ -80,13 +99,12 @@ class AddOrbAction(Action):
 
         orb_manager = game_state.player.orb_manager
         if len(orb_manager.orbs) >= orb_manager.max_orb_slots:
-            EvokeOrbAction(index=-1).execute()
+            evoked_orb = orb_manager.remove_orb(0)
+            if evoked_orb is not None:
+                add_actions([OrbEvokeAction(evoked_orb), ChannelOrbAction(self.orb)], to_front=True)
+            return
 
-        orb_manager.add_orb(self.orb)
-        if game_state.current_combat is not None:
-            orb_name = self.orb.__class__.__name__.replace("Orb", "")
-            history = game_state.current_combat.combat_state.orb_history
-            history[orb_name] = history.get(orb_name, 0) + 1
+        ChannelOrbAction(self.orb).execute()
 
 
 @register("action")

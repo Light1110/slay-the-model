@@ -15,7 +15,7 @@ class Glacier(Card):
     card_type = CardType.SKILL
     rarity = RarityType.UNCOMMON
 
-    base_cost = 1
+    base_cost = 2
     base_block = 7
     upgrade_block = 10
 

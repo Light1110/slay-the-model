@@ -210,6 +210,16 @@ class DiscardCardAction(Action):
             
             # Actually discard card
             discarded = game_state.player.card_manager.discard(self.card, src=self.source_pile)
+
+            if discarded and getattr(self.card, "_rebound_to_draw", False):
+                setattr(self.card, "_rebound_to_draw", False)
+                game_state.player.card_manager.move_to(
+                    self.card,
+                    "draw_pile",
+                    src="discard_pile",
+                    pos=PilePosType.TOP,
+                )
+                return
             
             if discarded and self.trigger_effects:
                 if game_state.current_combat is not None:
