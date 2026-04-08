@@ -42,6 +42,10 @@ ui:
   player_hp: 生命值
   player_block: 格挡
   player_energy: 能量
+  stance: 姿态
+  orbs: 充能球
+  passive: 被动
+  evoke: 主动
   hand: 手牌
   powers: 能力
   enemy: 敌人
@@ -117,6 +121,11 @@ ui:
     power: 能力
     status: 状态
     curse: 诅咒
+  status:
+    neutral: 中立
+    calm: 平静
+    wrath: 愤怒
+    divinity: 神性
   ssserpent_head_gold: 蛇头：获得 {amount} 金币！
   received_relic: 获得遗物：{name}！
   received_potion: 获得药水：{name}！

@@ -84,6 +84,10 @@ ui:
   player_hp: HP
   player_block: Block
   player_energy: Energy
+  stance: Stance
+  orbs: Orbs
+  passive: Passive
+  evoke: Evoke
   hand: Hand
   powers: Powers
   enemy: Enemy
@@ -118,6 +122,11 @@ ui:
     power: Power
     status: Status
     curse: Curse
+  status:
+    neutral: Neutral
+    calm: Calm
+    wrath: Wrath
+    divinity: Divinity
   ssserpent_head_gold: 'Ssserpent Head: Gain {amount} gold!'
   received_potion: 'Received potion: {name}!'
   received_relic: 'Received relic: {name}!'
@@ -3647,3 +3656,12 @@ ai_context:
     but other powers (like Weak, Vulnerable, Frail, etc.) have not yet been applied.'
 rewards:
   gold: Gained {amount} gold
+orbs:
+  LightningOrb:
+    name: Lightning Orb
+  FrostOrb:
+    name: Frost Orb
+  DarkOrb:
+    name: Dark Orb
+  PlasmaOrb:
+    name: Plasma Orb

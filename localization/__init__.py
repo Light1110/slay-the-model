@@ -145,6 +145,15 @@ def localize_rarity(rarity: Any) -> str:
         default = str(rarity.value)
         return t(key, default=default)
     return str(rarity)
+
+
+def localize_status(status: Any) -> str:
+    """Resolve a StatusType enum or raw status value to localized text."""
+    if isinstance(status, Enum):
+        key = f"ui.status.{status.name.lower()}"
+        default = str(status.value)
+        return t(key, default=default)
+    return str(status)
     
 class Localizable:
     """Provide localized fields via prefix + class name."""
