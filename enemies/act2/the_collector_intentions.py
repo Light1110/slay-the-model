@@ -53,7 +53,10 @@ class Fireball(Intention):
     
     def __init__(self, enemy: "TheCollector"):
         super().__init__("Fireball", enemy)
-        self.base_damage = 18
+        from engine.game_state import game_state
+
+        ascension = getattr(game_state, "ascension", 0)
+        self.base_damage = 21 if ascension >= 4 else 18
     
     def execute(self) -> None:
         """Execute fireball attack."""
@@ -75,8 +78,11 @@ class Buff(Intention):
     
     def __init__(self, enemy: "TheCollector"):
         super().__init__("Buff", enemy)
-        self.base_strength_gain = 3
-        self.base_block = 15
+        from engine.game_state import game_state
+
+        ascension = getattr(game_state, "ascension", 0)
+        self.base_strength_gain = 5 if ascension >= 19 else (4 if ascension >= 4 else 3)
+        self.base_block = 18 if ascension >= 9 else 15
     
     def execute(self) -> None:
         """Execute buff - strengthen all allies and gain block."""
@@ -110,7 +116,10 @@ class MegaDebuff(Intention):
     
     def __init__(self, enemy: "TheCollector"):
         super().__init__("Mega Debuff", enemy)
-        self.base_amount = 3
+        from engine.game_state import game_state
+
+        ascension = getattr(game_state, "ascension", 0)
+        self.base_amount = 5 if ascension >= 19 else 3
     
     def execute(self) -> None:
         """Execute mega debuff - apply multiple debuffs."""

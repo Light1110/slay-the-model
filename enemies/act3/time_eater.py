@@ -26,7 +26,10 @@ class TimeEater(Enemy):
     enemy_type = EnemyType.BOSS
     
     def __init__(self):
-        super().__init__(hp_range=(456, 456)) # todo: 480 a9
+        from engine.game_state import game_state
+
+        ascension = getattr(game_state, "ascension", 0)
+        super().__init__(hp_range=(480, 480) if ascension >= 9 else (456, 456))
         self.add_intention(Reverberate(self))
         self.add_intention(HeadSlam(self))
         self.add_intention(Ripple(self))

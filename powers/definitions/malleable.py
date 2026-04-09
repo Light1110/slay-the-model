@@ -51,7 +51,6 @@ class MalleablePower(Power):
         damage: int,
         source: Any = None,
         card: Any = None,
-        player: Any = None,
         damage_type: str = "physical",
     ) -> None:
         """
@@ -65,7 +64,7 @@ class MalleablePower(Power):
             player: Player (not used here)
             damage_type: Type of damage
         """
-        if damage > 0 and self.owner:
+        if damage > 0 and self.owner and not self.owner.is_dead():
             block_to_gain = self._current_block_bonus
             # Increase bonus for next trigger
             self._current_block_bonus += 1

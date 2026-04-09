@@ -32,7 +32,6 @@ class FlyingPower(Power):
         damage: int,
         source=None,
         card=None,
-        player=None,
         damage_type: str = "physical",
     ):
         """Lose Flying on attack hit; ground and stun owner at 0 stacks."""

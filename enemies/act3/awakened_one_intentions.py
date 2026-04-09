@@ -63,17 +63,13 @@ class Rebirth(Intention):
     
     def execute(self) -> None:
         """Execute the intention."""
-        from powers.definitions.strength import StrengthPower
-        
-        # Remove all powers except StrengthPower
-        # (Awakened One retains strength through rebirth)
-        strength_powers = [
-            p for p in self.enemy.powers 
-            if isinstance(p, StrengthPower)
+        self.enemy.powers = [
+            power
+            for power in self.enemy.powers
+            if getattr(power, "is_buff", True)
+            and getattr(power, "name", "") not in {"Curiosity", "Unawakened", "Shackled"}
         ]
-        self.enemy.powers.clear()
-        self.enemy.powers.extend(strength_powers)
-        
+
         # Heal to full HP
         self.enemy.heal(self.enemy.max_hp)
         # Switch to phase 2

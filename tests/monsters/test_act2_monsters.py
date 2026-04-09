@@ -85,9 +85,9 @@ class TestAct2Monsters(unittest.TestCase):
         m = TheChamp()
         self.assertGreaterEqual(m.hp, 100)
 
-    def test_the_collector_is_elite(self):
+    def test_the_collector_is_boss(self):
         m = TheCollector()
-        self.assertEqual(m.enemy_type, EnemyType.ELITE)
+        self.assertEqual(m.enemy_type, EnemyType.BOSS)
 
 if __name__ == '__main__':
     unittest.main()

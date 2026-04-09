@@ -15,6 +15,9 @@ class GremlinNob(Enemy):
     enemy_type = EnemyType.ELITE
     
     def __init__(self, ascension: int = 0):
+        from engine.game_state import game_state
+
+        ascension = max(ascension, getattr(game_state, "ascension", 0))
         if ascension >= 8:
             hp = random.randint(85, 90)
         else:
@@ -26,17 +29,14 @@ class GremlinNob(Enemy):
         self.bull_rush_count = 0
         self.last_action = None
         
-        skull_damage = 8 if ascension >= 9 else 6
-        bull_damage = 18 if ascension >= 9 else 14
+        skull_damage = 8 if ascension >= 3 else 6
+        bull_damage = 16 if ascension >= 3 else 14
         
         # Register intentions with keys
         self.add_intention(BellowIntention(self))
         self.add_intention(SkullBashIntention(self, skull_damage))
         self.add_intention(BullRushIntention(self, bull_damage))
         
-        from powers.definitions.enrage import EnragePower
-        self.add_power(EnragePower(2, owner=self))
-    
     def determine_next_intention(self, floor: int = 1):
         """Determine next intention based on turn count and ascension.
         

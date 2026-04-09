@@ -16,6 +16,9 @@ class Lagavulin(Enemy):
     enemy_type = EnemyType.ELITE
     
     def __init__(self, ascension: int = 0, start_awake: bool = False):
+        from engine.game_state import game_state
+
+        ascension = max(ascension, getattr(game_state, "ascension", 0))
         if ascension >= 8:
             hp = random.randint(112, 115)
         else:
@@ -34,9 +37,9 @@ class Lagavulin(Enemy):
             from powers.definitions.metallicize import MetallicizePower
             self.add_power(MetallicizePower(8, owner=self))
 
-        high_asc = ascension >= 18
+        high_asc = ascension >= 3
         damage = 20 if high_asc else 18
-        siphon_amount = 2 if high_asc else 1
+        siphon_amount = 2 if ascension >= 18 else 1
 
         # Register intentions with keys
         self.add_intention(SleepIntention(self))

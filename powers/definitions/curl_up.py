@@ -35,7 +35,6 @@ class CurlUpPower(Power):
         damage: int,
         source=None,
         card=None,
-        player=None,
         damage_type="physical",
     ) -> None:
         """
@@ -49,15 +48,14 @@ class CurlUpPower(Power):
             player: Player taking damage (optional)
             damage_type: Type of damage (optional)
         """
-        if not self.triggered and damage > 0:
+        if not self.triggered and damage > 0 and self.owner and not self.owner.is_dead():
             self.triggered = True
-            if self.owner:
-                add_actions(
-                    [
-                        GainBlockAction(self.amount, self.owner),
-                        RemovePowerAction(power="Curl Up", target=self.owner),
-                    ]
-                )
+            add_actions(
+                [
+                    GainBlockAction(self.amount, self.owner),
+                    RemovePowerAction(power="Curl Up", target=self.owner),
+                ]
+            )
 
     def local(self, field: str, **kwargs) -> LocalStr:
         """Get localized string for this power

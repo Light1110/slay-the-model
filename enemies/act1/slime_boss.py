@@ -23,8 +23,11 @@ class SlimeBoss(Enemy):
     enemy_type = EnemyType.BOSS
     
     def __init__(self):
+        from engine.game_state import game_state
+
+        ascension = getattr(game_state, "ascension", 0)
         super().__init__(
-            hp_range=(140, 140)  # todo: 150 a9
+            hp_range=(150, 150) if ascension >= 9 else (140, 140)
         )
         
         # Register intentions

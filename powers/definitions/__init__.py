@@ -10,6 +10,7 @@ from powers.definitions.confused import ConfusedPower
 from powers.definitions.no_block import NoBlockPower
 from powers.definitions.artifact import ArtifactPower
 from powers.definitions.intangible import IntangiblePower
+from powers.definitions.invincible import InvinciblePower
 from powers.definitions.frail import FrailPower
 from powers.definitions.magnetism import MagnetismPower
 from powers.definitions.mayhem import MayhemPower
@@ -73,6 +74,7 @@ __all__ = [
     "NoBlockPower",
     "ArtifactPower",
     "IntangiblePower",
+    "InvinciblePower",
     "FrailPower",
     "MagnetismPower",
     "MayhemPower",

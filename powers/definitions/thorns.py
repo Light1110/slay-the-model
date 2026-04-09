@@ -31,7 +31,6 @@ class ThornsPower(Power):
         damage: int,
         source: Any = None,
         card: Any = None,
-        player: Any = None,
         damage_type: str = "physical",
     ):
         if source is not None:

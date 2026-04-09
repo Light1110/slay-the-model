@@ -36,7 +36,10 @@ class AwakenedOne(Enemy):
     enemy_type = EnemyType.BOSS
     
     def __init__(self):
-        super().__init__(hp_range=(300, 300)) # todo: 320 a9
+        from engine.game_state import game_state
+
+        ascension = getattr(game_state, "ascension", 0)
+        super().__init__(hp_range=(320, 320) if ascension >= 9 else (300, 300))
         self.add_intention(Slash(self))
         self.add_intention(SoulStrike(self))
         self.add_intention(Rebirth(self))

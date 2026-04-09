@@ -16,16 +16,17 @@ class MultiStab(Intention):
     
     def __init__(self, enemy: "BookOfStabbing"):
         super().__init__("Multi Stab", enemy)
-        self.base_damage = 6  # Per hit
-        self._hits_base = 2  # Base number of hits
+        from engine.game_state import game_state
+
+        ascension = getattr(game_state, "ascension", 0)
+        self.base_damage = 7 if ascension >= 3 else 6
     
     def execute(self) -> None:
         """Execute multi-stab attack."""
         from engine.game_state import game_state
         
         actions = []
-        # Number of hits = times used + 2
-        num_hits = self.enemy.multi_stab_count + self._hits_base
+        num_hits = self.enemy.multi_stab_count + 1
         
         for _ in range(num_hits):
             actions.append(AttackAction(
@@ -44,7 +45,10 @@ class BigStab(Intention):
     
     def __init__(self, enemy: "BookOfStabbing"):
         super().__init__("Big Stab", enemy)
-        self.base_damage = 21
+        from engine.game_state import game_state
+
+        ascension = getattr(game_state, "ascension", 0)
+        self.base_damage = 24 if ascension >= 3 else 21
     
     def execute(self) -> None:
         """Execute big stab attack."""

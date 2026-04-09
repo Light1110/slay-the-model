@@ -32,7 +32,6 @@ class FlameBarrierPower(Power):
         damage: int,
         source: Any = None,
         card: Any = None,
-        player: Any = None,
         damage_type: str = "physical",
     ):
         """Deal damage to attacker when this creature is attacked."""

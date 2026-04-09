@@ -117,7 +117,10 @@ class TackleIntention(Intention):
     
     def __init__(self, enemy: 'Enemy'):
         super().__init__("tackle", enemy)
-        self.base_damage = 5
+        from engine.game_state import game_state
+
+        ascension = getattr(game_state, "ascension", 0)
+        self.base_damage = 6 if ascension >= 4 else 5
         self._hits = 2
     
     def execute(self) -> None:
@@ -175,8 +178,11 @@ class InfernoIntention(Intention):
     
     def __init__(self, enemy: 'Enemy'):
         super().__init__("inferno", enemy)
-        self.base_damage = 6
-        self._hits = 2
+        from engine.game_state import game_state
+
+        ascension = getattr(game_state, "ascension", 0)
+        self.base_damage = 3 if ascension >= 4 else 2
+        self._hits = 6
         self._burn_count = 3
     
     def execute(self) -> None:

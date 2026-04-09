@@ -47,7 +47,6 @@ class ShelledParasite(Enemy):
         damage: int,
         source=None,
         card=None,
-        player=None,
         damage_type: str = "physical",
     ):
         """Check if Plated Armor is broken."""

@@ -30,8 +30,6 @@ class ShiftingPower(Power):
         amount: int,
         source: Any = None,
         card: Any = None,
-        player: Any = None,
-        damage_type: str = "physical",
     ):
         if not self.owner or amount <= 0:
             return

@@ -25,7 +25,10 @@ class Deca(Enemy):
     enemy_type = EnemyType.BOSS
     
     def __init__(self):
-        super().__init__(hp_range=(250, 250)) # todo: 265 a9
+        from engine.game_state import game_state
+
+        ascension = getattr(game_state, "ascension", 0)
+        super().__init__(hp_range=(265, 265) if ascension >= 9 else (250, 250))
         self.add_intention(DecaBeam(self))
         self.add_intention(SquareOfProtection(self))
         self._use_beam = True  # Start with Beam
@@ -42,11 +45,11 @@ class Deca(Enemy):
         
         # Add Artifact 2 at combat start (Artifact 1 on A17+)
         from powers.definitions.artifact import ArtifactPower
-        artifact_stacks = 1 if ascension >= 17 else 2
+        artifact_stacks = 3 if ascension >= 19 else 2
         self.add_power(ArtifactPower(amount=artifact_stacks, owner=self))
         
-        # Set plated armor flag for A17+
-        self._add_plated_armor = ascension >= 17
+        # Set plated armor flag for A19+.
+        self._add_plated_armor = ascension >= 19
     
     def determine_next_intention(self, floor: int):
         """Determine next intention - alternates between Beam and Square of Protection."""

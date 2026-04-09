@@ -18,7 +18,10 @@ class DecaBeam(Intention):
     
     def __init__(self, enemy):
         super().__init__("Beam", enemy)
-        self.base_damage = 10
+        from engine.game_state import game_state
+
+        ascension = getattr(game_state, "ascension", 0)
+        self.base_damage = 12 if ascension >= 4 else 10
         self.base_hits = 2
     
     def execute(self) -> None:
@@ -47,7 +50,7 @@ class DecaBeam(Intention):
         add_actions(actions)
         
 class SquareOfProtection(Intention):
-    """All enemies gain 16 Block. Gain 1 Plated Armor on A17+."""
+    """All enemies gain 16 Block. Gain 3 Plated Armor on A19+."""
     
     def __init__(self, enemy):
         super().__init__("Square of Protection", enemy)
@@ -69,13 +72,13 @@ class SquareOfProtection(Intention):
                     target=enemy
                 ))
         
-        # On A17+, also gain Plated Armor
+        # On A19+, also gain Plated Armor
         # This is handled by checking ascension in the Deca class
         if hasattr(self.enemy, '_add_plated_armor') and self.enemy._add_plated_armor:
             actions.append(ApplyPowerAction(
                 power="plated_armor",
                 target=self.enemy,
-                amount=1
+                amount=3
             ))
         
         from engine.game_state import game_state

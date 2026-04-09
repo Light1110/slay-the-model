@@ -38,7 +38,6 @@ class ReactivePower(Power):
         damage: int,
         source: Any = None,
         card: Any = None,
-        player: Any = None,
         damage_type: str = "physical",
     ) -> None:
         """

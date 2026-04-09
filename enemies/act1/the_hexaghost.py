@@ -24,8 +24,11 @@ class TheHexaghost(Enemy):
     enemy_type = EnemyType.BOSS
     
     def __init__(self):
+        from engine.game_state import game_state
+
+        ascension = getattr(game_state, "ascension", 0)
         super().__init__(
-            hp_range=(250, 250)  # todo: 264 a9
+            hp_range=(264, 264) if ascension >= 9 else (250, 250)
         )
         
         # Register intentions

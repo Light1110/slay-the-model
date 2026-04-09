@@ -37,7 +37,6 @@ class PlatedArmorPower(Power):
         damage: int,
         source=None,
         card=None,
-        player=None,
         damage_type: str = "physical",
     ):
         self.amount -= 1

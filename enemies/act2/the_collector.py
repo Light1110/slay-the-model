@@ -18,7 +18,13 @@ class TorchHead(Enemy):
     enemy_type = EnemyType.NORMAL
     
     def __init__(self):
-        super().__init__(hp_range=(38, 40), is_minion=True) # todo: 40-45 a7
+        from engine.game_state import game_state
+
+        ascension = getattr(game_state, "ascension", 0)
+        super().__init__(
+            hp_range=(40, 45) if ascension >= 7 else (38, 40),
+            is_minion=True,
+        )
         
         # Register intentions
         from enemies.act2.the_collector_intentions import Tackle
@@ -30,7 +36,7 @@ class TorchHead(Enemy):
 
 
 class TheCollector(Enemy):
-    """Elite enemy found in Act 2.
+    """Boss enemy found in Act 2.
     
     Summons Torch Head minions and buffs them.
     Always starts with Spawn.
@@ -39,10 +45,13 @@ class TheCollector(Enemy):
     Cannot use Fireball 3 times in a row.
     """
     
-    enemy_type = EnemyType.ELITE
+    enemy_type = EnemyType.BOSS
     
     def __init__(self):
-        super().__init__(hp_range=(282, 282)) # todo: 300 a9
+        from engine.game_state import game_state
+
+        ascension = getattr(game_state, "ascension", 0)
+        super().__init__(hp_range=(300, 300) if ascension >= 9 else (282, 282))
         self._turn_count = 0
         self._used_mega_debuff = False
         

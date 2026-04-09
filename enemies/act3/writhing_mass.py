@@ -98,7 +98,6 @@ class WrithingMass(Enemy):
         damage: int,
         source=None,
         card=None,
-        player=None,
         damage_type: str = "physical",
     ) -> None:
         """Called when enemy takes damage.

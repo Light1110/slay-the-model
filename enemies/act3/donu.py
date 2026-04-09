@@ -25,19 +25,24 @@ class Donu(Enemy):
     enemy_type = EnemyType.BOSS
     
     def __init__(self):
-        super().__init__(hp_range=(250, 250)) # todo: 265 a9
+        from engine.game_state import game_state
+
+        ascension = getattr(game_state, "ascension", 0)
+        super().__init__(hp_range=(265, 265) if ascension >= 9 else (250, 250))
         self.add_intention(CircleOfPower(self))
         self.add_intention(Beam(self))
         self._use_circle_of_power = True  # Start with Circle of Power
     
     def on_combat_start(self, floor: int):
         """Initialize combat state and add Artifact."""
+        from engine.game_state import game_state
+        from powers.definitions.artifact import ArtifactPower
+
+        ascension = getattr(game_state, "ascension", 0)
         super().on_combat_start(floor)
         self._use_circle_of_power = True
-        
-        # Add Artifact 2 at combat start
-        from powers.definitions.artifact import ArtifactPower
-        self.add_power(ArtifactPower(amount=2, owner=self))
+
+        self.add_power(ArtifactPower(amount=3 if ascension >= 19 else 2, owner=self))
     
     def determine_next_intention(self, floor: int):
         """Determine next intention - alternates between Circle of Power and Beam."""

@@ -15,7 +15,10 @@ class GoopSprayIntention(Intention):
     
     def __init__(self, enemy: 'Enemy'):
         super().__init__("goop_spray", enemy)
-        self._slimed_count = 3
+        from engine.game_state import game_state
+
+        ascension = getattr(game_state, "ascension", 0)
+        self._slimed_count = 5 if ascension >= 19 else 3
     
     def execute(self) -> None:
         """Execute Goop Spray: adds Slimed cards to discard pile."""
@@ -49,7 +52,10 @@ class SlamIntention(Intention):
     
     def __init__(self, enemy: 'Enemy'):
         super().__init__("slam", enemy)
-        self.base_damage = 35
+        from engine.game_state import game_state
+
+        ascension = getattr(game_state, "ascension", 0)
+        self.base_damage = 38 if ascension >= 4 else 35
     
     def execute(self) -> None:
         """Execute Slam: deals 35 damage to player."""

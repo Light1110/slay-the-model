@@ -9,6 +9,7 @@ from actions.combat import (
     GainBlockAction,
     ApplyPowerAction,
 )
+from actions.card import AddCardAction
 from enemies.intention import Intention
 
 
@@ -17,7 +18,10 @@ class Reverberate(Intention):
     
     def __init__(self, enemy):
         super().__init__("Reverberate", enemy)
-        self.base_damage = 7
+        from engine.game_state import game_state
+
+        ascension = getattr(game_state, "ascension", 0)
+        self.base_damage = 8 if ascension >= 4 else 7
         self.base_hits = 3
     
     def execute(self) -> None:
@@ -39,11 +43,15 @@ class HeadSlam(Intention):
     
     def __init__(self, enemy):
         super().__init__("Head Slam", enemy)
-        self.base_damage = 26
+        from engine.game_state import game_state
+
+        ascension = getattr(game_state, "ascension", 0)
+        self.base_damage = 32 if ascension >= 4 else 26
         self.base_draw_reduction = 1
     
     def execute(self) -> None:
         """Execute the intention."""
+        from cards.colorless.slimed import Slimed
         from engine.game_state import game_state
         
         actions = [
@@ -60,7 +68,13 @@ class HeadSlam(Intention):
                 duration=self.base_draw_reduction
             )
         ]
-        from engine.game_state import game_state
+        if getattr(game_state, "ascension", 0) >= 19:
+            actions.extend(
+                [
+                    AddCardAction(card=Slimed(), dest_pile="discard_pile", source="enemy"),
+                    AddCardAction(card=Slimed(), dest_pile="discard_pile", source="enemy"),
+                ]
+            )
         add_actions(actions)
 class Ripple(Intention):
     """Gains 20 block. Applies 1 Vulnerable and 1 Weak."""
@@ -92,7 +106,15 @@ class Ripple(Intention):
                 duration=1
             )
         ]
-        from engine.game_state import game_state
+        if getattr(game_state, "ascension", 0) >= 19:
+            actions.append(
+                ApplyPowerAction(
+                    power="frail",
+                    target=game_state.player,
+                    amount=self.base_amount,
+                    duration=1,
+                )
+            )
         add_actions(actions)
 class Haste(Intention):
     """Removes all debuffs. Heals to 50% HP."""
@@ -102,19 +124,17 @@ class Haste(Intention):
     
     def execute(self) -> None:
         """Execute the intention."""
-        from powers.definitions.strength import StrengthPower
-        
-        # Remove all powers except StrengthPower
-        # (Awakened One retains strength through rebirth)
-        strength_powers = [
-            p for p in self.enemy.powers 
-            if isinstance(p, StrengthPower)
+        from engine.game_state import game_state
+
+        self.enemy.powers = [
+            power for power in self.enemy.powers
+            if getattr(power, "is_buff", True)
         ]
-        self.enemy.powers.clear()
-        self.enemy.powers.extend(strength_powers)
-        
-        # Heal to 50% HP
-        heal_amount = self.enemy.max_hp // 2
+
+        target_hp = self.enemy.max_hp // 2
+        heal_amount = max(0, target_hp - self.enemy.hp)
         self.enemy.heal(heal_amount)
+        if getattr(game_state, "ascension", 0) >= 19:
+            self.enemy.gain_block(self.enemy.intentions["Head Slam"].base_damage)
         # Mark that haste was used
         self.enemy._haste_used = True
