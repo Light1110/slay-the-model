@@ -25,24 +25,32 @@ class SecretTechnique(Card):
 
     # Note: Upgraded version removes Exhaust flag
 
+    def can_play(self, ignore_energy=False):
+        can_play, reason = super().can_play(ignore_energy)
+        if not can_play:
+            return can_play, reason
+        from engine.game_state import game_state
+
+        player = game_state.player
+        if player is None:
+            return False, "No player."
+        has_skill = any(
+            card.card_type == CardType.SKILL
+            for card in player.card_manager.get_pile("draw_pile")
+        )
+        if not has_skill:
+            return False, "No Skill in draw pile."
+        return True, None
+
     def on_play(self, targets: List[Creature] = []):
-        target = targets[0] if targets else None
         from engine.game_state import game_state
 
         super().on_play(targets)
 
-        actions = []
-        # Move a Skill from draw pile to hand
         if game_state.player and hasattr(game_state.player, "card_manager"):
-            actions.append(ChooseMoveCardAction(
+            add_actions([ChooseMoveCardAction(
                 src="draw_pile",
                 dst="hand",
                 amount=1,
                 filter_card_type=CardType.SKILL
-            ))
-
-        from engine.game_state import game_state
-
-        add_actions(actions)
-
-        return
+            )])

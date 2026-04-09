@@ -532,6 +532,11 @@ class Card(Localizable):
         combat_state = game_state.current_combat.combat_state
         if not combat_state.turn_enable_card_play:
             return False, "Normality restriction"
+
+        if game_state.player:
+            hand = game_state.player.card_manager.get_pile("hand")
+            if any(card.__class__.__name__ == "Normality" for card in hand) and combat_state.turn_cards_played >= 3:
+                return False, "Normality restriction"
         
         # VelvetChoker restriction: cannot play more than 6 cards per turn
         if game_state.player:

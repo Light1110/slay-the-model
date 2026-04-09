@@ -12,11 +12,12 @@ class Prostrate(Card):
     rarity = RarityType.COMMON
     base_cost = 0
     base_block = 4
-    upgrade_block = 6
-    base_exhaust = True
+    base_magic = {"mantra": 2}
+    base_exhaust = False
+    upgrade_magic = {"mantra": 3}
     text_name = "Prostrate"
     text_description = "Gain {block} Block. Gain 2 Mantra. Exhaust."
 
     def on_play(self, targets: List = []):
         super().on_play(targets)
-        add_action(GainMantraAction(2))
+        add_action(GainMantraAction(self.get_magic_value("mantra")))

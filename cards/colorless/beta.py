@@ -13,6 +13,7 @@ class Beta(Card):
     rarity = RarityType.SPECIAL
     base_cost = 2
     base_exhaust = True
+    upgrade_cost = 1
     text_name = "Beta"
     text_description = "Shuffle an Omega into your draw pile. Exhaust."
 

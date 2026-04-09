@@ -27,6 +27,7 @@ class CombatState:
         # Player turn tracking
         self.player_actions_this_turn: int = 0
         self.player_energy_spent_this_turn: int = 0
+        self.mantra_gained: int = 0
 
         # Phase tracking
         self.current_phase: str = "player_action"  # player_action, enemy_action, player_end
@@ -44,6 +45,7 @@ class CombatState:
         self.discarded_cards_this_turn = 0
         self.blood_for_blood_hits = 0
         self.last_card_targets = []
+        self.mantra_gained = 0
 
         # Reset turn-specific counters
         self.combat_turn = 0

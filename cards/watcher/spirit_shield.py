@@ -21,4 +21,5 @@ class SpiritShield(Card):
     @property
     def block(self) -> int:
         hand = game_state_module.game_state.player.card_manager.get_pile("hand")
-        return len(hand) * self.get_magic_value("per_card")
+        count = sum(1 for card in hand if card is not self)
+        return count * self.get_magic_value("per_card")

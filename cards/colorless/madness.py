@@ -1,10 +1,7 @@
 """
 Colorless Uncommon Skill card - Madness
 """
-from engine.runtime_api import add_action, add_actions
-
 from typing import List
-from actions.base import Action
 from cards.base import Card
 from entities.creature import Creature
 from utils.registry import register
@@ -24,27 +21,18 @@ class Madness(Card):
     upgrade_cost = 0
 
     def on_play(self, targets: List[Creature] = []):
-        target = targets[0] if targets else None
         from engine.game_state import game_state
         import random
 
         super().on_play(targets)
 
-        actions = []
-        # Reduce cost of a random card in hand to 0 for this combat
         if game_state.player and hasattr(game_state.player, "card_manager"):
             hand_cards = list(game_state.player.card_manager.get_pile("hand"))
-            if hand_cards:
-                # Select random card from hand
-                random_card = random.choice(hand_cards)
-                # Set its cost to 0 for the entire combat
-                # We need a way to track "cost 0 for this combat"
-                # For now, use a very negative turn-scoped cost override as a marker
-                # A proper implementation would use a power or special flag
-                random_card.cost = 0
-
-        from engine.game_state import game_state
-
-        add_actions(actions)
-
-        return
+            better_candidates = [card for card in hand_cards if card.cost > 0]
+            fallback_candidates = [
+                card for card in hand_cards
+                if card.cost_until_end_of_turn is None and getattr(card, "_cost", None) not in (-1, -2) and card.cost > 0
+            ]
+            candidates = better_candidates or fallback_candidates
+            if candidates:
+                random.choice(candidates).cost = 0

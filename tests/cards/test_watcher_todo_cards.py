@@ -85,12 +85,11 @@ def test_tantrum_shuffles_itself_into_draw_pile_after_play():
     assert card in helper.game_state.player.card_manager.get_pile("draw_pile")
 
 
-def test_brilliance_damage_scales_with_mantra():
+def test_brilliance_damage_scales_with_total_mantra_gained():
     helper = create_test_helper()
-    player = helper.create_player()
-    helper.start_combat([helper.create_enemy(Cultist, hp=20)])
-    player.add_power(CollectPower(owner=player))
-    player.add_power(type("TestMantra", (), {"name": "Mantra", "amount": 5})())
+    helper.create_player()
+    combat = helper.start_combat([helper.create_enemy(Cultist, hp=20)])
+    combat.combat_state.mantra_gained = 5
 
     card = Brilliance()
 
@@ -107,7 +106,7 @@ def test_spirit_shield_block_scales_with_cards_in_hand():
     helper.add_card_to_hand(IroncladStrike())
     helper.add_card_to_hand(IroncladStrike())
 
-    assert card.block == 9
+    assert card.block == 6
 
 
 def test_omniscience_plays_selected_card_twice_and_exhausts_it():

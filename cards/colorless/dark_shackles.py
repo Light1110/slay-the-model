@@ -9,6 +9,7 @@ from actions.combat import ApplyPowerAction
 from cards.base import Card
 from entities.creature import Creature
 from powers.definitions.strength import StrengthPower
+from powers.definitions.strength_up import StrengthUpPower
 from utils.registry import register
 from utils.types import CardType, RarityType, TargetType
 
@@ -30,18 +31,19 @@ class DarkShackles(Card):
     def on_play(self, targets: List[Creature] = []):
         target = targets[0] if targets else None
         super().on_play(targets)
-        actions = []
-        # Enemy loses Strength this turn (temporary weakness)
         if targets:
             strength_loss = self.get_magic_value("strength_loss")
-            # Apply Strength (negative value reduces strength)
-            actions.append(ApplyPowerAction(
+            assert target is not None
+            actions = [ApplyPowerAction(
                 StrengthPower(amount=-strength_loss, duration=1, owner=target),
                 target
-            ))
-
-        from engine.game_state import game_state
-
-        add_actions(actions)
-
-        return
+            )]
+            artifact = target.get_power("Artifact")
+            if artifact is None or artifact.amount <= 0:
+                actions.append(
+                    ApplyPowerAction(
+                        StrengthUpPower(amount=strength_loss, duration=1, owner=target),
+                        target,
+                    )
+                )
+            add_actions(actions)

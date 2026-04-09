@@ -18,9 +18,4 @@ class Normality(Card):
     upgradeable = False
     
     def on_draw(self):
-        from engine.game_state import game_state
-        combat = game_state.current_combat
-        assert combat is not None
-        if combat.combat_state.turn_cards_played >= 3:
-            combat.combat_state.turn_enable_card_play = False
         return

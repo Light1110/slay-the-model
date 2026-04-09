@@ -158,7 +158,13 @@ class DealDamageAction(Action):
             return
 
         if self.source is not None:
-            damage_amount = resolve_potential_damage(self.damage, self.source, self.target, card=self.card)
+            damage_amount = resolve_potential_damage(
+                self.damage,
+                self.source,
+                self.target,
+                card=self.card,
+                damage_type=self.damage_type,
+            )
         else:
             damage_amount = self.damage
             if callable(damage_amount):

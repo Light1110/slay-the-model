@@ -244,8 +244,6 @@ class ChooseExhaustCardAction(Action):
         cards_in_pile = card_manager.get_pile(pile)
 
         for card in cards_in_pile:
-            if not card.can_upgrade():
-                continue
             option = card.info() # card.display_name
             options.append(
                 Option(

@@ -12,6 +12,8 @@ class DevaForm(Card):
     target_type = TargetType.SELF
     rarity = RarityType.RARE
     base_cost = 3
+    base_ethereal = True
+    upgrade_ethereal = False
     text_name = "Deva Form"
     text_description = "At the start of your turn, gain Energy and increase this effect."
 

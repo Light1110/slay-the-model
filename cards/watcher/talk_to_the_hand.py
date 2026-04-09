@@ -13,8 +13,10 @@ class TalkToTheHand(Card):
     rarity = RarityType.UNCOMMON
     base_cost = 1
     base_damage = 5
-    upgrade_damage = 8
+    upgrade_damage = 7
     base_magic = {"block": 2}
+    base_exhaust = True
+    upgrade_magic = {"block": 3}
     text_name = "Talk to the Hand"
     text_description = "Deal {damage} damage. Apply a debuff that gives you {magic.block} Block whenever you attack that enemy."
 
