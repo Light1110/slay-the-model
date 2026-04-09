@@ -12,6 +12,7 @@ from actions.display import InputRequestAction, DisplayTextAction
 from actions.reward import LoseGoldAction
 from actions.combat import HealAction
 from events.event_pool import register_event
+from actions.base import LambdaAction
 from localization import LocalStr
 from utils.option import Option
 
@@ -50,6 +51,7 @@ class TheClericEvent(Event):
                 actions=[
                     LoseGoldAction(amount=35),
                     HealAction(amount=heal_amount),
+                    LambdaAction(lambda: self.end_event()),
                 ]
             ))
 
@@ -60,13 +62,14 @@ class TheClericEvent(Event):
                 actions=[
                     LoseGoldAction(amount=purify_cost),
                     ChooseRemoveCardAction(pile="deck", amount=1),
+                    LambdaAction(lambda: self.end_event()),
                 ]
             ))
 
         # Option 3: Leave - Nothing happens
         options.append(Option(
             name=LocalStr("events.the_cleric.option3"),
-            actions=[]  # Empty actions = nothing happens
+            actions=[LambdaAction(lambda: self.end_event())]
         ))
 
         # Display options and wait for selection

@@ -129,7 +129,7 @@ class MapManager:
         from engine.game_state import game_state
         
         if self.act_id == 4:
-            return [1, 1, 1, 1, 1, 1]
+            return [1, 1, 1, 1, 1]
         
         if self.act_id == 3 and game_state.ascension >= 20:
             floor_sizes = []
@@ -565,7 +565,7 @@ class MapManager:
         position: int, 
         nodes: List[List[MapNode]],
         prev_room_types: Dict[int, RoomType],
-        assigned_this_floor: Dict[int, RoomType]
+        assigned_this_floor: Dict[int, Dict[int, RoomType]]
     ) -> List[RoomType]:
         """
         Get list of available room types for a specific floor position.
@@ -762,6 +762,7 @@ class MapManager:
         act_start_floor = self._get_act_start_floor(self.act_id)
         floor_in_act = floor - act_start_floor
         node = self.map_data.get_node(floor_in_act, position)
+        assert node is not None
         
         # Create room instance based on room type
         room = self._create_room_instance(node.room_type)
@@ -1403,10 +1404,6 @@ class MapManager:
         if self.deadly_events and floor >= 6:
             elite_chance = 20 + (self.unknown_room_visits[RoomType.ELITE] * 20)
         
-        # Juzu Bracelet removes regular monsters from ? rooms
-        if self.has_juzu_bracelet:
-            monster_chance = 0
-        
         # Event fills remaining probability
         total_chances = monster_chance + treasure_chance + shop_chance + elite_chance
         event_chance = 100 - total_chances
@@ -1414,7 +1411,8 @@ class MapManager:
         # Roll for encounter type
         roll = self.rng.randint(1, 100)
         
-        if roll <= monster_chance:
+        rolled_monster = roll <= monster_chance
+        if rolled_monster:
             chosen_type = RoomType.MONSTER
         elif roll <= monster_chance + treasure_chance:
             chosen_type = RoomType.TREASURE
@@ -1424,12 +1422,22 @@ class MapManager:
             chosen_type = RoomType.ELITE
         else:
             chosen_type = RoomType.EVENT  # Event
+
+        if rolled_monster and self.has_juzu_bracelet:
+            chosen_type = RoomType.EVENT
         
+        redirected_from_monster = rolled_monster and chosen_type == RoomType.EVENT
+
         # Reset visit counter for the chosen type
-        self.unknown_room_visits[chosen_type] = 0
+        if rolled_monster:
+            self.unknown_room_visits[RoomType.MONSTER] = 0
+        else:
+            self.unknown_room_visits[chosen_type] = 0
         
         # Increment visit counters for all other types
         for room_type in self.unknown_room_visits:
+            if redirected_from_monster and room_type == RoomType.MONSTER:
+                continue
             if room_type != chosen_type:
                 self.unknown_room_visits[room_type] += 1
         

@@ -6,6 +6,7 @@ from engine.runtime_api import add_action, add_actions, publish_message, request
 
 from events.base_event import Event
 from events.event_pool import register_event
+from actions.base import LambdaAction
 from actions.display import InputRequestAction, DisplayTextAction
 from actions.card import AddCardAction
 from actions.reward import AddRelicAction
@@ -48,7 +49,8 @@ class HypnotizingColoredMushrooms(Event):
                     StartFightAction(
                         enemies=fungi_beasts,
                         victory_actions=[
-                            AddRelicAction(relic=OddMushroom())
+                            AddRelicAction(relic=OddMushroom()),
+                            LambdaAction(lambda: self.end_event()),
                         ]
                     )
                 ]
@@ -57,7 +59,8 @@ class HypnotizingColoredMushrooms(Event):
                 name=LocalStr('events.hypnotizing_mushrooms.eat'),
                 actions=[
                     HealAction(percent=0.25),
-                    AddCardAction(card=Parasite())
+                    AddCardAction(card=Parasite()),
+                    LambdaAction(lambda: self.end_event()),
                 ]
             )
         ]
@@ -66,6 +69,5 @@ class HypnotizingColoredMushrooms(Event):
             title=LocalStr('events.hypnotizing_mushrooms.title'),
             options=options
         ))
-        
-        self.end_event()
+
         add_actions(actions)

@@ -1,5 +1,6 @@
 ﻿import random as rd
 import sys
+import os
 from typing import List, Optional, cast
 
 from engine.input_protocol import InputRequest, InputSubmission
@@ -10,20 +11,36 @@ NO_OVERRIDE = object()
 
 
 
-def is_stdin_interactive(stdin=None) -> bool:
-    """Return True when stdin can accept interactive CLI input."""
-    stream = stdin if stdin is not None else sys.stdin
+def _is_stream_interactive(stream) -> bool:
+    """Return True when a stream is attached to an interactive terminal."""
     if stream is None:
         return False
     try:
-        return bool(stream.isatty())
+        if not bool(stream.isatty()):
+            return False
     except (AttributeError, OSError, ValueError):
         return False
+    try:
+        os.get_terminal_size(stream.fileno())
+    except (AttributeError, OSError, ValueError):
+        try:
+            stream.fileno()
+        except (AttributeError, OSError, ValueError):
+            return True
+        return False
+    return True
 
 
-def configure_noninteractive_cli_mode(game_state, stdin=None) -> bool:
+def is_stdin_interactive(stdin=None, stdout=None) -> bool:
+    """Return True only when CLI stdin/stdout can support interactive input/output."""
+    input_stream = stdin if stdin is not None else sys.stdin
+    output_stream = stdout if stdout is not None else sys.stdout
+    return _is_stream_interactive(input_stream) and _is_stream_interactive(output_stream)
+
+
+def configure_noninteractive_cli_mode(game_state, stdin=None, stdout=None) -> bool:
     """Switch the game into a stable non-interactive CLI mode when stdin is unavailable."""
-    if is_stdin_interactive(stdin):
+    if is_stdin_interactive(stdin, stdout):
         return False
 
     config = getattr(game_state, "config", None)
@@ -307,7 +324,7 @@ class RuntimeContext:
         config = self.config
         human_config = getattr(config, "human", {}) if config is not None else {}
         show_menu = bool(getattr(human_config, "get", lambda *_args, **_kwargs: False)("show_menu_option", False))
-        interactive_cli = sys.stdin.isatty() and sys.stdout.isatty()
+        interactive_cli = is_stdin_interactive()
         if not request.allow_menu or not show_menu or not (interactive_cli or is_tui_mode()):
             return options
 

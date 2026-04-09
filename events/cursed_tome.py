@@ -10,6 +10,7 @@ from actions.display import InputRequestAction, DisplayTextAction
 from actions.reward import AddRandomRelicAction
 from utils.types import RarityType
 from actions.combat import LoseHPAction
+from actions.base import LambdaAction
 from localization import LocalStr
 from utils.option import Option
 from engine.game_state import game_state
@@ -53,7 +54,10 @@ class CursedTome(Event):
             read_hp = self.read_count + 1  # 1, 2, 3
             options.append(Option(
                 name=LocalStr('events.cursed_tome.continue'),
-                actions=[LoseHPAction(amount=read_hp)]
+                actions=[
+                    LoseHPAction(amount=read_hp),
+                    LambdaAction(lambda: self.trigger()),
+                ]
             ))
             # Increment read count for next trigger
             self.read_count += 1
@@ -67,42 +71,28 @@ class CursedTome(Event):
                     AddRandomRelicAction(
                         pool=self.BOOK_RELICS,
                         rarities=[RarityType.BOSS]
-                    )
+                    ),
+                    LambdaAction(lambda: self.end_event()),
                 ]
             ))
             # Stop: Just lose 3 HP
             options.append(Option(
                 name=LocalStr('events.cursed_tome.stop'),
-                actions=[LoseHPAction(amount=3)]
+                actions=[
+                    LoseHPAction(amount=3),
+                    LambdaAction(lambda: self.end_event()),
+                ]
             ))
         
         # Leave option always available
         options.append(Option(
             name=LocalStr('events.cursed_tome.leave'),
-            actions=[]
+            actions=[LambdaAction(lambda: self.end_event())]
         ))
         
         actions.append(InputRequestAction(
             title=LocalStr('events.cursed_tome.title'),
             options=options
         ))
-        
-        # Only end event when player makes final decision (Take/Stop/Leave)
-        # Continue option should NOT end the event
-        # Note: The action system will re-trigger this event for Continue
-        # For final options, we need to detect which option was selected
-        # Since we can't know the selection here, we use a different approach:
-        # - Continue: doesn't call end_event (event persists)
-        # - Take/Stop/Leave: should call end_event
-        
-        # Actually, the event system calls trigger() for each selection.
-        # After Continue, the event is re-triggered with updated read_count.
-        # After Take/Stop/Leave, we should end the event.
-        
-        # For now, end the event - the state machine works by re-triggering
-        # after Continue selections (read_count is preserved in event instance)
-        if self.read_count > 3:
-            # After Take/Stop/Leave, end event
-            self.end_event()
         
         add_actions(actions)

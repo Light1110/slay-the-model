@@ -230,7 +230,10 @@ class OpenChestAction(Action):
                     break
 
         if empty_chest:
-            add_actions(chest_open_actions, to_front=True)
+            add_actions(
+                [*chest_open_actions, LeaveRoomAction(room=self.treasure_room)],
+                to_front=True,
+            )
             return
 
         # Handle chest contents based on type
@@ -249,12 +252,15 @@ class OpenChestAction(Action):
             for relic in relics:
                 options.append(Option(
                     name=LocalStr("ui.choose_relic", name=relic.local("name")),
-                    actions=[AddRelicByNameAction(relic_id=relic.idstr)]
+                    actions=[
+                        AddRelicByNameAction(relic_id=relic.idstr),
+                        LeaveRoomAction(room=self.treasure_room),
+                    ]
                 ))
 
             options.append(Option(
                 name=LocalStr("ui.skip_relic"),
-                actions=[]
+                actions=[LeaveRoomAction(room=self.treasure_room)]
             ))
 
             select_action = InputRequestAction(
@@ -278,8 +284,11 @@ class OpenChestAction(Action):
             relic = get_random_relic(rarities=rarities)
             if relic:
                 actions.append(AddRelicByNameAction(relic_id=relic.idstr))
-                
-            add_actions(chest_open_actions + actions, to_front=True)
+
+            add_actions(
+                [*chest_open_actions, *actions, LeaveRoomAction(room=self.treasure_room)],
+                to_front=True,
+            )
             return
             
         elif self.treasure_room.chest_type == "medium":
@@ -297,8 +306,11 @@ class OpenChestAction(Action):
             relic = get_random_relic(rarities=rarities)
             if relic:
                 actions.append(AddRelicByNameAction(relic_id=relic.idstr))
-                
-            add_actions(chest_open_actions + actions, to_front=True)
+
+            add_actions(
+                [*chest_open_actions, *actions, LeaveRoomAction(room=self.treasure_room)],
+                to_front=True,
+            )
             return
 
         elif self.treasure_room.chest_type == "large":
@@ -313,8 +325,11 @@ class OpenChestAction(Action):
             relic = get_random_relic(rarities=rarities)
             if relic:
                 actions.append(AddRelicByNameAction(relic_id=relic.idstr))
-                
-            add_actions(chest_open_actions + actions, to_front=True)
+
+            add_actions(
+                [*chest_open_actions, *actions, LeaveRoomAction(room=self.treasure_room)],
+                to_front=True,
+            )
             return
         
         else:

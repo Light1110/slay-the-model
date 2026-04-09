@@ -1,7 +1,11 @@
 """Test TreasureRoom basic functionality."""
 import pytest
+from unittest.mock import Mock
+
+import actions.misc as misc_actions
 from engine.game_state import game_state
 from actions.display import DisplayTextAction, InputRequestAction
+from actions.misc import LeaveRoomAction, OpenChestAction
 from rooms.treasure import TreasureRoom
 from utils.types import RoomType
 
@@ -96,6 +100,24 @@ class TestTreasureRoomBasic:
         
         # Leave should be handled by LeaveTreasureAction
         assert treasure_room.should_leave is False
+
+    def test_opening_regular_chest_queues_leave_room_action(self, monkeypatch):
+        """Opening a treasure chest should queue room exit after rewards."""
+        game_state._initialized = False
+        game_state.__init__()
+        game_state.player = Mock(relics=[], gold=0)
+        game_state.action_queue.clear()
+
+        treasure_room = TreasureRoom()
+        treasure_room.chest_type = "small"
+
+        monkeypatch.setattr(misc_actions.random, "random", lambda: 0.0)
+        monkeypatch.setattr(misc_actions.random, "randint", lambda a, b: a)
+        monkeypatch.setattr(misc_actions, "get_random_relic", lambda rarities=None: None)
+
+        OpenChestAction(treasure_room).execute()
+
+        assert isinstance(game_state.action_queue.queue[-1], LeaveRoomAction)
 
 
 if __name__ == "__main__":

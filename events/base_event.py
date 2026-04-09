@@ -32,6 +32,15 @@ class Event(Localizable):
     def end_event(self) -> None:
         """End the event and return to room flow"""
         self.event_ended = True
+        try:
+            from engine.game_state import game_state
+            from rooms.event import EventRoom
+        except Exception:
+            return
+
+        current_room = getattr(game_state, "current_room", None)
+        if current_room is not None and isinstance(current_room, EventRoom) and getattr(current_room, "triggered_event", None) is self:
+            current_room.should_leave = True
     
     def __str__(self):
         return f"{self.__class__.__name__}()"

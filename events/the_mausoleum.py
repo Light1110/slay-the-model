@@ -7,6 +7,7 @@ from engine.runtime_api import add_action, add_actions, publish_message, request
 from events.base_event import Event
 from events.event_pool import register_event
 from actions.display import InputRequestAction, DisplayTextAction
+from actions.base import LambdaAction
 from actions.card import AddCardAction
 from actions.reward import AddRandomRelicAction
 from localization import LocalStr
@@ -36,12 +37,13 @@ class TheMausoleum(Event):
                 name=LocalStr('events.the_mausoleum.open_coffin'),
                 actions=[
                     AddRandomRelicAction(),
-                    AddCardAction(card=Writhe(), chance=curse_chance)
+                    AddCardAction(card=Writhe(), chance=curse_chance),
+                    LambdaAction(lambda: self.end_event()),
                 ]
             ),
             Option(
                 name=LocalStr('events.the_mausoleum.leave'),
-                actions=[]
+                actions=[LambdaAction(lambda: self.end_event())]
             )
         ]
         
@@ -49,6 +51,5 @@ class TheMausoleum(Event):
             title=LocalStr('events.the_mausoleum.title'),
             options=options
         ))
-        
-        self.end_event()
+
         add_actions(actions)

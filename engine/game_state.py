@@ -162,7 +162,7 @@ class GameState:
             Number of floors in this act
         """
         if act == 4:
-            return 6  # Act 4: 6 floors (0-5)
+            return 5  # Act 4: 5 floors (0-4)
         elif act == 3 and self.ascension >= 20:
             return 19  # Act 3 A20+: 19 floors (0-18)
         else:

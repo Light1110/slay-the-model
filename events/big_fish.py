@@ -3,6 +3,7 @@ Event 1 - Big Fish
 """
 from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
 from events.base_event import Event
+from actions.base import LambdaAction
 from actions.card import AddCardAction
 from actions.combat import HealAction, ModifyMaxHpAction
 from actions.display import InputRequestAction, DisplayTextAction
@@ -48,6 +49,7 @@ class BigFishEvent(Event):
             name=LocalStr("events.big_fish.option1"),
             actions=[
                 HealAction(amount=game_state.player.max_hp // 3),
+                LambdaAction(lambda: self.end_event()),
             ]
         ))
         
@@ -56,6 +58,7 @@ class BigFishEvent(Event):
             name=LocalStr("events.big_fish.option2"),
             actions=[
                 ModifyMaxHpAction(amount=5),  # Positive = gain Max HP
+                LambdaAction(lambda: self.end_event()),
             ]
         ))
         
@@ -67,6 +70,7 @@ class BigFishEvent(Event):
                     rarities=[RarityType.COMMON, RarityType.UNCOMMON, RarityType.RARE]
                 ),
                 AddCardAction(card=Regret()),
+                LambdaAction(lambda: self.end_event()),
             ]
         ))
         
