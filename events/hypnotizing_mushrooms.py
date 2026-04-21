@@ -45,6 +45,7 @@ class HypnotizingColoredMushrooms(Event):
         options = [
             Option(
                 name=LocalStr('events.hypnotizing_mushrooms.stomp'),
+                detail=LocalStr('events.hypnotizing_mushrooms.stomp_effect'),
                 actions=[
                     StartFightAction(
                         enemies=fungi_beasts,
@@ -57,6 +58,7 @@ class HypnotizingColoredMushrooms(Event):
             ),
             Option(
                 name=LocalStr('events.hypnotizing_mushrooms.eat'),
+                detail=LocalStr('events.hypnotizing_mushrooms.eat_effect'),
                 actions=[
                     HealAction(percent=0.25),
                     AddCardAction(card=Parasite()),

@@ -321,7 +321,9 @@ events:
   hypnotizing_mushrooms:
     title: Mushrooms
     stomp: Stomp
+    stomp_effect: Fight 3 Fungi Beasts. Gain Odd Mushroom.
     eat: Eat a mushroom
+    eat_effect: Heal 25% of your HP. Become Cursed with Parasite.
     description: 'You give in to the unnatural desire to eat. As you consume mushroom after mushroom, you feel yourself entering
       into a daze and pass out. As you awake, you feel very odd.
 
@@ -578,15 +580,25 @@ events:
   wheel_of_change:
     title: Wheel of Change
     play: Play
+    result_gold: Gain {amount} gold.
+    result_relic: Gain a random relic.
+    result_heal: Heal to full HP.
+    result_decay: Become Cursed with Decay.
+    result_remove: Remove a card from your deck.
+    result_damage: Lose {percent}% HP.
     description: 'You come upon a dapper looking, cheery gremlin.
 
       "It''s time to spin the wheel! Are you R E A D Y ? Of course you are!"'
   we_meet_again:
     title: We Meet Again!
     give_potion: Give Potion
+    give_potion_effect: Lose 1 potion. Gain a random relic.
     give_gold: Give Gold
+    give_gold_effect: Lose {amount} gold. Gain a random relic.
     give_card: Give Card
+    give_card_effect: Remove 1 non-Basic, non-Curse card. Gain a random relic.
     attack: Attack
+    attack_effect: He runs away. Gain nothing.
     description: '"We meet again!"
 
       A cheery disheveled fellow approaches you gleefully. You do not know this man.
@@ -2639,6 +2651,7 @@ relics:
     description: Choose and add 5 Cards to your deck.
   PotionBeltShop:
     name: Potion Belt
+    description: Gain 2 additional potion slots.
   SlingOfCourage:
     name: Sling of Courage
     description: Start each Elite combat with 2 Strength. (Does not work against Bosses).

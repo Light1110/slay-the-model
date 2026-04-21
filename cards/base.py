@@ -546,7 +546,7 @@ class Card(Localizable):
         assert game_state.current_combat is not None
         combat_state = game_state.current_combat.combat_state
         if not combat_state.turn_enable_card_play:
-            return False, "Normality restriction"
+            return False, "Card play disabled"
 
         if game_state.player:
             hand = game_state.player.card_manager.get_pile("hand")

@@ -64,6 +64,7 @@ from powers.definitions.energized import EnergizedPower
 from powers.definitions.draw_card_next_turn import DrawCardNextTurnPower
 from powers.definitions.next_turn_block import NextTurnBlockPower
 from powers.definitions.choke import ChokePower
+from powers.definitions.sharp_hide import SharpHidePower
 
 __all__ = [
     "StrengthPower",
@@ -125,6 +126,7 @@ __all__ = [
     "DrawCardNextTurnPower",
     "NextTurnBlockPower",
     "ChokePower",
+    "SharpHidePower",
     "FlyingPower",
     "FocusPower",
     "HexPower",

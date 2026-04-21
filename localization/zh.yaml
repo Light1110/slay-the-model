@@ -310,7 +310,9 @@ events:
   hypnotizing_mushrooms:
     title: 蘑菇
     stomp: 踩扁
+    stomp_effect: 与 3 只真菌兽战斗。获得怪异蘑菇。
     eat: 吃下
+    eat_effect: 恢复 25% 生命值。获得寄生诅咒。
     description: '你顺从了这份不自然的食欲，吃下一个又一个蘑菇后，你觉得自己有点晕晕的，然后就失去了意识。当你醒来时，你觉得有点怪怪的
 
       你 回复 生命值的 25% ，但同时被 感染 了。'
@@ -549,15 +551,25 @@ events:
   wheel_of_change:
     title: 变化大转盘
     play: 玩
+    result_gold: 获得 {amount} 金币。
+    result_relic: 获得 1 件随机遗物。
+    result_heal: 回满生命值。
+    result_decay: 获得 1 张腐朽诅咒。
+    result_remove: 从牌组中移除 1 张牌。
+    result_damage: 失去 {percent}% 生命值。
     description: '你见到一位穿着帅气、满面笑容的地精。
 
       “是时候转动转盘了！ 你准备好了吗？ 你当然准备好了！”'
   we_meet_again:
     title: 我们又见面了！
     give_potion: 给药水
+    give_potion_effect: 失去 1 瓶药水。获得 1 件随机遗物。
     give_gold: 给金币
+    give_gold_effect: 失去 {amount} 金币。获得 1 件随机遗物。
     give_card: 给卡牌
+    give_card_effect: 移除 1 张非初始、非诅咒卡牌。获得 1 件随机遗物。
     attack: 攻击
+    attack_effect: 他会逃走。你什么也得不到。
     description: '“我们又见面了！”
 
       一个蓬头垢面的男子欢快地出现在你面前向你问好。你不认识这个男人。
@@ -2691,6 +2703,7 @@ relics:
     description: 每当你打出能力牌、攻击牌和技能牌，移除所有你的减益。
   PotionBeltShop:
     name: 药水腰带
+    description: 获得 2 个额外药水栏位。
   StrangeSpoonShop:
     name: 奇怪的勺子
     description: Cards which Exhaust when played will instead discard 50% of time.

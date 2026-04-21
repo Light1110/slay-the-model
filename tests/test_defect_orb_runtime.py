@@ -1,5 +1,6 @@
 from actions.base import LambdaAction
 from actions.orb import AddOrbAction
+from actions.orb import IncreaseOrbSlotsAction
 from engine.runtime_api import add_action
 from enemies.act1.cultist import Cultist
 from orbs.base import Orb
@@ -110,4 +111,12 @@ class TestDefectOrbRuntime:
         assert enemy.hp == 37
         assert self.player.block == 2
         assert dark.charge == 12
+
+    def test_orb_slots_are_capped_at_ten(self):
+        self.helper.start_combat([])
+        self.player.orb_manager.max_orb_slots = 9
+
+        IncreaseOrbSlotsAction(amount=5).execute()
+
+        assert self.player.orb_manager.max_orb_slots == 10
 

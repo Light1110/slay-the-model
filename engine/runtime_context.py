@@ -370,6 +370,9 @@ class RuntimeContext:
 
             for idx, option in enumerate(options, start=1):
                 tui_print(f"  {idx}. {resolve_text(option.name)}")
+                detail = getattr(option, "detail", None)
+                if detail:
+                    tui_print(f"     {resolve_text(detail)}")
 
             if request.must_select:
                 prompt = t("ui.select_prompt", default=f"Select (1-{len(options)}): ", count=len(options))
@@ -418,7 +421,14 @@ class RuntimeContext:
         from localization import resolve_text
 
         title = resolve_text(request.title)
-        option_text = [resolve_text(option.name) for option in options]
+        option_text = []
+        for option in options:
+            name = resolve_text(option.name)
+            detail = getattr(option, "detail", None)
+            if detail:
+                option_text.append(f"{name}\n{resolve_text(detail)}")
+            else:
+                option_text.append(name)
         context = request.context or {}
         max_select = len(options) if request.max_select == -1 else request.max_select
 

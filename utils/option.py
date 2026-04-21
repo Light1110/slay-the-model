@@ -15,11 +15,13 @@ class Option:
         actions: list["Action"],
         enabled: bool = True,
         commands: list[str] | None = None,
+        detail: BaseLocalStr | str | None = None,
     ):
         self.name = name
         self.actions = actions
         self.enabled = enabled
         self.commands = [command.strip().lower() for command in (commands or []) if command.strip()]
+        self.detail = detail
 
 
 def match_option_command(raw_input: str, options: list[Option]) -> list[int] | None:

@@ -20,6 +20,10 @@ from cards.colorless import Decay
 @register_event(event_id='wheel_of_change', acts='shared', weight=100)
 class WheelOfChange(Event):
     """Wheel of Change - random outcome wheel."""
+
+    @staticmethod
+    def _build_result_actions(result_key: str, outcome_action, **fmt):
+        return [DisplayTextAction(text_key=result_key, **fmt), outcome_action]
     
     def trigger(self) -> None:
         actions = []
@@ -37,15 +41,37 @@ class WheelOfChange(Event):
         # Excluded relics: Bottled Flame, Bottled Lightning, Bottled Tornado, Whetstone
         excluded_relics = ['BottledFlame', 'BottledLightning', 'BottledTornado', 'Whetstone']
         
+        hp_loss_percent = 0.15 if game_state.ascension >= 15 else 0.10
+
         # Determine outcomes
         outcomes = [
-            AddGoldAction(amount=gold_amount),  # 100/200/300 gold based on Act 1/2/3
-            AddRandomRelicAction(exclude_relics=excluded_relics),  # Exclude Bottled relics and Whetstone
-            HealAction(percent=1.0),  # Full heal
-            AddCardAction(card=Decay()),  # Gain Decay curse
-            ChooseRemoveCardAction(),  # Remove a card
+            self._build_result_actions(
+                "events.wheel_of_change.result_gold",
+                AddGoldAction(amount=gold_amount),
+                amount=gold_amount,
+            ),
+            self._build_result_actions(
+                "events.wheel_of_change.result_relic",
+                AddRandomRelicAction(exclude_relics=excluded_relics),
+            ),
+            self._build_result_actions(
+                "events.wheel_of_change.result_heal",
+                HealAction(percent=1.0),
+            ),
+            self._build_result_actions(
+                "events.wheel_of_change.result_decay",
+                AddCardAction(card=Decay()),
+            ),
+            self._build_result_actions(
+                "events.wheel_of_change.result_remove",
+                ChooseRemoveCardAction(),
+            ),
             # Take damage (10% or 15% on A15+)
-            LoseHPAction(percent=0.15 if game_state.ascension >= 15 else 0.10)
+            self._build_result_actions(
+                "events.wheel_of_change.result_damage",
+                LoseHPAction(percent=hp_loss_percent),
+                percent=int(hp_loss_percent * 100),
+            ),
         ]
         
         # Random outcome
@@ -55,7 +81,7 @@ class WheelOfChange(Event):
         options = [
             Option(
                 name=LocalStr('events.wheel_of_change.play'),
-                actions=[chosen_outcome]
+                actions=chosen_outcome
             )
         ]
         

@@ -309,3 +309,46 @@ def test_hypnotizing_mushrooms_option_ends_event():
         action.execute()
 
     assert event.event_ended is True
+
+
+def test_hypnotizing_mushrooms_option_text_describes_effects():
+    helper = create_test_helper()
+    helper.create_player()
+    helper.game_state.floor_in_act = 11
+    helper.game_state.action_queue.clear()
+
+    event = HypnotizingColoredMushrooms()
+    event.trigger()
+
+    menu = cast(InputRequestAction, helper.game_state.action_queue.queue[-1])
+    assert isinstance(menu, InputRequestAction)
+
+    option_details = [str(getattr(option, "detail", "")) for option in menu.options]
+
+    assert any("Odd Mushroom" in text for text in option_details)
+    assert any("25%" in text and "Parasite" in text for text in option_details)
+
+
+def test_we_meet_again_option_text_describes_trade_effects():
+    from events.we_meet_again import WeMeetAgain
+    from cards.ironclad.strike import Strike
+    from potions.global_potions import FruitJuice
+
+    helper = create_test_helper()
+    player = helper.create_player()
+    player.gold = 100
+    player.potions.append(FruitJuice())
+    player.card_manager.deck.append(Strike())
+    helper.game_state.action_queue.clear()
+
+    event = WeMeetAgain()
+    event.trigger()
+
+    menu = cast(InputRequestAction, helper.game_state.action_queue.queue[-1])
+    assert isinstance(menu, InputRequestAction)
+
+    option_texts = [str(option.name) for option in menu.options]
+
+    assert any("random relic" in text.lower() and "potion" in text.lower() for text in option_texts)
+    assert any("gold" in text.lower() and "random relic" in text.lower() for text in option_texts)
+    assert any("remove" in text.lower() and "random relic" in text.lower() for text in option_texts)

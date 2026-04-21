@@ -144,29 +144,47 @@ class SelectionPanel(Widget):
         self._selection_future = future
         self._refresh_display()
         self.query_one("#selection-input", Input).focus()
-    
-    def _refresh_display(self):
-        """Render selection options."""
+
+    def _build_selection_lines(
+        self,
+        title: str,
+        options: List[Any],
+        max_select: int,
+        must_select: bool,
+    ) -> List[str]:
         lines = []
-        if self.title:
-            lines.append(f"[bold]{self.title}[/bold]")
+        if title:
+            lines.append(f"[bold]{title}[/bold]")
             lines.append("")
-        
-        for i, opt in enumerate(self._options_data):
+
+        for i, opt in enumerate(options):
             name = resolve_text(opt.name) if hasattr(opt, "name") else resolve_text(opt)
             lines.append(f"  [cyan]{i + 1}.[/cyan] {name}")
-        
+            detail = resolve_text(getattr(opt, "detail", "")) if getattr(opt, "detail", None) else ""
+            if detail:
+                lines.append(f"      [dim]{detail}[/dim]")
+
         lines.append("")
-        if self._must_select:
-            required = len(self._options_data) if self._max_select == -1 else self._max_select
+        if must_select:
+            required = len(options) if max_select == -1 else max_select
             lines.append(
                 f"[dim]Enter {required} number(s), comma-separated (e.g. 1,3)[/dim]"
             )
         else:
-            max_select = len(self._options_data) if self._max_select == -1 else self._max_select
+            actual_max_select = len(options) if max_select == -1 else max_select
             lines.append(
-                f"[dim]Enter up to {max_select} number(s), comma-separated. Enter 0 to stop.[/dim]"
+                f"[dim]Enter up to {actual_max_select} number(s), comma-separated. Enter 0 to stop.[/dim]"
             )
+        return lines
+    
+    def _refresh_display(self):
+        """Render selection options."""
+        lines = self._build_selection_lines(
+            title=self.title,
+            options=self._options_data,
+            max_select=self._max_select,
+            must_select=self._must_select,
+        )
         self.query_one("#selection-content", Static).update("\n".join(lines))
     
     def select_by_index(self, idx: int) -> bool:
@@ -252,22 +270,12 @@ class SelectionPanel(Widget):
     def _show_validation_error(self, message: str):
         """Render validation error below selection instructions."""
         # Re-build display with error appended (Static.renderable doesn't exist in Textual 8.0)
-        lines = []
-        if self.title:
-            lines.append(f"[bold]{self.title}[/bold]")
-            lines.append("")
-        
-        for i, opt in enumerate(self._options_data):
-            name = resolve_text(opt.name) if hasattr(opt, "name") else resolve_text(opt)
-            lines.append(f"  [cyan]{i + 1}.[/cyan] {name}")
-        
-        lines.append("")
-        if self._must_select:
-            required = len(self._options_data) if self._max_select == -1 else self._max_select
-            lines.append(f"[dim]Enter {required} number(s), comma-separated (e.g. 1,3)[/dim]")
-        else:
-            max_select = len(self._options_data) if self._max_select == -1 else self._max_select
-            lines.append(f"[dim]Enter up to {max_select} number(s), comma-separated. Enter 0 to stop.[/dim]")
+        lines = self._build_selection_lines(
+            title=self.title,
+            options=self._options_data,
+            max_select=self._max_select,
+            must_select=self._must_select,
+        )
         lines.append(f"[red]{message}[/red]")
         self.query_one("#selection-content", Static).update("\n".join(lines))
 
