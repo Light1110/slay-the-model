@@ -34,7 +34,11 @@ class WeMeetAgain(Event):
         # Option 1: Give Potion (if has potion)
         if game_state.player.potions:
             options.append(Option(
-                name=LocalStr('events.we_meet_again.give_potion'),
+                name=(
+                    LocalStr('events.we_meet_again.give_potion')
+                    + "  "
+                    + LocalStr('events.we_meet_again.give_potion_effect')
+                ),
                 actions=[
                     LosePotionAction(index=0),  # Remove first potion
                     AddRandomRelicAction()
@@ -45,7 +49,11 @@ class WeMeetAgain(Event):
         if game_state.player.gold >= 50:
             gold_amount = random.randint(50, min(game_state.player.gold, 150))
             options.append(Option(
-                name=LocalStr('events.we_meet_again.give_gold'),
+                name=(
+                    LocalStr('events.we_meet_again.give_gold')
+                    + "  "
+                    + LocalStr('events.we_meet_again.give_gold_effect', amount=gold_amount)
+                ),
                 actions=[
                     LoseGoldAction(amount=gold_amount),
                     AddRandomRelicAction()
@@ -54,7 +62,11 @@ class WeMeetAgain(Event):
         
         # Option 3: Give Card (non-Basic, non-Curse, non-Bottled)
         options.append(Option(
-            name=LocalStr('events.we_meet_again.give_card'),
+            name=(
+                LocalStr('events.we_meet_again.give_card')
+                + "  "
+                + LocalStr('events.we_meet_again.give_card_effect')
+            ),
             actions=[
                 ChooseRemoveCardAction(
                     pile='deck',
@@ -66,7 +78,11 @@ class WeMeetAgain(Event):
         
         # Option 4: Attack (he runs away)
         options.append(Option(
-            name=LocalStr('events.we_meet_again.attack'),
+            name=(
+                LocalStr('events.we_meet_again.attack')
+                + "  "
+                + LocalStr('events.we_meet_again.attack_effect')
+            ),
             actions=[]  # Nothing happens
         ))
         

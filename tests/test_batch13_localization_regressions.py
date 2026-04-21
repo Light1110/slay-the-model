@@ -40,3 +40,14 @@ def test_shop_removed_card_message_is_localized_in_chinese():
         )
     finally:
         localization.set_language(original_language)
+
+
+def test_potion_belt_shop_description_exists_in_both_languages():
+    assert (
+        localization.translations["en"]["relics.PotionBeltShop.description"]
+        == "Gain 2 additional potion slots."
+    )
+    assert (
+        localization.translations["zh"]["relics.PotionBeltShop.description"]
+        == "获得 2 个额外药水栏位。"
+    )
