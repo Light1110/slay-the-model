@@ -63,7 +63,9 @@ def test_player_poison_loses_one_stack_per_own_turn():
         combat._end_player_phase()
         helper.game_state.drive_actions()
         if loss > 1:
-            assert player.get_power("Poison").amount == loss - 1
+            poison = player.get_power("Poison")
+            assert poison is not None
+            assert poison.amount == loss - 1
 
     assert player.get_power("Poison") is None
 
@@ -121,7 +123,9 @@ def test_monster_applied_weak_skips_the_round_it_was_applied():
     enemy.current_intention = RecordingIntention(enemy)
     combat.execute_enemy_phase()
 
-    assert player.get_power("Weak").duration == 1
+    weak = player.get_power("Weak")
+    assert weak is not None
+    assert weak.duration == 1
 
 
 def test_metallicize_triggers_once_on_player_turn_end():
