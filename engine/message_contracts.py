@@ -34,6 +34,7 @@ from engine.messages import (
     PotionUsedMessage,
     PowerAppliedMessage,
     RelicObtainedMessage,
+    RoundEndedMessage,
     ScryMessage,
     ShuffleMessage,
     ShopEnteredMessage,
@@ -138,6 +139,11 @@ def _build_contracts() -> dict[type[GameMessage], MessageContract]:
         ),
         PlayerTurnEndedMessage: MessageContract(
             message_type=PlayerTurnEndedMessage,
+            param_names=(),
+            binder=_bind(),
+        ),
+        RoundEndedMessage: MessageContract(
+            message_type=RoundEndedMessage,
             param_names=(),
             binder=_bind(),
         ),

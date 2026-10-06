@@ -105,6 +105,14 @@ class PlayerTurnEndedMessage(GameMessage):
 
 
 @dataclass(frozen=True)
+class RoundEndedMessage(GameMessage):
+    """All enemies have acted; end-of-round powers may tick once."""
+
+    owner: "Creature"
+    enemies: List["Creature"]
+
+
+@dataclass(frozen=True)
 class CombatStartedMessage(GameMessage):
     """Combat setup has completed and combat-start effects may run."""
 
@@ -322,6 +330,7 @@ EXPLICIT_SUBSCRIPTION_MESSAGE_TYPES = (
     PlayerTurnPostDrawMessage,
     PlayerTurnEndedMessage,
     PlayerTurnStartedMessage,
+    RoundEndedMessage,
     PotionUsedMessage,
     PowerAppliedMessage,
     RelicObtainedMessage,

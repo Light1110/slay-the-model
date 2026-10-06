@@ -22,8 +22,8 @@ class TheMawRoar(Intention):
         from engine.game_state import game_state
         add_actions(
         [
-            ApplyPowerAction(WeakPower(amount=3, duration=3, owner=game_state.player), game_state.player),
-            ApplyPowerAction(FrailPower(amount=3, duration=3, owner=game_state.player), game_state.player)
+            ApplyPowerAction(WeakPower(amount=3, duration=3, owner=game_state.player), game_state.player, source=self.enemy),
+            ApplyPowerAction(FrailPower(amount=3, duration=3, owner=game_state.player), game_state.player, source=self.enemy)
         ]
         )
 

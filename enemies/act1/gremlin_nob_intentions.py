@@ -65,7 +65,8 @@ class SkullBashIntention(Intention):
             actions.append(
                 ApplyPowerAction(
                     VulnerablePower(amount=self.vulnerable_stacks, duration=self.vulnerable_stacks, owner=game_state.player),
-                    game_state.player
+                    game_state.player,
+                    source=self.enemy,
                 )
             )
         

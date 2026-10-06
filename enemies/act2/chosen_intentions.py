@@ -88,7 +88,7 @@ class DebilitateIntention(Intention):
                 source=self.enemy,
                 damage_type="attack",
             ),
-            ApplyPowerAction(VulnerablePower(amount=self.vulnerable_stacks, owner=game_state.player), game_state.player)
+            ApplyPowerAction(VulnerablePower(amount=self.vulnerable_stacks, owner=game_state.player), game_state.player, source=self.enemy)
 
         ]
         )
@@ -118,7 +118,7 @@ class DrainIntention(Intention):
         
         if game_state and game_state.player:
             actions.append(
-                ApplyPowerAction(WeakPower(amount=self.weak_stacks, owner=game_state.player), game_state.player)
+                ApplyPowerAction(WeakPower(amount=self.weak_stacks, owner=game_state.player), game_state.player, source=self.enemy)
             )
 
 

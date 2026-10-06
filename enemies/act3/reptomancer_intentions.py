@@ -72,6 +72,6 @@ class SnakeStrikeIntention(Intention):
                 self.enemy,
                 "attack"
             ))
-        actions.append(ApplyPowerAction(WeakPower(amount=1, owner=game_state.player), game_state.player))
+        actions.append(ApplyPowerAction(WeakPower(amount=1, owner=game_state.player), game_state.player, source=self.enemy))
         from engine.game_state import game_state
         add_actions(actions)

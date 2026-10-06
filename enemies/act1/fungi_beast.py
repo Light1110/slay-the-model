@@ -83,7 +83,8 @@ class FungiBeast(Enemy):
             actions.append(
                 ApplyPowerAction(
                     VulnerablePower(amount=self._spore_cloud_stacks, duration=self._spore_cloud_stacks, owner=game_state.player),
-                    game_state.player
+                    game_state.player,
+                    source=self,
                 )
             )
         

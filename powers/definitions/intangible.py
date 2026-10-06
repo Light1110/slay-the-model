@@ -15,6 +15,7 @@ class IntangiblePower(Power):
     name = "Intangible"
     description = "Reduce all damage taken to 1."
     stack_type = StackType.DURATION
+    decays_at_round_end = True
     is_buff = True
     modify_phase = DamagePhase.CAPPING  # Applied last, caps damage to 1
 

@@ -14,6 +14,7 @@ class VulnerablePower(Power):
     name = "Vulnerable"
     description = "Increases damage taken by 50% per stack."
     stack_type = StackType.DURATION
+    decays_at_round_end = True
     is_buff = False  # Debuff - increases damage taken
     
     def __init__(self, amount: int = 0, duration: int = 2, owner=None):

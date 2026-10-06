@@ -105,7 +105,8 @@ class LickIntention(Intention):
         [
             ApplyPowerAction(
                 WeakPower(amount=self.weak_stacks, duration=2, owner=game_state.player),
-                game_state.player
+                game_state.player,
+                source=self.enemy,
             )
         ]
         )

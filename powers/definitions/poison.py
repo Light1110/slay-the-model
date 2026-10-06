@@ -28,9 +28,12 @@ class PoisonPower(Power):
         super().__init__(amount=amount, duration=duration, owner=owner)
         
     def on_turn_start(self):
-        actions = [LoseHPAction(amount=self.amount)]
-        # Reduce poison by 1 after dealing damage
-        self.amount = max(0, self.amount - 1)
-        from engine.game_state import game_state
-        add_actions(actions)
+        if self.owner is None or self.amount <= 0:
+            return
+        add_actions([LoseHPAction(amount=self.amount, target=self.owner)])
+        self.amount -= 1
+        if self.amount <= 0:
+            self.owner.remove_power(self)
+
+    def on_turn_end(self):
         return

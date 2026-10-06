@@ -22,6 +22,7 @@ from engine.messages import (
     PlayerTurnPostDrawMessage,
     PlayerTurnEndedMessage,
     PlayerTurnStartedMessage,
+    RoundEndedMessage,
 )
 
 class Combat(Localizable):
@@ -468,53 +469,63 @@ class Combat(Localizable):
         # DEBUG: Print combat state at start of enemy phase
         # _debug_print_combat_state("ENEMY_PHASE_START", self.enemies)
 
-        # For each alive enemy, execute actions
+        # For each alive enemy, resolve that enemy's own turn, then act.
         for enemy in self.enemies:
-            if not enemy.is_dead():
-                # Clear block at start of enemy turn (unless Barricade)
-                has_barricade = any(p.name == "Barricade" for p in enemy.powers)
-                if not has_barricade:
-                    enemy.block = 0
-                
-                # Print enemy intention before executing (hidden if player has RunicDome)
-                has_runic_dome = any(r.__class__.__name__ == "RunicDome" for r in game_state.player.relics)
-                if not has_runic_dome:
-                    enemy_name = self._safe_localized_name(enemy)
-                    intent_desc = self._safe_intention_text(enemy.current_intention)
-                    if intent_desc:
-                        tui_print(f">> {t('combat.enemy_intends', default='Enemy')} [{enemy_name}] {t('combat.intends_to', default='intends to')}: {intent_desc}")
-                result = enemy.execute_intention()
-                if result:
-                    game_state.action_queue.add_actions(result)
+            if enemy.is_dead():
+                continue
 
-        # Process enemy turn-end effects (tick down power durations)
-        self._end_enemy_phase()
+            for power in enemy.powers[:]:
+                power.on_turn_start()
+            result = game_state.drive_actions()
+            if result is not None:
+                return result
+            if enemy.is_dead():
+                continue
 
+            # Clear block at start of enemy turn (unless Barricade)
+            has_barricade = any(p.name == "Barricade" for p in enemy.powers)
+            if not has_barricade:
+                enemy.block = 0
+
+            # Print enemy intention before executing (hidden if player has RunicDome)
+            has_runic_dome = any(r.__class__.__name__ == "RunicDome" for r in game_state.player.relics)
+            if not has_runic_dome:
+                enemy_name = self._safe_localized_name(enemy)
+                intent_desc = self._safe_intention_text(enemy.current_intention)
+                if intent_desc:
+                    tui_print(f">> {t('combat.enemy_intends', default='Enemy')} [{enemy_name}] {t('combat.intends_to', default='intends to')}: {intent_desc}")
+            result = enemy.execute_intention()
+            if result:
+                game_state.action_queue.add_actions(result)
+            result = game_state.drive_actions()
+            if result is not None:
+                return result
+            if enemy.is_dead():
+                continue
+
+            for power in enemy.powers[:]:
+                end_result = power.on_turn_end()
+                if end_result:
+                    game_state.action_queue.add_actions(end_result)
+                if power.duration == 0:
+                    enemy.remove_power(power)
+            result = game_state.drive_actions()
+            if result is not None:
+                return result
+
+        alive_enemies = [enemy for enemy in self.enemies if not enemy.is_dead()]
+        publish_message(
+            RoundEndedMessage(
+                owner=game_state.player,
+                enemies=alive_enemies,
+            )
+        )
         result = game_state.drive_actions()
         if result is not None:
             return result
         self.combat_state.current_phase = "enemy_end"
         return result
     
-    def _end_enemy_phase(self):
-        """Process end of enemy turn - tick down enemy power durations."""
-        from engine.game_state import game_state
-        
-        # Process each alive enemy's powers
-        for enemy in self.enemies:
-            if enemy.is_dead():
-                continue
-                
-            # Call on_turn_end for each power and collect actions
-            for power in enemy.powers[:]:  # Use slice copy to allow modification
-                result = power.on_turn_end()
-                if result:
-                    game_state.action_queue.add_actions(result)
-                
-                # Remove power if duration reached 0
-                if power.duration == 0:
-                    enemy.remove_power(power)
-
     @staticmethod
     def _safe_localized_name(localizable) -> str:
         """Resolve a localized name, falling back to readable identifiers."""

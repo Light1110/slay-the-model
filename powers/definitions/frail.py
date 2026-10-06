@@ -14,6 +14,7 @@ class FrailPower(Power):
     name = "Frail"
     description = "Reduce block gained by 25%."
     stack_type = StackType.DURATION
+    decays_at_round_end = True
     is_buff = False
 
     def __init__(self, amount: int = 0, duration: int = 1, owner=None):

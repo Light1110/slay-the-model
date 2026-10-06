@@ -61,11 +61,11 @@ class FaceSlap(Intention):
         ))
         
         # Apply Frail
-        actions.append(ApplyPowerAction(FrailPower(amount=self.base_amount, owner=player), player))
+        actions.append(ApplyPowerAction(FrailPower(amount=self.base_amount, owner=player), player, source=self.enemy))
 
         
         # Apply Vulnerable
-        actions.append(ApplyPowerAction(VulnerablePower(amount=self.base_amount, owner=player), player))
+        actions.append(ApplyPowerAction(VulnerablePower(amount=self.base_amount, owner=player), player, source=self.enemy))
 
         
         from engine.game_state import game_state
@@ -132,11 +132,11 @@ class Taunt(Intention):
         player = game_state.player
         
         # Apply Weak
-        actions.append(ApplyPowerAction(WeakPower(amount=self.base_amount, owner=player), player))
+        actions.append(ApplyPowerAction(WeakPower(amount=self.base_amount, owner=player), player, source=self.enemy))
 
         
         # Apply Vulnerable
-        actions.append(ApplyPowerAction(VulnerablePower(amount=self.base_amount, owner=player), player))
+        actions.append(ApplyPowerAction(VulnerablePower(amount=self.base_amount, owner=player), player, source=self.enemy))
 
         
         from engine.game_state import game_state

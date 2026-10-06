@@ -14,6 +14,7 @@ class WeakPower(Power):
     name = "Weak"
     description = "Reduces damage dealt by 25%."
     stack_type = StackType.DURATION
+    decays_at_round_end = True
     is_buff = False  # Debuff - reduces damage dealt
     
     def __init__(self, amount: int = 0, duration: int = 2, owner=None):
