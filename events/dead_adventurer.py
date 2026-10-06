@@ -134,7 +134,10 @@ class DeadAdventurer(Event):
                 search_actions = self._get_search_reward_actions()
                 options.append(Option(
                     name=LocalStr('events.dead_adventurer.search'),
-                    actions=search_actions
+                    actions=[
+                        *search_actions,
+                        LambdaAction(lambda: self.trigger()),
+                    ]
                 ))
         
         # Leave option

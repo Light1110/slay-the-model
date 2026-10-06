@@ -30,7 +30,13 @@ class CurlUpPower(Power):
         self.localization_key = "powers.curl_up"
         self.triggered = False
         
-    def on_damage_taken(self, damage: int, source=None, card=None, player=None, damage_type="direct") -> None:
+    def on_physical_attack_taken(
+        self,
+        damage: int,
+        source=None,
+        card=None,
+        damage_type="physical",
+    ) -> None:
         """
         Called when owner takes damage.
         Gains block equal to amount, then removes.
@@ -42,16 +48,14 @@ class CurlUpPower(Power):
             player: Player taking damage (optional)
             damage_type: Type of damage (optional)
         """
-        # Only trigger on attack damage, not on HP loss or other damage
-        if not self.triggered and damage > 0 and damage_type == "attack":
+        if not self.triggered and damage > 0 and self.owner and not self.owner.is_dead():
             self.triggered = True
-            if self.owner:
-                add_actions(
-                    [
-                        GainBlockAction(self.amount, self.owner),
-                        RemovePowerAction(power="Curl Up", target=self.owner),
-                    ]
-                )
+            add_actions(
+                [
+                    GainBlockAction(self.amount, self.owner),
+                    RemovePowerAction(power="Curl Up", target=self.owner),
+                ]
+            )
 
     def local(self, field: str, **kwargs) -> LocalStr:
         """Get localized string for this power

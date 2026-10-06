@@ -14,6 +14,7 @@ class Rushdown(Card):
     rarity = RarityType.UNCOMMON
     base_cost = 1
     base_magic = {"draw": 2}
+    upgrade_cost = 0
     text_name = "Rushdown"
     text_description = "Whenever you enter Wrath, draw {magic.draw} cards."
 

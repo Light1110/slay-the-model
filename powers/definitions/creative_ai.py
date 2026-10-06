@@ -11,18 +11,19 @@ from utils.types import CardType
 class CreativeAIPower(Power):
     name = "Creative AI"
     description = "At the start of your turn, add a random Power card into your hand."
-    stack_type = StackType.PRESENCE
+    stack_type = StackType.INTENSITY
     is_buff = True
 
     def on_turn_start(self):
         from engine.game_state import game_state
 
         namespace = game_state.player.namespace if game_state.player is not None else None
-        add_action(
-            AddRandomCardAction(
-                pile="hand",
-                namespace=namespace,
-                card_type=CardType.POWER,
-                exclude_card_ids=["defect.SelfRepair"],
+        for _ in range(self.amount):
+            add_action(
+                AddRandomCardAction(
+                    pile="hand",
+                    namespace=namespace,
+                    card_type=CardType.POWER,
+                    exclude_card_ids=["defect.SelfRepair"],
+                )
             )
-        )

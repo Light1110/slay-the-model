@@ -1,4 +1,4 @@
-"""
+﻿"""
 Combat logic class - independent from rooms.
 Can be triggered by CombatRoom or Events.
 Uses global action queue for action management.
@@ -19,6 +19,7 @@ from localization import LocalStr, Localizable, t
 from engine.messages import (
     CombatEndedMessage,
     CombatStartedMessage,
+    PlayerTurnPostDrawMessage,
     PlayerTurnEndedMessage,
     PlayerTurnStartedMessage,
 )
@@ -76,48 +77,6 @@ class Combat(Localizable):
         )
 
     @staticmethod
-    def _localized_ui_label(key: str, *, en_default: str, zh_default: str) -> str:
-        from localization import current_language, t
-
-        text = t(key, default=en_default)
-        if current_language == "zh" and text == en_default:
-            return zh_default
-        return text
-
-    @staticmethod
-    def _localized_status_fallback(status) -> str:
-        from localization import current_language, localize_status
-
-        text = localize_status(status)
-        if current_language != "zh":
-            return text
-        zh_fallbacks = {
-            "Neutral": "中立",
-            "Calm": "平静",
-            "Wrath": "愤怒",
-            "Divinity": "神性",
-        }
-        return zh_fallbacks.get(text, text)
-
-    @staticmethod
-    def _localized_orb_fallback(orb_name: str) -> str:
-        from localization import current_language
-
-        if current_language != "zh":
-            return orb_name
-        zh_fallbacks = {
-            "Lightning Orb": "闪电球",
-            "Frost Orb": "冰霜球",
-            "Dark Orb": "黑暗球",
-            "Plasma Orb": "等离子球",
-            "Lightning": "闪电球",
-            "Frost": "冰霜球",
-            "Dark": "黑暗球",
-            "Plasma": "等离子球",
-        }
-        return zh_fallbacks.get(orb_name, orb_name)
-
-    @staticmethod
     def _format_stance(player) -> str | None:
         status_manager = getattr(player, "status_manager", None)
         if status_manager is None:
@@ -125,27 +84,20 @@ class Combat(Localizable):
         status = getattr(status_manager, "status", None)
         if status is None:
             return None
-        return Combat._localized_status_fallback(status)
+        status_raw = str(getattr(status, "value", status))
+        status_value = status_raw.lower()
+        return t(f"ui.status.{status_value}", default=status_raw)
 
     @staticmethod
     def _format_orb_name(orb) -> str:
-        has_local = getattr(orb, "has_local", None)
         local = getattr(orb, "local", None)
-        if callable(has_local) and has_local("name") and callable(local):
+        if callable(local):
             try:
-                localized_name = cast(Any, local("name"))
-                resolved_name = str(localized_name.resolve())
-                if resolved_name and not resolved_name.startswith("orbs."):
-                    return resolved_name
+                return str(cast(Any, local("name")).resolve())
             except Exception:
                 pass
         name = orb.__class__.__name__
-        fallback_name = name[:-3] if name.endswith("Orb") else name
-        fallback_name = fallback_name.replace("Lightning", "Lightning Orb")
-        fallback_name = fallback_name.replace("Frost", "Frost Orb")
-        fallback_name = fallback_name.replace("Dark", "Dark Orb")
-        fallback_name = fallback_name.replace("Plasma", "Plasma Orb")
-        return Combat._localized_orb_fallback(fallback_name)
+        return name[:-3] if name.endswith("Orb") else name
 
     @staticmethod
     def _format_orb_value(orb, passive: bool) -> int | str | None:
@@ -258,7 +210,7 @@ class Combat(Localizable):
 
         # 1. Display combat information
         from localization import t, LocalStr
-        from utils.types import CombatType
+        from utils.types import CombatType, TargetType
 
         # Get player info
         player = game_state.player
@@ -294,11 +246,19 @@ class Combat(Localizable):
         # 3. Build InputRequestAction for potions
         from actions.combat import UsePotionAction
         for potion in game_state.player.potions:
-            if potion.can_be_used_actively:
-                options.append(Option(
-                    name=LocalStr(potion.info()),
-                    actions=[UsePotionAction(potion=potion, target=game_state.player)]
-                ))
+            if not getattr(potion, "can_be_used_actively", True):
+                continue
+
+            potion_target_type = getattr(potion, "target_type", None)
+            potion_target = game_state.player if potion_target_type == TargetType.SELF else None
+            can_use_targets = [potion_target] if potion_target is not None else list(enemies)
+            if not potion.can_use(can_use_targets):
+                continue
+
+            options.append(Option(
+                name=LocalStr(potion.info()),
+                actions=[UsePotionAction(potion=potion, target=potion_target)]
+            ))
             
         # 4. Add option to end turn
         options.append(Option(
@@ -343,16 +303,13 @@ class Combat(Localizable):
         tui_print(f"{t('ui.player_energy', default='Energy')}: {player.energy}/{player.max_energy}")
         stance_text = self._format_stance(player)
         if stance_text:
-            tui_print(
-                f"{self._localized_ui_label('ui.stance', en_default='Stance', zh_default='姿态')}: "
-                f"{stance_text}"
-            )
+            tui_print(f"{t('ui.stance', default='Stance')}: {stance_text}")
 
         orb_manager = getattr(player, "orb_manager", None)
         if orb_manager is not None:
             orbs = list(getattr(orb_manager, "orbs", []) or [])
             tui_print(
-                f"{self._localized_ui_label('ui.orbs', en_default='Orbs', zh_default='充能球')} "
+                f"{t('ui.orbs', default='Orbs')} "
                 f"({len(orbs)}/{getattr(orb_manager, 'max_orb_slots', len(orbs))}):"
             )
             for orb in orbs:
@@ -361,8 +318,8 @@ class Combat(Localizable):
                 evoke_value = self._format_orb_value(orb, passive=False)
                 tui_print(
                     f"  {orb_name} | "
-                    f"{self._localized_ui_label('ui.passive', en_default='Passive', zh_default='被动')}: {passive_value} | "
-                    f"{self._localized_ui_label('ui.evoke', en_default='Evoke', zh_default='主动')}: {evoke_value}"
+                    f"{t('ui.passive', default='Passive')}: {passive_value} | "
+                    f"{t('ui.evoke', default='Evoke')}: {evoke_value}"
                 )
         
         # Print hand
@@ -449,16 +406,19 @@ class Combat(Localizable):
                 hand_cards=list(hand),
             )
         )
+        result = game_state.drive_actions()
+        if result is not None:
+            return result
 
         # Process player powers: remove expired ones after the turn-end hooks have ticked durations.
         powers_to_remove = []
         for power in game_state.player.powers:
             if power.duration == 0:
-                powers_to_remove.append(power.name)
+                powers_to_remove.append(power)
         
         # Remove expired powers
-        for power_name in powers_to_remove:
-            game_state.player.remove_power(power_name)
+        for power in powers_to_remove:
+            game_state.player.remove_power(power)
 
         # End-of-turn hand resolution: Ethereal cards exhaust; then discard non-retained
         # (Runic Pyramid only prevents discarding non-Ethereal cards, not Ethereal exhaust).
@@ -553,7 +513,7 @@ class Combat(Localizable):
                 
                 # Remove power if duration reached 0
                 if power.duration == 0:
-                    enemy.remove_power(power.name)
+                    enemy.remove_power(power)
 
     @staticmethod
     def _safe_localized_name(localizable) -> str:
@@ -744,11 +704,26 @@ class Combat(Localizable):
         if self.combat_state.combat_turn == 0:
             opening_hand_count = len(game_state.player.card_manager.get_pile("hand"))
             draw_count = max(0, draw_count - opening_hand_count)
+
+        alive_enemies = [e for e in self.enemies if e.hp > 0]
+        publish_message(
+            PlayerTurnStartedMessage(
+                owner=game_state.player,
+                enemies=alive_enemies,
+            )
+        )
         
         if draw_count > 0:
             tui_print(f"\n{t('combat.draw_cards', count=draw_count, default=f'Draw {draw_count} cards')}")
             from actions.card import DrawCardsAction
             game_state.action_queue.add_action(DrawCardsAction(count=draw_count))
+
+        publish_message(
+            PlayerTurnPostDrawMessage(
+                owner=game_state.player,
+                enemies=alive_enemies,
+            )
+        )
 
         # Reset energy
         game_state.player.energy = game_state.player.max_energy
@@ -759,14 +734,6 @@ class Combat(Localizable):
         # Increment turn counter
         self.combat_state.combat_turn += 1
         self.combat_state.current_phase = "player_action"
-        
-        alive_enemies = [e for e in self.enemies if e.hp > 0]
-        publish_message(
-            PlayerTurnStartedMessage(
-                owner=game_state.player,
-                enemies=alive_enemies,
-            )
-        )
         if getattr(self.combat_state, "preserve_enemy_intent_once", False):
             self.combat_state.preserve_enemy_intent_once = False
 

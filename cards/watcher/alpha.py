@@ -12,6 +12,7 @@ class Alpha(Card):
     rarity = RarityType.RARE
     base_cost = 1
     base_exhaust = True
+    upgrade_innate = True
     text_name = "Alpha"
     text_description = "Shuffle a Beta into your draw pile. Exhaust."
 

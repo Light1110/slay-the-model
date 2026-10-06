@@ -102,10 +102,18 @@ class EventRoom(Room):
 
         if hasattr(event, 'trigger'):
             event.trigger()
-            self.should_leave = True
+            self._sync_leave_state()
             return None
 
         return None
+
+    def _sync_leave_state(self) -> None:
+        """Leave only after the triggered event explicitly ends."""
+        event = self.triggered_event
+        if event is None:
+            return
+        if getattr(event, "event_ended", False):
+            self.should_leave = True
 
     def _empty_pool_result(self) -> None:
         """Return the explicit runtime result for an empty event pool."""

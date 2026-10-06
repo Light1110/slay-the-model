@@ -166,11 +166,19 @@ class EventPool:
         events = []
         weights = []
         
+        selected_metadata = None
         for metadata in available:
             events.append(metadata.event_class)
             weights.append(metadata.weight)
-        
-        return random.choices(events, weights=weights, k=1)[0]
+
+        selected_event = random.choices(events, weights=weights, k=1)[0]
+        for metadata in available:
+            if metadata.event_class is selected_event:
+                selected_metadata = metadata
+                break
+        if selected_metadata is not None:
+            self.mark_event_used(selected_metadata.event_id)
+        return selected_event
     
     def get_event_by_id(self, event_id: str) -> Optional[Type]:
         """
@@ -206,8 +214,16 @@ class EventPool:
             True if event can appear
         """
         # Check if unique event was already used
-        if metadata.is_unique and metadata.has_been_used:
+        if metadata.has_been_used:
             return False
+
+        can_appear = getattr(metadata.event_class, "can_appear", None)
+        if callable(can_appear):
+            try:
+                if not can_appear():
+                    return False
+            except Exception:
+                return False
         
         # Check custom condition
         if metadata.requires_condition:
@@ -221,8 +237,7 @@ class EventPool:
     def reset_unique_events(self):
         """Reset all unique events for a new run"""
         for metadata in self._event_registry.values():
-            if metadata.is_unique:
-                metadata.has_been_used = False
+            metadata.has_been_used = False
     
     def get_events_by_act(self, act: int) -> List[str]:
         """

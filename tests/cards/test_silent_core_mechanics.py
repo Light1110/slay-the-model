@@ -100,7 +100,7 @@ class TestSilentCoreMechanics:
         power = self.player.get_power("Noxious Fumes")
         assert power is not None
 
-        power.on_turn_start()
+        power.on_turn_start_post_draw()
         self.helper.game_state.drive_actions()
 
         for enemy in (enemy_a, enemy_b):

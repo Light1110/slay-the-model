@@ -8,6 +8,8 @@ from actions.base import Action
 class OrbManager:
     """Manages orbs for the player."""
 
+    MAX_ORB_SLOTS = 10
+
     def __init__(self, max_orb_slots: int = 1) -> None:
         self._orbs: List[Orb] = []
         self._max_orb_slots = max_orb_slots
@@ -22,13 +24,13 @@ class OrbManager:
 
     @max_orb_slots.setter
     def max_orb_slots(self, value: int) -> None:
-        value = max(0, int(value))
+        value = min(self.MAX_ORB_SLOTS, max(0, int(value)))
         if value < self._max_orb_slots:
             self._orbs = self._orbs[:value]
         self._max_orb_slots = value
 
     def add_orb(self, orb: Orb):
-        """Add an orb. If max slots exceeded, evoke rightmost orb first.
+        """Add an orb. If max slots exceeded, evoke leftmost orb first.
         
         Args:
             orb: Orb instance to add
@@ -40,8 +42,8 @@ class OrbManager:
             return
             
         if len(self._orbs) >= self._max_orb_slots:
-            # Evoke rightmost orb first
-            self.evoke_orb(index=-1)
+            # Evoke leftmost orb first
+            self.evoke_orb(index=0)
             
         self._orbs.append(orb)
         return

@@ -2,6 +2,7 @@ from typing import List, Optional, Tuple
 from actions.base import Action
 from localization import Localizable, t
 from engine.messages import (
+    AnyHpLostMessage,
     BlockGainedMessage,
     CardPlayedMessage,
     CardAddedToPileMessage,
@@ -10,12 +11,16 @@ from engine.messages import (
     CardExhaustedMessage,
     CombatEndedMessage,
     CombatStartedMessage,
-    DamageResolvedMessage,
+    DamageDealtMessage,
+    DirectHpLossMessage,
     EliteVictoryMessage,
     GoldGainedMessage,
     HealedMessage,
     HpLostMessage,
+    PhysicalAttackDealtMessage,
+    PhysicalAttackTakenMessage,
     RelicObtainedMessage,
+    PlayerTurnPostDrawMessage,
     PlayerTurnEndedMessage,
     PlayerTurnStartedMessage,
     PotionUsedMessage,
@@ -63,6 +68,19 @@ class Relic(Localizable):
             if idx + 1 < len(parts):
                 return parts[idx + 1]
         return "any"
+
+    def combat_enemies(self) -> list:
+        """Return the current combat enemy list, or an empty list outside combat."""
+        from engine.game_state import game_state
+
+        combat = getattr(game_state, "current_combat", None)
+        if combat is None:
+            return []
+        return list(getattr(combat, "enemies", []) or [])
+
+    def alive_enemies(self) -> list:
+        """Return living enemies in the current combat."""
+        return [enemy for enemy in self.combat_enemies() if not enemy.is_dead()]
     
     @subscribe(RelicObtainedMessage, priority=MessagePriority.PLAYER_RELIC)
     def on_obtain(self):
@@ -71,7 +89,7 @@ class Relic(Localizable):
     # ==================== Phase Hooks ====================
     
     @subscribe(CombatStartedMessage, priority=MessagePriority.PLAYER_RELIC)
-    def on_combat_start(self, player, entities):
+    def on_combat_start(self, floor: int):
         """Called at the start of combat.
         
         Returns:
@@ -80,7 +98,7 @@ class Relic(Localizable):
         return
 
     @subscribe(CombatEndedMessage, priority=MessagePriority.PLAYER_RELIC)
-    def on_combat_end(self, player, entities):
+    def on_combat_end(self):
         """Called at the end of combat.
         
         Returns:
@@ -89,7 +107,7 @@ class Relic(Localizable):
         return
     
     @subscribe(EliteVictoryMessage, priority=MessagePriority.PLAYER_RELIC)
-    def on_elite_victory(self, player, entities):
+    def on_elite_victory(self):
         """Called when player defeats an elite enemy.
         
         Returns:
@@ -98,7 +116,7 @@ class Relic(Localizable):
         return
 
     @subscribe(PlayerTurnStartedMessage, priority=MessagePriority.PLAYER_RELIC)
-    def on_player_turn_start(self, player, entities):
+    def on_player_turn_start(self):
         """Called at the start of player's turn.
         
         Returns:
@@ -107,7 +125,7 @@ class Relic(Localizable):
         return
 
     @subscribe(PlayerTurnEndedMessage, priority=MessagePriority.PLAYER_RELIC)
-    def on_player_turn_end(self, player, entities):
+    def on_player_turn_end(self):
         """Called at the end of player's turn.
         
         Returns:
@@ -115,7 +133,7 @@ class Relic(Localizable):
         """
         return
 
-    def on_enemy_turn_start(self, enemy, player, entities):
+    def on_enemy_turn_start(self, enemy, player):
         """Called at the start of enemy's turn.
         
         Returns:
@@ -123,7 +141,7 @@ class Relic(Localizable):
         """
         return
 
-    def on_enemy_turn_end(self, enemy, player, entities):
+    def on_enemy_turn_end(self, enemy, player):
         """Called at the end of enemy's turn.
         
         Returns:
@@ -132,14 +150,14 @@ class Relic(Localizable):
         return
 
     @subscribe(ShopEnteredMessage, priority=MessagePriority.PLAYER_RELIC)
-    def on_shop_enter(self, player, entities=None):
+    def on_shop_enter(self):
         """Called when entering a shop room."""
         return
     
     # ==================== Card Hooks ====================
     
     @subscribe(CardPlayedMessage, priority=MessagePriority.REACTION)
-    def on_card_play(self, card, player, targets):
+    def on_card_play(self, card, targets):
         """Called when a card is played.
         
         Returns:
@@ -148,7 +166,7 @@ class Relic(Localizable):
         return
     
     @subscribe(CardDrawnMessage, priority=MessagePriority.PLAYER_RELIC)
-    def on_card_draw(self, card, player, entities):
+    def on_card_draw(self, card):
         """Called when a card is drawn.
         
         Returns:
@@ -157,7 +175,7 @@ class Relic(Localizable):
         return
     
     @subscribe(CardDiscardedMessage, priority=MessagePriority.PLAYER_RELIC)
-    def on_card_discard(self, card, player, entities):
+    def on_card_discard(self, card):
         """Called when a card is discarded.
         
         Returns:
@@ -165,7 +183,7 @@ class Relic(Localizable):
         """
         return
     
-    def on_card_exhaust(self, card, player, entities):
+    def on_card_exhaust(self, card, player):
         """Called when a card is exhausted.
         
         Returns:
@@ -174,7 +192,7 @@ class Relic(Localizable):
         return
 
     @subscribe(CardExhaustedMessage, priority=MessagePriority.REACTION)
-    def on_card_exhausted(self, card, owner, source_pile=None):
+    def on_card_exhausted(self, card, source_pile=None):
         """Called when a card is exhausted."""
         return
 
@@ -185,48 +203,54 @@ class Relic(Localizable):
 
     # ==================== Stat Hooks ====================
     
-    @subscribe(DamageResolvedMessage, priority=MessagePriority.REACTION)
-    def on_damage_dealt(self, damage, target, player, entities):
+    @subscribe(DamageDealtMessage, priority=MessagePriority.REACTION)
+    def on_damage_dealt(self, damage, target, source=None, card=None, damage_type="direct"):
         """Called when damage is dealt.
         
         Args:
             damage: Original damage amount
             target: Entity receiving damage
             player: Player instance
-            entities: All entities in combat
-            
         Returns:
             List of actions to execute when damage is dealt
         """
         return
 
-    @subscribe(DamageResolvedMessage, priority=MessagePriority.REACTION)
-    def on_damage_taken(self, damage, source, player, entities):
-        """Called when damage is taken.
-        
-        Args:
-            damage: Original damage amount
-            source: Entity dealing damage
-            player: Player instance
-            entities: All entities in combat
-            
-        Returns:
-            List of actions to execute when damage is taken
-        """
+    @subscribe(PlayerTurnPostDrawMessage, priority=MessagePriority.PLAYER_RELIC)
+    def on_player_turn_post_draw(self):
+        """Called after the player's normal start-of-turn draw resolves."""
+        return
+
+    @subscribe(PhysicalAttackDealtMessage, priority=MessagePriority.REACTION)
+    def on_physical_attack_dealt(self, damage, target=None, source=None, card=None, damage_type="physical"):
+        """Called when a physical attack deals HP damage."""
+        return
+
+    @subscribe(PhysicalAttackTakenMessage, priority=MessagePriority.REACTION)
+    def on_physical_attack_taken(self, damage, source=None, card=None, damage_type="physical"):
+        """Called when the player loses HP to a physical attack."""
         return
 
     @subscribe(HealedMessage, priority=MessagePriority.REACTION)
-    def on_heal(self, heal_amount, player, entities):
+    def on_heal(self, amount, source=None):
         """Called when healing occurs.
         
         Args:
             heal_amount: Original heal amount
             player: Player instance
-            entities: All entities in combat
-            
         Returns:
             List of actions to execute when healing occurs
         """
+        return
+
+    @subscribe(DirectHpLossMessage, priority=MessagePriority.REACTION)
+    def on_direct_hp_loss(self, amount: int, source=None, card=None):
+        """Called when direct HP loss resolves."""
+        return
+
+    @subscribe(AnyHpLostMessage, priority=MessagePriority.REACTION)
+    def on_any_hp_lost(self, amount: int, source=None, card=None):
+        """Called whenever actual HP is lost."""
         return
     
     # ==================== Modification Hooks ====================
@@ -244,7 +268,7 @@ class Relic(Localizable):
         """
         return base_damage
     
-    def modify_damage_taken(self, base_damage: int, source=None) -> int:
+    def modify_damage_taken(self, base_damage: int, source=None, damage_type: str = "direct") -> int:
         """Modify damage taken by the player.
         
         Args:
@@ -255,6 +279,10 @@ class Relic(Localizable):
             Modified damage amount
         """
         return base_damage
+
+    def on_spawn_monster(self, monster, player):
+        """Called when a new enemy is added to the current combat."""
+        return
     
     def modify_heal(self, base_heal: int) -> int:
         """Modify healing received.
@@ -290,7 +318,7 @@ class Relic(Localizable):
         return base_gold
     
     @subscribe(GoldGainedMessage, priority=MessagePriority.PLAYER_RELIC)
-    def on_gold_gained(self, gold_amount: int, player):
+    def on_gold_gained(self, gold_amount: int):
         """Called when gold is gained.
         
         Args:
@@ -312,29 +340,25 @@ class Relic(Localizable):
         return
     
     @subscribe(PotionUsedMessage, priority=MessagePriority.PLAYER_RELIC)
-    def on_use_potion(self, potion, player, entities):
+    def on_use_potion(self, potion):
         """Called when a potion is used.
         
         Args:
             potion: The potion being used
             player: Player instance
-            entities: All entities in combat
-            
         Returns:
             List of actions to execute when potion is used
         """
         return
     
     @subscribe(PowerAppliedMessage, priority=MessagePriority.REACTION)
-    def on_apply_power(self, power, target, player, entities):
+    def on_apply_power(self, power, target):
         """Called when a power is applied to a target.
         
         Args:
             power: The power being applied
             target: The creature receiving the power
             player: Player instance
-            entities: All entities in combat
-            
         Returns:
             List of actions to execute when power is applied
         """

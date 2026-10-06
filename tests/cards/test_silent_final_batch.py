@@ -5,6 +5,8 @@ from cards.silent.corpse_explosion import CorpseExplosion
 from cards.silent.doppelganger import Doppelganger
 from cards.silent.grand_finale import GrandFinale
 from cards.silent.malaise import Malaise
+import inspect
+
 from cards.silent.masterful_stab import MasterfulStab
 from cards.silent.nightmare import Nightmare
 from cards.silent.setup import Setup
@@ -178,6 +180,13 @@ class TestSilentFinalBatch:
         self.helper.game_state.drive_actions()
         assert card.cost == 1
 
+    def test_masterful_stab_cost_increases_when_damage_taken_hook_runs(self):
+        card = MasterfulStab()
+        assert "entities" not in inspect.signature(card.on_any_hp_lost).parameters
+        assert card.cost == 0
+        card.on_any_hp_lost(3, source=None, card=None)
+        assert card.cost == 1
+
     def test_nightmare_adds_three_copies_next_turn(self):
         combat = self.helper.start_combat([])
         target = Strike()
@@ -194,7 +203,7 @@ class TestSilentFinalBatch:
         self.helper.start_combat([])
         card = Nightmare()
         card.on_play([])
-        queued = self.helper.game_state.action_queue.peek_next()
+        queued = self.helper.game_state.action_queue.queue[1]
         assert isinstance(queued, ChooseCardLambdaAction)
 
     def test_setup_sets_cost_zero_until_card_is_played(self):

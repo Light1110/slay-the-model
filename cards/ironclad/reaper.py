@@ -22,10 +22,11 @@ class Reaper(Card):
 
     base_cost = 2
     base_damage = 4
+    base_exhaust = True
 
     upgrade_damage = 5
 
-    def on_damage_dealt(self, damage: int, target: Creature, card: Card, damage_type: str):
+    def on_damage_dealt(self, damage: int, target: Creature, source=None, card: Card | None = None, damage_type: str = "direct"):
         """Vampirism: heal player for damage dealt"""
         from engine.game_state import game_state
         from actions.combat import HealAction

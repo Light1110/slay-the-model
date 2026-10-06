@@ -26,7 +26,10 @@ class TimeEater(Enemy):
     enemy_type = EnemyType.BOSS
     
     def __init__(self):
-        super().__init__(hp_range=(456, 456)) # todo: 480 a9
+        from engine.game_state import game_state
+
+        ascension = getattr(game_state, "ascension", 0)
+        super().__init__(hp_range=(480, 480) if ascension >= 9 else (456, 456))
         self.add_intention(Reverberate(self))
         self.add_intention(HeadSlam(self))
         self.add_intention(Ripple(self))
@@ -45,9 +48,8 @@ class TimeEater(Enemy):
         from powers.definitions.time_warp import TimeWarpPower
         self.add_power(TimeWarpPower(amount=1, owner=self))
     
-    def on_damage_taken(self, damage: int, source=None, card=None, damage_type=None):
+    def on_any_hp_lost(self, amount: int, source=None, card=None):
         """Check if Haste should be triggered next turn."""
-        super().on_damage_taken(damage, source, card, damage_type)
         if not self._haste_used and self.hp <= self.max_hp // 2:
             # Set flag to trigger Haste next turn instead of immediately
             self._haste_triggered = True

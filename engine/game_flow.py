@@ -21,7 +21,7 @@ class GameFlow:
     - Act 1-2: 18 floors (0-17), floor 16=boss, floor 17=treasure
     - Act 3 (A<20): 18 floors (0-17), floor 16=boss, floor 17=VictoryRoom
     - Act 3 (A20): 19 floors (0-18), floor 16=boss1, floor 17=boss2, floor 18=VictoryRoom
-    - Act 4: 6 floors (0-5), fixed: Rest->Shop->Elite->Boss->VictoryRoom
+    - Act 4: 5 floors (0-4), fixed: Rest->Shop->Elite->Boss->VictoryRoom
     
     VictoryRoom handles key checking for Act 4 transition.
     """
@@ -34,7 +34,7 @@ class GameFlow:
     def _get_max_floor(self, game_state) -> int:
         """Get the maximum floor number for current act (0-indexed)."""        
         if game_state.current_act == 4:
-            return 5  # Act 4: 6 floors (0-5)
+            return 4  # Act 4: 5 floors (0-4)
         elif game_state.current_act == 3 and game_state.ascension >= 20:
             return 18  # Act 3 A20: 19 floors (0-18)
         else:
@@ -125,22 +125,24 @@ class GameFlow:
             self.flow_phase = "select_room"
             return None
 
-        cur_room.init()
-        result = cur_room.enter()
+        if not getattr(cur_room, "_entered", False):
+            cur_room.init()
+            result = cur_room.enter()
+            setattr(cur_room, "_entered", True)
 
-        from engine.runtime_presenter import flush_runtime_events
-        flush_runtime_events()
+            from engine.runtime_presenter import flush_runtime_events
+            flush_runtime_events()
 
-        from tui import get_app, is_tui_mode
-        if is_tui_mode():
-            app = get_app()
-            if app:
-                from tui.handlers.display_handler import DisplayHandler
-                DisplayHandler(app).display_room(cur_room, game_state)
+            from tui import get_app, is_tui_mode
+            if is_tui_mode():
+                app = get_app()
+                if app:
+                    from tui.handlers.display_handler import DisplayHandler
+                    DisplayHandler(app).display_room(cur_room, game_state)
 
-        if isinstance(result, GameTerminalState):
-            self.flow_phase = "finished"
-            return result
+            if isinstance(result, GameTerminalState):
+                self.flow_phase = "finished"
+                return result
 
         result = game_state.drive_actions()
 
@@ -148,7 +150,16 @@ class GameFlow:
             self.flow_phase = "finished"
             return result
 
+        sync_leave_state = getattr(cur_room, "_sync_leave_state", None)
+        if callable(sync_leave_state):
+            sync_leave_state()
+
+        if not getattr(cur_room, "should_leave", False):
+            self.flow_phase = "enter_room"
+            return None
+
         cur_room.leave()
+        setattr(cur_room, "_entered", False)
 
         if isinstance(cur_room, VictoryRoom):
             self.flow_phase = "complete_act"

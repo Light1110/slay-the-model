@@ -102,6 +102,16 @@ def get_random_card_reward(namespaces: Optional[List[str]] = None,
     """
     # Get base probabilities for this encounter type
     base_probs = card_rarity_probabilities.get(encounter_type, card_rarity_probabilities["normal"]).copy()
+    rolling_offset = 0
+    if use_rolling_offset:
+        try:
+            from engine.game_state import game_state
+            rolling_offset = int(getattr(game_state, "card_chance_common_counter", 0))
+        except Exception:
+            rolling_offset = 0
+        rolling_offset = max(0, min(rolling_offset, 40))
+        base_probs[RarityType.RARE] = base_probs.get(RarityType.RARE, 0) + rolling_offset
+        base_probs[RarityType.COMMON] = max(0, base_probs.get(RarityType.COMMON, 0) - rolling_offset)
 
     # N'loth's Gift: rare chance x3, taken from common chance.
     try:
@@ -181,17 +191,6 @@ def get_random_card_reward(namespaces: Optional[List[str]] = None,
     # Randomly select rarity based on weights
     selected_rarity, card_list = random.choices(available_rarities, weights=weights, k=1)[0]
     
-    # Apply rolling offset if enabled
-    if use_rolling_offset:
-        base_probs[RarityType.RARE] += 1
-        # Decrease common chance proportionally
-        base_probs[RarityType.COMMON] -= 1
-    
-    if selected_rarity == RarityType.RARE:
-        # reset prob
-        card_rarity_probabilities.clear()
-        card_rarity_probabilities.update(CARD_RARITY_PROBABILITIES.copy())
-
     # Randomly select a card from the chosen rarity
     selected_card_idstr = random.choice(card_list)
     selected_card_cls = get_registered("card", selected_card_idstr)
@@ -268,9 +267,18 @@ def get_random_relic(characters: Optional[List[str]] = None,
         Optional[Any]: A random relic matching the criteria, or None if none found.
     """
     
-    # Ensure "any" namespace is included
-    if characters and "any" not in characters:
-        characters.append("any")
+    from engine.game_state import game_state
+
+    normalized_characters: Optional[set[str]] = None
+    if characters:
+        normalized_characters = {str(character).lower() for character in characters}
+    else:
+        player = getattr(game_state, "player", None)
+        namespace = getattr(player, "namespace", None)
+        if namespace:
+            normalized_characters = {str(namespace).lower()}
+    if normalized_characters is not None:
+        normalized_characters.update({"any", "global"})
     
     all_relic_idstrs = list_registered("relic")
     filtered_relic_idstrs = []
@@ -280,7 +288,7 @@ def get_random_relic(characters: Optional[List[str]] = None,
             continue
         relic_instance = relic_cls()
         
-        if characters and relic_instance.namespace not in characters:
+        if normalized_characters and str(relic_instance.namespace).lower() not in normalized_characters:
             continue
         if rarities and relic_instance.rarity not in rarities:
             continue
@@ -288,9 +296,15 @@ def get_random_relic(characters: Optional[List[str]] = None,
         # Check if relic is excluded
         if exclude and relic_idstr in exclude:
             continue
+
+        can_spawn = getattr(relic_instance, "can_spawn", None)
+        if callable(can_spawn) and not can_spawn():
+            continue
+        can_spawn_legacy = getattr(relic_instance, "canSpawn", None)
+        if callable(can_spawn_legacy) and not can_spawn_legacy():
+            continue
         
         # Check if relic was already obtained
-        from engine.game_state import game_state
         if relic_idstr in game_state.obtained_relics:
             continue
         
@@ -317,10 +331,24 @@ def get_random_potion(characters: Optional[List[str]] = None,
     """
     import potions  # Ensure potion classes are registered before querying the registry.
 
+    from engine.game_state import game_state
+
     normalized_characters = None
     if characters:
         normalized_characters = {str(character).lower() for character in characters}
         normalized_characters.update({"any", "global"})
+    else:
+        player = getattr(game_state, "player", None)
+        character = getattr(player, "character", None)
+        namespace = getattr(player, "namespace", None)
+        tokens = {
+            str(value).lower()
+            for value in (character, namespace)
+            if value
+        }
+        if tokens:
+            normalized_characters = tokens
+            normalized_characters.update({"any", "global"})
 
     all_potion_idstrs = list_registered("potion")
     filtered_potion_idstrs = []
@@ -340,6 +368,24 @@ def get_random_potion(characters: Optional[List[str]] = None,
 
     if not filtered_potion_idstrs:
         return None
+
+    if not rarities:
+        rarity_roll = random.random()
+        if rarity_roll < 0.65:
+            rolled_rarity = RarityType.COMMON
+        elif rarity_roll < 0.90:
+            rolled_rarity = RarityType.UNCOMMON
+        else:
+            rolled_rarity = RarityType.RARE
+        rarity_filtered = []
+        for potion_idstr in filtered_potion_idstrs:
+            potion_cls = get_registered("potion", potion_idstr)
+            if potion_cls is None:
+                continue
+            if potion_cls().rarity == rolled_rarity:
+                rarity_filtered.append(potion_idstr)
+        if rarity_filtered:
+            filtered_potion_idstrs = rarity_filtered
 
     selected_potion_idstr = random.choice(filtered_potion_idstrs)
     selected_potion_cls = get_registered("potion", selected_potion_idstr)
@@ -369,17 +415,16 @@ def get_random_events(act: int = 1, count: int = 1) -> List[Any]:
     if not available_metadata:
         return []
     
-    # Get specified count of events
-    if count >= len(available_metadata):
-        # Return all available if count exceeds available
-        selected_metadata = available_metadata
-    else:
-        # Random weighted selection
-        selected_metadata = random.choices(
-            available_metadata,
-            weights=[m.weight for m in available_metadata],
-            k=count
-        )
+    remaining = list(available_metadata)
+    selected_metadata = []
+    while remaining and len(selected_metadata) < count:
+        chosen = random.choices(
+            remaining,
+            weights=[m.weight for m in remaining],
+            k=1
+        )[0]
+        selected_metadata.append(chosen)
+        remaining.remove(chosen)
     
     # Create event instances
     events = []
@@ -387,8 +432,6 @@ def get_random_events(act: int = 1, count: int = 1) -> List[Any]:
         event = metadata.event_class()
         events.append(event)
         
-        # Mark unique events as used
-        if metadata.is_unique:
-            event_pool.mark_event_used(metadata.event_id)
+        event_pool.mark_event_used(metadata.event_id)
     
     return events

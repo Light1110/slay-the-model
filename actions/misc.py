@@ -103,6 +103,7 @@ class BuyItemAction(Action):
         gold_spent = 0
         from engine.game_state import game_state
         from actions.card import ChooseRemoveCardAction
+        from actions.reward import AddPotionAction
         from tui.print_utils import tui_print
         from localization import t
 
@@ -124,8 +125,10 @@ class BuyItemAction(Action):
             if room is not None and hasattr(room, "card_removal_used"):
                 room.card_removal_used = True
                 if not _has_relic("SmilingMask", game_state):
+                    next_price = getattr(game_state, "card_removal_price", getattr(room, "card_removal_price", 75)) + 25
+                    game_state.card_removal_price = next_price
                     if hasattr(room, "card_removal_price"):
-                        room.card_removal_price += 25
+                        room.card_removal_price = next_price
 
             tui_print(t("ui.shop_removed_card", default="Removed a card from deck"))
 
@@ -152,7 +155,7 @@ class BuyItemAction(Action):
         elif self.shop_item.item_type == "relic":
             AddRelicByNameAction(relic_id=self.shop_item.item.idstr).execute()
         elif self.shop_item.item_type == "potion":
-            AddRandomPotionAction(character=game_state.player.character).execute()
+            AddPotionAction(potion=self.shop_item.item).execute()
 
         self.shop_item.purchased = True
 
@@ -230,7 +233,10 @@ class OpenChestAction(Action):
                     break
 
         if empty_chest:
-            add_actions(chest_open_actions, to_front=True)
+            add_actions(
+                [*chest_open_actions, LeaveRoomAction(room=self.treasure_room)],
+                to_front=True,
+            )
             return
 
         # Handle chest contents based on type
@@ -249,12 +255,15 @@ class OpenChestAction(Action):
             for relic in relics:
                 options.append(Option(
                     name=LocalStr("ui.choose_relic", name=relic.local("name")),
-                    actions=[AddRelicByNameAction(relic_id=relic.idstr)]
+                    actions=[
+                        AddRelicByNameAction(relic_id=relic.idstr),
+                        LeaveRoomAction(room=self.treasure_room),
+                    ]
                 ))
 
             options.append(Option(
                 name=LocalStr("ui.skip_relic"),
-                actions=[]
+                actions=[LeaveRoomAction(room=self.treasure_room)]
             ))
 
             select_action = InputRequestAction(
@@ -278,8 +287,11 @@ class OpenChestAction(Action):
             relic = get_random_relic(rarities=rarities)
             if relic:
                 actions.append(AddRelicByNameAction(relic_id=relic.idstr))
-                
-            add_actions(chest_open_actions + actions, to_front=True)
+
+            add_actions(
+                [*chest_open_actions, *actions, LeaveRoomAction(room=self.treasure_room)],
+                to_front=True,
+            )
             return
             
         elif self.treasure_room.chest_type == "medium":
@@ -297,8 +309,11 @@ class OpenChestAction(Action):
             relic = get_random_relic(rarities=rarities)
             if relic:
                 actions.append(AddRelicByNameAction(relic_id=relic.idstr))
-                
-            add_actions(chest_open_actions + actions, to_front=True)
+
+            add_actions(
+                [*chest_open_actions, *actions, LeaveRoomAction(room=self.treasure_room)],
+                to_front=True,
+            )
             return
 
         elif self.treasure_room.chest_type == "large":
@@ -313,8 +328,11 @@ class OpenChestAction(Action):
             relic = get_random_relic(rarities=rarities)
             if relic:
                 actions.append(AddRelicByNameAction(relic_id=relic.idstr))
-                
-            add_actions(chest_open_actions + actions, to_front=True)
+
+            add_actions(
+                [*chest_open_actions, *actions, LeaveRoomAction(room=self.treasure_room)],
+                to_front=True,
+            )
             return
         
         else:

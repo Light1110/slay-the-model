@@ -19,15 +19,16 @@ class BellowIntention(Intention):
     
     def execute(self) -> None:
         """Execute Bellow: gain 2 Enrage."""
-        from actions.combat import ApplyPowerAction
-        
         from engine.game_state import game_state
+        from actions.combat import ApplyPowerAction
+
+        amount = 3 if getattr(game_state, "ascension", 0) >= 18 else self.base_amount
         add_actions(
         [
             ApplyPowerAction(
                 power="Enrage",
                 target=self.enemy,
-                amount=2,
+                amount=amount,
                 duration=-1  # Permanent
             )
         ]

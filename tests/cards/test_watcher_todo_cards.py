@@ -7,6 +7,7 @@ from cards.watcher import (
     Indignation,
     Meditate,
     Omniscience,
+    Perseverance,
     SimmeringFury,
     SpiritShield,
     Swivel,
@@ -84,12 +85,11 @@ def test_tantrum_shuffles_itself_into_draw_pile_after_play():
     assert card in helper.game_state.player.card_manager.get_pile("draw_pile")
 
 
-def test_brilliance_damage_scales_with_mantra():
+def test_brilliance_damage_scales_with_total_mantra_gained():
     helper = create_test_helper()
-    player = helper.create_player()
-    helper.start_combat([helper.create_enemy(Cultist, hp=20)])
-    player.add_power(CollectPower(owner=player))
-    player.add_power(type("TestMantra", (), {"name": "Mantra", "amount": 5})())
+    helper.create_player()
+    combat = helper.start_combat([helper.create_enemy(Cultist, hp=20)])
+    combat.combat_state.mantra_gained = 5
 
     card = Brilliance()
 
@@ -106,7 +106,7 @@ def test_spirit_shield_block_scales_with_cards_in_hand():
     helper.add_card_to_hand(IroncladStrike())
     helper.add_card_to_hand(IroncladStrike())
 
-    assert card.block == 9
+    assert card.block == 6
 
 
 def test_omniscience_plays_selected_card_twice_and_exhausts_it():
@@ -227,3 +227,17 @@ def test_simmering_fury_enters_wrath_and_draws_next_turn_not_now():
 
     assert player.status_manager.status == StatusType.WRATH
     assert len(player.card_manager.get_pile("hand")) == 2
+
+
+def test_perseverance_leaves_hand_when_played_despite_retain():
+    helper = create_test_helper()
+    player = helper.create_player(energy=10)
+    enemy = helper.create_enemy(Cultist, hp=30)
+    helper.start_combat([enemy])
+
+    card = Perseverance()
+    helper.add_card_to_hand(card)
+
+    assert helper.play_card(card) is True
+    assert card not in player.card_manager.get_pile("hand")
+    assert card in player.card_manager.get_pile("discard_pile")

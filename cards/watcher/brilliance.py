@@ -18,5 +18,6 @@ class Brilliance(Card):
 
     @property
     def damage(self) -> int:
-        mantra = game_state_module.game_state.player.get_power("Mantra")
-        return self._damage + (mantra.amount if mantra is not None else 0)
+        combat = game_state_module.game_state.current_combat
+        mantra_gained = getattr(getattr(combat, "combat_state", None), "mantra_gained", 0)
+        return self._damage + mantra_gained

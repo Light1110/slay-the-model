@@ -8,6 +8,7 @@ from actions.base import Action
 from actions.display import DisplayTextAction
 from actions.reward import AddGoldAction, AddRandomPotionAction
 from actions.card import AddRandomCardAction, ChooseAddRandomCardAction, ChooseObtainCardAction
+from actions.misc import LeaveRoomAction
 from utils.result_types import GameTerminalState
 from engine.combat import Combat
 from rooms.base import Room
@@ -70,6 +71,8 @@ class CombatRoom(Room):
             victory_actions = self._handle_victory()
             if victory_actions:
                 actions.extend(victory_actions)
+        elif result == GameTerminalState.COMBAT_ESCAPE:
+            actions.append(LeaveRoomAction(room=self))
         # ESCAPE：没有reward
         
         if result == GameTerminalState.GAME_LOSE:
@@ -119,6 +122,7 @@ class CombatRoom(Room):
             self.room_type == RoomType.BOSS
             and game_state.current_act in (3, 4)
         ):
+            actions.append(LeaveRoomAction(room=self))
             return actions
 
         combat = self.combat
@@ -176,6 +180,7 @@ class CombatRoom(Room):
             else:
                 game_state.potion_drop_chance = min(90, game_state.potion_drop_chance + 10)
 
+        actions.append(LeaveRoomAction(room=self))
         return actions
     
     def _calculate_gold_reward(self) -> int:

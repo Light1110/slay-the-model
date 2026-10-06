@@ -58,7 +58,8 @@ class KnowingSkull(Event):
                 actions=[
                     LoseHPAction(amount=hp_cost),
                     AddRandomPotionAction(character=game_state.player.character),
-                    LambdaAction(lambda: self._increment_use())
+                    LambdaAction(lambda: self._increment_use()),
+                    LambdaAction(lambda: self._continue_or_end()),
                 ]
             ),
             Option(
@@ -66,7 +67,8 @@ class KnowingSkull(Event):
                 actions=[
                     LoseHPAction(amount=hp_cost),
                     AddGoldAction(amount=90),
-                    LambdaAction(lambda: self._increment_use())
+                    LambdaAction(lambda: self._increment_use()),
+                    LambdaAction(lambda: self._continue_or_end()),
                 ]
             ),
             Option(
@@ -74,12 +76,13 @@ class KnowingSkull(Event):
                 actions=[
                     LoseHPAction(amount=hp_cost),
                     AddRandomCardAction(namespace='colorless', rarity=RarityType.UNCOMMON),
-                    LambdaAction(lambda: self._increment_use())
+                    LambdaAction(lambda: self._increment_use()),
+                    LambdaAction(lambda: self._continue_or_end()),
                 ]
             ),
             Option(
                 name=LocalStr('events.knowing_skull.leave'),
-                actions=[]  # Leave costs nothing and ends the event
+                actions=[LambdaAction(lambda: self.end_event())]
             )
         ]
         
@@ -88,10 +91,16 @@ class KnowingSkull(Event):
             options=options
         ))
         
-        # Don't end event here - it will be ended by the InputRequestAction result
-        # Only end when player chooses Leave (which doesn't have end_event in its actions)
         add_actions(actions)
     
     def _increment_use(self):
         """Increment use count when a reward is chosen."""
         self.use_count += 1
+
+    def _continue_or_end(self):
+        """Avoid unbounded auto-selection loops in non-interactive runs."""
+        config = getattr(game_state, "config", None)
+        if bool(getattr(config, "auto_select", False)):
+            self.end_event()
+            return
+        self.trigger()

@@ -20,15 +20,29 @@ class BookOfStabbing(Enemy):
     enemy_type = EnemyType.ELITE
     
     def __init__(self):
-        super().__init__(hp_range=(160, 164)) # todo: 168-172 a8
+        from engine.game_state import game_state
+
+        ascension = getattr(game_state, "ascension", 0)
+        hp_range = (168, 172) if ascension >= 8 else (160, 164)
+        super().__init__(hp_range=hp_range)
         self.multi_stab_count = 0  # Number of times Multi Stab used
         
         # Register intentions
         self.add_intention(MultiStab(self))
         self.add_intention(BigStab(self))
+
+    def on_combat_start(self, floor: int):
+        from powers.definitions.painful_stabs import PainfulStabsPower
+
+        super().on_combat_start(floor)
+        if not self.has_power("Painful Stabs"):
+            self.add_power(PainfulStabsPower(owner=self))
     
     def determine_next_intention(self, floor: int) -> None:
         """Determine next intention based on pattern."""
+        from engine.game_state import game_state
+
+        ascension = getattr(game_state, "ascension", 0)
         # Get last move
         last = self.history_intentions[-1] if self.history_intentions else None
         
@@ -62,6 +76,9 @@ class BookOfStabbing(Enemy):
 
         if self.current_intention is None:
             self.current_intention = self.intentions["Multi Stab"]
+
+        if self.current_intention.name == "Big Stab" and ascension >= 18:
+            self.multi_stab_count += 1
 
         return self.current_intention
     

@@ -37,6 +37,9 @@ class RemoveCardAction(Action):
         from engine.game_state import game_state
         if self.card and game_state.player:
             if hasattr(game_state.player, "card_manager"):
+                on_remove = getattr(self.card, "on_remove", None)
+                if callable(on_remove):
+                    on_remove()
                 game_state.player.card_manager.remove_from_pile(self.card, self.src_pile)
 
 @register("action")
@@ -97,9 +100,6 @@ class AddCardAction(Action):
                         if negate_curse is None:
                             continue
                         if negate_curse():
-                            if getattr(relic, "curses_to_negate", 0) <= 0:
-                                # TODO: Do not remove Omamori outright; disable it when charges run out.
-                                game_state.player.relics.remove(relic)
                             print(
                                 f"[Relic] Omamori negated curse: "
                                 f"{self.card.display_name.resolve()}"
@@ -116,6 +116,11 @@ class AddCardAction(Action):
                             self.card.upgrade()
 
                 game_state.player.card_manager.add_to_pile(self.card, target_pile, pos=self.position)
+                if self.source == "reward" and target_pile == "deck":
+                    if getattr(self.card, "rarity", None) == RarityType.COMMON:
+                        game_state.card_chance_common_counter += 1
+                    elif getattr(self.card, "rarity", None) == RarityType.RARE:
+                        game_state.card_chance_common_counter = 0
                 get_card_location = getattr(game_state.player.card_manager, "get_card_location", None)
                 actual_pile_obj = (
                     get_card_location(self.card)
@@ -204,19 +209,22 @@ class DiscardCardAction(Action):
         from engine.game_state import game_state
         from engine.messages import CardDiscardedMessage
         if self.card and game_state.player and hasattr(game_state.player, "card_manager"):
-            if (
-                not self.trigger_effects
-                and (getattr(self.card, "retain", False) or getattr(self.card, "retain_this_turn", False))
-            ):
-                if getattr(self.card, "retain_this_turn", False):
-                    setattr(self.card, "retain_this_turn", False)
-                return
             # Find source pile if not specified
             if self.source_pile is None:
                 self.source_pile = game_state.player.card_manager.get_card_location(self.card)
             
             # Actually discard card
             discarded = game_state.player.card_manager.discard(self.card, src=self.source_pile)
+
+            if discarded and getattr(self.card, "_rebound_to_draw", False):
+                setattr(self.card, "_rebound_to_draw", False)
+                game_state.player.card_manager.move_to(
+                    self.card,
+                    "draw_pile",
+                    src="discard_pile",
+                    pos=PilePosType.TOP,
+                )
+                return
             
             if discarded and self.trigger_effects:
                 if game_state.current_combat is not None:
@@ -336,10 +344,10 @@ class ExhaustRandomCardAction(Action):
 
 @register("action")
 class ShuffleAction(Action):
-    """Shuffle all cards from hand and discard piles into draw pile."""
+    """Shuffle discard pile into draw pile."""
 
     def execute(self):
-        """Execute shuffle: move all cards from hand/discard to draw pile and shuffle."""
+        """Execute shuffle: move discard pile into draw pile and shuffle."""
         from engine.game_state import game_state
         from engine.messages import ShuffleMessage
         import random
@@ -349,13 +357,8 @@ class ShuffleAction(Action):
 
         card_manager = game_state.player.card_manager
 
-        # Collect all cards from hand and discard
-        hand_cards = list(card_manager.get_pile("hand"))
         discard_cards = list(card_manager.get_pile("discard_pile"))
 
-        # Add them to draw pile
-        for card in hand_cards:
-            card_manager.move_to(card=card, dst="draw_pile")
         for card in discard_cards:
             card_manager.move_to(card, "draw_pile")
 

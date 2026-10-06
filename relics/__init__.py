@@ -105,7 +105,6 @@ from .global_relics import (
     RedKey,
     RedMask,
     RegalPillow,
-    RunicCube,
     RunicDome,
     RunicPyramid,
     SacredBark,
@@ -147,13 +146,14 @@ from .global_relics import (
 )
 from .character.ironclad import (
     BlackBlood,
-    BrimStone,
+    Brimstone,
     BurningBlood,
     ChampionBelt,
     CharonsAshes,
     MagicFlower,
     OrangePellets,
     RedSkull,
+    RunicCube,
     Runicube,
 )
 from .character.silent import (

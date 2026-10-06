@@ -56,10 +56,12 @@ class TestEventRoomBasic:
         assert len(queued.options) == 2
 
     def test_trigger_event_marks_state(self):
-        """Triggering an event should set triggered_event and should_leave."""
+        """Triggering an unfinished event should keep the room open."""
         room = EventRoom()
 
         class DummyEvent:
+            event_ended = False
+
             def trigger(self):
                 return None
 
@@ -68,7 +70,7 @@ class TestEventRoomBasic:
 
         assert result is None
         assert room.triggered_event is event
-        assert room.should_leave is True
+        assert room.should_leave is False
 
     def test_empty_event_pool_returns_explicit_empty_pool_message(self):
         """Empty event pools should return without queueing actions."""

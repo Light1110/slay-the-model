@@ -16,6 +16,9 @@ class Lagavulin(Enemy):
     enemy_type = EnemyType.ELITE
     
     def __init__(self, ascension: int = 0, start_awake: bool = False):
+        from engine.game_state import game_state
+
+        ascension = max(ascension, getattr(game_state, "ascension", 0))
         if ascension >= 8:
             hp = random.randint(112, 115)
         else:
@@ -34,9 +37,9 @@ class Lagavulin(Enemy):
             from powers.definitions.metallicize import MetallicizePower
             self.add_power(MetallicizePower(8, owner=self))
 
-        high_asc = ascension >= 18
+        high_asc = ascension >= 3
         damage = 20 if high_asc else 18
-        siphon_amount = 2 if high_asc else 1
+        siphon_amount = 2 if ascension >= 18 else 1
 
         # Register intentions with keys
         self.add_intention(SleepIntention(self))
@@ -79,9 +82,9 @@ class Lagavulin(Enemy):
         
         return intention
 
-    def on_damage_taken(self, damage: int, source=None, card=None, damage_type=None):
+    def on_any_hp_lost(self, amount: int, source=None, card=None):
         """Wake from sleep when any resolved damage hits HP (amount > 0); stun intent same turn."""
-        if self.is_sleeping and damage > 0:
+        if self.is_sleeping and amount > 0:
             self.is_sleeping = False
             self.turns_without_damage = 0
             self.powers = [p for p in self.powers if p.name != "Metallicize"]

@@ -11,8 +11,7 @@ class Worship(Card):
     target_type = TargetType.SELF
     rarity = RarityType.UNCOMMON
     base_cost = 2
-    base_innate = False
-    upgrade_innate = True
+    upgrade_retain = True
     text_name = "Worship"
     text_description = "Gain 5 Mantra."
 

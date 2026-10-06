@@ -23,8 +23,11 @@ class SlimeBoss(Enemy):
     enemy_type = EnemyType.BOSS
     
     def __init__(self):
+        from engine.game_state import game_state
+
+        ascension = getattr(game_state, "ascension", 0)
         super().__init__(
-            hp_range=(140, 140)  # todo: 150 a9
+            hp_range=(150, 150) if ascension >= 9 else (140, 140)
         )
         
         # Register intentions
@@ -54,9 +57,8 @@ class SlimeBoss(Enemy):
         
         return self.intentions[intention_name]
     
-    def on_damage_taken(self, damage: int, source=None, card=None, damage_type: str = "direct") -> None:
+    def on_any_hp_lost(self, amount: int, source=None, card=None) -> None:
         """Check for split trigger when taking damage."""
-        super().on_damage_taken(damage, source, card, damage_type)
         actions = []
         # Check if HP threshold reached
         if self.hp <= self.max_hp / 2 and not self._split_triggered:

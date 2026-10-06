@@ -7,7 +7,7 @@ class DevotionPower(Power):
     name = "Devotion"
     description = "At the start of your turn, gain {amount} Mantra."
 
-    def on_turn_start(self):
+    def on_turn_start_post_draw(self):
         from actions.watcher import GainMantraAction
 
         add_action(GainMantraAction(self.amount))

@@ -14,6 +14,8 @@ class Omega(Card):
     rarity = RarityType.SPECIAL
     base_cost = 3
     base_exhaust = True
+    base_magic = {"damage": 50}
+    upgrade_magic = {"damage": 60}
     text_name = "Omega"
     text_description = "At the end of your turn, deal 50 damage to ALL enemies."
 
@@ -21,4 +23,4 @@ class Omega(Card):
         from engine.game_state import game_state
 
         player = game_state.player
-        add_action(ApplyPowerAction(OmegaPower(amount=50, owner=player), player))
+        add_action(ApplyPowerAction(OmegaPower(amount=self.get_magic_value("damage"), owner=player), player))

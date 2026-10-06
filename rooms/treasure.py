@@ -5,7 +5,7 @@ from engine.runtime_api import add_action, add_actions, publish_message, request
 import random
 from tui.print_utils import tui_print
 from actions.display import InputRequestAction, DisplayTextAction
-from actions.misc import OpenChestAction
+from actions.misc import LeaveRoomAction, OpenChestAction
 from engine.game_state import game_state
 from localization import LocalStr, t
 from rooms.base import Room
@@ -126,7 +126,7 @@ class TreasureRoom(Room):
             # Chest already opened, just leave
             options.append(Option(
                 name=self.local("leave"),
-                actions=[]
+                actions=[LeaveRoomAction(room=self)]
             ))
 
         return InputRequestAction(

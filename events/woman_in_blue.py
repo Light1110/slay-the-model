@@ -3,6 +3,7 @@ Event 5 - The Woman in Blue
 """
 from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
 from events.base_event import Event
+from actions.base import LambdaAction
 from actions.display import InputRequestAction, DisplayTextAction
 from actions.reward import LoseGoldAction, AddRandomPotionAction
 from actions.combat import LoseHPAction
@@ -48,6 +49,7 @@ class WomanInBlueEvent(Event):
                 actions=[
                     LoseGoldAction(amount=20),
                     AddRandomPotionAction(character=game_state.player.character),
+                    LambdaAction(lambda: self.end_event()),
                 ]
             ))
         
@@ -59,6 +61,7 @@ class WomanInBlueEvent(Event):
                     LoseGoldAction(amount=30),
                     AddRandomPotionAction(character=game_state.player.character),
                     AddRandomPotionAction(character=game_state.player.character),
+                    LambdaAction(lambda: self.end_event()),
                 ]
             ))
         
@@ -71,6 +74,7 @@ class WomanInBlueEvent(Event):
                     AddRandomPotionAction(character=game_state.player.character),
                     AddRandomPotionAction(character=game_state.player.character),
                     AddRandomPotionAction(character=game_state.player.character),
+                    LambdaAction(lambda: self.end_event()),
                 ]
             ))
         
@@ -79,6 +83,7 @@ class WomanInBlueEvent(Event):
             name=LocalStr("events.woman_in_blue.option4"),
             actions=[
                 LoseHPAction(amount=game_state.player.max_hp // 20),  # 5% of max HP
+                LambdaAction(lambda: self.end_event()),
             ]
         ))
         

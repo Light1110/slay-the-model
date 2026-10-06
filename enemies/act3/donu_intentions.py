@@ -40,7 +40,10 @@ class Beam(Intention):
     
     def __init__(self, enemy):
         super().__init__("Beam", enemy)
-        self.base_damage = 10
+        from engine.game_state import game_state
+
+        ascension = getattr(game_state, "ascension", 0)
+        self.base_damage = 12 if ascension >= 4 else 10
         self.base_hits = 2
     
     def execute(self) -> None:

@@ -7,11 +7,16 @@ from actions.base import Action, LambdaAction
 from actions.combat import AttackAction
 from entities.creature import Creature
 from engine.messages import (
+    AnyHpLostMessage,
     CardDiscardedMessage,
     CardDrawnMessage,
     CardPlayedMessage,
-    DamageResolvedMessage,
+    DamageDealtMessage,
+    DirectHpLossMessage,
+    FatalDamageMessage,
     HpLostMessage,
+    PhysicalAttackDealtMessage,
+    PhysicalAttackTakenMessage,
     PlayerTurnEndedMessage,
 )
 from engine.subscriptions import MessagePriority, subscribe
@@ -19,7 +24,7 @@ from engine.subscriptions import MessagePriority, subscribe
 def get_game_state():
     from engine.game_state import game_state
     return game_state
-from utils.types import CardType, TargetType, RarityType
+from utils.types import CardType, DamageType, TargetType, RarityType
 from cards.namespaces import get_color_for_namespace, namespace_from_module
 from localization import Localizable
 from localization import BaseLocalStr, LocalStr, ConcatLocalStr, localize_card_type, localize_rarity, t
@@ -168,7 +173,7 @@ class Card(Localizable):
     @cost.setter
     def cost(self, value: int):
         """设置消耗能量"""
-        if self._cost != COST_UNPLAYABLE or self._cost != COST_X:
+        if self._cost not in (COST_UNPLAYABLE, COST_X):
             self._cost = value
     
     @property
@@ -300,9 +305,14 @@ class Card(Localizable):
         """
         # 特殊处理：如果是战斗描述且已升级，检查是否有升级后的战斗描述
         original_desc_key = desc_key
-        if desc_key == "combat_description" and self.upgrade_level > 0:
-            if self.has_local("upgrade_combat_description"):
-                desc_key = "upgrade_combat_description"
+        if self.upgrade_level > 0:
+            if desc_key == "combat_description":
+                if self.has_local("upgrade_combat_description"):
+                    desc_key = "upgrade_combat_description"
+                elif self.has_local("upgrade_description"):
+                    desc_key = "upgrade_description"
+            elif desc_key == "description" and self.has_local("upgrade_description"):
+                desc_key = "upgrade_description"
         
         # 检查是否有该描述
         if not self.has_local(desc_key):
@@ -434,7 +444,7 @@ class Card(Localizable):
                             damage=self.damage,
                             target=target,
                             source=source,
-                            damage_type="attack",
+                            damage_type=DamageType.PHYSICAL,
                             card=self,
                         )
                         actions.append(action)
@@ -467,12 +477,12 @@ class Card(Localizable):
             return
 
     @subscribe(CardDiscardedMessage, priority=MessagePriority.CARD)
-    def on_discard(self):
+    def on_discard(self, card):
         """卡牌被弃置时触发，默认返回 Action 列表。"""
         return
 
     @subscribe(CardDrawnMessage, priority=MessagePriority.CARD)
-    def on_draw(self):
+    def on_draw(self, card):
         """卡牌被抽到时触发，默认返回 Action 列表。"""
         return
 
@@ -481,7 +491,7 @@ class Card(Localizable):
         return
     
     @subscribe(CardPlayedMessage, priority=MessagePriority.REACTION)
-    def on_card_play(self, card, player, targets):
+    def on_card_play(self, card, targets):
         """Called when another card is played while this card is active."""
         return
 
@@ -499,23 +509,33 @@ class Card(Localizable):
         """卡牌在回合结束时触发，默认返回 Action 列表。"""
         return
 
-    @subscribe(DamageResolvedMessage, priority=MessagePriority.REACTION)
-    def on_damage_dealt(self, damage: int, target=None, card=None, damage_type: str = "direct"):
+    @subscribe(DamageDealtMessage, priority=MessagePriority.REACTION)
+    def on_damage_dealt(self, damage: int, target=None, source=None, card=None, damage_type: str = "direct"):
         """Called when this card deals damage."""
         return
 
-    @subscribe(DamageResolvedMessage, priority=MessagePriority.REACTION)
-    def on_damage_taken(self, damage: int, source=None, card=None, player=None, damage_type: str = "direct"):
-        """Called when damage is resolved while this card is active."""
+    @subscribe(PhysicalAttackDealtMessage, priority=MessagePriority.REACTION)
+    def on_physical_attack_dealt(self, damage: int, target=None, source=None, card=None, damage_type: str = "physical"):
+        """Called when this card deals physical attack damage."""
         return
 
-    @subscribe(HpLostMessage, priority=MessagePriority.REACTION)
-    def on_lose_hp(self, amount: int, source=None, card=None):
-        """Called when HP loss is resolved while this card is active."""
+    @subscribe(PhysicalAttackTakenMessage, priority=MessagePriority.REACTION)
+    def on_physical_attack_taken(self, damage: int, source=None, card=None, damage_type: str = "physical"):
+        """Called when the player takes physical attack damage while this card is active."""
         return
 
-    @subscribe(DamageResolvedMessage, priority=MessagePriority.REACTION)
-    def on_fatal(self, damage: int, target=None, card=None, damage_type: str = "direct"):
+    @subscribe(DirectHpLossMessage, priority=MessagePriority.REACTION)
+    def on_direct_hp_loss(self, amount: int, source=None, card=None):
+        """Called when direct HP loss is resolved while this card is active."""
+        return
+
+    @subscribe(AnyHpLostMessage, priority=MessagePriority.REACTION)
+    def on_any_hp_lost(self, amount: int, source=None, card=None):
+        """Called whenever actual HP loss is resolved while this card is active."""
+        return
+
+    @subscribe(FatalDamageMessage, priority=MessagePriority.REACTION)
+    def on_fatal(self, damage: int, target=None, source=None, card=None, damage_type: str = "direct"):
         """Called when this card delivers a killing blow."""
         return
 

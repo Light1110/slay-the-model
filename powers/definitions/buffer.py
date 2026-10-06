@@ -46,5 +46,7 @@ class BufferPower(Power):
         """
         if self.amount > 0:
             self.amount -= 1
+            if self.owner and self.amount <= 0:
+                self.owner.remove_power(self)
             return True
         return False

@@ -10,6 +10,7 @@ from powers.definitions.confused import ConfusedPower
 from powers.definitions.no_block import NoBlockPower
 from powers.definitions.artifact import ArtifactPower
 from powers.definitions.intangible import IntangiblePower
+from powers.definitions.invincible import InvinciblePower
 from powers.definitions.frail import FrailPower
 from powers.definitions.magnetism import MagnetismPower
 from powers.definitions.mayhem import MayhemPower
@@ -63,6 +64,7 @@ from powers.definitions.energized import EnergizedPower
 from powers.definitions.draw_card_next_turn import DrawCardNextTurnPower
 from powers.definitions.next_turn_block import NextTurnBlockPower
 from powers.definitions.choke import ChokePower
+from powers.definitions.sharp_hide import SharpHidePower
 
 __all__ = [
     "StrengthPower",
@@ -73,6 +75,7 @@ __all__ = [
     "NoBlockPower",
     "ArtifactPower",
     "IntangiblePower",
+    "InvinciblePower",
     "FrailPower",
     "MagnetismPower",
     "MayhemPower",
@@ -123,6 +126,7 @@ __all__ = [
     "DrawCardNextTurnPower",
     "NextTurnBlockPower",
     "ChokePower",
+    "SharpHidePower",
     "FlyingPower",
     "FocusPower",
     "HexPower",

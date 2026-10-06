@@ -15,6 +15,7 @@ class Blasphemy(Card):
     rarity = RarityType.RARE
     base_cost = 1
     base_exhaust = True
+    upgrade_retain = True
     text_name = "Blasphemy"
     text_description = "Enter Divinity. Die next turn. Exhaust."
 

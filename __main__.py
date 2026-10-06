@@ -15,7 +15,7 @@ import os
 import argparse
 from engine.game_flow import GameFlow
 from engine.game_state import game_state
-from engine.runtime_context import configure_noninteractive_cli_mode
+from engine.runtime_context import configure_noninteractive_cli_mode, is_stdin_interactive
 
 
 def _import_potions():
@@ -34,11 +34,8 @@ def _import_relics():
 
 
 def _is_interactive_stdin():
-    """Return True when stdin can accept interactive input."""
-    try:
-        return bool(sys.stdin and sys.stdin.isatty())
-    except (AttributeError, OSError, ValueError):
-        return False
+    """Return True when CLI stdin/stdout can support interactive input."""
+    return is_stdin_interactive()
 
 
 def run_cli_mode():

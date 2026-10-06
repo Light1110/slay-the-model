@@ -34,6 +34,14 @@ class RestRoom(Room):
     def enter(self) -> None:
         """Enter rest room and return the initial rest actions."""
         actions = []
+        for relic in game_state.player.relics:
+            on_enter_rest_room = getattr(relic, "on_enter_rest_room", None)
+            if callable(on_enter_rest_room):
+                on_enter_rest_room()
+                continue
+            on_enter_rest_room_legacy = getattr(relic, "onEnterRestRoom", None)
+            if callable(on_enter_rest_room_legacy):
+                on_enter_rest_room_legacy()
 
         if _has_relic("EternalFeather", game_state):
             deck = game_state.player.card_manager.get_pile('deck')

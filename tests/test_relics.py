@@ -44,7 +44,7 @@ class TestRelics(unittest.TestCase):
         self.player.relics = [relic]
         self.player.card_manager.piles["hand"] = []
 
-        relic.on_combat_start(self.player, [])
+        relic.on_combat_start(self.player)
         self.helper.game_state.drive_actions()
 
         shivs = [card for card in self.player.card_manager.piles["hand"] if card.__class__.__name__ == "Shiv"]

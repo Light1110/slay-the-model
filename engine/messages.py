@@ -81,7 +81,15 @@ class CardAddedToPileMessage(GameMessage):
 
 @dataclass(frozen=True)
 class PlayerTurnStartedMessage(GameMessage):
-    """The player turn start boundary has already been reached."""
+    """The player turn start boundary has been reached before normal draw."""
+
+    owner: "Creature"
+    enemies: List["Creature"]
+
+
+@dataclass(frozen=True)
+class PlayerTurnPostDrawMessage(GameMessage):
+    """The player turn has reached the post-draw boundary."""
 
     owner: "Creature"
     enemies: List["Creature"]
@@ -190,6 +198,26 @@ class HpLostMessage(GameMessage):
 
 
 @dataclass(frozen=True)
+class DirectHpLossMessage(GameMessage):
+    """Direct HP loss has already been applied to a target."""
+
+    target: "Creature"
+    amount: int
+    source: Any = None
+    card: Optional["Card"] = None
+
+
+@dataclass(frozen=True)
+class AnyHpLostMessage(GameMessage):
+    """Any actual HP loss has already been applied to a target."""
+
+    target: "Creature"
+    amount: int
+    source: Any = None
+    card: Optional["Card"] = None
+
+
+@dataclass(frozen=True)
 class BlockGainedMessage(GameMessage):
     """Block has already been added to a target."""
 
@@ -200,14 +228,47 @@ class BlockGainedMessage(GameMessage):
 
 
 @dataclass(frozen=True)
-class DamageResolvedMessage(GameMessage):
-    """Damage has already been resolved against a target."""
+class DamageDealtMessage(GameMessage):
+    """Damage has already been dealt to a target."""
 
     target: "Creature"
     amount: int
     source: Any = None
     card: Optional["Card"] = None
     damage_type: str = "direct"
+
+
+@dataclass(frozen=True)
+class FatalDamageMessage(GameMessage):
+    """A damage instance has already delivered a killing blow."""
+
+    target: "Creature"
+    amount: int
+    source: Any = None
+    card: Optional["Card"] = None
+    damage_type: str = "direct"
+
+
+@dataclass(frozen=True)
+class PhysicalAttackTakenMessage(GameMessage):
+    """A physical attack has already caused damage to a target."""
+
+    target: "Creature"
+    amount: int
+    source: Any = None
+    card: Optional["Card"] = None
+    damage_type: str = "physical"
+
+
+@dataclass(frozen=True)
+class PhysicalAttackDealtMessage(GameMessage):
+    """A source has already dealt physical attack damage to a target."""
+
+    target: "Creature"
+    amount: int
+    source: Any = None
+    card: Optional["Card"] = None
+    damage_type: str = "physical"
 
 
 @dataclass(frozen=True)
@@ -248,11 +309,17 @@ EXPLICIT_SUBSCRIPTION_MESSAGE_TYPES = (
     CombatEndedMessage,
     CombatStartedMessage,
     CreatureDiedMessage,
-    DamageResolvedMessage,
+    DamageDealtMessage,
+    FatalDamageMessage,
+    DirectHpLossMessage,
     EliteVictoryMessage,
     GoldGainedMessage,
     HealedMessage,
     HpLostMessage,
+    AnyHpLostMessage,
+    PhysicalAttackDealtMessage,
+    PhysicalAttackTakenMessage,
+    PlayerTurnPostDrawMessage,
     PlayerTurnEndedMessage,
     PlayerTurnStartedMessage,
     PotionUsedMessage,

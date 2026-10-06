@@ -33,9 +33,10 @@ class ArtifactPower(Power):
         Returns True if the debuff was prevented (consumes 1 stack).
         """
         if self.amount > 0:
+            self.amount -= 1
             tui_print(t("combat.artifact_blocked"))
             print(f"[{t('powers.ArtifactPower.name')}] {t('combat.artifact_blocked')} {t('combat.artifact_remaining', count=self.amount)}")
             if self.owner and self.amount <= 0:
-                self.owner.remove_power(self.name)
+                self.owner.remove_power(self)
             return True
         return False

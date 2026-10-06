@@ -63,6 +63,9 @@ class GainMantraAction(Action):
         player = game_state.player
         if player is None or self.amount <= 0:
             return
+        combat = game_state.current_combat
+        if combat is not None:
+            combat.combat_state.mantra_gained += self.amount
 
         mantra = player.get_power("Mantra")
         if mantra is None:
@@ -72,6 +75,8 @@ class GainMantraAction(Action):
         while mantra.amount >= 10:
             mantra.amount -= 10
             add_action(ChangeStanceAction(StatusType.DIVINITY), to_front=True)
+        if mantra.amount <= 0:
+            player.remove_power(mantra)
 
 
 @register("action")
