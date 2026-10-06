@@ -160,7 +160,7 @@ def _apply_back_attack(damage, attacker):
     return damage
 
 
-def resolve_potential_damage(base_damage: int, attacker: Creature, 
+def resolve_potential_damage(base_damage: int, attacker: Optional[Creature], 
                          target: Optional[Creature], card=None, damage_type: str | None = None) -> int:
     """
     Resolve final damage value with one floor at the end.
