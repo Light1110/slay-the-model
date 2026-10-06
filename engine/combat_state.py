@@ -21,7 +21,6 @@ class CombatState:
 
         # Turn tracking
         self.turn_cards_played: int = 0
-        self.turn_enable_card_play: bool = True
         self.turn_attack_cards_played: int = 0
 
         # Player turn tracking
@@ -64,5 +63,4 @@ class CombatState:
         self.turn_attack_cards_played = 0
         self.player_actions_this_turn = 0
         self.player_energy_spent_this_turn = 0
-        self.turn_enable_card_play = True
         self.last_card_targets = []

@@ -46,6 +46,10 @@ class Relic(Localizable):
     def __init__(self):
         self.namespace = self._resolve_namespace()
 
+    def allows_card_play(self, card) -> tuple[bool, Optional[str]]:
+        """Whether this relic allows the given card to be played."""
+        return True, None
+
     def _resolve_namespace(self) -> str:
         """Infer relic namespace from module path.
 

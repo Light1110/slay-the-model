@@ -379,6 +379,13 @@ class VelvetChoker(Relic):
         from engine.game_state import game_state
         add_actions([GainEnergyAction(energy=1)])
         return
-    # Card play limit implemented in Card.can_play() in cards/base.py
-    # Checks combat_state.turn_cards_played >= 6 and blocks further card plays
+
+    def allows_card_play(self, card):
+        """At most 6 cards can be played each turn."""
+        from engine.game_state import game_state
+
+        combat = game_state.current_combat
+        if combat is not None and combat.combat_state.turn_cards_played >= 6:
+            return False, "Velvet Choker restriction (max 6 cards per turn)"
+        return True, None
 

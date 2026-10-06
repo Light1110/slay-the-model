@@ -700,6 +700,7 @@ class Combat(Localizable):
 
     def _start_player_turn(self):
         """Start player turn - draw cards, reset energy, trigger start-of-turn effects"""
+        self.combat_state.reset_turn_info()
         from engine.game_state import game_state
         from localization import t
         from actions.watcher import ChangeStanceAction

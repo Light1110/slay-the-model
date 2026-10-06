@@ -71,6 +71,10 @@ class Power(Localizable):
         if not hasattr(self, "localization_key"):
             self.localization_key = f"{self.localization_prefix}.{self.__class__.__name__}"
 
+    def allows_card_play(self, card) -> tuple[bool, Optional[str]]:
+        """Whether this power allows the given card to be played."""
+        return True, None
+
     @staticmethod
     def _normalized_name_candidates(value: str) -> List[str]:
         """Generate common localization key variants for power names."""

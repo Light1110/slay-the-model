@@ -519,26 +519,20 @@ class Card(Localizable):
         """Called when this card delivers a killing blow."""
         return
 
+    def allows_card_play(self, card) -> tuple[bool, Optional[str]]:
+        """Whether this card allows another card to be played while it is in hand."""
+        return True, None
+
     def can_play(self, ignore_energy=False) -> tuple[bool, Optional[str]]:
         """Check if this card can be played."""
         from engine.game_state import game_state
         from utils.types import CardType
         assert game_state.current_combat is not None
-        combat_state = game_state.current_combat.combat_state
-        if not combat_state.turn_enable_card_play:
-            return False, "Normality restriction"
-        
-        # VelvetChoker restriction: cannot play more than 6 cards per turn
-        if game_state.player:
-            for relic in game_state.player.relics:
-                if relic.__class__.__name__ == "VelvetChoker":
-                    if combat_state.turn_cards_played >= 6:
-                        return False, "Velvet Choker restriction (max 6 cards per turn)"
-                    break
-        
+
         cost = self.cost
-        
+
         if cost == COST_UNPLAYABLE:
+            can_bypass_unplayable = False
             if (
                 self.card_type == CardType.STATUS
                 and game_state.player
@@ -547,7 +541,7 @@ class Card(Localizable):
                     for relic in game_state.player.relics
                 )
             ):
-                return True, None
+                can_bypass_unplayable = True
             if (
                 self.card_type == CardType.CURSE
                 and game_state.player
@@ -556,16 +550,48 @@ class Card(Localizable):
                     for relic in game_state.player.relics
                 )
             ):
-                return True, None
-            return False, "Unplayable card."
+                can_bypass_unplayable = True
+            if not can_bypass_unplayable:
+                return False, "Unplayable card."
 
-        if not ignore_energy and game_state.player:
-            if cost == COST_X:
-                return True, None
-            elif game_state.player.energy < cost:
-                return False, "Not enough energy."
+        if (
+            not ignore_energy
+            and game_state.player
+            and cost != COST_X
+            and cost != COST_UNPLAYABLE
+            and game_state.player.energy < cost
+        ):
+            return False, "Not enough energy."
+
+        restriction = self._play_restriction_from_others()
+        if restriction is not None:
+            return False, restriction
 
         return True, None
+
+    def _play_restriction_from_others(self) -> Optional[str]:
+        """Ask hand cards, relics, and powers whether this card may be played."""
+        from engine.game_state import game_state
+
+        player = game_state.player
+        if player is None:
+            return None
+
+        sources = []
+        card_manager = getattr(player, "card_manager", None)
+        if card_manager is not None:
+            sources.extend(card_manager.get_pile("hand"))
+        sources.extend(list(getattr(player, "relics", []) or []))
+        sources.extend(list(getattr(player, "powers", []) or []))
+
+        for source in sources:
+            hook = getattr(source, "allows_card_play", None)
+            if hook is None:
+                continue
+            allowed, reason = hook(self)
+            if not allowed:
+                return reason or "Card play restricted"
+        return None
 
     # * * * upgrade 相关
 
