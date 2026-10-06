@@ -203,20 +203,13 @@ class DealDamageAction(Action):
         if not self.target or self.target.is_dead():
             return
 
-        if self.source is not None:
-            damage_amount = resolve_potential_damage(
-                self.damage,
-                self.source,
-                self.target,
-                card=self.card,
-                damage_type=self.damage_type,
-            )
-        else:
-            damage_amount = self.damage
-            if callable(damage_amount):
-                damage_amount = damage_amount()
-            if isinstance(damage_amount, list):
-                damage_amount = damage_amount[0] if damage_amount else 0
+        damage_amount = resolve_potential_damage(
+            self.damage,
+            self.source,
+            self.target,
+            card=self.card,
+            damage_type=self.damage_type,
+        )
 
         block_absorbed = min(self.target.block, damage_amount)
         hp_loss = damage_amount - block_absorbed

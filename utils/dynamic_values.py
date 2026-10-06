@@ -3,6 +3,7 @@ Dynamic value resolution system for cards and enemies.
 Handles combat value calculations with powers, stances, and other modifiers.
 """
 
+import math
 from typing import Optional, Any, TYPE_CHECKING, cast
 from entities.creature import Creature
 from utils.types import CardType, DamageType, StatusType
@@ -91,156 +92,118 @@ def resolve_card_damage(card: 'Card', target: Optional[Creature] = None) -> int:
     return resolve_potential_damage(base_damage, player, target=target, card=card, damage_type=damage_type)
 
 
+def _is_physical_attack(damage_type) -> bool:
+    return damage_type in {DamageType.PHYSICAL, "attack"}
+
+
+def _damage_priority(modifier) -> int:
+    return getattr(modifier, "damage_priority", 5)
+
+
+def _modifiers_in_phase(modifiers, phase: DamagePhase):
+    matched = [
+        modifier
+        for modifier in modifiers
+        if getattr(modifier, "modify_phase", DamagePhase.ADDITIVE) == phase
+        and not getattr(modifier, "is_back_attack", False)
+    ]
+    return sorted(matched, key=_damage_priority)
+
+
+def _apply_damage_dealt(damage, modifier, card, target):
+    try:
+        return cast(Any, modifier).modify_damage_dealt(damage, card=card, target=target)
+    except TypeError:
+        return cast(Any, modifier).modify_damage_dealt(damage)
+
+
+def _apply_dealt_phase(damage, attacker, phase: DamagePhase, card, target):
+    from player.player import Player
+
+    if attacker is not None and hasattr(attacker, "powers"):
+        for power in _modifiers_in_phase(attacker.powers, phase):
+            if hasattr(power, "modify_damage_dealt"):
+                damage = _apply_damage_dealt(damage, power, card, target)
+    if isinstance(attacker, Player) and hasattr(attacker, "relics"):
+        for relic in _modifiers_in_phase(attacker.relics, phase):
+            if hasattr(relic, "modify_damage_dealt"):
+                damage = cast(Any, relic).modify_damage_dealt(damage, card=card, target=target)
+    return damage
+
+
+def _apply_taken_phase(damage, target, attacker, phase: DamagePhase, damage_type):
+    from player.player import Player
+
+    if target is None:
+        return damage
+    if hasattr(target, "powers"):
+        for power in _modifiers_in_phase(target.powers, phase):
+            if hasattr(power, "modify_damage_taken"):
+                damage = cast(Any, power).modify_damage_taken(damage)
+    if isinstance(target, Player) and hasattr(target, "relics"):
+        for relic in _modifiers_in_phase(target.relics, phase):
+            if hasattr(relic, "modify_damage_taken"):
+                damage = cast(Any, relic).modify_damage_taken(
+                    damage,
+                    source=attacker,
+                    damage_type=damage_type,
+                )
+    return damage
+
+
+def _apply_back_attack(damage, attacker):
+    if attacker is None:
+        return damage
+    for power in getattr(attacker, "powers", []):
+        if getattr(power, "is_back_attack", False):
+            return int(power.modify_damage_dealt(damage))
+    return damage
+
+
 def resolve_potential_damage(base_damage: int, attacker: Creature, 
                          target: Optional[Creature], card=None, damage_type: str | None = None) -> int:
     """
-    Resolve final damage value with unified phased pipeline.
-    
-    This is the SINGLE SOURCE OF TRUTH for damage calculation.
-    All damage modifiers should be applied here, not in DealDamageAction.
-    
-    Phase order (CRITICAL - additive before multiplicative before capping):
-    1. Normalize damage (callable/list -> int)
-    2. ADDITIVE phase: Powers first, then Relics
-    3. MULTIPLICATIVE phase: Powers first, then Relics
-    4. CAPPING phase: Powers first, then Relics
-    5. Clamp to non-negative
-    
-    For each phase, the order is ALWAYS: Powers -> Relics
-    
-    Args:
-        base_damage: Base damage value (int or callable returning int)
-        attacker: Creature dealing damage
-        target: Creature receiving damage (can be None for preview)
-        card: Card being played (optional, for PenNib etc.)
-    
-    Returns:
-        Final resolved damage value
+    Resolve final damage value with one floor at the end.
+
+    Physical attacks: additive, attacker multipliers, stance, incoming
+    multipliers, back attack, final modifiers, then capping.
+    Other damage types only receive capping modifiers.
     """
     from player.player import Player
-    
-    is_attack_damage = damage_type in {"attack", DamageType.PHYSICAL}
 
-    # ====================
-    # Phase 1: Normalize
-    # ====================
+    is_physical = _is_physical_attack(damage_type)
+
     damage = base_damage() if callable(base_damage) else base_damage
-    
-    # Defensive: handle case where damage is accidentally a list
     if isinstance(damage, list):
         print(f"[ERROR] resolve_potential_damage received list: {damage}, base_damage={base_damage}")
         damage = damage[0] if damage else 0
-    
-    # ====================
-    # Phase 2: ADDITIVE (加算)
-    # e.g., Strength +3, Dexterity for block
-    # ====================
-    
-    # 2a. Attacker's powers (ADDITIVE phase)
-    if attacker and hasattr(attacker, 'powers'):
-        for power in attacker.powers:
-            if getattr(power, 'modify_phase', DamagePhase.ADDITIVE) == DamagePhase.ADDITIVE:
-                if hasattr(power, 'modify_damage_dealt'):
-                    try:
-                        damage = cast(Any, power).modify_damage_dealt(damage, card=card, target=target)
-                    except TypeError:
-                        damage = cast(Any, power).modify_damage_dealt(damage)
-    
-    # 2b. Attacker's relics (ADDITIVE phase, Player only)
-    if isinstance(attacker, Player) and hasattr(attacker, 'relics'):
-        for relic in attacker.relics:
-            if getattr(relic, 'modify_phase', DamagePhase.ADDITIVE) == DamagePhase.ADDITIVE:
-                if hasattr(relic, 'modify_damage_dealt'):
-                    damage = cast(Any, relic).modify_damage_dealt(damage, card=card, target=target)
-    
-    # ====================
-    # Phase 3: MULTIPLICATIVE (乘算)
-    # e.g., Weak 0.75x, Vulnerable 1.5x, PenNib 2x
-    # ====================
-    
-    # 3a. Attacker's powers (MULTIPLICATIVE phase)
-    if attacker and hasattr(attacker, 'powers'):
-        for power in attacker.powers:
-            if getattr(power, 'modify_phase', DamagePhase.ADDITIVE) == DamagePhase.MULTIPLICATIVE:
-                if hasattr(power, 'modify_damage_dealt'):
-                    try:
-                        damage = cast(Any, power).modify_damage_dealt(damage, card=card, target=target)
-                    except TypeError:
-                        damage = cast(Any, power).modify_damage_dealt(damage)
-    
-    # 3b. Attacker's relics (MULTIPLICATIVE phase, Player only)
-    if isinstance(attacker, Player) and hasattr(attacker, 'relics'):
-        for relic in attacker.relics:
-            if getattr(relic, 'modify_phase', DamagePhase.ADDITIVE) == DamagePhase.MULTIPLICATIVE:
-                if hasattr(relic, 'modify_damage_dealt'):
-                    damage = cast(Any, relic).modify_damage_dealt(damage, card=card, target=target)
-    
-    # 3c. Attacker's stance multiplier (Player only)
-    if isinstance(attacker, Player) and is_attack_damage:
-        attacker_status = attacker.status_manager.status
-        if attacker_status == StatusType.WRATH:
-            damage *= 2
-        elif attacker_status == StatusType.DIVINITY:
-            damage = int(damage * 3)
-    
-    # 3d. Target's incoming multiplicative modifiers
-    if target is not None:
-        # Target's Vulnerable (50% more damage)
-        if hasattr(target, 'get_damage_taken_multiplier'):
-            multiplier = target.get_damage_taken_multiplier()
-            damage = int(damage * multiplier)
-        
-        # Target's stance multiplier (Player only)
-        if isinstance(target, Player) and is_attack_damage:
-            target_status = target.status_manager.status
-            if target_status == StatusType.WRATH:
+    damage = float(damage)
+
+    if is_physical:
+        damage = _apply_dealt_phase(damage, attacker, DamagePhase.ADDITIVE, card, target)
+        damage = _apply_dealt_phase(damage, attacker, DamagePhase.MULTIPLICATIVE, card, target)
+
+        if isinstance(attacker, Player):
+            attacker_status = attacker.status_manager.status
+            if attacker_status == StatusType.WRATH:
                 damage *= 2
-        
-        # Target's powers (MULTIPLICATIVE phase for damage taken)
-        if hasattr(target, 'powers'):
-            for power in target.powers:
-                if getattr(power, 'modify_phase', DamagePhase.ADDITIVE) == DamagePhase.MULTIPLICATIVE:
-                    if hasattr(power, 'modify_damage_taken'):
-                        damage = cast(Any, power).modify_damage_taken(damage)
-        
-        # Target's relics (MULTIPLICATIVE phase, Player only)
-        if isinstance(target, Player) and hasattr(target, 'relics'):
-            for relic in target.relics:
-                if getattr(relic, 'modify_phase', DamagePhase.ADDITIVE) == DamagePhase.MULTIPLICATIVE:
-                    if hasattr(relic, 'modify_damage_taken'):
-                        damage = cast(Any, relic).modify_damage_taken(
-                            damage,
-                            source=attacker,
-                            damage_type=damage_type,
-                        )
-    
-    # ====================
-    # Phase 4: CAPPING (限定)
-    # e.g., Intangible caps all damage to 1
-    # ====================
-    
-    # 4a. Target's powers (CAPPING phase for damage taken)
-    if target is not None and hasattr(target, 'powers'):
-        for power in target.powers:
-            if getattr(power, 'modify_phase', DamagePhase.ADDITIVE) == DamagePhase.CAPPING:
-                if hasattr(power, 'modify_damage_taken'):
-                    damage = cast(Any, power).modify_damage_taken(damage)
-    
-    # 4b. Target's relics (CAPPING phase, Player only)
-    if isinstance(target, Player) and hasattr(target, 'relics'):
-        for relic in target.relics:
-            if getattr(relic, 'modify_phase', DamagePhase.ADDITIVE) == DamagePhase.CAPPING:
-                if hasattr(relic, 'modify_damage_taken'):
-                    damage = cast(Any, relic).modify_damage_taken(
-                        damage,
-                        source=attacker,
-                        damage_type=damage_type,
-                    )
-    
-    # ====================
-    # Phase 5: Clamp
-    # ====================
-    return max(0, int(damage))
+            elif attacker_status == StatusType.DIVINITY:
+                damage *= 3
+
+        if target is not None:
+            if hasattr(target, "get_damage_taken_multiplier"):
+                damage *= target.get_damage_taken_multiplier()
+            if isinstance(target, Player) and target.status_manager.status == StatusType.WRATH:
+                damage *= 2
+            damage = _apply_taken_phase(
+                damage, target, attacker, DamagePhase.MULTIPLICATIVE, damage_type
+            )
+
+        damage = _apply_back_attack(damage, attacker)
+        damage = _apply_taken_phase(damage, target, attacker, DamagePhase.FINAL, damage_type)
+
+    damage = _apply_taken_phase(damage, target, attacker, DamagePhase.CAPPING, damage_type)
+    return max(0, math.floor(damage))
 
 
 def resolve_card_block(card: 'Card') -> int:

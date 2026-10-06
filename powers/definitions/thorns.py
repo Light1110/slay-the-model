@@ -34,6 +34,13 @@ class ThornsPower(Power):
         damage_type: str = "physical",
     ):
         if source is not None:
-            add_actions([DealDamageAction(damage=self.amount, target=source, damage_type=DamageType.MAGICAL)])
+            add_actions([
+                DealDamageAction(
+                    damage=self.amount,
+                    target=source,
+                    source=self.owner,
+                    damage_type=DamageType.THORNS,
+                )
+            ])
             return
         return

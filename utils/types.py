@@ -67,3 +67,4 @@ class DamageType(str, Enum):
     PHYSICAL = "physical"
     MAGICAL = "magical"
     HP_LOSS = "hp_loss"
+    THORNS = "thorns"

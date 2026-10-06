@@ -60,6 +60,7 @@ class Power(Localizable):
     # MULTIPLICATIVE: Applied second (e.g., Weak 0.75x)
     # CAPPING: Applied last (e.g., Intangible caps at 1)
     modify_phase: DamagePhase = DamagePhase.ADDITIVE
+    damage_priority: int = 5
     
     def __init__(self, amount: int = 0, duration: int = -1, owner=None):
         """Initialize power with amount and duration.
@@ -76,6 +77,7 @@ class Power(Localizable):
         self.amount_equals_duration = self.__class__.amount_equals_duration
         self.is_buff = self.__class__.is_buff
         self.decays_at_round_end = self.__class__.decays_at_round_end
+        self.damage_priority = self.__class__.damage_priority
         self.just_applied = False
         if not hasattr(self, "localization_key"):
             self.localization_key = f"{self.localization_prefix}.{self.__class__.__name__}"
