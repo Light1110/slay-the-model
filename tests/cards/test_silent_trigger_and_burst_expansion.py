@@ -84,8 +84,12 @@ class TestSilentTriggerAndBurstExpansion:
         PlayCardBHAction(card, [self.player]).execute()
         self.helper.game_state.drive_actions()
 
-        assert self.player.get_power("Intangible").amount == 2
-        assert self.player.get_power("Dexterity Down").amount == 1
+        intangible = self.player.get_power("Intangible")
+        dexterity_down = self.player.get_power("Dexterity Down")
+        assert intangible is not None
+        assert dexterity_down is not None
+        assert intangible.amount == 2
+        assert dexterity_down.amount == 1
         assert card not in self.player.card_manager.get_pile("exhaust_pile")
         assert card not in self.player.card_manager.get_pile("discard_pile")
         assert card not in self.player.card_manager.get_pile("hand")
@@ -99,7 +103,9 @@ class TestSilentTriggerAndBurstExpansion:
         self.helper.game_state.drive_actions()
 
         assert upgraded.exhaust is False
-        assert self.player.get_power("Intangible").amount == 3
+        upgraded_intangible = self.player.get_power("Intangible")
+        assert upgraded_intangible is not None
+        assert upgraded_intangible.amount == 3
         assert upgraded not in self.player.card_manager.get_pile("exhaust_pile")
         assert upgraded not in self.player.card_manager.get_pile("discard_pile")
 
