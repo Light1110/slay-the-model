@@ -423,7 +423,7 @@ class Card(Localizable):
             )
             from actions.card import ExhaustCardAction, DrawCardsAction
             
-            from utils.dynamic_values import resolve_card_value
+            from utils.dynamic_values import attack_base_damage, resolve_card_value
             from engine.game_state import game_state
             source = game_state.player
             
@@ -441,7 +441,7 @@ class Card(Localizable):
                     for _ in range(hits):
                         # Use unified damage pipeline via AttackAction so Strength/Weak/Vulnerable etc. are applied correctly.
                         action = AttackAction(
-                            damage=self.damage,
+                            damage=attack_base_damage(self),
                             target=target,
                             source=source,
                             damage_type=DamageType.PHYSICAL,

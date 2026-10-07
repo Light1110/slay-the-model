@@ -59,6 +59,28 @@ def resolve_card_value(card, value_type: str, target: Optional[Creature] = None)
                 return 0
 
 
+def attack_base_damage(card: 'Card') -> int:
+    """Base damage sent into the damage pipeline, before Strength is added once."""
+    from engine.game_state import game_state
+
+    base_damage = card.damage
+    if callable(base_damage):
+        base_damage = base_damage()
+
+    player = game_state.player
+    if player is None or not hasattr(card, "get_magic_value"):
+        return base_damage
+
+    strength_power = player.get_power("Strength")
+    if strength_power is None:
+        return base_damage
+
+    strength_mult = card.get_magic_value("strength_mult", 0)
+    if strength_mult:
+        base_damage += (strength_mult - 1) * strength_power.amount
+    return base_damage
+
+
 def resolve_card_damage(card: 'Card', target: Optional[Creature] = None) -> int:
     """
     Resolve damage value for card preview (only considers attacker's abilities).
@@ -74,20 +96,7 @@ def resolve_card_damage(card: 'Card', target: Optional[Creature] = None) -> int:
     """
     from engine.game_state import game_state
     player = game_state.player
-    
-    # Get base damage
-    base_damage = card.damage
-    if callable(base_damage):
-        base_damage = base_damage()
-    
-    # Handle Heavy Blade special case - extra strength scaling
-    strength_power = player.get_power('strength')
-    if strength_power and hasattr(card, 'get_magic_value'):
-        strength_mult = card.get_magic_value('strength_mult', 0)
-        if strength_mult and strength_mult:
-            # Heavy Blade: extra strength bonus added to base
-            base_damage += (strength_mult - 1) * strength_power.amount
-    
+    base_damage = attack_base_damage(card)
     damage_type = DamageType.PHYSICAL if getattr(card, "card_type", None) == CardType.ATTACK else DamageType.MAGICAL
     return resolve_potential_damage(base_damage, player, target=target, card=card, damage_type=damage_type)
 
