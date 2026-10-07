@@ -818,7 +818,7 @@ cards:
       description: 造成 {damage} 点伤害。本场战斗中每失去 1 点生命值，消耗减少 1。
     Bloodletting:
       name: 放血
-      description: 失去 2 点生命值。获得 {energy_gain} 点能量。
+      description: 失去 3 点生命值。获得 {energy_gain} 点能量。
     Brutality:
       name: 残暴
       description: 回合开始时失去 1 点生命值并抽 1 张牌。
@@ -1015,7 +1015,7 @@ cards:
       description: 获得 {block} 点格挡。抽 {draw} 张牌。
     Backstab:
       name: 背刺
-      description: 固有。造成 {damage} 点伤害。
+      description: 固有。造成 {damage} 点伤害。消耗。
     Caltrops:
       name: 蒺棘
       description: 每当被攻击时，反弹 {magic.thorns} 点伤害。
@@ -1166,7 +1166,7 @@ cards:
       description: 无法打出。如果这张牌从手牌被弃掉，获得 {magic.energy} 点能量。
     WraithForm:
       name: 幽魂形态
-      description: 获得 {magic.intangible} 层虚无。在你的回合结束时，失去 {magic.dex_down} 点敏捷。消耗。
+      description: 获得 {magic.intangible} 层虚无。在你的回合结束时，失去 {magic.dex_down} 点敏捷。
     BulletTime:
       name: 子弹时间
       description: 你手中的牌本回合费用变为 0。本回合你不能再抽牌。

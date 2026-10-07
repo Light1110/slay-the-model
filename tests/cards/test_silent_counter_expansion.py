@@ -105,9 +105,13 @@ class TestSilentCounterExpansion:
         self.player.energy = 3
         card = Skewer()
         self.helper.add_card_to_hand(card)
+        assert card.damage == 7
         assert self.helper.play_card(card, target=enemy)
         assert self.player.energy == 0
-        assert enemy.hp == 31
+        assert enemy.hp == 19
+        upgraded = Skewer()
+        upgraded.upgrade()
+        assert upgraded.damage == 10
 
     def test_skewer_counts_chemical_x_bonus(self):
         enemy = self.helper.create_enemy(Cultist, hp=50)
@@ -117,9 +121,8 @@ class TestSilentCounterExpansion:
         self.player.relics.append(ChemicalX())
         card = Skewer()
         self.helper.add_card_to_hand(card)
-
         assert self.helper.play_card(card, target=enemy)
-        assert enemy.hp == 38
+        assert enemy.hp == 22
 
     def test_expertise_draw_property_tracks_missing_cards(self):
         self.helper.start_combat([])

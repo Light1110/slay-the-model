@@ -848,7 +848,7 @@ cards:
       description: Deal {damage} damage. Costs 1 less energy for each HP lost this combat.
     Bloodletting:
       name: Bloodletting
-      description: Lose 2 HP. Gain {energy_gain} Energy.
+      description: Lose 3 HP. Gain {energy_gain} Energy.
     Brutality:
       name: Brutality
       description: At the start of your turn, lose 1 HP and draw 1 card.
@@ -1047,7 +1047,7 @@ cards:
       description: Gain {block} Block. Draw {draw} cards.
     Backstab:
       name: Backstab
-      description: Innate. Deal {damage} damage.
+      description: Innate. Deal {damage} damage. Exhaust.
     Caltrops:
       name: Caltrops
       description: When attacked, deal {magic.thorns} damage back.
@@ -1198,7 +1198,7 @@ cards:
       description: Unplayable. If this card is discarded from your hand, gain {magic.energy} Energy.
     WraithForm:
       name: Wraith Form
-      description: Gain {magic.intangible} Intangible. At the end of your turn, lose {magic.dex_down} Dexterity. Exhaust.
+      description: Gain {magic.intangible} Intangible. At the end of your turn, lose {magic.dex_down} Dexterity.
     BulletTime:
       name: Bullet Time
       description: Your cards in hand cost 0 this turn. You cannot draw additional cards this turn.

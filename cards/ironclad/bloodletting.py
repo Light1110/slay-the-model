@@ -19,7 +19,7 @@ class Bloodletting(Card):
     rarity = RarityType.UNCOMMON
 
     base_cost = 0
-    base_heal = -2
+    base_heal = -3
     base_energy_gain = 2
 
     upgrade_energy_gain = 3

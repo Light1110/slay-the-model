@@ -21,6 +21,7 @@ class TestBloodletting(unittest.TestCase):
         self.assertEqual(card.card_type, CardType.SKILL)
         self.assertEqual(card.rarity, RarityType.UNCOMMON)
         self.assertEqual(card.damage, 0)
+        self.assertEqual(card.heal, -3)
 
     def test_gains_energy(self):
         """Test that Bloodletting gains energy."""
@@ -47,8 +48,7 @@ class TestBloodletting(unittest.TestCase):
         self.helper.add_card_to_hand(card)
         self.helper.play_card(card, target=None)
         
-        # Should lose 2 HP
-        self.assertEqual(self.helper.get_player_hp(), initial_hp - 2)
+        self.assertEqual(self.helper.get_player_hp(), initial_hp - 3)
 
     def test_upgraded_more_energy(self):
         """Test upgraded Bloodletting gains more energy."""
@@ -56,6 +56,7 @@ class TestBloodletting(unittest.TestCase):
         card.upgrade()
         self.assertEqual(card.cost, 0)
         self.assertEqual(card.energy_gain, 3)
+        self.assertEqual(card.heal, -3)
 
     def test_energy_cost(self):
         """Test Bloodletting costs 0 energy."""

@@ -1,3 +1,4 @@
+from actions.combat_cards import PlayCardBHAction
 from cards.silent.endless_agony import EndlessAgony
 from cards.silent.escape_plan import EscapePlan
 from cards.silent.phantasmal_killer import PhantasmalKiller
@@ -72,6 +73,35 @@ class TestSilentTriggerAndBurstExpansion:
         assert intangible.amount == 2
         assert down is not None
         assert down.amount == 1
+
+    def test_wraith_form_leaves_combat_without_exhausting(self):
+        enemy = self.helper.create_enemy(Cultist, hp=40)
+        self.helper.start_combat([enemy])
+        self.player.energy = 3
+        card = WraithForm()
+        self.helper.add_card_to_hand(card)
+
+        PlayCardBHAction(card, [self.player]).execute()
+        self.helper.game_state.drive_actions()
+
+        assert self.player.get_power("Intangible").amount == 2
+        assert self.player.get_power("Dexterity Down").amount == 1
+        assert card not in self.player.card_manager.get_pile("exhaust_pile")
+        assert card not in self.player.card_manager.get_pile("discard_pile")
+        assert card not in self.player.card_manager.get_pile("hand")
+
+        self.player.powers.clear()
+        upgraded = WraithForm()
+        upgraded.upgrade()
+        self.player.energy = 3
+        self.helper.add_card_to_hand(upgraded)
+        PlayCardBHAction(upgraded, [self.player]).execute()
+        self.helper.game_state.drive_actions()
+
+        assert upgraded.exhaust is False
+        assert self.player.get_power("Intangible").amount == 3
+        assert upgraded not in self.player.card_manager.get_pile("exhaust_pile")
+        assert upgraded not in self.player.card_manager.get_pile("discard_pile")
 
     def test_phantasmal_killer_doubles_attack_damage_next_turn(self):
         enemy = self.helper.create_enemy(Cultist, hp=40)

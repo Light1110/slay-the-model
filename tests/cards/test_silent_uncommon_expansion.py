@@ -23,9 +23,12 @@ class TestSilentUncommonExpansion:
         card = Backstab()
         self.helper.add_card_to_hand(card)
         assert card.innate is True
+        assert card.exhaust is True
         assert self.helper.play_card(card, target=enemy)
         assert enemy.hp == 29
         assert self.player.energy == 3
+        assert card in self.player.card_manager.get_pile("exhaust_pile")
+        assert card not in self.player.card_manager.get_pile("discard_pile")
 
     def test_dash_deals_damage_and_gains_block(self):
         enemy = self.helper.create_enemy(Cultist, hp=40)
