@@ -278,6 +278,9 @@ class ChooseAddRandomCardAction(Action):
     Optional:
         None
     """
+
+    cost_until_end_of_turn: Optional[int]
+
     def __init__(self, pile: str = 'hand', total: int = 3, namespace: Optional[str] = None, rarity: Optional[RarityType] = None,
                  card_type: Optional[CardType] = None, cost_until_end_of_turn: Optional[int] = None):
         self.pile = pile

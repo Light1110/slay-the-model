@@ -1,5 +1,8 @@
 """Effect fixes for cards whose localization already matches the original game."""
 
+from typing import cast
+
+from actions.base import Action
 from actions.card_choice import ChooseAddRandomCardAction
 from actions.combat_cards import PlayCardBHAction
 from cards.base import COST_X
@@ -19,6 +22,11 @@ from cards.watcher.sanctity import Sanctity
 from enemies.act1.cultist import Cultist
 from tests.test_combat_utils import create_test_helper
 from utils.types import CardType, StatusType
+
+
+def _last_card_choice(actions: list[Action]) -> ChooseAddRandomCardAction:
+    found = next(action for action in actions if isinstance(action, ChooseAddRandomCardAction))
+    return cast(ChooseAddRandomCardAction, found)
 
 
 class TestLocalizationEffectCards:
@@ -68,13 +76,7 @@ class TestLocalizationEffectCards:
         self.helper.start_combat([])
         base = Discovery()
         base.on_play([])
-        queued = [
-            action
-            for action in self.helper.game_state.action_queue.queue
-            if isinstance(action, ChooseAddRandomCardAction)
-        ]
-        base_choice = queued[-1]
-        assert isinstance(base_choice, ChooseAddRandomCardAction)
+        base_choice = _last_card_choice(self.helper.game_state.action_queue.queue)
         assert base_choice.cost_until_end_of_turn is None
         assert base.exhaust is True
 
@@ -82,13 +84,7 @@ class TestLocalizationEffectCards:
         upgraded = Discovery()
         upgraded.upgrade()
         upgraded.on_play([])
-        queued = [
-            action
-            for action in self.helper.game_state.action_queue.queue
-            if isinstance(action, ChooseAddRandomCardAction)
-        ]
-        upgraded_choice = queued[-1]
-        assert isinstance(upgraded_choice, ChooseAddRandomCardAction)
+        upgraded_choice = _last_card_choice(self.helper.game_state.action_queue.queue)
         assert upgraded_choice.cost_until_end_of_turn == 0
         assert upgraded.exhaust is True
 
