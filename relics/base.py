@@ -27,6 +27,7 @@ from engine.messages import (
     PowerAppliedMessage,
     ShuffleMessage,
     ShopEnteredMessage,
+    FloorClimbedMessage,
 )
 from engine.subscriptions import MessagePriority, subscribe
 from utils.types import RarityType
@@ -152,6 +153,11 @@ class Relic(Localizable):
     @subscribe(ShopEnteredMessage, priority=MessagePriority.PLAYER_RELIC)
     def on_shop_enter(self):
         """Called when entering a shop room."""
+        return
+
+    @subscribe(FloorClimbedMessage, priority=MessagePriority.PLAYER_RELIC)
+    def on_floor_climb(self):
+        """Called after the player moves onto a new floor."""
         return
     
     # ==================== Card Hooks ====================

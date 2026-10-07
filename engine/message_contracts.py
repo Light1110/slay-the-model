@@ -38,6 +38,7 @@ from engine.messages import (
     ScryMessage,
     ShuffleMessage,
     ShopEnteredMessage,
+    FloorClimbedMessage,
     StanceChangedMessage,
 )
 
@@ -269,6 +270,11 @@ def _build_contracts() -> dict[type[GameMessage], MessageContract]:
         ),
         ShopEnteredMessage: MessageContract(
             message_type=ShopEnteredMessage,
+            param_names=(),
+            binder=_bind(),
+        ),
+        FloorClimbedMessage: MessageContract(
+            message_type=FloorClimbedMessage,
             param_names=(),
             binder=_bind(),
         ),

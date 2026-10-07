@@ -147,6 +147,14 @@ class ShopEnteredMessage(GameMessage):
 
 
 @dataclass(frozen=True)
+class FloorClimbedMessage(GameMessage):
+    """The player has moved onto a new floor."""
+
+    owner: "Creature"
+    floor: int
+
+
+@dataclass(frozen=True)
 class EliteVictoryMessage(GameMessage):
     """The player has won an elite combat and elite-victory relic effects may run."""
 
@@ -337,5 +345,6 @@ EXPLICIT_SUBSCRIPTION_MESSAGE_TYPES = (
     ScryMessage,
     ShuffleMessage,
     ShopEnteredMessage,
+    FloorClimbedMessage,
     StanceChangedMessage,
 )

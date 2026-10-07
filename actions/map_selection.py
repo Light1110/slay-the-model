@@ -46,6 +46,10 @@ class MoveToMapNodeAction(Action):
         # Update game state
         game_state.current_room = new_room
         game_state.current_floor = self.floor
+        if game_state.player is not None:
+            from engine.messages import FloorClimbedMessage
+
+            publish_message(FloorClimbedMessage(owner=game_state.player, floor=self.floor))
         
         # Print which room player moved to
         from localization import t

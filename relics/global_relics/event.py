@@ -131,19 +131,25 @@ class Necronomicon(Relic):
         self.rarity = RarityType.EVENT
         self.double_attack_played = False
 
-    def on_turn_start(self):
-        """Reset tracker at start of combat"""
-        from engine.game_state import game_state
-        add_actions([LambdaAction(func=lambda: setattr(self, 'double_attack_played', False))])
-        return
+    def on_player_turn_start(self):
+        """The first costly attack of each turn can be replayed."""
+        self.double_attack_played = False
+
+    def _attack_cost_paid(self, card) -> int:
+        from cards.base import COST_X
+
+        if getattr(card, "_cost", None) == COST_X:
+            return int(getattr(card, "_x_cost_energy", 0) or 0)
+        return int(card.cost or 0)
+
     def on_card_play(self, card, targets):
-        """Track high-cost attacks and play twice"""
-        if card.cost >= 2 and card.card_type == CardType.ATTACK and not self.double_attack_played:
-            self.double_attack_played = True
-            for _ in range(1):
-                card.on_play()
+        """Play the first Attack that cost 2 or more a second time."""
+        if self.double_attack_played or card.card_type != CardType.ATTACK:
             return
-        return
+        if self._attack_cost_paid(card) < 2:
+            return
+        self.double_attack_played = True
+        card.on_play(targets=list(targets or []))
 @register("relic")
 class NilrysCodex(Relic):
     """At end of each turn, you can choose 1 of 3 random Cards to shuffle into your Drawpile."""
