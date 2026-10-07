@@ -58,12 +58,16 @@ def test_metallicize_after_image_and_frost_ignore_dexterity_and_frail():
     player.add_power(MetallicizePower(amount=3))
     player.add_power(AfterImagePower(amount=1))
 
-    player.get_power("Metallicize").on_turn_end()
+    metallicize = player.get_power("Metallicize")
+    assert metallicize is not None
+    metallicize.on_turn_end()
     helper.game_state.drive_actions()
     assert player.block == 3
 
     player.block = 0
-    player.get_power("After Image").on_card_play(Defend(), [])
+    after_image = player.get_power("After Image")
+    assert after_image is not None
+    after_image.on_card_play(Defend(), [])
     helper.game_state.drive_actions()
     assert player.block == 1
 
@@ -85,7 +89,9 @@ def test_dodge_and_roll_snapshots_next_turn_block():
     assert next_block is not None
     assert next_block.amount == 7
 
-    player.get_power("Dexterity").amount = 0
+    dexterity = player.get_power("Dexterity")
+    assert dexterity is not None
+    dexterity.amount = 0
     player.block = 0
     next_block.on_turn_start()
     helper.game_state.drive_actions()
