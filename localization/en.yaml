@@ -889,7 +889,7 @@ cards:
       description: Double your current Block.
     Evolve:
       name: Evolve
-      description: Whenever you draw a Status card, draw {draw} card(s).
+      description: Whenever you draw a Status card, draw {magic.draw} card(s).
     Exhume:
       name: Exhume
       description: Choose a card from your Exhaust pile and put it into your hand. Exhaust.

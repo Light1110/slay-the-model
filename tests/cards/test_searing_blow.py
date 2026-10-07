@@ -41,7 +41,14 @@ class TestSearingBlow(unittest.TestCase):
         card = SearingBlow()
         card.upgrade()
         card.upgrade()
-        self.assertEqual(card.damage, 20)  # 16 + 4
+        self.assertEqual(card.damage, 21)  # 16 + 5
+
+    def test_upgraded_three_times(self):
+        card = SearingBlow()
+        card.upgrade()
+        card.upgrade()
+        card.upgrade()
+        self.assertEqual(card.damage, 27)  # 21 + 6
 
     def test_energy_cost(self):
         player = self.helper.create_player(hp=80, energy=3)

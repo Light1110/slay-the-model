@@ -21,7 +21,8 @@ class TestFireBreathing(unittest.TestCase):
         self.assertEqual(card.card_type, CardType.POWER)
         self.assertEqual(card.rarity, RarityType.UNCOMMON)
         self.assertIn("damage_on_status", card._magic)
-        self.assertEqual(card._magic["damage_on_status"], 7)
+        self.assertEqual(card._magic["damage_on_status"], 6)
+        self.assertEqual(card._magic["damage"], 6)
 
     def test_upgraded_properties(self):
         """Test upgraded Fire Breathing increases damage on status."""
@@ -44,6 +45,9 @@ class TestFireBreathing(unittest.TestCase):
         power_names = [type(p).__name__ for p in powers]
         self.assertTrue(any("Fire" in name or "Breathing" in name for name in power_names), 
                         f"Expected FireBreathing power, got: {power_names}")
+        power = self.helper.game_state.player.get_power("Fire Breathing")
+        self.assertIsNotNone(power)
+        self.assertEqual(power.amount, 6)
 
     def test_energy_cost(self):
         """Test Fire Breathing costs 1 energy."""

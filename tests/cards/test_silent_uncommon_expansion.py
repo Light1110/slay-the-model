@@ -1,4 +1,5 @@
-﻿from cards.silent.backstab import Backstab
+﻿from actions.combat import ApplyPowerAction, GainBlockAction
+from cards.silent.backstab import Backstab
 from cards.silent.bouncing_flask import BouncingFlask
 from cards.silent.catalyst import Catalyst
 from cards.silent.dash import Dash
@@ -7,7 +8,10 @@ from cards.silent.leg_sweep import LegSweep
 from cards.silent.predator import Predator
 from cards.ironclad.strike import Strike
 from enemies.act1.cultist import Cultist
+from powers.base import Power
+from powers.definitions.artifact import ArtifactPower
 from powers.definitions.poison import PoisonPower
+from relics.character.silent import SneckoSkull
 from tests.test_combat_utils import create_test_helper
 from utils.types import PilePosType
 
@@ -59,6 +63,29 @@ class TestSilentUncommonExpansion:
         assert weak is not None
         assert weak.amount == 2
 
+    def test_leg_sweep_applies_weak_before_block(self):
+        enemy = self.helper.create_enemy(Cultist, hp=40)
+        self.helper.start_combat([enemy])
+        seen_block = []
+
+        class _BlockWhenWeakApplied(Power):
+            name = "Block When Weak Applied"
+            def on_power_added(self, power, target=None):
+                if getattr(power, "name", None) == "Weak":
+                    seen_block.append(self.owner.block)
+
+        watcher = _BlockWhenWeakApplied(owner=self.player)
+        self.player.add_power(watcher)
+        card = LegSweep()
+        self.helper.add_card_to_hand(card)
+        card.on_play([enemy])
+        queued = list(self.helper.game_state.action_queue.queue)
+        assert isinstance(queued[0], ApplyPowerAction)
+        assert isinstance(queued[1], GainBlockAction)
+        self.helper.game_state.drive_actions()
+        assert seen_block == [0]
+        assert self.player.block == 11
+
     def test_bouncing_flask_applies_poison(self):
         enemy = self.helper.create_enemy(Cultist, hp=40)
         self.helper.start_combat([enemy])
@@ -79,6 +106,51 @@ class TestSilentUncommonExpansion:
         poison = enemy.get_power('Poison')
         assert poison is not None
         assert poison.amount == 10
+
+    def test_catalyst_does_nothing_without_poison(self):
+        enemy = self.helper.create_enemy(Cultist, hp=40)
+        self.helper.start_combat([enemy])
+        card = Catalyst()
+        self.helper.add_card_to_hand(card)
+        assert self.helper.play_card(card, target=enemy)
+        assert enemy.get_power('Poison') is None
+
+    def test_upgraded_catalyst_triples_poison(self):
+        enemy = self.helper.create_enemy(Cultist, hp=40)
+        self.helper.start_combat([enemy])
+        enemy.add_power(PoisonPower(amount=5, duration=5, owner=enemy))
+        card = Catalyst()
+        card.upgrade()
+        self.helper.add_card_to_hand(card)
+        assert self.helper.play_card(card, target=enemy)
+        poison = enemy.get_power('Poison')
+        assert poison is not None
+        assert poison.amount == 15
+
+    def test_catalyst_triggers_snecko_skull(self):
+        enemy = self.helper.create_enemy(Cultist, hp=40)
+        self.helper.start_combat([enemy])
+        self.player.relics = [SneckoSkull()]
+        enemy.add_power(PoisonPower(amount=5, duration=5, owner=enemy))
+        card = Catalyst()
+        self.helper.add_card_to_hand(card)
+        assert self.helper.play_card(card, target=enemy)
+        poison = enemy.get_power('Poison')
+        assert poison is not None
+        assert poison.amount == 11
+
+    def test_catalyst_is_blocked_by_artifact(self):
+        enemy = self.helper.create_enemy(Cultist, hp=40)
+        self.helper.start_combat([enemy])
+        enemy.add_power(PoisonPower(amount=5, duration=5, owner=enemy))
+        enemy.add_power(ArtifactPower(amount=1, owner=enemy))
+        card = Catalyst()
+        self.helper.add_card_to_hand(card)
+        assert self.helper.play_card(card, target=enemy)
+        poison = enemy.get_power('Poison')
+        assert poison is not None
+        assert poison.amount == 5
+        assert enemy.get_power('Artifact') is None
 
     def test_predator_adds_next_turn_draw(self):
         enemy = self.helper.create_enemy(Cultist, hp=40)

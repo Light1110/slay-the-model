@@ -2,11 +2,27 @@ from entities.creature import Creature
 """Comprehensive tests for Sever Soul card."""
 import unittest
 from tests.test_combat_utils import create_test_helper
+from cards.base import Card
 from cards.ironclad.sever_soul import SeverSoul
 from cards.ironclad.strike import Strike
 from cards.ironclad.defend import Defend
 from enemies.act1.cultist import Cultist
 from utils.types import CardType, RarityType
+
+
+class _ExhaustProbe(Card):
+    card_type = CardType.SKILL
+    base_cost = 0
+
+    def __init__(self, label, log):
+        super().__init__()
+        self.label = label
+        self.log = log
+
+    def on_exhaust(self):
+        from engine.game_state import game_state
+        enemy = game_state.current_combat.enemies[0]
+        self.log.append((self.label, enemy.hp))
 
 
 class TestSeverSoul(unittest.TestCase):
@@ -57,8 +73,29 @@ class TestSeverSoul(unittest.TestCase):
         self.helper.play_card(card, target=enemy)
         
         self.assertLess(enemy.hp, initial_hp)
-        
-    # todo: test exhaust cards
+
+    def test_exhausts_non_attacks_before_damage_in_reverse_hand_order(self):
+        self.player = self.helper.create_player(energy=3)
+        enemy = self.helper.create_enemy(Cultist, hp=50)
+        self.helper.start_combat([enemy])
+        log = []
+        first = _ExhaustProbe("first", log)
+        second = _ExhaustProbe("second", log)
+        strike = Strike()
+        self.helper.add_card_to_hand(first)
+        self.helper.add_card_to_hand(second)
+        self.helper.add_card_to_hand(strike)
+        card = SeverSoul()
+        self.helper.add_card_to_hand(card)
+
+        self.helper.play_card(card, target=enemy)
+
+        self.assertEqual(log, [("second", 50), ("first", 50)])
+        self.assertLess(enemy.hp, 50)
+        self.assertIn(first, self.player.card_manager.get_pile("exhaust_pile"))
+        self.assertIn(second, self.player.card_manager.get_pile("exhaust_pile"))
+        self.assertIn(strike, self.player.card_manager.get_pile("hand"))
+        self.assertNotIn(strike, self.player.card_manager.get_pile("exhaust_pile"))
 
 
 if __name__ == '__main__':

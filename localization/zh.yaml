@@ -859,7 +859,7 @@ cards:
       description: 将当前格挡翻倍。
     Evolve:
       name: 进化
-      description: 每当抽到状态牌时，抽 {draw} 张牌。
+      description: 每当抽到状态牌时，抽 {magic.draw} 张牌。
     Exhume:
       name: 发掘
       description: 从消耗堆选择一张牌加入手牌。消耗。
