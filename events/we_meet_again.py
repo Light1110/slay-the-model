@@ -35,21 +35,25 @@ class WeMeetAgain(Event):
             demands.append("potion")
         if game_state.player.gold >= 50:
             demands.append("gold")
-        if any(
-            card.rarity not in (RarityType.STARTER, RarityType.CURSE)
-            for card in game_state.player.deck
-        ):
+        if any(_offerable_card(card) for card in game_state.player.deck):
             demands.append("card")
 
         demand = random.choice(demands) if demands else None
         if demand == "potion":
+            potion = random.choice(list(game_state.player.potions))
+            potion.event_locked = True
             options.append(Option(
                 name=(
                     LocalStr('events.we_meet_again.give_potion')
                     + "  "
+                    + potion.local("name")
+                    + "  "
                     + LocalStr('events.we_meet_again.give_potion_effect')
                 ),
-                actions=[_potion_choice()],
+                actions=[
+                    LosePotionAction(potion=potion),
+                    AddRandomRelicAction(),
+                ],
             ))
         elif demand == "gold":
             gold_amount = random.randint(50, min(game_state.player.gold, 150))
@@ -74,7 +78,8 @@ class WeMeetAgain(Event):
                 actions=[
                     ChooseRemoveCardAction(
                         pile='deck',
-                        exclude_rarities=[RarityType.STARTER, RarityType.CURSE]
+                        exclude_rarities=[RarityType.STARTER, RarityType.CURSE],
+                        exclude_bottled=True,
                     ),
                     AddRandomRelicAction()
                 ]
@@ -99,18 +104,8 @@ class WeMeetAgain(Event):
         add_actions(actions)
 
 
-def _potion_choice() -> InputRequestAction:
-    """Ask which carried potion to trade."""
-    options = []
-    for potion in list(game_state.player.potions):
-        options.append(Option(
-            name=potion.__class__.__name__,
-            actions=[
-                LosePotionAction(potion=potion),
-                AddRandomRelicAction(),
-            ],
-        ))
-    return InputRequestAction(
-        title=LocalStr('events.we_meet_again.give_potion'),
-        options=options,
+def _offerable_card(card) -> bool:
+    return (
+        card.rarity not in (RarityType.STARTER, RarityType.CURSE)
+        and not getattr(card, "bottled", False)
     )

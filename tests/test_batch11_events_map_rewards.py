@@ -329,26 +329,33 @@ def test_hypnotizing_mushrooms_option_text_describes_effects():
     assert any("25%" in text and "Parasite" in text for text in option_details)
 
 
-def test_we_meet_again_option_text_describes_trade_effects():
+def test_we_meet_again_option_text_describes_trade_effects(monkeypatch):
     from events.we_meet_again import WeMeetAgain
-    from cards.ironclad.strike import Strike
+    from cards.ironclad.inflame import Inflame
     from potions.global_potions import FruitJuice
 
-    helper = create_test_helper()
-    player = helper.create_player()
-    player.gold = 100
-    player.potions.append(FruitJuice())
-    player.card_manager.deck.append(Strike())
-    helper.game_state.action_queue.clear()
+    def offer(kind: str) -> list[str]:
+        helper = create_test_helper()
+        player = helper.create_player()
+        player.gold = 100
+        player.potions.append(FruitJuice())
+        player.card_manager.deck.append(Inflame())
+        helper.game_state.action_queue.clear()
+        monkeypatch.setattr(
+            "events.we_meet_again.random.choice",
+            lambda seq: kind if kind in seq else seq[0],
+        )
+        monkeypatch.setattr("events.we_meet_again.random.randint", lambda a, b: 50)
+        WeMeetAgain().trigger()
+        menu = cast(InputRequestAction, helper.game_state.action_queue.queue[-1])
+        assert isinstance(menu, InputRequestAction)
+        return [str(option.name) for option in menu.options]
 
-    event = WeMeetAgain()
-    event.trigger()
+    potion_texts = offer("potion")
+    assert any("random relic" in text.lower() and "potion" in text.lower() for text in potion_texts)
 
-    menu = cast(InputRequestAction, helper.game_state.action_queue.queue[-1])
-    assert isinstance(menu, InputRequestAction)
+    gold_texts = offer("gold")
+    assert any("gold" in text.lower() and "random relic" in text.lower() for text in gold_texts)
 
-    option_texts = [str(option.name) for option in menu.options]
-
-    assert any("random relic" in text.lower() and "potion" in text.lower() for text in option_texts)
-    assert any("gold" in text.lower() and "random relic" in text.lower() for text in option_texts)
-    assert any("remove" in text.lower() and "random relic" in text.lower() for text in option_texts)
+    card_texts = offer("card")
+    assert any("remove" in text.lower() and "random relic" in text.lower() for text in card_texts)

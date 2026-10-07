@@ -15,6 +15,7 @@ class Potion(Localizable):
 
     def __init__(self):
         self._amount = 0
+        self.event_locked = False
     
     @property
     def amount(self) -> int:
@@ -40,7 +41,7 @@ class Potion(Localizable):
 
     def can_use(self, targets: List[Creature]) -> bool:
         """Return whether this potion may be consumed in the current state."""
-        return True
+        return not self.event_locked
     
     def info(self):
         """Return a stable human-readable potion summary."""

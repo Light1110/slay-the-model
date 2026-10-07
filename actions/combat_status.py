@@ -111,6 +111,9 @@ class UsePotionAction(Action):
         from utils.combat import resolve_target
         from utils.option import Option
 
+        if getattr(self.potion, "event_locked", False):
+            return
+
         if self.target is not None:
             targets = [self.target]
         else:
@@ -156,6 +159,9 @@ class UsePotionBHAction(Action):
     def execute(self) -> None:
         from engine.game_state import game_state
         from engine.messages import PotionUsedMessage
+
+        if getattr(self.potion, "event_locked", False):
+            return
 
         if not self.potion.can_use(self.targets):
             return

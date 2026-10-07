@@ -48,7 +48,10 @@ def _pick(kind: str):
     return choice
 
 
-def test_we_meet_again_asks_for_one_potion_and_lets_the_player_choose(monkeypatch):
+def test_we_meet_again_designates_one_potion_and_locks_it(monkeypatch):
+    from actions.combat import UsePotionAction
+    from rooms.event import EventRoom
+
     helper = create_test_helper()
     player = helper.create_player()
     potions = [BloodPotion(), BloodPotion()]
@@ -62,17 +65,20 @@ def test_we_meet_again_asks_for_one_potion_and_lets_the_player_choose(monkeypatc
 
     assert len(trades) == 1
     assert any(not option.actions for option in options)
-    picker = _requests_in(trades[0].actions)[0]
-    lost = [
-        next(action for action in option.actions if isinstance(action, LosePotionAction))
-        for option in picker.options
-    ]
-    assert [action.potion for action in lost] == potions
-    assert all(action.index is None for action in lost)
-    assert all(
-        any(isinstance(action, AddRandomRelicAction) for action in option.actions)
-        for option in picker.options
-    )
+    loss = next(action for action in trades[0].actions if isinstance(action, LosePotionAction))
+    assert loss.potion is potions[0]
+    assert loss.index is None
+    assert any(isinstance(action, AddRandomRelicAction) for action in trades[0].actions)
+    assert potions[0].event_locked is True
+    assert potions[1].event_locked is False
+    assert potions[0].can_use([]) is False
+
+    UsePotionAction(potion=potions[0], target=player).execute()
+    assert potions[0] in player.potions
+
+    EventRoom().leave()
+    assert potions[0].event_locked is False
+    assert potions[0].can_use([]) is True
 
 
 def test_we_meet_again_asks_for_gold_or_a_card_but_not_both(monkeypatch):
@@ -103,13 +109,16 @@ def test_we_meet_again_asks_for_gold_or_a_card_but_not_both(monkeypatch):
     assert removal.exclude_rarities is not None
     assert RarityType.STARTER in removal.exclude_rarities
     assert RarityType.CURSE in removal.exclude_rarities
+    assert removal.exclude_bottled is True
 
 
 def test_we_meet_again_only_offers_attack_when_nothing_can_be_traded():
     helper = create_test_helper()
     player = helper.create_player()
     player.gold = 40
-    player.deck.extend([Strike(), Doubt()])
+    bottled = Inflame()
+    bottled.bottled = True
+    player.deck.extend([Strike(), Doubt(), bottled])
 
     options = _options(WeMeetAgain())
 

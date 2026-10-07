@@ -503,6 +503,8 @@ class SmokeBomb(Potion):
         self.queue_actions([EscapeAction()])
 
     def can_use(self, targets) -> bool:
+        if self.event_locked:
+            return False
         from engine.game_state import game_state
 
         player = getattr(game_state, "player", None)

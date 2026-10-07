@@ -247,6 +247,8 @@ class Combat(Localizable):
         # 3. Build InputRequestAction for potions
         from actions.combat import UsePotionAction
         for potion in game_state.player.potions:
+            if getattr(potion, "event_locked", False):
+                continue
             if not getattr(potion, "can_be_used_actively", True):
                 continue
 

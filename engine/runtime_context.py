@@ -133,6 +133,8 @@ class RuntimeContext:
         base_options = list(request.options or [])
         augmented_options = list(base_options)
         for potion in list(getattr(player, "potions", []) or []):
+            if getattr(potion, "event_locked", False):
+                continue
             if not getattr(potion, "can_be_used_actively", True):
                 continue
             if not getattr(potion, "can_be_used_out_of_combat", False):

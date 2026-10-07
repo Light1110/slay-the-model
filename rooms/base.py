@@ -54,6 +54,13 @@ class Room(Localizable):
         """
         from engine.game_state import game_state
         
+        # A potion designated by We Meet Again stays unusable until this floor ends.
+        player = getattr(game_state, "player", None)
+        if player is not None:
+            for potion in list(getattr(player, "potions", []) or []):
+                if getattr(potion, "event_locked", False):
+                    potion.event_locked = False
+
         # Clear global action queue
         game_state.action_queue.clear()
 
