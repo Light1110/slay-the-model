@@ -14,15 +14,6 @@ from events.the_colosseum import TheColosseum
 from tests.test_combat_utils import create_test_helper
 
 
-def _fight_from_queue() -> StartFightAction:
-    fight = next(
-        action
-        for action in game_state.action_queue.queue
-        if isinstance(action, StartFightAction)
-    )
-    return cast(StartFightAction, fight)
-
-
 def _requests() -> list[InputRequestAction]:
     return [
         cast(InputRequestAction, action)
@@ -60,8 +51,12 @@ def test_colosseum_fights_slavers_then_offers_victory_or_cowardice():
     event.trigger()
 
     assert event.event_ended is False
-    assert not _requests()
-    fight = _fight_from_queue()
+    requests = _requests()
+    assert len(requests) == 1
+    assert len(requests[0].options) == 1
+    opening = requests[0].options[0]
+    fight = next(action for action in opening.actions if isinstance(action, StartFightAction))
+    fight = cast(StartFightAction, fight)
     assert [type(enemy).__name__ for enemy in fight.enemies] == ["BlueSlaver", "RedSlaver"]
 
     for action in fight.victory_actions:

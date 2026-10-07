@@ -17,7 +17,7 @@ from utils.option import Option
 from engine.game_state import game_state
 from cards.base import Card
 from utils.registry import get_registered
-from utils.types import RarityType
+from utils.types import CardType, RarityType
 
 
 # Global state for the matching minigame (per event instance)
@@ -28,11 +28,12 @@ def _generate_card_pairs() -> List[Tuple[Card, Card]]:
     """Generate 6 pairs of cards for the minigame.
     
     Always includes:
-    - 1 Colorless card pair
+    - 1 non-curse Colorless card pair
     - 1 Curse pair
-    - 4 random card pairs from Ironclad pool
+    - 4 random card pairs from the current character
     """
     pairs = []
+    character_namespace = game_state.player.namespace if game_state.player is not None else None
     
     # Get all registered cards
     all_card_classes = list_registered('card')
@@ -43,7 +44,11 @@ def _generate_card_pairs() -> List[Tuple[Card, Card]]:
         card_cls = get_registered('card', card_idstr)
         if card_cls:
             card_instance = card_cls()
-            if card_instance.namespace == 'colorless':
+            if (
+                card_instance.namespace == 'colorless'
+                and card_instance.rarity != RarityType.CURSE
+                and card_instance.card_type != CardType.CURSE
+            ):
                 colorless_cards.append(card_cls)
     
     if colorless_cards:
@@ -63,19 +68,19 @@ def _generate_card_pairs() -> List[Tuple[Card, Card]]:
         curse_cls = random.choice(curse_cards)
         pairs.append((curse_cls(), curse_cls()))
     
-    # Get 4 random Ironclad card pairs (Common, Uncommon, or Rare)
-    ironclad_cards = []
+    # Get 4 random pairs from the current character (Common, Uncommon, or Rare)
+    character_cards = []
     for card_idstr in all_card_classes:
         card_cls = get_registered('card', card_idstr)
-        if card_cls:
+        if card_cls and character_namespace:
             card_instance = card_cls()
-            if (card_instance.namespace == 'ironclad' and 
+            if (card_instance.namespace == character_namespace and 
                 card_instance.rarity in [RarityType.COMMON, RarityType.UNCOMMON, RarityType.RARE]):
-                ironclad_cards.append(card_cls)
+                character_cards.append(card_cls)
     
     # Weight by rarity (Common 50%, Uncommon 35%, Rare 15%)
     weighted_cards = []
-    for card_cls in ironclad_cards:
+    for card_cls in character_cards:
         card = card_cls()
         if card.rarity == RarityType.COMMON:
             weighted_cards.extend([card_cls] * 50)

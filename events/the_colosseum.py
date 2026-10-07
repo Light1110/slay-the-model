@@ -24,7 +24,6 @@ class TheColosseum(Event):
     After winning the first fight:
     [Victory] Fight Taskmaster + Gremlin Nob -> 100g + rare relic + uncommon relic + card
     [Cowardice] Escape with your life
-    [Leave] Always available - Leave the arena
     """
     
     @classmethod
@@ -53,9 +52,19 @@ class TheColosseum(Event):
         if not self.first_fight_done:
             from enemies.act1.slaver import BlueSlaver, RedSlaver
 
-            actions.append(StartFightAction(
-                enemies=[BlueSlaver(), RedSlaver()],
-                victory_actions=[LambdaAction(self._finish_first_fight)],
+            actions.append(InputRequestAction(
+                title=LocalStr('events.the_colosseum.title'),
+                options=[
+                    Option(
+                        name=LocalStr('events.the_colosseum.fight'),
+                        actions=[
+                            StartFightAction(
+                                enemies=[BlueSlaver(), RedSlaver()],
+                                victory_actions=[LambdaAction(self._finish_first_fight)],
+                            )
+                        ],
+                    )
+                ],
             ))
         else:
             from enemies.act1.gremlin_nob import GremlinNob

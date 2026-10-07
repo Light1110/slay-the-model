@@ -19,7 +19,7 @@ from engine.game_state import game_state
 @register_event(event_id='we_meet_again', acts='shared', weight=100)
 class WeMeetAgain(Event):
     """We Meet Again! - trade items for relic."""
-    
+
     def trigger(self) -> None:
         actions = []
         
@@ -28,25 +28,30 @@ class WeMeetAgain(Event):
             text_key='events.we_meet_again.description'
         ))
         
-        # Build options based on available resources
+        # Build one demand the player can pay, plus the attack that gives nothing.
         options = []
-        
-        # Option 1: Give Potion (if has potion)
-        if game_state.player.potions:
+        demands = []
+        if list(game_state.player.potions):
+            demands.append("potion")
+        if game_state.player.gold >= 50:
+            demands.append("gold")
+        if any(
+            card.rarity not in (RarityType.STARTER, RarityType.CURSE)
+            for card in game_state.player.deck
+        ):
+            demands.append("card")
+
+        demand = random.choice(demands) if demands else None
+        if demand == "potion":
             options.append(Option(
                 name=(
                     LocalStr('events.we_meet_again.give_potion')
                     + "  "
                     + LocalStr('events.we_meet_again.give_potion_effect')
                 ),
-                actions=[
-                    LosePotionAction(index=0),  # Remove first potion
-                    AddRandomRelicAction()
-                ]
+                actions=[_potion_choice()],
             ))
-        
-        # Option 2: Give Gold (50 to min(player.gold, 150) gold)
-        if game_state.player.gold >= 50:
+        elif demand == "gold":
             gold_amount = random.randint(50, min(game_state.player.gold, 150))
             options.append(Option(
                 name=(
@@ -59,24 +64,23 @@ class WeMeetAgain(Event):
                     AddRandomRelicAction()
                 ]
             ))
-        
-        # Option 3: Give Card (non-Basic, non-Curse, non-Bottled)
-        options.append(Option(
-            name=(
-                LocalStr('events.we_meet_again.give_card')
-                + "  "
-                + LocalStr('events.we_meet_again.give_card_effect')
-            ),
-            actions=[
-                ChooseRemoveCardAction(
-                    pile='deck',
-                    exclude_rarities=[RarityType.STARTER, RarityType.CURSE]
+        elif demand == "card":
+            options.append(Option(
+                name=(
+                    LocalStr('events.we_meet_again.give_card')
+                    + "  "
+                    + LocalStr('events.we_meet_again.give_card_effect')
                 ),
-                AddRandomRelicAction()
-            ]
-        ))
+                actions=[
+                    ChooseRemoveCardAction(
+                        pile='deck',
+                        exclude_rarities=[RarityType.STARTER, RarityType.CURSE]
+                    ),
+                    AddRandomRelicAction()
+                ]
+            ))
         
-        # Option 4: Attack (he runs away)
+        # Attack: he runs away and gives nothing.
         options.append(Option(
             name=(
                 LocalStr('events.we_meet_again.attack')
@@ -93,3 +97,20 @@ class WeMeetAgain(Event):
         
         self.end_event()
         add_actions(actions)
+
+
+def _potion_choice() -> InputRequestAction:
+    """Ask which carried potion to trade."""
+    options = []
+    for potion in list(game_state.player.potions):
+        options.append(Option(
+            name=potion.__class__.__name__,
+            actions=[
+                LosePotionAction(potion=potion),
+                AddRandomRelicAction(),
+            ],
+        ))
+    return InputRequestAction(
+        title=LocalStr('events.we_meet_again.give_potion'),
+        options=options,
+    )
