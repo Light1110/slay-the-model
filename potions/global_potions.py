@@ -31,7 +31,7 @@ class AttackPotion(Potion):
         for _ in range(self.amount):
             actions.append(ChooseAddRandomCardAction(
                 pile='hand',
-                total=1,
+                total=3,
                 card_type=CardType.ATTACK,
                 cost_until_end_of_turn=0  # Set temporary cost to 0 for this turn
             ))
@@ -69,7 +69,7 @@ class ColorlessPotion(Potion):
         for _ in range(self.amount):
             actions.append(ChooseAddRandomCardAction(
                 pile='hand',
-                total=1,
+                total=3,
                 namespace="colorless",
                 cost_until_end_of_turn=0  # Set temporary cost to 0 for this turn
             ))
@@ -207,7 +207,7 @@ class PowerPotion(Potion):
         for _ in range(self.amount):
             actions.append(ChooseAddRandomCardAction(
                 pile='hand',
-                total=1,
+                total=3,
                 card_type=CardType.POWER,
                 cost_until_end_of_turn=0  # Set temporary cost to 0 for this turn
             ))
@@ -230,7 +230,7 @@ class SkillPotion(Potion):
         for _ in range(self.amount):
             actions.append(ChooseAddRandomCardAction(
                 pile='hand',
-                total=1,
+                total=3,
                 card_type=CardType.SKILL,
                 cost_until_end_of_turn=0  # Set temporary cost to 0 for this turn
             ))
