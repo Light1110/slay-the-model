@@ -87,6 +87,9 @@ class DeadAdventurer(Event):
             actions.append(DisplayTextAction(text_key='events.dead_adventurer.nothing'))
         
         return actions
+
+    def _count_search(self) -> None:
+        self.search_count += 1
     
     def trigger(self) -> None:
         actions = []
@@ -101,7 +104,6 @@ class DeadAdventurer(Event):
         
         # Option to continue searching (max 3 times)
         if self.search_count < 3:
-            self.search_count += 1
             elite_chance = self._get_elite_chance()
             
             if random.randint(1, 100) <= elite_chance:
@@ -123,6 +125,7 @@ class DeadAdventurer(Event):
                     name=LocalStr('events.dead_adventurer.search'),
                     actions=[
                         DisplayTextAction(text_key='events.dead_adventurer.elite_appears'),
+                        LambdaAction(self._count_search),
                         StartFightAction(
                             enemies=elite_enemies,
                             victory_actions=victory_rewards
@@ -136,7 +139,8 @@ class DeadAdventurer(Event):
                     name=LocalStr('events.dead_adventurer.search'),
                     actions=[
                         *search_actions,
-                        LambdaAction(lambda: self.trigger()),
+                        LambdaAction(self._count_search),
+                        LambdaAction(self.trigger),
                     ]
                 ))
         

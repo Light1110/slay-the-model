@@ -1,6 +1,6 @@
-"""Event: Scrap Ooze - Act 1 Event (A15+)
+"""Event: Scrap Ooze - Act 1 Event
 
-An event where you reach into an ooze for a chance to get a relic at HP cost.
+Reach into the ooze, lose HP, then roll for a relic. Ascension 15 raises the HP cost.
 """
 from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
 
@@ -9,6 +9,7 @@ from events.base_event import Event
 from events.event_pool import register_event
 from actions.display import InputRequestAction, DisplayTextAction
 from actions.reward import AddRandomRelicAction
+from actions.base import LambdaAction
 from actions.combat import LoseHPAction
 from localization import LocalStr
 from utils.option import Option
@@ -23,6 +24,22 @@ class ScrapOoze(Event):
         super().__init__()
         self.attempt_count = 0
         self.relic_obtained = False
+
+    def _hp_cost(self) -> int:
+        base_hp = 5 if game_state.ascension >= 15 else 3
+        return base_hp + self.attempt_count
+
+    def _resolve_reach(self) -> None:
+        relic_chance = 0.25 + (self.attempt_count * 0.10)
+        if random.random() < relic_chance:
+            self.relic_obtained = True
+            add_actions([
+                AddRandomRelicAction(),
+                LambdaAction(self.end_event),
+            ])
+            return
+        self.attempt_count += 1
+        self.trigger()
     
     def trigger(self) -> None:
         actions = []
@@ -32,34 +49,20 @@ class ScrapOoze(Event):
             text_key='events.scrap_ooze.description'
         ))
         
-        # Base chance starts at 25%, +10% per attempt
-        relic_chance = 0.25 + (self.attempt_count * 0.10)
-        # HP cost: 3 base + 1 per attempt (5 base on A15+)
-        base_hp = 5 if game_state.ascension >= 15 else 3
-        hp_cost = base_hp + self.attempt_count
-        
-        # Build options
         options = []
         
         if not self.relic_obtained:
-            # Check if relic is obtained this attempt
-            if random.random() < relic_chance:
-                options.append(Option(
-                    name=LocalStr('events.scrap_ooze.reach'),
-                    actions=[AddRandomRelicAction()]
-                ))
-                self.relic_obtained = True
-            else:
-                options.append(Option(
-                    name=LocalStr('events.scrap_ooze.reach'),
-                    actions=[LoseHPAction(amount=hp_cost)]
-                ))
-                self.attempt_count += 1
+            options.append(Option(
+                name=LocalStr('events.scrap_ooze.reach'),
+                actions=[
+                    LoseHPAction(amount=self._hp_cost()),
+                    LambdaAction(self._resolve_reach),
+                ]
+            ))
         
-        # Leave option
         options.append(Option(
             name=LocalStr('events.scrap_ooze.leave'),
-            actions=[]
+            actions=[LambdaAction(self.end_event)]
         ))
         
         actions.append(InputRequestAction(
@@ -67,5 +70,4 @@ class ScrapOoze(Event):
             options=options
         ))
         
-        self.end_event()
         add_actions(actions)

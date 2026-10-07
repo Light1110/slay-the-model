@@ -11,7 +11,6 @@ from actions.card import AddRandomCardAction
 from actions.reward import AddGoldAction, AddRandomRelicAction
 from actions.combat import StartFightAction
 from actions.base import LambdaAction
-from utils.registry import get_registered
 from localization import LocalStr
 from utils.option import Option
 from engine.game_state import game_state
@@ -39,6 +38,10 @@ class TheColosseum(Event):
         super().__init__()
         self.first_fight_done = False
     
+    def _finish_first_fight(self) -> None:
+        self.first_fight_done = True
+        self.trigger()
+
     def trigger(self) -> None:
         actions = []
         
@@ -47,75 +50,40 @@ class TheColosseum(Event):
             text_key='events.the_colosseum.description'
         ))
         
-        # Build options based on current state
-        options = []
-        
         if not self.first_fight_done:
-            # Create Slavers for first fight
-            blue_slaver_class = get_registered("enemy", 'blue_slaver')
-            red_slaver_class = get_registered("enemy", 'red_slaver')
-            slavers = []
-            if blue_slaver_class:
-                slavers.append(blue_slaver_class())
-            if red_slaver_class:
-                slavers.append(red_slaver_class())
-            
-            # Initial state: Show Fight and Leave options
-            # First fight has no rewards, just sets first_fight_done = True after victory
-            options.append(Option(
-                name=LocalStr('events.the_colosseum.fight'),
-                actions=[
-                    StartFightAction(
-                        enemies=slavers,
-                        victory_actions=[
-                            LambdaAction(lambda: setattr(self, 'first_fight_done', True))
-                        ]
-                    )
-                ]
+            from enemies.act1.slaver import BlueSlaver, RedSlaver
+
+            actions.append(StartFightAction(
+                enemies=[BlueSlaver(), RedSlaver()],
+                victory_actions=[LambdaAction(self._finish_first_fight)],
             ))
-            # Leave option - end event immediately
-            options.append(Option(
-                name=LocalStr('events.the_colosseum.leave'),
-                actions=[LambdaAction(lambda: self.end_event())]
-            ))
-            # Don't call end_event() here - event resumes after Fight
         else:
-            # Create enemies for second fight
-            taskmaster_class = get_registered("enemy", 'taskmaster')
-            gremlin_nob_class = get_registered("enemy", 'gremlin_nob')
-            second_fight_enemies = []
-            if taskmaster_class:
-                second_fight_enemies.append(taskmaster_class())
-            if gremlin_nob_class:
-                second_fight_enemies.append(gremlin_nob_class())
-            
-            # After first fight won: Show Victory and Cowardice options
-            # Second fight gives big rewards on victory
-            options.extend([
-                Option(
-                    name=LocalStr('events.the_colosseum.victory'),
-                    actions=[
-                        StartFightAction(
-                            enemies=second_fight_enemies,
-                            victory_actions=[
-                                AddGoldAction(amount=100),
-                                AddRandomRelicAction(rarity='rare'),
-                                AddRandomRelicAction(rarity='uncommon'),
-                                AddRandomCardAction(),
-                                LambdaAction(lambda: self.end_event())
-                            ]
-                        )
-                    ]
-                ),
-                Option(
-                    name=LocalStr('events.the_colosseum.cowardice'),
-                    actions=[LambdaAction(lambda: self.end_event())]
-                )
-            ])
-        
-        actions.append(InputRequestAction(
-            title=LocalStr('events.the_colosseum.title'),
-            options=options
-        ))
+            from enemies.act1.gremlin_nob import GremlinNob
+            from enemies.act2.taskmaster import Taskmaster
+
+            actions.append(InputRequestAction(
+                title=LocalStr('events.the_colosseum.title'),
+                options=[
+                    Option(
+                        name=LocalStr('events.the_colosseum.victory'),
+                        actions=[
+                            StartFightAction(
+                                enemies=[Taskmaster(), GremlinNob()],
+                                victory_actions=[
+                                    AddGoldAction(amount=100),
+                                    AddRandomRelicAction(rarity='rare'),
+                                    AddRandomRelicAction(rarity='uncommon'),
+                                    AddRandomCardAction(),
+                                    LambdaAction(self.end_event),
+                                ],
+                            )
+                        ],
+                    ),
+                    Option(
+                        name=LocalStr('events.the_colosseum.cowardice'),
+                        actions=[LambdaAction(self.end_event)],
+                    ),
+                ],
+            ))
         
         add_actions(actions)
