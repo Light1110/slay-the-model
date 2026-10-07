@@ -679,18 +679,6 @@ class Combat(Localizable):
         
         # Print player turn header
         tui_print(f"\n{t('ui.player_turn', default='=== Player Turn ===')}")
-        
-        # Clear block at start of turn (unless Barricade/Calipers)
-        has_barricade = any(p.name == "Barricade" for p in game_state.player.powers)
-        has_blur = any(p.name == "Blur" for p in game_state.player.powers)
-        has_calipers = any(getattr(r, "idstr", None) == "Calipers" for r in game_state.player.relics)
-        
-        if has_barricade or has_blur:
-            pass  # Block is not removed
-        elif has_calipers:
-            game_state.player.block = max(0, game_state.player.block - 15)
-        else:
-            game_state.player.block = 0
 
         for pile_name in ("hand", "draw_pile", "discard_pile", "exhaust_pile"):
             for card in list(game_state.player.card_manager.get_pile(pile_name)):
@@ -716,6 +704,11 @@ class Combat(Localizable):
             opening_hand_count = len(game_state.player.card_manager.get_pile("hand"))
             draw_count = max(0, draw_count - opening_hand_count)
 
+        game_state.player.energy = game_state.player.max_energy
+
+        if game_state.player.status_manager.status == StatusType.DIVINITY:
+            ChangeStanceAction(StatusType.NEUTRAL).execute()
+
         alive_enemies = [e for e in self.enemies if e.hp > 0]
         publish_message(
             PlayerTurnStartedMessage(
@@ -723,24 +716,37 @@ class Combat(Localizable):
                 enemies=alive_enemies,
             )
         )
-        
+
+        if self.combat_state.combat_turn != 0:
+            has_barricade = any(p.name == "Barricade" for p in game_state.player.powers)
+            has_blur = any(p.name == "Blur" for p in game_state.player.powers)
+            has_calipers = any(
+                getattr(r, "idstr", None) == "Calipers" for r in game_state.player.relics
+            )
+            if has_barricade or has_blur:
+                pass
+            elif has_calipers:
+                game_state.player.block = max(0, game_state.player.block - 15)
+            else:
+                game_state.player.block = 0
+
         if draw_count > 0:
             tui_print(f"\n{t('combat.draw_cards', count=draw_count, default=f'Draw {draw_count} cards')}")
             from actions.card import DrawCardsAction
             game_state.action_queue.add_action(DrawCardsAction(count=draw_count))
 
-        publish_message(
-            PlayerTurnPostDrawMessage(
-                owner=game_state.player,
-                enemies=alive_enemies,
+        from actions.base import LambdaAction
+
+        def _publish_post_draw():
+            still_alive = [enemy for enemy in self.enemies if enemy.hp > 0]
+            publish_message(
+                PlayerTurnPostDrawMessage(
+                    owner=game_state.player,
+                    enemies=still_alive,
+                )
             )
-        )
 
-        # Reset energy
-        game_state.player.energy = game_state.player.max_energy
-
-        if game_state.player.status_manager.status == StatusType.DIVINITY:
-            game_state.action_queue.add_action(ChangeStanceAction(StatusType.NEUTRAL), to_front=True)
+        game_state.action_queue.add_action(LambdaAction(_publish_post_draw))
 
         # Increment turn counter
         self.combat_state.combat_turn += 1
