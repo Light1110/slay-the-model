@@ -11,6 +11,7 @@ from actions.card import RemoveRandomCardAction
 from localization import LocalStr
 from utils.option import Option
 from utils.types import CardType
+from engine.game_state import game_state
 
 
 @register_event(event_id='falling', acts=[3], weight=100)
@@ -25,19 +26,27 @@ class Falling(Event):
             text_key='events.falling.description'
         ))
         
-        # Build options - must choose one
+        deck = game_state.player.deck if game_state.player is not None else []
+
+        def has_type(card_type: CardType) -> bool:
+            return any(card.card_type == card_type for card in deck)
+
+        # Build options - must choose one of the types still in the deck
         options = [
             Option(
                 name=LocalStr('events.falling.land'),
-                actions=[RemoveRandomCardAction(card_type=CardType.SKILL)]
+                actions=[RemoveRandomCardAction(card_type=CardType.SKILL)],
+                enabled=has_type(CardType.SKILL),
             ),
             Option(
                 name=LocalStr('events.falling.channel'),
-                actions=[RemoveRandomCardAction(card_type=CardType.POWER)]
+                actions=[RemoveRandomCardAction(card_type=CardType.POWER)],
+                enabled=has_type(CardType.POWER),
             ),
             Option(
                 name=LocalStr('events.falling.strike'),
-                actions=[RemoveRandomCardAction(card_type=CardType.ATTACK)]
+                actions=[RemoveRandomCardAction(card_type=CardType.ATTACK)],
+                enabled=has_type(CardType.ATTACK),
             )
         ]
         
@@ -47,5 +56,4 @@ class Falling(Event):
         ))
         
         self.end_event()
-        from engine.game_state import game_state
         add_actions(actions)

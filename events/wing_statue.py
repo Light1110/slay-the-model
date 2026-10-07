@@ -14,6 +14,7 @@ from actions.combat import LoseHPAction
 from localization import LocalStr
 from utils.option import Option
 from engine.game_state import game_state
+from utils.types import CardType
 
 
 @register_event(event_id='wing_statue', acts=[1], weight=100)
@@ -31,13 +32,10 @@ class WingStatue(Event):
         # Gold: 50-80 random
         gold_amount = random.randint(50, 80)
         
-        # Check if player has attack with 10+ base damage
-        has_10_damage_attack = False
-        for card in game_state.player.deck:
-            if hasattr(card, 'card_type') and card.card_type == 'attack':
-                if hasattr(card, 'base_damage') and card.base_damage >= 10:
-                    has_10_damage_attack = True
-                    break
+        has_10_damage_attack = any(
+            card.card_type == CardType.ATTACK and card.damage >= 10
+            for card in game_state.player.deck
+        )
         
         # Build options
         options = [

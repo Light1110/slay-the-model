@@ -98,7 +98,6 @@ class RemoveRandomCardAction(Action):
         if not game_state.player or not hasattr(game_state.player, 'card_manager'):
             return
 
-        # Get all cards from all piles
         all_cards = []
         card_manager = game_state.player.card_manager
 
@@ -112,22 +111,17 @@ class RemoveRandomCardAction(Action):
             }
             target_type = type_map.get(target_type.lower())
 
-        # Check each pile for matching cards
-        piles = ['draw_pile', 'hand', 'discard_pile', 'exhaust_pile']
-        for pile_name in piles:
-            pile = getattr(card_manager, pile_name, [])
-            for card in pile:
-                if hasattr(card, 'card_type') and card.card_type == target_type:
-                    all_cards.append((card, pile_name))
+        for card in card_manager.get_pile("deck"):
+            if getattr(card, "card_type", None) == target_type:
+                all_cards.append(card)
 
         if not all_cards:
             print(f"[Event] No {self.card_type} cards found to remove")
             return
 
-        # Remove a random card
-        card_to_remove, pile_name = random.choice(all_cards)
-        card_manager.remove_from_pile(card_to_remove, pile_name)
-        print(f"[Event] Removed {card_to_remove.name} ({self.card_type})")
+        card_to_remove = random.choice(all_cards)
+        card_manager.remove_from_pile(card_to_remove, "deck")
+        print(f"[Event] Removed {card_to_remove.display_name} ({self.card_type})")
 
 
 @register("action")
