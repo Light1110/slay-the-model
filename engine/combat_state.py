@@ -4,6 +4,7 @@ Combat state management for storing combat-related information and logic
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from cards.base import Card
     from enemies.base import Enemy
 
 
@@ -36,7 +37,7 @@ class CombatState:
         # Blood for Blood tracking
         self.blood_for_blood_hits: int = 0
         self.last_card_targets: List["Enemy"] = []
-        self.last_played_card = None
+        self.last_played_card: Optional["Card"] = None
 
     def reset_combat_info(self):
         """Reset per-combat counters such as power card tracking and Echo Form flags."""

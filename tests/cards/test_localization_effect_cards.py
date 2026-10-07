@@ -73,7 +73,9 @@ class TestLocalizationEffectCards:
             for action in self.helper.game_state.action_queue.queue
             if isinstance(action, ChooseAddRandomCardAction)
         ]
-        assert queued[-1].cost_until_end_of_turn is None
+        base_choice = queued[-1]
+        assert isinstance(base_choice, ChooseAddRandomCardAction)
+        assert base_choice.cost_until_end_of_turn is None
         assert base.exhaust is True
 
         self.helper.game_state.action_queue.queue.clear()
@@ -85,7 +87,9 @@ class TestLocalizationEffectCards:
             for action in self.helper.game_state.action_queue.queue
             if isinstance(action, ChooseAddRandomCardAction)
         ]
-        assert queued[-1].cost_until_end_of_turn == 0
+        upgraded_choice = queued[-1]
+        assert isinstance(upgraded_choice, ChooseAddRandomCardAction)
+        assert upgraded_choice.cost_until_end_of_turn == 0
         assert upgraded.exhaust is True
 
     def test_doppelganger_stays_x_cost_and_scales_on_upgrade(self):
@@ -96,8 +100,12 @@ class TestLocalizationEffectCards:
         self.helper.add_card_to_hand(card)
         assert self.helper.play_card(card, target=self.player)
         assert card in self.player.card_manager.get_pile("exhaust_pile")
-        assert self.player.get_power("Energized").amount == 2
-        assert self.player.get_power("Draw Card Next Turn").amount == 2
+        energized = self.player.get_power("Energized")
+        draw_next = self.player.get_power("Draw Card Next Turn")
+        assert energized is not None
+        assert draw_next is not None
+        assert energized.amount == 2
+        assert draw_next.amount == 2
 
         upgraded = Doppelganger()
         upgraded.upgrade()
@@ -107,8 +115,12 @@ class TestLocalizationEffectCards:
         self.player.energy = 2
         self.helper.add_card_to_hand(upgraded)
         assert self.helper.play_card(upgraded, target=self.player)
-        assert self.player.get_power("Energized").amount == 3
-        assert self.player.get_power("Draw Card Next Turn").amount == 3
+        upgraded_energized = self.player.get_power("Energized")
+        upgraded_draw_next = self.player.get_power("Draw Card Next Turn")
+        assert upgraded_energized is not None
+        assert upgraded_draw_next is not None
+        assert upgraded_energized.amount == 3
+        assert upgraded_draw_next.amount == 3
 
     def test_meditate_returns_a_retained_card_and_does_not_exhaust(self):
         enemy = self.helper.create_enemy(Cultist, hp=40)
