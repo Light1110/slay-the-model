@@ -19,12 +19,7 @@ from cards.colorless.ritual_dagger import RitualDagger
 @register_event(event_id='the_nest', acts=[2], weight=100)
 class TheNest(Event):
     """The Nest - gold or Ritual Dagger."""
-    
-    @classmethod
-    def can_appear(cls) -> bool:
-        """Only appears on Ascension 15+."""
-        return game_state.ascension >= 15
-    
+
     def trigger(self) -> None:
         actions = []
         
