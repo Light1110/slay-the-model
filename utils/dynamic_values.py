@@ -206,16 +206,39 @@ def resolve_potential_damage(base_damage: int, attacker: Optional[Creature],
     return max(0, math.floor(damage))
 
 
+def _apply_block_phase(block, owner, phase: DamagePhase):
+    from player.player import Player
+
+    if hasattr(owner, "powers"):
+        for power in _modifiers_in_phase(owner.powers, phase):
+            if hasattr(power, "modify_block_gained"):
+                block = cast(Any, power).modify_block_gained(block)
+    if isinstance(owner, Player) and hasattr(owner, "relics"):
+        for relic in _modifiers_in_phase(owner.relics, phase):
+            if hasattr(relic, "modify_block_gained"):
+                block = cast(Any, relic).modify_block_gained(block)
+    return block
+
+
+def resolve_block_gained(base_block, owner=None) -> int:
+    """Apply card-block modifiers, then floor once.
+
+    Dexterity and Frail belong here. GainBlockAction adds the returned number
+    as-is, so powers, orbs, and relics stay outside this function.
+    """
+    block = base_block() if callable(base_block) else base_block
+    block = float(block)
+    if owner is not None:
+        block = _apply_block_phase(block, owner, DamagePhase.ADDITIVE)
+        block = _apply_block_phase(block, owner, DamagePhase.MULTIPLICATIVE)
+    return max(0, math.floor(block))
+
+
 def resolve_card_block(card: 'Card') -> int:
-    """Resolve block value"""
-    block = card.block
+    """Resolve the block a card grants when played or previewed."""
     from engine.game_state import game_state
-    player = game_state.player
-    # player有Frail会减少25%格挡
-    frail_power = player.get_power('frail')
-    if frail_power:
-        block = int(block * 0.75)
-    return int(block)
+
+    return resolve_block_gained(card.block, game_state.player)
 
 
 # 充能球的魔法值获取

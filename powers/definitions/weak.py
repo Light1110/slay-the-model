@@ -16,6 +16,7 @@ class WeakPower(Power):
     description = "Reduces damage dealt by 25%."
     stack_type = StackType.DURATION
     decays_at_round_end = True
+    amount_equals_duration = True
     is_buff = False  # Debuff - reduces damage dealt
     modify_phase = DamagePhase.MULTIPLICATIVE
     damage_priority = 99
@@ -26,6 +27,8 @@ class WeakPower(Power):
             amount: Weak stacks (default 2)
             duration: Duration in turns (default 2)
         """
+        if duration < 0 and amount > 0:
+            duration = amount
         super().__init__(amount=amount, duration=duration, owner=owner)
     
     def modify_damage_dealt(self, base_damage: int) -> float:

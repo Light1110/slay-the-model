@@ -15,6 +15,7 @@ class VulnerablePower(Power):
     description = "Increases damage taken by 50% per stack."
     stack_type = StackType.DURATION
     decays_at_round_end = True
+    amount_equals_duration = True
     is_buff = False  # Debuff - increases damage taken
     
     def __init__(self, amount: int = 0, duration: int = 2, owner=None):
@@ -23,6 +24,8 @@ class VulnerablePower(Power):
             amount: Vulnerable stacks (default 2)
             duration: Duration in turns (default 2)
         """
+        if duration < 0 and amount > 0:
+            duration = amount
         super().__init__(amount=amount, duration=duration, owner=owner)
 
     def get_damage_taken_multiplier(self) -> float:

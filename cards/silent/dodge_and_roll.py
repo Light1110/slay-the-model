@@ -27,6 +27,11 @@ class DodgeAndRoll(Card):
         from engine.game_state import game_state
         from engine.runtime_api import add_actions
 
+        from utils.dynamic_values import resolve_card_block
+
         add_actions([
-            ApplyPowerAction(NextTurnBlockPower(amount=self.block, owner=game_state.player), game_state.player)
+            ApplyPowerAction(
+                NextTurnBlockPower(amount=resolve_card_block(self), owner=game_state.player),
+                game_state.player,
+            )
         ])
