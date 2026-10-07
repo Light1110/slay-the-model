@@ -178,6 +178,7 @@ class PlayCardBHAction(Action):
         play_actions = self.card.on_play(targets=resolved_targets)
         if play_actions:
             add_actions(play_actions)
+        current_combat.combat_state.last_played_card = self.card
 
         publish_message(
             CardPlayedMessage(

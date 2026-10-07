@@ -19,6 +19,7 @@ class Terror(Card):
     target_type = TargetType.ENEMY_SELECT
 
     base_cost = 1
+    base_exhaust = True
     base_magic = {"vulnerable": 99}
 
     upgrade_cost = 0

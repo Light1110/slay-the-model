@@ -17,7 +17,6 @@ class Darkness(Card):
     rarity = RarityType.UNCOMMON
 
     base_cost = 1
-    upgrade_cost = 0
 
     def on_play(self, targets: List[Creature] = []):
         from engine.game_state import game_state

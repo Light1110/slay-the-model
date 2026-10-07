@@ -1,4 +1,4 @@
-from actions.card_choice import ChooseCardLambdaAction, MoveCardAction
+from actions.card_choice import ChooseCardLambdaAction, MarkRetainCardAction, MoveCardAction
 from actions.combat import EndTurnAction
 from actions.watcher import ChangeStanceAction
 from cards.base import Card
@@ -16,9 +16,8 @@ class Meditate(Card):
     base_cost = 1
     base_magic = {"pick": 1}
     upgrade_magic = {"pick": 2}
-    base_exhaust = True
     text_name = "Meditate"
-    text_description = "Put up to {magic.pick} cards from your discard pile into your hand. Enter Calm. Exhaust."
+    text_description = "Put up to {magic.pick} cards from your discard pile into your hand and Retain them. Enter Calm. End your turn."
 
     def on_play(self, targets: List = []):
         add_actions(
@@ -27,7 +26,10 @@ class Meditate(Card):
                     pile="discard_pile",
                     amount=self.get_magic_value("pick"),
                     must_select=False,
-                    action_builder=lambda card: MoveCardAction(card=card, src_pile="discard_pile", dst_pile="hand"),
+                    action_builder=lambda card: [
+                        MoveCardAction(card=card, src_pile="discard_pile", dst_pile="hand"),
+                        MarkRetainCardAction(card=card),
+                    ],
                 ),
                 ChangeStanceAction(StatusType.CALM),
                 EndTurnAction(),

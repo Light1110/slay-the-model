@@ -36,6 +36,7 @@ class CombatState:
         # Blood for Blood tracking
         self.blood_for_blood_hits: int = 0
         self.last_card_targets: List["Enemy"] = []
+        self.last_played_card = None
 
     def reset_combat_info(self):
         """Reset per-combat counters such as power card tracking and Echo Form flags."""
@@ -44,6 +45,7 @@ class CombatState:
         self.discarded_cards_this_turn = 0
         self.blood_for_blood_hits = 0
         self.last_card_targets = []
+        self.last_played_card = None
         self.mantra_gained = 0
 
         # Reset turn-specific counters
