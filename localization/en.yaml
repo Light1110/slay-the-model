@@ -136,10 +136,10 @@ ui:
   received_relic: 'Received relic: {name}!'
   shop_bought_item: Bought {item_name} for {final_price} gold!
   character:
-    ironclad: Ironclad
-    silent: Silent
-    defect: Defect
-    watcher: Watcher
+    ironclad: The Ironclad
+    silent: The Silent
+    defect: The Defect
+    watcher: The Watcher
 blessing:
   title: Choose blessings
   upgrade_card_option: Upgrade a card
@@ -171,7 +171,7 @@ stance:
   choose_stance: Choose a stance
 events:
   neo:
-    welcome: Before you stands a dark shrine to Neow, the enigmatic spirit of the Spire.
+    welcome: Hello... I am Neow...
   ancient_writing:
     title: Ancient Writing
     elegance: Elegance
@@ -182,8 +182,8 @@ events:
       Suddenly, the message becomes clear...'
   augmenter:
     title: Augmenter
-    test_jax: Test JAX
-    transform: Transform
+    test_jax: Test J.A.X.
+    transform: Become Test Subject
     mutagens: Mutagens
     description: 'A man with an eyepatch and a devilish grin strides up to you.
 
@@ -201,9 +201,9 @@ events:
     give_only: Give only
   big_fish:
     title: Big Fish
-    option1: Option 1
-    option2: Option 2
-    option3: Option 3
+    option1: Banana
+    option2: Donut
+    option3: Box
     description: 'As you make your way down a long corridor you see a banana, a donut, and a box floating about. No... upon
       closer inspection they are tied to strings coming from holes in the ceiling. There is a quiet cackling from above as
       you approach the objects.
@@ -211,7 +211,7 @@ events:
       What do you do?'
   bonfire_spirits:
     title: Bonfire Spirits
-    offer: Offer a card to the spirits
+    offer: Offer
     leave: Leave
     description: You happen upon a group of what looks like purple fire spirits dancing around a large bonfire.
   council_of_ghosts:
@@ -261,7 +261,7 @@ events:
       A man with ridiculous clothing appears at the entrance to bar you.'
   divine_fountain:
     title: The Divine Fountain
-    drink: Drink from the fountain
+    drink: Drink
     leave: Leave
     description: You come across shimmering water flowing endlessly from a fountain on a nearby wall.
   duplicator:
@@ -301,28 +301,24 @@ events:
       She calls out to you, demanding sacrifice.'
   GoldenIdol:
     title: Golden Idol
-    take: Take the idol
+    take: Take
     trap: Trap
     outrun: Outrun
     smash: Smash
     hide: Hide
     leave: Leave
-    description: 'You come across an inconspicuous pedestal with a shining gold idol sitting peacefully atop. It looks incredibly
-      valuable.
-
-
-      You sure don''t see any traps nearby.'
+    description: "You come across an inconspicuous pedestal with a shining gold idol sitting peacefully atop. It looks incredibly valuable. You sure don't see any traps nearby."
   golden_shrine:
     title: Golden Shrine
-    pray: Pray at the shrine
-    desecrate: Desecrate the shrine
+    pray: Pray
+    desecrate: Desecrate
     leave: Leave
     description: Before you lies an elaborate shrine to an ancient spirit.
   hypnotizing_mushrooms:
     title: Mushrooms
     stomp: Stomp
     stomp_effect: Fight 3 Fungi Beasts. Gain Odd Mushroom.
-    eat: Eat a mushroom
+    eat: Eat
     eat_effect: Heal 25% of your HP. Become Cursed with Parasite.
     description: 'You give in to the unnatural desire to eat. As you consume mushroom after mushroom, you feel yourself entering
       into a daze and pass out. As you awake, you feel very odd.
@@ -330,7 +326,7 @@ events:
       You Heal 25% of your HP, but you also get infected.'
   knowing_skull:
     title: Knowing Skull
-    potion: Potion
+    potion: "A Pick Me Up?"
     riches: Riches
     success: Success
     leave: Leave
@@ -338,7 +334,7 @@ events:
       pedestal. As you approach, the skull bursts into flames and turns to face you.
   lab:
     title: Lab
-    search: Search the lab
+    search: Search
     description: 'You find yourself in a room filled with racks of test tubes, beakers, flasks, forceps, pinch clamps, stirring
       rods, tongs, goggles, funnels, pipets, cylinders, condensers, and even a rare spiral tube of glass.
 
@@ -370,7 +366,7 @@ events:
       shiny shiny chits they are!'
   match_and_keep:
     title: Match and Keep!
-    play: Play the game
+    play: Play
     leave: Leave
     description: '" Twelve cards! Match them to keep them! Five tries, no do-overs.
 
@@ -424,7 +420,7 @@ events:
       He seems delusional, but harmless.'
   ominous_forge:
     title: Ominous Forge
-    forge: Forge a card
+    forge: Forge
     rummage: Rummage
     leave: Leave
     description: You duck into a small hut. Inside, you find what appears to be a forge. The smithing tools are covered with
@@ -436,7 +432,7 @@ events:
     description: Before you lies an elaborate shrine to a forgotten spirit.
   scrap_ooze:
     title: Scrap Ooze
-    reach: Reach
+    reach: Reach Inside
     leave: Leave
     description: As you walk into the room you hear a gurgling and the grinding of metals. Before you is a slime-like creature
       that ate too much scrap for its own good. From the center of the creature you see glints of strange light, perhaps something
@@ -467,15 +463,15 @@ events:
       Its warm glow and enchanting patterns invite you in.'
   the_cleric:
     title: The Cleric
-    option1: Option 1
-    option2: Option 2
-    option3: Option 3
+    option1: Heal
+    option2: Purify
+    option3: Leave
     description: 'A strange blue humanoid with a golden helm(?) approaches you with a huge smile.
 
       "Hello friend! I am Cleric! Are you interested in my services?!" the creature shouts, loudly.'
   the_colosseum:
     title: The Colosseum
-    fight: Fight for glory
+    fight: Fight
     leave: Leave
     victory: Victory
     cowardice: Cowardice
@@ -501,7 +497,7 @@ events:
       A knight forcefully gestures you to stop with its giant lance.'
   the_library:
     title: The Library
-    read: Read a book
+    read: Read
     sleep: Sleep
     description: 'You come across an ornate building which appears abandoned.
 
@@ -551,7 +547,7 @@ events:
       Do you agree?"'
   tomb_of_lord_red_mask:
     title: Tomb of Lord Red Mask
-    don_mask: Don Mask
+    don_mask: Don the Red Mask
     leave: Leave
     offer_gold: Offer Gold
     description: A highly ornamented tomb can be seen on the other side of a floating path. Upon reaching the tomb, you notice
@@ -611,7 +607,7 @@ events:
     title: Winding Halls
     embrace_madness: Embrace Madness
     focus: Focus
-    retrace: Retrace
+    retrace: Retrace Your Steps
     description: 'As you slowly make your way up the twisting pathways, you constantly find yourself losing your way as the
       walls and ground seem to inexplicably shift before your eyes.
 
@@ -619,7 +615,7 @@ events:
       The constant whispering voices in the back of your head aren''t helping things either.'
   wing_statue:
     title: Wing Statue
-    pray: Pray to the statue
+    pray: Pray
     destroy: Destroy
     leave: Leave
     description: 'Among the stone and boulders, you notice an intricate large blue statue resembling a wing.
@@ -627,10 +623,10 @@ events:
       You find gold spilling from its cracks. Maybe there is more inside...'
   woman_in_blue:
     title: The Woman in Blue
-    option1: Option 1
-    option2: Option 2
-    option3: Option 3
-    option4: Option 4
+    option1: Buy 1 Potion
+    option2: Buy 2 Potions
+    option3: Buy 3 Potions
+    option4: Leave
     description: 'From the darkness, an arm pulls you into a small shop. As your eyes adjust, you see a pale woman in sharp
       clothes gesturing towards a wall of potions.
 
@@ -652,7 +648,7 @@ events:
       with gold from unfortunate adventurers mixed together in the puddle.'
   golden_idol:
     title: Golden Idol
-    description: Before you lies an elaborate shrine to a forgotten spirit.
+    description: "You come across an inconspicuous pedestal with a shining gold idol sitting peacefully atop. It looks incredibly valuable. You sure don't see any traps nearby."
     take: Take
     leave: Leave
     trap: 'A trap springs! Choose your escape:'
@@ -826,17 +822,17 @@ cards:
       upgrade_description: Double your Strength.
     Pummel:
       name: Pummel
-      description: Deal {damage} damage {attack_times} times.
+      description: "Deal {damage} damage {attack_times} times. Exhaust."
     Uppercut:
       name: Uppercut
       description: Deal {damage} damage. Apply {magic.vulnerable} Vulnerable and {magic.weak} Weak.
     Offering:
       name: Offering
-      description: Lose 6 HP. Gain {energy_gain} Energy. Gain 2 Strength. Draw {draw} cards.
+      description: "Lose 6 HP. Gain {energy_gain} Energy. Draw {draw} cards. Exhaust."
     Barricade:
       name: Barricade
       description: Block no longer expires at the start of your turn.
-      upgrade_description: Block no longer expires at the start of your turn. Costs 2.
+      upgrade_description: Block is not removed at the start of your turn.
     BattleTrance:
       name: Battle Trance
       description: Draw {draw} cards. You cannot draw any more cards this turn.
@@ -876,7 +872,7 @@ cards:
       description: At the end of your turn, gain {magic.strength} Strength.
     Disarm:
       name: Disarm
-      description: Enemy loses {magic.strength} Strength.
+      description: "Enemy loses {magic.strength} Strength. Exhaust."
     DoubleTap:
       name: Double Tap
       description: The next {magic.double_tap} Attack(s) is(are) played twice.
@@ -899,7 +895,7 @@ cards:
       description: Choose a card from your Exhaust pile and put it into your hand. Exhaust.
     Feed:
       name: Feed
-      description: Deal {damage} damage. If Fatal, gain {magic.max_hp} Max HP.
+      description: "Deal {damage} damage. If Fatal, raise your Max HP by {magic.max_hp}. Exhaust."
     FeelNoPain:
       name: Feel No Pain
       description: Whenever a card is Exhausted, gain {block} Block.
@@ -929,14 +925,14 @@ cards:
       description: Deal {damage} damage to ALL enemies. Add a Burn into your discard pile.
     Impervious:
       name: Impervious
-      description: Ethereal. Gain {block} Block. Exhaust.
+      description: "Gain {block} Block. Exhaust."
       upgrade_description: Gain {block} Block. Exhaust.
     InfernalBlade:
       name: Infernal Blade
       description: Add a random Attack into your hand. It costs 0 this turn. Exhaust.
     Intimidate:
       name: Intimidate
-      description: Apply {magic.weak} Weak to ALL enemies.
+      description: "Apply {magic.weak} Weak to ALL enemies. Exhaust."
     Juggernaut:
       name: Juggernaut
       description: Whenever you gain Block, deal {magic.damage} damage to a random enemy.
@@ -1007,7 +1003,7 @@ cards:
       description: Deal {damage} damage twice.
     WarCry:
       name: Warcry
-      description: Draw {draw} card(s). Place a card from your hand on top of your draw pile.
+      description: "Draw {draw} card(s). Put a card from your hand on top of your draw pile. Exhaust."
     Whirlwind:
       name: Whirlwind
       description: Deal {damage} damage to ALL enemies X times.
@@ -1034,7 +1030,7 @@ cards:
       name: Adrenaline
       description: Draw {draw} cards. Gain {energy_gain} Energy. Exhaust.
     AllOutAttack:
-      name: All Out Attack
+      name: All-Out Attack
       description: Deal {damage} damage to ALL enemies. Discard 1 random card.
     BladeDance:
       name: Blade Dance
@@ -1107,8 +1103,8 @@ cards:
       description: Apply {magic.poison} Poison to random enemies {magic.hits} times.
     Catalyst:
       name: Catalyst
-      description: Double an enemy's Poison.
-      upgrade_description: Triple an enemy's Poison.
+      description: "Double the enemy's Poison. Exhaust."
+      upgrade_description: "Triple the enemy's Poison. Exhaust."
     DaggerSpray:
       name: Dagger Spray
       description: Deal {damage} damage to ALL enemies twice.
@@ -1134,7 +1130,7 @@ cards:
       name: Piercing Wail
       description: ALL enemies lose {magic.strength_loss} Strength this turn. Exhaust.
     RiddleWithHoles:
-      name: Riddle With Holes
+      name: Riddle with Holes
       description: Deal {damage} damage {attack_times} times.
     AfterImage:
       name: After Image
@@ -1156,7 +1152,7 @@ cards:
       description: Deal {damage} damage {attack_times} times. Decrease this card's damage by {magic.decay} this combat.
     Terror:
       name: Terror
-      description: Apply {magic.vulnerable} Vulnerable.
+      description: "Apply {magic.vulnerable} Vulnerable. Exhaust."
     ThousandCuts:
       name: A Thousand Cuts
       description: Whenever you play a card, deal {magic.damage} damage to ALL enemies.
@@ -1214,7 +1210,7 @@ cards:
       description: Apply {magic.poison} Poison. When the enemy dies, deal damage equal to its max HP to ALL enemies.
     Doppelganger:
       name: Doppelganger
-      description: Next turn, draw X cards and gain X Energy.
+      description: "Next turn, draw X cards and gain X Energy. Exhaust."
     GrandFinale:
       name: Grand Finale
       description: Can only be played if there are no cards in your draw pile. Deal {damage} damage to ALL enemies.
@@ -1226,7 +1222,7 @@ cards:
       description: Costs 1 more whenever you lose HP this combat. Deal {damage} damage.
     Nightmare:
       name: Nightmare
-      description: Choose a card. Next turn, add 3 copies of that card into your hand.
+      description: "Choose a card. Next turn, add 3 copies of that card into your hand. Exhaust."
     Setup:
       name: Setup
       description: Put a card from your hand on top of your draw pile. It costs 0 until played.
@@ -1264,7 +1260,7 @@ cards:
       description: Deal {damage} damage once for each channeled orb.
     BeamCell:
       name: Beam Cell
-      description: Deal {damage} damage. Apply {magic.vulnerable} Lock-On.
+      description: "Deal {damage} damage. Apply {magic.vulnerable} Vulnerable."
     BiasedCognition:
       name: Biased Cognition
       description: Gain {magic.focus} Focus. At the start of each turn, lose 1 Focus.
@@ -1309,13 +1305,13 @@ cards:
       description: Channel 1 Frost. Draw {draw} card(s).
     CoreSurge:
       name: Core Surge
-      description: Deal {damage} damage. Gain 1 Artifact.
+      description: "Deal {damage} damage. Gain 1 Artifact. Exhaust."
     CreativeAI:
       name: Creative AI
       description: At the start of your turn, add 1 random Power card to your hand.
     Darkness:
       name: Darkness
-      description: Channel 1 Dark. Upgraded version triggers each Dark orb's passive once.
+      description: Channel 1 Dark.
     Defend:
       name: Defend
       description: Gain {block} Block.
@@ -1327,13 +1323,13 @@ cards:
       description: Deal {damage} damage to ALL enemies. Channel 1 Dark.
     DoubleEnergy:
       name: Double Energy
-      description: Double your Energy.
+      description: Double your Energy. Exhaust.
     Dualcast:
       name: Dualcast
       description: Evoke your next orb twice.
     EchoForm:
       name: Echo Form
-      description: The first card you play each turn is played twice.
+      description: Ethereal. The first card you play each turn is played twice.
     Electrodynamics:
       name: Electrodynamics
       description: Your Lightning orbs hit ALL enemies. Channel {magic.lightning} Lightning.
@@ -1342,7 +1338,7 @@ cards:
       description: Gain {block} Block. Retain your hand this turn.
     Fission:
       name: Fission
-      description: Evoke all your orbs. Gain benefits for each orb evoked. Exhaust.
+      description: Remove all your Orbs. Gain Energy and draw cards for each Orb removed. Exhaust.
     ForceField:
       name: Force Field
       description: Gain {block} Block. Costs 1 less for each Power played this combat.
@@ -1354,7 +1350,7 @@ cards:
       description: Channel 1 Plasma.
     GeneticAlgorithm:
       name: Genetic Algorithm
-      description: Gain {block} Block. Permanently gains {magic.growth} Block when played.
+      description: "Gain {block} Block. Permanently increase this card's Block by {magic.growth}. Exhaust."
     Glacier:
       name: Glacier
       description: Gain {block} Block. Channel 2 Frost.
@@ -1389,8 +1385,8 @@ cards:
       name: Meteor Strike
       description: Deal {damage} damage. Channel 3 Plasma.
     MultiCast:
-      name: Multicast
-      description: Evoke your next orb X times. Exhaust.
+      name: Multi-Cast
+      description: Evoke your next Orb X times.
     Overclock:
       name: Overclock
       description: Draw {draw} card(s). Shuffle 1 Burn into your draw pile.
@@ -1529,7 +1525,7 @@ cards:
       description: Unplayable. At the end of your turn, take {damage} damage.
     Miracle:
       name: Miracle
-      description: Gain {energy_gain} Energy. Exhaust.
+      description: "Retain. Gain {energy_gain} Energy. Exhaust."
     Smite:
       name: Smite
       description: Retain. Deal {damage} damage. Exhaust.
@@ -1544,7 +1540,7 @@ cards:
       description: Retain. Deal {damage} damage. Exhaust.
     Expunger:
       name: Expunger
-      description: Deal {damage} damage X times. Exhaust.
+      description: "Deal {damage} damage X times."
     Beta:
       name: Beta
       description: Shuffle an Omega into your draw pile. Exhaust.
@@ -1737,7 +1733,7 @@ cards:
       description: 'Unplayable. When drawn, add {magic.count} Miracles to your hand. Exhaust.'
     DevaForm:
       name: 'Deva Form'
-      description: 'At the start of your turn, gain Energy and increase this effect.'
+      description: "Ethereal. At the start of your turn, gain Energy and increase this gain."
     Devotion:
       name: 'Devotion'
       description: 'At the start of your turn, gain {magic.mantra} Mantra.'
@@ -1761,13 +1757,13 @@ cards:
       description: 'Gain {block} Block. Shuffle an Insight into your draw pile.'
     Expunger:
       name: 'Expunger'
-      description: 'Deal {damage} damage X times. Exhaust.'
+      description: "Deal {damage} damage X times."
     Fasting:
       name: 'Fasting'
       description: 'Gain {magic.stat} Strength and Dexterity. Gain 1 less Energy at the start of each turn.'
     FearNoEvil:
       name: 'Fear No Evil'
-      description: 'Deal {damage} damage. If the enemy intends to attack, gain 2 Energy.'
+      description: "Deal {damage} damage. If the enemy intends to Attack, enter Calm."
     FlurryOfBlows:
       name: 'Flurry of Blows'
       description: 'Deal {damage} damage. Whenever you change stances, return this from your discard pile to your hand.'
@@ -1779,7 +1775,8 @@ cards:
       description: 'Deal {damage} damage. If the previous card played this turn was an Attack, gain 1 Energy.'
     ForeignInfluence:
       name: 'Foreign Influence'
-      description: 'Choose 1 of 3 attacks from any color to add to your hand. It costs 0 this turn. Exhaust.'
+      description: Choose 1 of 3 attacks from any color to add to your hand. Exhaust.
+      upgrade_description: Choose 1 of 3 attacks from any color to add to your hand. It costs 0 this turn. Exhaust.
     Foresight:
       name: 'Foresight'
       description: 'At the start of your turn, Scry {magic.scry}.'
@@ -1788,7 +1785,7 @@ cards:
       description: 'Gain {block} Block. If you are in Wrath, gain {magic.wrath_block} more.'
     Indignation:
       name: 'Indignation'
-      description: 'Apply {magic.vuln} Vulnerable.'
+      description: "If you are in Wrath, apply {magic.vuln} Vulnerable to ALL enemies, otherwise enter Wrath."
     InnerPeace:
       name: 'Inner Peace'
       description: 'Enter Calm. If you are already in Calm, draw {draw} cards.'
@@ -1803,7 +1800,7 @@ cards:
       description: 'Deal {damage} damage. Scry 1. Gain {block} Block.'
     LessonLearned:
       name: 'Lesson Learned'
-      description: 'Deal {damage} damage. If Fatal, upgrade a card in your deck.'
+      description: "Deal {damage} damage. If Fatal, Upgrade a random card in your deck. Exhaust."
     LikeWater:
       name: 'Like Water'
       description: 'At the end of your turn, if you are in Calm, gain {magic.block} Block.'
@@ -1812,13 +1809,13 @@ cards:
       description: 'Whenever a card is created during combat, upgrade it.'
     Meditate:
       name: 'Meditate'
-      description: 'Put up to {magic.pick} cards from your discard pile into your hand. Enter Calm. Exhaust.'
+      description: "Put up to {magic.pick} cards from your discard pile into your hand and Retain them. Enter Calm. End your turn."
     MentalFortress:
       name: 'Mental Fortress'
       description: 'Whenever you change stances, gain {magic.block} Block.'
     Miracle:
       name: 'Miracle'
-      description: 'Gain {energy_gain} Energy. Exhaust.'
+      description: "Retain. Gain {energy_gain} Energy. Exhaust."
     Nirvana:
       name: 'Nirvana'
       description: 'Whenever you Scry, gain {magic.block} Block.'
@@ -1839,7 +1836,7 @@ cards:
       description: 'Apply {magic.mark} Mark. ALL enemies lose HP equal to their Mark.'
     Prostrate:
       name: 'Prostrate'
-      description: 'Gain {block} Block. Gain 2 Mantra. Exhaust.'
+      description: "Gain {block} Block. Gain 2 Mantra."
     Protect:
       name: 'Protect'
       description: 'Retain. Gain {block} Block.'
@@ -1857,7 +1854,7 @@ cards:
       description: 'Retain. Gain {block} Block. Exhaust.'
     Sanctity:
       name: 'Sanctity'
-      description: 'Gain {block} Block. If you are in Calm, draw 2 cards.'
+      description: "Gain {block} Block. If the last card played this combat was a Skill, draw 2 cards."
     SandsOfTime:
       name: 'Sands of Time'
       description: 'Retain. Deal {damage} damage. Retaining this card reduces its cost by 1.'
@@ -1890,7 +1887,7 @@ cards:
       description: 'Gain {block} Block. Your next Attack this turn costs 0.'
     TalkToTheHand:
       name: 'Talk to the Hand'
-      description: 'Deal {damage} damage. Apply a debuff that gives you {magic.block} Block whenever you attack that enemy.'
+      description: "Deal {damage} damage. Whenever you attack this enemy, gain {magic.block} Block. Exhaust."
     Tantrum:
       name: 'Tantrum'
       description: 'Deal {damage} damage {attack_times} times. Enter Wrath.'
@@ -1905,7 +1902,7 @@ cards:
       description: 'Retain. Enter Calm. Exhaust.'
     Vault:
       name: 'Vault'
-      description: 'End your turn. Take another turn after this one.'
+      description: Take an extra turn after this one. End your turn. Exhaust.
     Vigilance:
       name: 'Vigilance'
       description: 'Gain {block} Block. Enter Calm.'
@@ -1951,10 +1948,7 @@ powers:
     description: Deals 25% less attack damage.
   FlexPower:
     name: Strength Down
-    description: Gain {amount} Strength. Lose equal amount at end of turn.
-  HeavyBladePower:
-    name: Heavy Blade
-    description: Gain {amount} Strength. Lose equal amount at end of turn.
+    description: "At the end of your turn, lose {amount} Strength."
   Constricted:
     name: Constricted
     description: At the end of your turn, lose HP equal to Constricted.
@@ -2002,9 +1996,6 @@ powers:
   PlatedArmorPower:
     name: Plated Armor
     description: At the end of your turn, gain {amount} Block.
-  ArtifactPower:
-    name: Artifact
-    description: Negates the next {amount} debuff(s).
   curl_up:
     name: Curl Up
     description: On receiving attack damage, gain {amount} Block. Once per combat.
@@ -2012,7 +2003,7 @@ powers:
     name: Amplify
     description: The next Power you play this turn is played an additional time.
   BiasedCognitionPower:
-    name: Biased Cognition
+    name: Bias
     description: At the start of your turn, lose 1 Focus.
   CreativeAIPower:
     name: Creative AI
@@ -2021,19 +2012,19 @@ powers:
     name: Echo Form
     description: The first card you play each turn is played an additional time.
   ElectroPower:
-    name: Electrodynamics
+    name: Electro
     description: Your Lightning orbs hit all enemies.
   EquilibriumPower:
     name: Equilibrium
     description: At the end of your turn, retain your hand.
   FocusPower:
     name: Focus
-    description: Your Lightning, Frost, and Dark orbs gain {amount} strength.
+    description: "Increases the effectiveness of Orbs by {amount}."
   HeatsinksPower:
-    name: Heatsinks
+    name: Heatsink
     description: Whenever you play a Power, draw {amount} card(s).
   HelloWorldPower:
-    name: Hello World
+    name: Hello
     description: At the start of your turn, add 1 random common card to your hand.
   LockOnPower:
     name: Lock-On
@@ -2045,7 +2036,7 @@ powers:
     name: Machine Learning
     description: At the start of your turn, draw {amount} additional card(s).
   SelfRepairPower:
-    name: Self Repair
+    name: Repair
     description: At the end of combat, heal {amount} HP.
   StaticDischargePower:
     name: Static Discharge
@@ -2053,133 +2044,6 @@ powers:
   StormPower:
     name: Storm
     description: Whenever you play a Power, channel {amount} Lightning.
-potions:
-  BloodPotion:
-    name: Blood Potion
-    description: Heal for {amount}% of your max HP.
-  Elixir:
-    name: Elixir
-    description: Exhaust all cards in your hand.
-  HeartOfIron:
-    name: Heart of Iron
-    description: Gain {amount} Metallicize.
-  PoisonPotion:
-    name: Poison Potion
-    description: Apply {magic_number} Poison.
-  CunningPotion:
-    name: Cunning Potion
-    description: Gain {block} Block.
-  GhostInAJar:
-    name: Ghost in a Jar
-    description: Gain 1 Intangible.
-  FocusPotion:
-    name: Focus Potion
-    description: Gain {magic_number} Focus.
-  EssenceOfDarkness:
-    name: Essence of Darkness
-    description: Channel {amount} Dark Orbs.
-  PotionOfCapacity:
-    name: Potion of Capacity
-    description: Gain {amount} Orb slots.
-  BottledMiracle:
-    name: Bottled Miracle
-    description: Add 2 Miracles to your hand.
-  StancePotion:
-    name: Stance Potion
-    description: Enter a stance of your choice.
-  Ambrosia:
-    name: Ambrosia
-    description: Enter Divinity.
-  AttackPotion:
-    name: Attack Potion
-    description: Add a random Attack card to your hand. It costs 0 this turn.
-  BlockPotion:
-    name: Block Potion
-    description: Gain {block} Block.
-  ColorlessPotion:
-    name: Colorless Potion
-    description: Add a random Colorless card to your hand. It costs 0 this turn.
-  DexterityPotion:
-    name: Dexterity Potion
-    description: Gain {magic_number} Dexterity.
-  EnergyPotion:
-    name: Energy Potion
-    description: Gain {energy_gain} Energy.
-  ExplosivePotion:
-    name: Explosive Potion
-    description: Deal {damage} damage to all enemies.
-  FearPotion:
-    name: Fear Potion
-    description: Apply {magic_number} Vulnerable to all enemies.
-  FirePotion:
-    name: Fire Potion
-    description: Deal {damage} damage.
-  FlexPotion:
-    name: Flex Potion
-    description: Gain {strength} Strength this turn.
-  PowerPotion:
-    name: Power Potion
-    description: Add a random Power card to your hand. It costs 0 this turn.
-  SkillPotion:
-    name: Skill Potion
-    description: Add a random Skill card to your hand. It costs 0 this turn.
-  SpeedPotion:
-    name: Speed Potion
-    description: Gain {dexterity} Dexterity this turn.
-  StrengthPotion:
-    name: Strength Potion
-    description: Gain {magic_number} Strength.
-  SwiftPotion:
-    name: Swift Potion
-    description: Draw {amount} cards.
-  WeakPotion:
-    name: Weak Potion
-    description: Apply {magic_number} Weak to an enemy.
-  AncientPotion:
-    name: Ancient Potion
-    description: Gain 1 Artifact.
-  BlessingOfTheForge:
-    name: Blessing of the Forge
-    description: Upgrade a card in your hand.
-  DistilledChaos:
-    name: Distilled Chaos
-    description: Play {amount} random cards from your draw pile.
-  DuplicationPotion:
-    name: Duplication Potion
-    description: This turn, your next card is played twice.
-  EssenceOfSteel:
-    name: Essence of Steel
-    description: Gain {block} Block.
-  GamblersBrew:
-    name: Gambler's Brew
-    description: Draw {amount} cards, then discard {amount} cards.
-  LiquidBronze:
-    name: Liquid Bronze
-    description: Gain {plated_armor} Plated Armor.
-  LiquidMemories:
-    name: Liquid Memories
-    description: Return a card from your discard pile to your hand.
-  RegenPotion:
-    name: Regen Potion
-    description: Gain {regeneration} Regeneration.
-  SmokeBomb:
-    name: Smoke Bomb
-    description: Escape from a non-boss combat.
-  FairyInABottle:
-    name: Fairy in a Bottle
-    description: When you would die, heal to {heal}% HP instead.
-  FruitJuice:
-    name: Fruit Juice
-    description: Gain {max_hp} Max HP.
-  SneckoOil:
-    name: Snecko Oil
-    description: Gain {energy} Energy. Confused for {turns} turns.
-  CultistPotion:
-    name: Cultist Potion
-    description: Gain {strength} Strength.
-  EntropicBrew:
-    name: Entropic Brew
-    description: Add 3 random potions to your inventory.
   BattleHymnPower:
     name: 'Battle Hymn'
     description: 'At the start of your turn, add a Smite into your hand.'
@@ -2209,7 +2073,7 @@ potions:
     description: 'At the end of your turn, if you are in Calm, gain {amount} Block.'
   MantraPower:
     name: 'Mantra'
-    description: 'When this reaches 10, enter Divinity.'
+    description: "When you obtain 10 Mantra, enter Divinity."
   MarkPower:
     name: 'Mark'
     description: 'When triggered, lose HP equal to Mark.'
@@ -2243,6 +2107,133 @@ potions:
   WreathOfFlamePower:
     name: 'Wreath of Flame'
     description: 'Your next Attack deals {amount} additional damage.'
+potions:
+  BloodPotion:
+    name: Blood Potion
+    description: Heal for {amount}% of your max HP.
+  Elixir:
+    name: Elixir
+    description: Exhaust any number of cards in your hand.
+  HeartOfIron:
+    name: Heart of Iron
+    description: Gain {amount} Metallicize.
+  PoisonPotion:
+    name: Poison Potion
+    description: Apply {magic_number} Poison.
+  CunningPotion:
+    name: Cunning Potion
+    description: Gain {block} Block.
+  GhostInAJar:
+    name: Ghost in a Jar
+    description: Gain 1 Intangible.
+  FocusPotion:
+    name: Focus Potion
+    description: Gain {magic_number} Focus.
+  EssenceOfDarkness:
+    name: Essence Of Darkness
+    description: "Channel {amount} Dark."
+  PotionOfCapacity:
+    name: Potion Of Capacity
+    description: Gain {amount} Orb slots.
+  BottledMiracle:
+    name: Bottled Miracle
+    description: Add 2 Miracles to your hand.
+  StancePotion:
+    name: Stance Potion
+    description: Enter Calm or Wrath.
+  Ambrosia:
+    name: Ambrosia
+    description: Enter Divinity.
+  AttackPotion:
+    name: Attack Potion
+    description: Choose 1 of 3 random Attack cards to add to your hand. It costs 0 this turn.
+  BlockPotion:
+    name: Block Potion
+    description: Gain {block} Block.
+  ColorlessPotion:
+    name: Colorless Potion
+    description: Choose 1 of 3 random Colorless cards to add to your hand. It costs 0 this turn.
+  DexterityPotion:
+    name: Dexterity Potion
+    description: Gain {magic_number} Dexterity.
+  EnergyPotion:
+    name: Energy Potion
+    description: Gain {energy_gain} Energy.
+  ExplosivePotion:
+    name: Explosive Potion
+    description: Deal {damage} damage to all enemies.
+  FearPotion:
+    name: Fear Potion
+    description: Apply {magic_number} Vulnerable to all enemies.
+  FirePotion:
+    name: Fire Potion
+    description: Deal {damage} damage.
+  FlexPotion:
+    name: Flex Potion
+    description: Gain {strength} Strength this turn.
+  PowerPotion:
+    name: Power Potion
+    description: Choose 1 of 3 random Power cards to add to your hand. It costs 0 this turn.
+  SkillPotion:
+    name: Skill Potion
+    description: Choose 1 of 3 random Skill cards to add to your hand. It costs 0 this turn.
+  SpeedPotion:
+    name: Speed Potion
+    description: Gain {dexterity} Dexterity this turn.
+  StrengthPotion:
+    name: Strength Potion
+    description: Gain {magic_number} Strength.
+  SwiftPotion:
+    name: Swift Potion
+    description: Draw {amount} cards.
+  WeakPotion:
+    name: Weak Potion
+    description: Apply {magic_number} Weak to an enemy.
+  AncientPotion:
+    name: Ancient Potion
+    description: Gain 1 Artifact.
+  BlessingOfTheForge:
+    name: Blessing of the Forge
+    description: Upgrade a card in your hand.
+  DistilledChaos:
+    name: Distilled Chaos
+    description: Play {amount} random cards from your draw pile.
+  DuplicationPotion:
+    name: Duplication Potion
+    description: This turn, your next card is played twice.
+  EssenceOfSteel:
+    name: Essence of Steel
+    description: Gain {block} Block.
+  GamblersBrew:
+    name: Gambler's Brew
+    description: Draw {amount} cards, then discard {amount} cards.
+  LiquidBronze:
+    name: Liquid Bronze
+    description: "Gain {amount} Thorns."
+  LiquidMemories:
+    name: Liquid Memories
+    description: Return a card from your discard pile to your hand.
+  RegenPotion:
+    name: Regen Potion
+    description: Gain {regeneration} Regeneration.
+  SmokeBomb:
+    name: Smoke Bomb
+    description: Escape from a non-boss combat.
+  FairyInABottle:
+    name: Fairy in a Bottle
+    description: When you would die, heal to {heal}% HP instead.
+  FruitJuice:
+    name: Fruit Juice
+    description: Gain {max_hp} Max HP.
+  SneckoOil:
+    name: Snecko Oil
+    description: "Draw {amount} cards. Randomize the cost of cards in your hand."
+  CultistPotion:
+    name: Cultist Potion
+    description: "Gain {amount} Ritual."
+  EntropicBrew:
+    name: Entropic Brew
+    description: Fill all your empty potion slots with random potions.
 relics:
   PureWater:
     name: 'Pure Water'
@@ -2366,7 +2357,7 @@ relics:
     description: At start of your 2nd turn, gain 14 Block.
   BlueCandle:
     name: Blue Candle
-    description: Curse Cards can now be played. Playing a Curse will make you lose 1 HP and Exhaust Card.
+    description: "Unplayable Curse cards can now be played. Whenever you play a Curse, lose 1 HP and Exhaust it."
   BottledFlame:
     name: Bottled Flame
     description: Upon pickup, choose an Attack. Start each combat with that card in your hand.
@@ -2423,10 +2414,10 @@ relics:
     description: At start of Boss combats, heal 25 HP.
   PaperFrog:
     name: Paper Phrog
-    description: Enemies dealing 75% or more of your Max HP have damage reduced by 50%.
+    description: "Enemies with Vulnerable take 75% more damage rather than 50%."
   PaperKrane:
     name: Paper Krane
-    description: Enemies with Weak deal 50% less damage rather than 25%.
+    description: "Enemies with Weak deal 40% less damage rather than 25%."
   PaperPhrog:
     name: Paper Phrog
     description: Enemies with Vulnerable take 75% more damage rather than 50%.
@@ -2639,7 +2630,7 @@ relics:
     description: Raise your Max HP by 7 and heal all of your HP.
   MedicalKit:
     name: Medical Kit
-    description: Status Cards can now be played. Playing a Status will Exhaust Card.
+    description: "Unplayable Status cards can now be played. Whenever you play a Status card, Exhaust it."
   MembershipCard:
     name: Membership Card
     description: 50% discount on all products!
@@ -2666,7 +2657,7 @@ relics:
     description: At start of each combat, apply 4 Poison to ALL enemies.
   CultistHeadpiece:
     name: Cultist Headpiece
-    description: CAW CAW CAWWWW!
+    description: You feel more talkative.
   FaceOfCleric:
     name: Face Of Cleric
     description: Raise your Max HP by 1 after each combat.
@@ -2712,18 +2703,18 @@ relics:
     description: At start of your turn, Upgrade a random Card in your hand for rest of combat.
   RedMask:
     name: Red Mask
-    description: At start of each combat, apply 1 Weakness to ALL enemies.
+    description: "At the start of each combat, apply 1 Weak to ALL enemies."
   NlothGift:
     name: N'loth's Gift
     description: Triples chance of receiving rare Cards as monster rewards.
   RedKey:
-    name: Red Key
+    name: Ruby Key
     description: You need to obtain Red, Green and Blue Key. Why? Find out yourself!
   BlueKey:
-    name: Blue Key
+    name: Sapphire Key
     description: You need to obtain Red, Green and Blue Key. Why? Find out yourself!
   GreenKey:
-    name: Green Key
+    name: Emerald Key
     description: You need to obtain Red, Green and Blue Key. Why? Find out yourself!
   BurningBlood:
     name: Burning Blood
@@ -2754,7 +2745,7 @@ relics:
     description: At the start of each combat, gain 1 Focus.
   EmotionChip:
     name: Emotion Chip
-    description: The first time you lose HP each combat, channel 1 random orb for each empty orb slot.
+    description: "If you lost HP during the previous turn, trigger the passive ability of all Orbs at the start of your turn."
   FrozenCore:
     name: Frozen Core
     description: If you end your turn with any empty orb slots, channel 1 Frost.
@@ -2778,7 +2769,7 @@ enemies:
     name: Cultist
     intentions:
       ritual:
-        name: Ritual
+        name: Incantation
         description: Gain 3 Ritual.
       cultist_attack:
         name: Attack
@@ -2790,19 +2781,19 @@ enemies:
     name: Jaw Worm
     intentions:
       chomp:
-        name: Chomp
+        name: Attack
         description: Deal {damage} damage.
       bellow:
         name: Bellow
         description: Gain {strength_gain} Strength and {block} Block.
       thrash:
-        name: Thrash
+        name: Attack
         description: Deal {damage} damage. Gain {block} Block.
   FungiBeast:
     name: Fungi Beast
     intentions:
       bite:
-        name: Bite
+        name: Attack
         description: Deal {damage} damage.
       grow:
         name: Grow
@@ -2811,7 +2802,7 @@ enemies:
     name: Louse
     intentions:
       bite:
-        name: Bite
+        name: Attack
         description: Deal {damage} damage.
       grow:
         name: Grow
@@ -2820,7 +2811,7 @@ enemies:
     name: Louse
     intentions:
       bite:
-        name: Bite
+        name: Attack
         description: Deal {damage} damage.
       spit_web:
         name: Spit Web
@@ -2829,7 +2820,7 @@ enemies:
     name: Slaver
     intentions:
       stab:
-        name: Stab
+        name: Attack
         description: Deal {damage} damage.
       rake:
         name: Rake
@@ -2838,7 +2829,7 @@ enemies:
     name: Slaver
     intentions:
       stab:
-        name: Stab
+        name: Attack
         description: Deal {damage} damage.
       scrape:
         name: Scrape
@@ -2856,7 +2847,7 @@ enemies:
         name: Lick
         description: Apply {amount} Weak to you.
       tackle:
-        name: Tackle
+        name: Attack
         description: Deal {damage} damage.
       split:
         name: Split
@@ -2871,7 +2862,7 @@ enemies:
         name: Lick
         description: Apply {amount} Weak to you.
       tackle:
-        name: Tackle
+        name: Attack
         description: Deal {damage} damage.
       split:
         name: Split
@@ -2895,7 +2886,7 @@ enemies:
         name: Lick
         description: Apply {amount} Frail to you.
       flame_tackle:
-        name: Flame Tackle
+        name: Attack
         description: Deal {damage} damage. Add 2 Slimed to your discard pile.
       split:
         name: Split
@@ -2932,7 +2923,7 @@ enemies:
         name: Defensive Mode
         description: Gain {block} Block.
       roll_attack:
-        name: Roll Attack
+        name: Attack
         description: Deal {damage} damage.
       twin_slam:
         name: Twin Slam
@@ -2953,7 +2944,7 @@ enemies:
     name: Hexaghost
     intentions:
       divider:
-        name: Divider
+        name: Attack
         description: Deal {damage} damage {attack_times} times.
       activate:
         name: Activate
@@ -2962,7 +2953,7 @@ enemies:
         name: Sear
         description: Deal {damage} damage. Shuffle 1 Burn into your discard pile.
       tackle:
-        name: Tackle
+        name: Attack
         description: Deal {damage} damage twice.
       inflame:
         name: Inflame
@@ -2995,16 +2986,16 @@ enemies:
         name: Skull Bash
         description: Deal {damage} damage. Apply 2 Vulnerable to you.
       bull_rush:
-        name: Bull Rush
+        name: Attack
         description: Deal {damage} damage.
   Sentry:
     name: Sentry
     intentions:
       bolt:
-        name: Bolt
+        name: Attack
         description: Add 2 Dazed to your discard pile.
       beam:
-        name: Beam
+        name: Attack
         description: Deal {damage} damage.
   FatGremlin:
     name: Fat Gremlin
@@ -3022,7 +3013,7 @@ enemies:
     name: Mad Gremlin
     intentions:
       mad_gremlin_scratch:
-        name: Scratch
+        name: Claw
         description: Deal {damage} damage.
   ShieldGremlin:
     name: Shield Gremlin
@@ -3031,13 +3022,13 @@ enemies:
         name: Protect
         description: Gain {block} Block.
       shield_gremlin_bash:
-        name: Bash
+        name: Shield Bash
         description: Deal {damage} damage.
   GremlinWizard:
     name: Gremlin Wizard
     intentions:
       gremlin_wizard_charge:
-        name: Charge
+        name: Charging
         description: Charging up...
       gremlin_wizard_ultimate_blast:
         name: Ultimate Blast
@@ -3113,7 +3104,7 @@ enemies:
     name: The Champ
     intentions:
       heavy_slash:
-        name: Heavy Slash
+        name: Attack
         description: Deal {damage} damage.
       face_slap:
         name: Face Slap
@@ -3140,7 +3131,7 @@ enemies:
         name: Circle of Power
         description: All enemies gain {strength_gain} Strength.
       Beam:
-        name: Beam
+        name: Attack
         description: Deal {damage} damage twice.
       Square of Protection:
         name: Square of Protection
@@ -3173,7 +3164,7 @@ enemies:
     name: Awakened One
     intentions:
       Slash:
-        name: Slash
+        name: Attack
         description: Deal {damage} damage.
       SoulStrike:
         name: Soul Strike
@@ -3188,7 +3179,7 @@ enemies:
         name: Sludge
         description: Deal {damage} damage. Add 2 Slimed to your discard pile.
       Tackle:
-        name: Tackle
+        name: Attack
         description: Deal {damage} damage.
   GiantHead:
     name: Giant Head
@@ -3320,7 +3311,7 @@ enemies:
         name: Split
         description: Split into 2 Spike Slime (M)
       tackle:
-        name: Tackle
+        name: Attack
         description: Deal {damage} damage
   BookOfStabbing:
     name: Book of Stabbing
@@ -3386,10 +3377,10 @@ enemies:
     name: Orb Walker
     intentions:
       laser:
-        name: Laser
+        name: Attack
         description: Deal {damage} damage
       spawn:
-        name: Spawn
+        name: Attack
         description: Spawn an orb
   ShelledParasite:
     name: Shelled Parasite
@@ -3464,19 +3455,19 @@ enemies:
     name: Snake Plant
     intentions:
       thorns:
-        name: Thorns
+        name: Enfeebling Spores
         description: Gain {block} Block
       chomp:
-        name: Chomp
+        name: Attack
         description: Deal {damage} damage
   GremlinLeader:
     name: Gremlin Leader
     intentions:
       Encourage:
-        name: Encourage
+        name: "Rally!"
         description: All enemies gain {strength_gain} Strength. Other enemies gain {block} Block.
       Stab:
-        name: Stab
+        name: Attack
         description: Deal {damage} damage {hits} times.
       Rally!:
         name: Rally!
@@ -3497,7 +3488,7 @@ enemies:
     name: Bronze Automaton
     intentions:
       hyperbeam:
-        name: Hyperbeam
+        name: HYPER BEAM
         description: Deal {damage} damage to ALL enemies
       stasis:
         name: Stasis
@@ -3682,10 +3673,10 @@ rewards:
   gold: Gained {amount} gold
 orbs:
   LightningOrb:
-    name: Lightning Orb
+    name: Lightning
   FrostOrb:
-    name: Frost Orb
+    name: Frost
   DarkOrb:
-    name: Dark Orb
+    name: Dark
   PlasmaOrb:
-    name: Plasma Orb
+    name: Plasma
