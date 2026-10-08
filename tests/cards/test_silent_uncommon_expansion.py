@@ -72,7 +72,9 @@ class TestSilentUncommonExpansion:
             name = "Block When Weak Applied"
             def on_power_added(self, power, target=None):
                 if getattr(power, "name", None) == "Weak":
-                    seen_block.append(self.owner.block)
+                    owner = self.owner
+                    assert owner is not None
+                    seen_block.append(owner.block)
 
         watcher = _BlockWhenWeakApplied(owner=self.player)
         self.player.add_power(watcher)

@@ -47,6 +47,7 @@ class TestFireBreathing(unittest.TestCase):
                         f"Expected FireBreathing power, got: {power_names}")
         power = self.helper.game_state.player.get_power("Fire Breathing")
         self.assertIsNotNone(power)
+        assert power is not None
         self.assertEqual(power.amount, 6)
 
     def test_energy_cost(self):

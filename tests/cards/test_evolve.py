@@ -73,6 +73,7 @@ class TestEvolve(unittest.TestCase):
 
         power = player.get_power("Evolve")
         self.assertIsNotNone(power)
+        assert power is not None
         self.assertEqual(power.amount, 2)
 
         DrawCardsAction(count=1).execute()

@@ -21,7 +21,9 @@ class _ExhaustProbe(Card):
 
     def on_exhaust(self):
         from engine.game_state import game_state
-        enemy = game_state.current_combat.enemies[0]
+        combat = game_state.current_combat
+        assert combat is not None
+        enemy = combat.enemies[0]
         self.log.append((self.label, enemy.hp))
 
 
