@@ -15,5 +15,6 @@ class Backstab(Card):
     base_cost = 0
     base_damage = 11
     base_innate = True
+    base_exhaust = True
 
     upgrade_damage = 15

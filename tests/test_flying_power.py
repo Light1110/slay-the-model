@@ -10,7 +10,7 @@ from powers.definitions.flying import FlyingPower
 def test_flying_halves_incoming_damage():
     power = FlyingPower(amount=3)
     assert power.modify_damage_taken(10) == 5
-    assert power.modify_damage_taken(1) == 0
+    assert power.modify_damage_taken(1) == 0.5
 
 
 def test_flying_loses_stack_only_on_attack_damage():

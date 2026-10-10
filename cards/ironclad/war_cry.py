@@ -20,6 +20,7 @@ class WarCry(Card):
     rarity = RarityType.COMMON
 
     base_cost = 0
+    base_exhaust = True
     base_draw = 1
 
     upgrade_draw = 2

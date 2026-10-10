@@ -15,8 +15,10 @@ class IntangiblePower(Power):
     name = "Intangible"
     description = "Reduce all damage taken to 1."
     stack_type = StackType.DURATION
+    decays_at_round_end = True
     is_buff = True
     modify_phase = DamagePhase.CAPPING  # Applied last, caps damage to 1
+    damage_priority = 75
 
     def __init__(self, amount: int = 0, duration: int = 1, owner=None):
         """

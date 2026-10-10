@@ -27,12 +27,11 @@ class LegSweep(Card):
 
     def on_play(self, targets: List[Creature] = []):
         target = targets[0] if targets else None
-        super().on_play(targets)
-        if target is None:
-            return
-        from engine.runtime_api import add_actions
+        if target is not None:
+            from engine.runtime_api import add_actions
 
-        weak = self.get_magic_value("weak")
-        add_actions([
-            ApplyPowerAction(WeakPower(amount=weak, duration=weak, owner=target), target)
-        ])
+            weak = self.get_magic_value("weak")
+            add_actions([
+                ApplyPowerAction(WeakPower(amount=weak, duration=weak, owner=target), target)
+            ])
+        super().on_play(targets)

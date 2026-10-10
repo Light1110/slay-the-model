@@ -105,6 +105,14 @@ class PlayerTurnEndedMessage(GameMessage):
 
 
 @dataclass(frozen=True)
+class RoundEndedMessage(GameMessage):
+    """All enemies have acted; end-of-round powers may tick once."""
+
+    owner: "Creature"
+    enemies: List["Creature"]
+
+
+@dataclass(frozen=True)
 class CombatStartedMessage(GameMessage):
     """Combat setup has completed and combat-start effects may run."""
 
@@ -136,6 +144,14 @@ class ShopEnteredMessage(GameMessage):
     owner: "Creature"
     room: Any
     entities: Optional[List["Creature"]] = None
+
+
+@dataclass(frozen=True)
+class FloorClimbedMessage(GameMessage):
+    """The player has moved onto a new floor."""
+
+    owner: "Creature"
+    floor: int
 
 
 @dataclass(frozen=True)
@@ -322,11 +338,13 @@ EXPLICIT_SUBSCRIPTION_MESSAGE_TYPES = (
     PlayerTurnPostDrawMessage,
     PlayerTurnEndedMessage,
     PlayerTurnStartedMessage,
+    RoundEndedMessage,
     PotionUsedMessage,
     PowerAppliedMessage,
     RelicObtainedMessage,
     ScryMessage,
     ShuffleMessage,
     ShopEnteredMessage,
+    FloorClimbedMessage,
     StanceChangedMessage,
 )

@@ -11,6 +11,7 @@ class Miracle(Card):
     base_cost = 0
     base_energy_gain = 1
     upgrade_energy_gain = 2
+    base_retain = True
     base_exhaust = True
     text_name = "Miracle"
-    text_description = "Gain {energy_gain} Energy. Exhaust."
+    text_description = "Retain. Gain {energy_gain} Energy. Exhaust."

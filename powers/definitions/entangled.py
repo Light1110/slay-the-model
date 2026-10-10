@@ -23,3 +23,11 @@ class EntangledPower(Power):
             duration: Duration in turns (default 1)
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
+
+    def allows_card_play(self, card):
+        """Attacks cannot be played while this debuff is active."""
+        from utils.types import CardType
+
+        if getattr(card, "card_type", None) == CardType.ATTACK:
+            return False, "Entangled restriction"
+        return True, None

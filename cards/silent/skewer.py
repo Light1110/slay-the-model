@@ -18,9 +18,9 @@ class Skewer(Card):
     target_type = TargetType.ENEMY_SELECT
 
     base_cost = COST_X
-    base_damage = 3
+    base_damage = 7
 
-    upgrade_damage = 4
+    upgrade_damage = 10
 
     def on_play(self, targets: List[Creature] = []):
         target = targets[0] if targets else None

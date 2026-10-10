@@ -14,9 +14,8 @@ class Expunger(Card):
     rarity = RarityType.SPECIAL
     base_cost = 1
     base_damage = 9
-    base_exhaust = True
     text_name = "Expunger"
-    text_description = "Deal {damage} damage X times. Exhaust."
+    text_description = "Deal {damage} damage X times."
 
     def __init__(self, hits: int = 1, **kwargs):
         self.hits = max(1, hits)
@@ -29,7 +28,7 @@ class Expunger(Card):
         damage = self.damage
         if player is not None and target is not None:
             damage = resolve_potential_damage(self.damage, player, target, card=self)
-        return RawLocalStr(f"Deal {damage} damage {self.hits} times. Exhaust.")
+        return RawLocalStr(f"Deal {damage} damage {self.hits} times.")
 
     def on_play(self, targets: List = []):
         from engine.game_state import game_state

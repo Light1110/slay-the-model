@@ -24,6 +24,7 @@ from engine.messages import (
     PlayerTurnEndedMessage,
     PlayerTurnStartedMessage,
     PowerAppliedMessage,
+    RoundEndedMessage,
 )
 from engine.subscriptions import MessagePriority, subscribe
 from localization import Localizable, LocalStr, has_translation, t
@@ -52,12 +53,14 @@ class Power(Localizable):
     stack_type: StackType = StackType.INTENSITY  # How this power stacks
     amount_equals_duration: bool = False  # Should amount be set to duration on apply?
     is_buff: bool = True  # True for beneficial effects, False for harmful effects
+    decays_at_round_end: bool = False  # Weak/Vulnerable/Frail/Intangible tick once per round
     
     # Damage modification phase
     # ADDITIVE: Applied first (e.g., Strength +3)
     # MULTIPLICATIVE: Applied second (e.g., Weak 0.75x)
     # CAPPING: Applied last (e.g., Intangible caps at 1)
     modify_phase: DamagePhase = DamagePhase.ADDITIVE
+    damage_priority: int = 5
     
     def __init__(self, amount: int = 0, duration: int = -1, owner=None):
         """Initialize power with amount and duration.
@@ -73,8 +76,15 @@ class Power(Localizable):
         self.stack_type = self.__class__.stack_type
         self.amount_equals_duration = self.__class__.amount_equals_duration
         self.is_buff = self.__class__.is_buff
+        self.decays_at_round_end = self.__class__.decays_at_round_end
+        self.damage_priority = self.__class__.damage_priority
+        self.just_applied = False
         if not hasattr(self, "localization_key"):
             self.localization_key = f"{self.localization_prefix}.{self.__class__.__name__}"
+
+    def allows_card_play(self, card) -> tuple[bool, Optional[str]]:
+        """Whether this power allows the given card to be played."""
+        return True, None
 
     @staticmethod
     def _normalized_name_candidates(value: str) -> List[str]:
@@ -191,11 +201,22 @@ class Power(Localizable):
     
     @subscribe(PlayerTurnEndedMessage, priority=MessagePriority.PLAYER_POWER)
     def on_turn_end(self):
-        """Called at end of turn."""
-        # tick_down should be called by on_turn_end - decrease duration
+        """Called at end of the owner's turn."""
+        if self.decays_at_round_end:
+            return
         self.tick()
-        
         return
+
+    @subscribe(RoundEndedMessage, priority=MessagePriority.PLAYER_POWER)
+    def on_round_end(self):
+        """Tick end-of-round debuffs once after every enemy has acted."""
+        if not self.decays_at_round_end:
+            return
+        if self.just_applied:
+            self.just_applied = False
+            return
+        if self.tick() and self.owner is not None:
+            self.owner.remove_power(self)
     
     @subscribe(CardPlayedMessage, priority=MessagePriority.REACTION)
     def on_card_play(self, card, targets):

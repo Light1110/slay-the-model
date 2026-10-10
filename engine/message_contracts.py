@@ -34,9 +34,11 @@ from engine.messages import (
     PotionUsedMessage,
     PowerAppliedMessage,
     RelicObtainedMessage,
+    RoundEndedMessage,
     ScryMessage,
     ShuffleMessage,
     ShopEnteredMessage,
+    FloorClimbedMessage,
     StanceChangedMessage,
 )
 
@@ -138,6 +140,11 @@ def _build_contracts() -> dict[type[GameMessage], MessageContract]:
         ),
         PlayerTurnEndedMessage: MessageContract(
             message_type=PlayerTurnEndedMessage,
+            param_names=(),
+            binder=_bind(),
+        ),
+        RoundEndedMessage: MessageContract(
+            message_type=RoundEndedMessage,
             param_names=(),
             binder=_bind(),
         ),
@@ -263,6 +270,11 @@ def _build_contracts() -> dict[type[GameMessage], MessageContract]:
         ),
         ShopEnteredMessage: MessageContract(
             message_type=ShopEnteredMessage,
+            param_names=(),
+            binder=_bind(),
+        ),
+        FloorClimbedMessage: MessageContract(
+            message_type=FloorClimbedMessage,
             param_names=(),
             binder=_bind(),
         ),

@@ -12,11 +12,12 @@ from utils.types import TargetType
 class ApplyPowerAction(Action):
     """Apply a power to a target creature."""
 
-    def __init__(self, power, target: Creature, duration: int = -1, amount: int = 0):
+    def __init__(self, power, target: Creature, duration: int = -1, amount: int = 0, source=None):
         self.power = power
         self.target = target
         self.duration = duration
         self.amount = amount
+        self.source = source
 
     def execute(self) -> None:
         from engine.game_state import game_state
@@ -44,6 +45,10 @@ class ApplyPowerAction(Action):
                 power_instance = self.power(amount=self.amount, duration=self.duration, owner=self.target)
         else:
             power_instance = self.power
+
+        from enemies.base import Enemy
+        if isinstance(self.source, Enemy) and getattr(power_instance, "decays_at_round_end", False):
+            power_instance.just_applied = True
 
         if game_state.player and self.target == game_state.player:
             power_name_lower = getattr(power_instance, "idstr", "").lower()
@@ -106,6 +111,9 @@ class UsePotionAction(Action):
         from utils.combat import resolve_target
         from utils.option import Option
 
+        if getattr(self.potion, "event_locked", False):
+            return
+
         if self.target is not None:
             targets = [self.target]
         else:
@@ -151,6 +159,9 @@ class UsePotionBHAction(Action):
     def execute(self) -> None:
         from engine.game_state import game_state
         from engine.messages import PotionUsedMessage
+
+        if getattr(self.potion, "event_locked", False):
+            return
 
         if not self.potion.can_use(self.targets):
             return

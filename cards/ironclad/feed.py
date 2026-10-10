@@ -33,8 +33,10 @@ class Feed(Card):
         from engine.game_state import game_state
         from actions.combat import ModifyMaxHpAction
 
+        if card is not self or target is None or getattr(target, "is_minion", False):
+            return
+
         actions = []
-        # Gain max HP on fatal kill
         max_hp_gain = get_magic_value(
             self,
             "max_hp",

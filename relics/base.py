@@ -27,6 +27,7 @@ from engine.messages import (
     PowerAppliedMessage,
     ShuffleMessage,
     ShopEnteredMessage,
+    FloorClimbedMessage,
 )
 from engine.subscriptions import MessagePriority, subscribe
 from utils.types import RarityType
@@ -50,6 +51,10 @@ class Relic(Localizable):
 
     def __init__(self):
         self.namespace = self._resolve_namespace()
+
+    def allows_card_play(self, card) -> tuple[bool, Optional[str]]:
+        """Whether this relic allows the given card to be played."""
+        return True, None
 
     def _resolve_namespace(self) -> str:
         """Infer relic namespace from module path.
@@ -148,6 +153,11 @@ class Relic(Localizable):
     @subscribe(ShopEnteredMessage, priority=MessagePriority.PLAYER_RELIC)
     def on_shop_enter(self):
         """Called when entering a shop room."""
+        return
+
+    @subscribe(FloorClimbedMessage, priority=MessagePriority.PLAYER_RELIC)
+    def on_floor_climb(self):
+        """Called after the player moves onto a new floor."""
         return
     
     # ==================== Card Hooks ====================

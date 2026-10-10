@@ -129,15 +129,15 @@ class MegaDebuff(Intention):
         player = game_state.player
         
         # Apply 3 Weak
-        actions.append(ApplyPowerAction(WeakPower(amount=self.base_amount, owner=player), player))
+        actions.append(ApplyPowerAction(WeakPower(amount=self.base_amount, owner=player), player, source=self.enemy))
 
         
         # Apply 3 Vulnerable
-        actions.append(ApplyPowerAction(VulnerablePower(amount=self.base_amount, owner=player), player))
+        actions.append(ApplyPowerAction(VulnerablePower(amount=self.base_amount, owner=player), player, source=self.enemy))
 
         
         # Apply 3 Frail
-        actions.append(ApplyPowerAction(FrailPower(amount=self.base_amount, owner=player), player))
+        actions.append(ApplyPowerAction(FrailPower(amount=self.base_amount, owner=player), player, source=self.enemy))
 
         
         from engine.game_state import game_state

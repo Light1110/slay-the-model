@@ -20,7 +20,7 @@ class FireBreathing(Power):
     stack_type = StackType.INTENSITY
     is_buff = True
 
-    def __init__(self, amount: int = 7, duration: int = -1, owner=None):
+    def __init__(self, amount: int = 6, duration: int = -1, owner=None):
         """
         Args:
             amount: Damage to deal when status is drawn

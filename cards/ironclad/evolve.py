@@ -20,6 +20,8 @@ class Evolve(Card):
     rarity = RarityType.UNCOMMON
 
     base_cost = 1
+    base_magic = {"draw": 1}
+    upgrade_magic = {"draw": 2}
 
     def on_play(self, targets: List[Creature] = []):
         target = targets[0] if targets else None
@@ -30,7 +32,8 @@ class Evolve(Card):
         actions = []
         # Apply EvolvePower
         # The amount is handled by the power's on_card_draw hook
-        actions.append(ApplyPowerAction(power="EvolvePower", target=game_state.player, amount=1, duration=-1))
+        draw_count = self.get_magic_value("draw")
+        actions.append(ApplyPowerAction(power="EvolvePower", target=game_state.player, amount=draw_count, duration=-1))
 
         from engine.game_state import game_state
 

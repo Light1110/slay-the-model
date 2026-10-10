@@ -20,12 +20,7 @@ from relics.global_relics.event import GoldenIdol, BloodyIdol
 @register_event(event_id='forgotten_altar', acts=[2], weight=100)
 class ForgottenAltar(Event):
     """Forgotten Altar - Golden Idol trade or Max HP sacrifice."""
-    
-    @classmethod
-    def can_appear(cls) -> bool:
-        """Only appears on Ascension 15+."""
-        return game_state.ascension >= 15
-    
+
     def trigger(self) -> None:
         actions = []
         
@@ -66,10 +61,6 @@ class ForgottenAltar(Event):
                 name=LocalStr('events.forgotten_altar.desecrate'),
                 actions=[AddCardAction(card=Decay())]
             ),
-            Option(
-                name=LocalStr('events.forgotten_altar.leave'),
-                actions=[]
-            )
         ])
         
         actions.append(InputRequestAction(

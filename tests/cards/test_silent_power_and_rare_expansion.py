@@ -1,3 +1,4 @@
+from actions.combat_cards import PlayCardBHAction
 from cards.silent.after_image import AfterImage
 from cards.silent.alchemize import Alchemize
 from cards.silent.distraction import Distraction
@@ -65,16 +66,45 @@ class TestSilentPowerAndRareExpansion:
 
     def test_expertise_draws_up_to_six_cards(self):
         self.helper.start_combat([])
+        self.player.card_manager.get_pile("draw_pile").clear()
         filler_a = Strike()
         filler_b = Strike()
         self.helper.add_card_to_hand(filler_a)
         self.helper.add_card_to_hand(filler_b)
-        for _ in range(4):
-            self.player.card_manager.add_to_pile(Strike(), 'draw_pile', PilePosType.TOP)
+        for _ in range(8):
+            self.player.card_manager.add_to_pile(Strike(), "draw_pile", PilePosType.TOP)
         card = Expertise()
         self.helper.add_card_to_hand(card)
         assert self.helper.play_card(card)
-        assert len(self.player.card_manager.get_pile('hand')) == 6
+        assert len(self.player.card_manager.get_pile("hand")) == 6
+
+    def test_expertise_draws_after_leaving_hand_and_upgrades_to_seven(self):
+        self.helper.start_combat([])
+        self.player.energy = 3
+        self.player.card_manager.get_pile("draw_pile").clear()
+        self.player.card_manager.get_pile("hand").clear()
+        for _ in range(8):
+            self.player.card_manager.add_to_pile(Strike(), "draw_pile", PilePosType.TOP)
+        self.helper.add_card_to_hand(Strike())
+        self.helper.add_card_to_hand(Strike())
+        card = Expertise()
+        self.helper.add_card_to_hand(card)
+
+        PlayCardBHAction(card, [self.player]).execute()
+        self.helper.game_state.drive_actions()
+
+        assert len(self.player.card_manager.get_pile("hand")) == 6
+        assert card in self.player.card_manager.get_pile("discard_pile")
+
+        upgraded = Expertise()
+        upgraded.upgrade()
+        self.player.energy = 3
+        self.helper.add_card_to_hand(upgraded)
+        PlayCardBHAction(upgraded, [self.player]).execute()
+        self.helper.game_state.drive_actions()
+
+        assert len(self.player.card_manager.get_pile("hand")) == 7
+        assert upgraded in self.player.card_manager.get_pile("discard_pile")
 
     def test_glass_knife_deals_two_hits_and_loses_damage(self):
         enemy = self.helper.create_enemy(Cultist, hp=40)

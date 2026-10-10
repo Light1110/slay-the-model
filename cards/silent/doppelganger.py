@@ -17,13 +17,13 @@ class Doppelganger(Card):
     rarity = RarityType.RARE
 
     base_cost = COST_X
-    upgrade_cost = 0
+    base_exhaust = True
 
     def on_play(self, targets: List[Creature] = []):
         from engine.game_state import game_state
         from engine.runtime_api import add_actions
 
-        x_value = self.get_effective_x()
+        x_value = self.get_effective_x() + self.upgrade_level
         add_actions([
             ApplyPowerAction(EnergizedPower(amount=x_value, owner=game_state.player), game_state.player),
             ApplyPowerAction(DrawCardNextTurnPower(amount=x_value, owner=game_state.player), game_state.player),

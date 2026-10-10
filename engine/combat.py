@@ -22,6 +22,7 @@ from engine.messages import (
     PlayerTurnPostDrawMessage,
     PlayerTurnEndedMessage,
     PlayerTurnStartedMessage,
+    RoundEndedMessage,
 )
 
 class Combat(Localizable):
@@ -246,6 +247,8 @@ class Combat(Localizable):
         # 3. Build InputRequestAction for potions
         from actions.combat import UsePotionAction
         for potion in game_state.player.potions:
+            if getattr(potion, "event_locked", False):
+                continue
             if not getattr(potion, "can_be_used_actively", True):
                 continue
 
@@ -468,53 +471,63 @@ class Combat(Localizable):
         # DEBUG: Print combat state at start of enemy phase
         # _debug_print_combat_state("ENEMY_PHASE_START", self.enemies)
 
-        # For each alive enemy, execute actions
+        # For each alive enemy, resolve that enemy's own turn, then act.
         for enemy in self.enemies:
-            if not enemy.is_dead():
-                # Clear block at start of enemy turn (unless Barricade)
-                has_barricade = any(p.name == "Barricade" for p in enemy.powers)
-                if not has_barricade:
-                    enemy.block = 0
-                
-                # Print enemy intention before executing (hidden if player has RunicDome)
-                has_runic_dome = any(r.__class__.__name__ == "RunicDome" for r in game_state.player.relics)
-                if not has_runic_dome:
-                    enemy_name = self._safe_localized_name(enemy)
-                    intent_desc = self._safe_intention_text(enemy.current_intention)
-                    if intent_desc:
-                        tui_print(f">> {t('combat.enemy_intends', default='Enemy')} [{enemy_name}] {t('combat.intends_to', default='intends to')}: {intent_desc}")
-                result = enemy.execute_intention()
-                if result:
-                    game_state.action_queue.add_actions(result)
+            if enemy.is_dead():
+                continue
 
-        # Process enemy turn-end effects (tick down power durations)
-        self._end_enemy_phase()
+            for power in enemy.powers[:]:
+                power.on_turn_start()
+            result = game_state.drive_actions()
+            if result is not None:
+                return result
+            if enemy.is_dead():
+                continue
 
+            # Clear block at start of enemy turn (unless Barricade)
+            has_barricade = any(p.name == "Barricade" for p in enemy.powers)
+            if not has_barricade:
+                enemy.block = 0
+
+            # Print enemy intention before executing (hidden if player has RunicDome)
+            has_runic_dome = any(r.__class__.__name__ == "RunicDome" for r in game_state.player.relics)
+            if not has_runic_dome:
+                enemy_name = self._safe_localized_name(enemy)
+                intent_desc = self._safe_intention_text(enemy.current_intention)
+                if intent_desc:
+                    tui_print(f">> {t('combat.enemy_intends', default='Enemy')} [{enemy_name}] {t('combat.intends_to', default='intends to')}: {intent_desc}")
+            result = enemy.execute_intention()
+            if result:
+                game_state.action_queue.add_actions(result)
+            result = game_state.drive_actions()
+            if result is not None:
+                return result
+            if enemy.is_dead():
+                continue
+
+            for power in enemy.powers[:]:
+                end_result = power.on_turn_end()
+                if end_result:
+                    game_state.action_queue.add_actions(end_result)
+                if power.duration == 0:
+                    enemy.remove_power(power)
+            result = game_state.drive_actions()
+            if result is not None:
+                return result
+
+        alive_enemies = [enemy for enemy in self.enemies if not enemy.is_dead()]
+        publish_message(
+            RoundEndedMessage(
+                owner=game_state.player,
+                enemies=alive_enemies,
+            )
+        )
         result = game_state.drive_actions()
         if result is not None:
             return result
         self.combat_state.current_phase = "enemy_end"
         return result
     
-    def _end_enemy_phase(self):
-        """Process end of enemy turn - tick down enemy power durations."""
-        from engine.game_state import game_state
-        
-        # Process each alive enemy's powers
-        for enemy in self.enemies:
-            if enemy.is_dead():
-                continue
-                
-            # Call on_turn_end for each power and collect actions
-            for power in enemy.powers[:]:  # Use slice copy to allow modification
-                result = power.on_turn_end()
-                if result:
-                    game_state.action_queue.add_actions(result)
-                
-                # Remove power if duration reached 0
-                if power.duration == 0:
-                    enemy.remove_power(power)
-
     @staticmethod
     def _safe_localized_name(localizable) -> str:
         """Resolve a localized name, falling back to readable identifiers."""
@@ -660,6 +673,7 @@ class Combat(Localizable):
 
     def _start_player_turn(self):
         """Start player turn - draw cards, reset energy, trigger start-of-turn effects"""
+        self.combat_state.reset_turn_info()
         from engine.game_state import game_state
         from localization import t
         from actions.watcher import ChangeStanceAction
@@ -667,18 +681,6 @@ class Combat(Localizable):
         
         # Print player turn header
         tui_print(f"\n{t('ui.player_turn', default='=== Player Turn ===')}")
-        
-        # Clear block at start of turn (unless Barricade/Calipers)
-        has_barricade = any(p.name == "Barricade" for p in game_state.player.powers)
-        has_blur = any(p.name == "Blur" for p in game_state.player.powers)
-        has_calipers = any(getattr(r, "idstr", None) == "Calipers" for r in game_state.player.relics)
-        
-        if has_barricade or has_blur:
-            pass  # Block is not removed
-        elif has_calipers:
-            game_state.player.block = max(0, game_state.player.block - 15)
-        else:
-            game_state.player.block = 0
 
         for pile_name in ("hand", "draw_pile", "discard_pile", "exhaust_pile"):
             for card in list(game_state.player.card_manager.get_pile(pile_name)):
@@ -704,6 +706,11 @@ class Combat(Localizable):
             opening_hand_count = len(game_state.player.card_manager.get_pile("hand"))
             draw_count = max(0, draw_count - opening_hand_count)
 
+        game_state.player.energy = game_state.player.max_energy
+
+        if game_state.player.status_manager.status == StatusType.DIVINITY:
+            ChangeStanceAction(StatusType.NEUTRAL).execute()
+
         alive_enemies = [e for e in self.enemies if e.hp > 0]
         publish_message(
             PlayerTurnStartedMessage(
@@ -711,24 +718,37 @@ class Combat(Localizable):
                 enemies=alive_enemies,
             )
         )
-        
+
+        if self.combat_state.combat_turn != 0:
+            has_barricade = any(p.name == "Barricade" for p in game_state.player.powers)
+            has_blur = any(p.name == "Blur" for p in game_state.player.powers)
+            has_calipers = any(
+                getattr(r, "idstr", None) == "Calipers" for r in game_state.player.relics
+            )
+            if has_barricade or has_blur:
+                pass
+            elif has_calipers:
+                game_state.player.block = max(0, game_state.player.block - 15)
+            else:
+                game_state.player.block = 0
+
         if draw_count > 0:
             tui_print(f"\n{t('combat.draw_cards', count=draw_count, default=f'Draw {draw_count} cards')}")
             from actions.card import DrawCardsAction
             game_state.action_queue.add_action(DrawCardsAction(count=draw_count))
 
-        publish_message(
-            PlayerTurnPostDrawMessage(
-                owner=game_state.player,
-                enemies=alive_enemies,
+        from actions.base import LambdaAction
+
+        def _publish_post_draw():
+            still_alive = [enemy for enemy in self.enemies if enemy.hp > 0]
+            publish_message(
+                PlayerTurnPostDrawMessage(
+                    owner=game_state.player,
+                    enemies=still_alive,
+                )
             )
-        )
 
-        # Reset energy
-        game_state.player.energy = game_state.player.max_energy
-
-        if game_state.player.status_manager.status == StatusType.DIVINITY:
-            game_state.action_queue.add_action(ChangeStanceAction(StatusType.NEUTRAL), to_front=True)
+        game_state.action_queue.add_action(LambdaAction(_publish_post_draw))
 
         # Increment turn counter
         self.combat_state.combat_turn += 1

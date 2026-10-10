@@ -21,6 +21,7 @@ class Disarm(Card):
     target_type = TargetType.ENEMY_SELECT
 
     base_cost = 1
+    base_exhaust = True
     base_magic = {"strength_debuff": 2, "strength": 2}
 
     upgrade_magic = {"strength_debuff": 3, "strength": 3}

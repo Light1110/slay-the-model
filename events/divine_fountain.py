@@ -11,6 +11,7 @@ from actions.card import RemoveCardAction
 from localization import LocalStr
 from utils.option import Option
 from engine.game_state import game_state
+from utils.types import CardType
 
 
 @register_event(event_id='divine_fountain', acts='shared', weight=100)
@@ -20,10 +21,10 @@ class DivineFountain(Event):
     @classmethod
     def can_appear(cls) -> bool:
         """Only appears if deck has at least one curse."""
-        for card in game_state.player.deck:
-            if hasattr(card, 'is_curse') and card.is_curse:
-                return True
-        return False
+        player = game_state.player
+        if player is None:
+            return False
+        return any(card.card_type == CardType.CURSE for card in player.deck)
     
     def trigger(self) -> None:
         actions = []
@@ -34,8 +35,10 @@ class DivineFountain(Event):
         ))
         
         # Get all curse cards and create remove actions
-        curse_cards = [card for card in game_state.player.deck 
-                       if hasattr(card, 'is_curse') and card.is_curse]
+        curse_cards = [
+            card for card in game_state.player.deck
+            if card.card_type == CardType.CURSE
+        ]
         remove_actions = [RemoveCardAction(card=card, src_pile='deck') for card in curse_cards]
         
         # Build options

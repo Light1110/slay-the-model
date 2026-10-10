@@ -44,7 +44,8 @@ class FatGremlinSmashIntention(Intention):
             ),
             ApplyPowerAction(
                 WeakPower(amount=1, duration=-1, owner=game_state.player),
-                game_state.player
+                game_state.player,
+                source=self.enemy,
             ),
         ]
         )

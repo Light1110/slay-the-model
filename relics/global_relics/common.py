@@ -289,9 +289,15 @@ class MawBank(Relic):
         self.rarity = RarityType.COMMON
         self.still_working = True
         self._shop_spend_baseline = None
-    
-    def on_combat_start(self, floor: int):
-        """Gain 12 Gold while active and disable after shop spending."""
+
+    def on_obtain(self):
+        """Remember how much gold had already been spent in shops."""
+        from engine.game_state import game_state
+
+        self._shop_spend_baseline = getattr(game_state, "gold_spent_in_shop", 0)
+
+    def on_floor_climb(self):
+        """Gain 12 Gold on each new floor until gold is spent in a shop."""
         from engine.game_state import game_state
         from actions.reward import AddGoldAction
 
@@ -303,9 +309,7 @@ class MawBank(Relic):
 
         if not self.still_working:
             return
-        from engine.game_state import game_state
-        add_actions([AddGoldAction(amount=12)])
-        return
+        return [AddGoldAction(amount=12)]
 @register("relic")
 class MealTicket(Relic):
     """Whenever you enter a Shop room, heal 15 HP."""

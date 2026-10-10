@@ -111,6 +111,24 @@ def test_gain_mantra_tracks_total_gained_and_enters_divinity():
     assert combat.combat_state.mantra_gained == 12
 
 
+def test_gain_mantra_enters_divinity_once_and_keeps_remainder():
+    helper = create_test_helper()
+    player = helper.create_player(energy=3)
+    helper.start_combat([helper.create_enemy(Cultist, hp=30)])
+
+    GainMantraAction(20).execute()
+    helper.game_state.drive_actions()
+
+    mantra = player.get_power("Mantra")
+    combat = helper.game_state.current_combat
+    assert combat is not None
+    assert mantra is not None
+    assert mantra.amount == 10
+    assert player.status_manager.status == StatusType.DIVINITY
+    assert combat.combat_state.mantra_gained == 20
+    assert player.energy == 6
+
+
 def test_rushdown_upgrade_reduces_cost_to_zero():
     card = Rushdown()
     card.upgrade()

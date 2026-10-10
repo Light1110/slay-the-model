@@ -18,5 +18,4 @@ class HeavyBlade(Card):
     base_damage = 14
     base_magic = {"strength_mult": 3}
 
-    upgrade_damage = 17
     upgrade_magic = {"strength_mult": 5}

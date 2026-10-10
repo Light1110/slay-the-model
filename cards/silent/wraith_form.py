@@ -12,13 +12,12 @@ from utils.types import CardType, RarityType
 
 @register("card")
 class WraithForm(Card):
-    """Gain Intangible and lose Dexterity each turn. Exhaust."""
+    """Gain Intangible and lose Dexterity each turn."""
 
     card_type = CardType.POWER
     rarity = RarityType.RARE
 
     base_cost = 3
-    base_exhaust = True
     base_magic = {"intangible": 2, "dex_down": 1}
 
     upgrade_magic = {"intangible": 3, "dex_down": 1}

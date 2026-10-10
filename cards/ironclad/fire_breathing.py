@@ -14,13 +14,13 @@ from utils.types import CardType, RarityType
 
 @register("card")
 class FireBreathing(Card):
-    """Whenever you draw a status card, deal 7/10 damage to ALL enemies"""
+    """Whenever you draw a status card, deal 6/10 damage to ALL enemies"""
 
     card_type = CardType.POWER
     rarity = RarityType.UNCOMMON
 
     base_cost = 1
-    base_magic = {"damage_on_status": 7, "damage": 7}
+    base_magic = {"damage_on_status": 6, "damage": 6}
     upgrade_magic = {"damage_on_status": 10, "damage": 10}
 
     def on_play(self, targets: List[Creature] = []):

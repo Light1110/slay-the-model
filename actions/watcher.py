@@ -72,7 +72,7 @@ class GainMantraAction(Action):
             mantra = MantraPower(amount=0, owner=player)
             player.add_power(mantra)
         mantra.amount += self.amount
-        while mantra.amount >= 10:
+        if mantra.amount >= 10:
             mantra.amount -= 10
             add_action(ChangeStanceAction(StatusType.DIVINITY), to_front=True)
         if mantra.amount <= 0:

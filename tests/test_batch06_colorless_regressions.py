@@ -126,19 +126,19 @@ def test_normality_blocks_fourth_play_while_in_hand():
     assert can_play is False
 
 
-def test_turn_disable_does_not_report_normality_restriction_without_normality():
+def test_turn_cards_played_does_not_report_normality_restriction_without_normality():
     helper = create_test_helper()
     helper.create_player(energy=3)
     helper.start_combat([helper.create_enemy(Cultist, hp=30)])
 
     combat = helper.game_state.current_combat
     assert combat is not None
-    combat.combat_state.turn_enable_card_play = False
+    combat.combat_state.turn_cards_played = 3
 
     can_play, reason = Strike().can_play()
 
-    assert can_play is False
-    assert reason != "Normality restriction"
+    assert can_play is True
+    assert reason is None
 
 
 def test_burn_triggers_at_end_of_turn():

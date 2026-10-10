@@ -19,12 +19,7 @@ from cards.colorless.writhe import Writhe
 @register_event(event_id='winding_halls', acts=[3], weight=100)
 class WindingHalls(Event):
     """Winding Halls - trade-offs for cards/heal."""
-    
-    @classmethod
-    def can_appear(cls) -> bool:
-        """Only appears on Ascension 15+."""
-        return game_state.ascension >= 15
-    
+
     def trigger(self) -> None:
         actions = []
         

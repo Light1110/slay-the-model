@@ -19,13 +19,12 @@ class Discovery(Card):
 
     base_cost = 1
     base_exhaust = True
-    upgrade_exhaust = False
 
     def on_play(self, targets: List[Creature] = []):
         super().on_play(targets)
         add_actions([
             ChooseAddRandomCardAction(
                 total=3,
-                cost_until_end_of_turn=0,  # Cards cost 0 this turn
+                cost_until_end_of_turn=0 if self.upgrade_level > 0 else None,
             )
         ])

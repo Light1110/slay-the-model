@@ -21,6 +21,7 @@ class Intimidate(Card):
     target_type = TargetType.ENEMY_ALL
 
     base_cost = 0
+    base_exhaust = True
     base_magic = {"weak": 1}
 
     upgrade_magic = {"weak": 2}
