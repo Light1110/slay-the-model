@@ -90,13 +90,17 @@ def test_pantograph_heals_only_boss_encounters_immediately(enemy_types, expected
 
 def test_akabeko_and_wreath_share_vigor_and_buff_all_hits_once():
     helper, player, enemies, _ = setup_combat([Akabeko()])
-    assert player.get_power('Vigor').amount == 8
+    vigor_power = player.get_power('Vigor')
+    assert vigor_power is not None
+    assert vigor_power.amount == 8
     play(helper, WreathOfFlame(), [player])
     vigor = [power for power in player.powers if isinstance(power, VigorPower)]
     assert len(vigor) == 1
     assert vigor[0].amount == 13
     play(helper, Defend(), [player])
-    assert player.get_power('Vigor').amount == 13
+    vigor_power = player.get_power('Vigor')
+    assert vigor_power is not None
+    assert vigor_power.amount == 13
     play(helper, TwinStrike(), enemies)
     assert enemies[0].hp == 1000 - 36
     assert player.get_power('Vigor') is None
@@ -113,7 +117,9 @@ def test_vigor_buffs_every_target_then_expires_and_reapplies_next_combat():
     assert player.get_power('Vigor') is None
     helper.start_combat(enemies, floor=2)
     helper.game_state.drive_actions()
-    assert player.get_power('Vigor').amount == 8
+    vigor_power = player.get_power('Vigor')
+    assert vigor_power is not None
+    assert vigor_power.amount == 8
 
 
 @pytest.mark.parametrize('relic_cls,card_cls,power_name,block,damage', [
@@ -134,7 +140,9 @@ def test_three_card_relics_repeat_and_reset_each_turn(relic_cls, card_cls, power
         play(helper, card_cls(), [player] if relic_cls is LetterOpener else enemies)
         assert getattr(relic, attr) == (index + 1) % 3
     if power_name:
-        assert player.get_power(power_name).amount == 3
+        power = player.get_power(power_name)
+        assert power is not None
+        assert power.amount == 3
     else:
         assert player.block == block
     if damage:
@@ -154,7 +162,9 @@ def test_vigor_survives_turns_and_combines_with_pen_nib():
     helper.game_state.drive_actions()
     combat._start_player_turn()
     helper.game_state.drive_actions()
-    assert player.get_power("Vigor").amount == 8
+    vigor_power = player.get_power("Vigor")
+    assert vigor_power is not None
+    assert vigor_power.amount == 8
     play(helper, TwinStrike(), enemies)
     assert enemies[0].hp == 1000 - 52
     assert player.get_power("Vigor") is None
