@@ -2104,6 +2104,9 @@ powers:
   WaveOfTheHandPower:
     name: 'Wave of the Hand'
     description: 'Whenever you gain Block this turn, apply {amount} Weak to all enemies.'
+  VigorPower:
+    name: Vigor
+    description: "Your next Attack deals {amount} additional damage."
   WreathOfFlamePower:
     name: 'Wreath of Flame'
     description: 'Your next Attack deals {amount} additional damage.'

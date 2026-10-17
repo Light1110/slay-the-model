@@ -222,6 +222,7 @@ class Kunai(Relic):
         if card.card_type == CardType.ATTACK:
             self.attacks_played_this_turn += 1
             if self.attacks_played_this_turn == 3:
+                self.attacks_played_this_turn = 0
                 from engine.game_state import game_state
                 player = game_state.player
                 if player is None:
@@ -247,6 +248,7 @@ class LetterOpener(Relic):
         if card.card_type == CardType.SKILL:
             self.skills_played_this_turn += 1
             if self.skills_played_this_turn == 3:
+                self.skills_played_this_turn = 0
                 from engine.game_state import game_state
                 current_combat = getattr(game_state, "current_combat", None)
                 enemies = getattr(current_combat, "enemies", []) if current_combat is not None else []
@@ -404,6 +406,7 @@ class OrnamentalFan(Relic):
         if card.card_type == CardType.ATTACK:
             self.attacks_played_this_turn += 1
             if self.attacks_played_this_turn == 3:
+                self.attacks_played_this_turn = 0
                 from engine.game_state import game_state
                 player = game_state.player
                 if player is None:
@@ -420,18 +423,16 @@ class Pantograph(Relic):
         self.rarity = RarityType.UNCOMMON
     
     def on_combat_start(self, floor: int):
-        """Heal 25 HP at start of boss combat"""
+        """Heal once immediately when the encounter contains a boss."""
         from engine.game_state import game_state
-        from utils.types import CombatType
-        
-        if game_state.current_combat is not None:
-            if game_state.current_combat.combat_type != CombatType.NORMAL:
-                player = game_state.player
-                if player is None:
-                    return
-                add_actions([ApplyPowerAction(power="Regeneration", target=player, amount=25, duration=1)])
-                return
-        return
+        from utils.types import EnemyType
+
+        player = game_state.player
+        if player is not None and any(
+            enemy.enemy_type == EnemyType.BOSS for enemy in self.combat_enemies()
+        ):
+            add_action(HealAction(amount=25, target=player))
+
 @register("relic")
 class PaperPhrog(Relic):
     """Enemies with Vulnerable take 75% more damage rather than 50%."""
@@ -521,6 +522,7 @@ class Shuriken(Relic):
         if card.card_type == CardType.ATTACK:
             self.attacks_played_this_turn += 1
             if self.attacks_played_this_turn == 3:
+                self.attacks_played_this_turn = 0
                 from engine.game_state import game_state
                 player = game_state.player
                 if player is None:

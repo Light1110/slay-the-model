@@ -2072,6 +2072,9 @@ powers:
   WaveOfTheHandPower:
     name: 摆手
     description: 每当你在本回合获得格挡时，给予所有敌人{amount}层虚弱。
+  VigorPower:
+    name: 活力
+    description: "你的下一张攻击牌额外造成{amount}点伤害。"
   WreathOfFlamePower:
     name: 火焰纹
     description: 你的下一张攻击牌额外造成{amount}点伤害。

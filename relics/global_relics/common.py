@@ -27,25 +27,14 @@ class Akabeko(Relic):
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.COMMON
-        self.damage_phase = DamagePhase.ADDITIVE  # +8 damage
-        
-        # Track if first attack has been played this combat
-        self.first_attack_played = False
-    
+
     def on_combat_start(self, floor: int):
-        """Reset first attack tracker at start of combat"""
-        self.first_attack_played = False
-        return
-    def on_card_play(self, card, targets):
-        """Track when first attack is played"""
-        if not self.first_attack_played and card.card_type == CardType.ATTACK:
-            self.first_attack_played = True
-        return
-    def modify_damage_dealt(self, base_damage: int, card=None, target=None) -> int:
-        """Add 8 damage to first attack each combat"""
-        if not self.first_attack_played and card and card.card_type == CardType.ATTACK:
-            return base_damage + 8
-        return base_damage
+        from engine.game_state import game_state
+        from powers.definitions.vigor import VigorPower
+
+        player = game_state.player
+        if player is not None:
+            add_action(ApplyPowerAction(VigorPower(amount=8, owner=player), player))
 
 @register("relic")
 class Anchor(Relic):
@@ -244,7 +233,7 @@ class HappyFlower(Relic):
     
     # doesn't need to reset in a new combat
     
-    def on_player_turn_end(self):
+    def on_player_turn_start(self):
         """Check if we've reached 3 turns"""
         self.turn_counter += 1
         if self.turn_counter % 3 == 0 and self.turn_counter > 0:
@@ -405,22 +394,24 @@ class PenNib(Relic):
         self.attacks_played = 0
     
     def on_combat_start(self, floor: int):
-        """Reset tracker at start of combat"""
-        self.attacks_played = 0
-        return
+        """Restore the primed attack after combat powers have been cleared."""
+        if self.attacks_played == 9:
+            self._prime_next_attack()
+
+    def _prime_next_attack(self):
+        from engine.game_state import game_state
+
+        player = game_state.player
+        if player is not None:
+            add_action(ApplyPowerAction(PenNibPower(amount=1, owner=player), player))
+
     def on_card_play(self, card, targets):
         """Prime the next attack after every ninth attack played."""
-        from utils.types import CardType
         if card.card_type == CardType.ATTACK:
-            self.attacks_played += 1
-            if self.attacks_played % 10 == 9:
-                from engine.game_state import game_state
-                player = game_state.player
-                if player is None:
-                    return
-                add_actions([ApplyPowerAction(PenNibPower(amount=1, owner=player), player)])
-                return
-        return
+            self.attacks_played = (self.attacks_played + 1) % 10
+            if self.attacks_played == 9:
+                self._prime_next_attack()
+
 @register("relic")
 class PotionBelt(Relic):
     """Upon pick up, gain 2 Potion slots."""
