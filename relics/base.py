@@ -47,6 +47,7 @@ class Relic(Localizable):
     counter_scope = "run"
     counter_kind = "progress"
     dynamic_remaining = False
+    replaces_relic: str | None = None
 
     # Damage modification phase (same as Power)
     # ADDITIVE: Applied first (e.g., +3 damage)
@@ -58,6 +59,16 @@ class Relic(Localizable):
         self.namespace = self._resolve_namespace()
         self._counter_triggered = False
         self._display_ended = False
+
+    def can_spawn(self) -> bool:
+        from engine.game_state import game_state
+
+        if self.replaces_relic is None:
+            return True
+        player = game_state.player
+        return player is not None and any(
+            getattr(relic, "idstr", None) == self.replaces_relic for relic in player.relics
+        )
 
     def allows_card_play(self, card) -> tuple[bool, Optional[str]]:
         """Whether this relic allows the given card to be played."""

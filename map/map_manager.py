@@ -763,14 +763,14 @@ class MapManager:
         assert node is not None
         
         # Create room instance based on room type
-        room = self._create_room_instance(node.room_type)
+        room = self._create_room_instance(node.room_type, floor_in_act=floor_in_act)
         
         # Update current position
         self.map_data.set_current_position(floor_in_act, position)
         
         return room
     
-    def _create_room_instance(self, room_type: RoomType):
+    def _create_room_instance(self, room_type: RoomType, floor_in_act: int | None = None):
         """
         Create a Room instance based on room type.
         
@@ -792,10 +792,12 @@ class MapManager:
         from rooms.victory import VictoryRoom
         from engine.game_state import game_state
         
+        target_floor = self.map_data.current_floor if floor_in_act is None else floor_in_act
+
         if room_type == RoomType.MONSTER:
             # Get monster encounter from encounter pool
             enemies, encounter_name = self.encounter_pool.get_normal_encounter(
-                floor=self.map_data.current_floor,
+                floor=target_floor,
                 encounter_count=game_state.normal_encounters_fought,
                 encounter_history=game_state.encounter_history,
             )
@@ -804,7 +806,7 @@ class MapManager:
         elif room_type == RoomType.ELITE:
             # Get elite encounter from encounter pool
             enemies, encounter_name = self.encounter_pool.get_elite_encounter(
-                floor=self.map_data.current_floor,
+                floor=target_floor,
                 last_elite=game_state.elite_history[-1] if game_state.elite_history else None
             )
             return CombatRoom(enemies=enemies, room_type=RoomType.ELITE, encounter_name=encounter_name)
@@ -813,9 +815,9 @@ class MapManager:
             # Boss combat room - fight the boss!
             boss_index = 0
             if self.act_id == 3 and game_state.ascension >= 20:
-                boss_index = 0 if self.map_data.current_floor == 16 else 1
+                boss_index = 0 if target_floor == 16 else 1
             enemies, encounter_name = self.encounter_pool.get_boss_encounter(
-                floor=self.map_data.current_floor,
+                floor=target_floor,
                 boss_index=boss_index,
             )
             return CombatRoom(enemies=enemies, room_type=RoomType.BOSS, encounter_name=encounter_name)
@@ -827,7 +829,7 @@ class MapManager:
             return ShopRoom()
         
         elif room_type == RoomType.TREASURE:
-            is_boss = self.map_data.current_floor == 17 and self.act_id < 3
+            is_boss = target_floor == 17 and self.act_id < 3
             return TreasureRoom(is_boss=is_boss)
         
         elif room_type == RoomType.EVENT:
@@ -838,8 +840,8 @@ class MapManager:
         
         elif room_type == RoomType.UNKNOWN:
             # Resolve unknown room type
-            actual_type = self._resolve_unknown_type(self.map_data.current_floor)
-            return self._create_room_instance(actual_type)
+            actual_type = self._resolve_unknown_type(target_floor)
+            return self._create_room_instance(actual_type, floor_in_act=target_floor)
         
         else:
             # Fallback to EventRoom for unknown types

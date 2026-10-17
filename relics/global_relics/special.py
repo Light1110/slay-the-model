@@ -82,3 +82,9 @@ class NeowsLament(Relic):
             return
         return
     # This relic provides benefits when certain conditions are met
+
+
+@register("relic")
+class RedCirclet(Relic):
+    """Repeatable fallback when the Boss relic pool is exhausted."""
+    rarity = RarityType.SPECIAL

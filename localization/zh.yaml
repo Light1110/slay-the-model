@@ -2213,6 +2213,9 @@ potions:
     name: 混沌药水
     description: 用随机药水填满所有空的药水栏。
 relics:
+  RedCirclet:
+    name: "红头环"
+    description: "已经没有可获得的 Boss 遗物了。"
   PureWater:
     name: 至纯之水
     description: 在每场战斗开始时，将一张奇迹放入你的手牌。
