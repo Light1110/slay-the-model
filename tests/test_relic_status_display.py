@@ -1,5 +1,6 @@
 """R-06: relic counters, dynamic descriptions, and shared presentation."""
 from types import SimpleNamespace
+from typing import cast
 
 import pytest
 
@@ -172,8 +173,7 @@ def test_neow_has_one_definition_and_three_uses_with_localized_messages(lang):
         messages = [action for action in helper.game_state.action_queue.queue if isinstance(action, DisplayTextAction)]
         assert len(messages) == (1 if index < 3 else 0)
         if messages:
-            message = messages[0]
-            assert isinstance(message, DisplayTextAction)
+            message = cast(DisplayTextAction, messages[0])
             text = localization.t(message.text_key, **message.fmt)
             assert str(2 - index) in text
             assert 'relics.' not in text
