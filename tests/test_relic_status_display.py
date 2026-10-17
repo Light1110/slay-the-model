@@ -172,7 +172,9 @@ def test_neow_has_one_definition_and_three_uses_with_localized_messages(lang):
         messages = [action for action in helper.game_state.action_queue.queue if isinstance(action, DisplayTextAction)]
         assert len(messages) == (1 if index < 3 else 0)
         if messages:
-            text = localization.t(messages[0].text_key, **messages[0].fmt)
+            message = messages[0]
+            assert isinstance(message, DisplayTextAction)
+            text = localization.t(message.text_key, **message.fmt)
             assert str(2 - index) in text
             assert 'relics.' not in text
         helper.game_state.drive_actions()
