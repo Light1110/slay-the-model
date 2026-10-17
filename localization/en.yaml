@@ -1,4 +1,11 @@
 ui:
+  relic_status:
+    exhausted: "Exhausted"
+    remaining: "{remaining} uses left"
+    used: "Lifted {progress}"
+    curses: "Curses: {count}"
+    cards: "This turn: {count} cards"
+    ready: "Ready"
   choose_blessings: Choose Blessings
   choose_cards_to_upgrade: Choose a card to upgrade
   upgrade_comparison_header: === Before Upgrade ===
@@ -2318,7 +2325,8 @@ relics:
     description: At start of each combat, gain 1 Dexterity.
   Omamori:
     name: Omamori
-    description: Negate next 2 Curses you obtain.
+    description: "Negate the next {remaining} Curses you obtain."
+    description_exhausted: "Exhausted."
   Orichalcum:
     name: Orichalcum
     description: If you end your turn without Block, gain 6 Block.
@@ -2393,7 +2401,8 @@ relics:
     description: Every time you play 3 Skills in a single turn, deal 5 damage to ALL enemies.
   Matryoshka:
     name: Matryoshka
-    description: The next 2 Chests you open contain 2 Relics.
+    description: "The next {remaining} non-boss chests you open contain an extra Relic."
+    description_exhausted: "Exhausted."
   MeatOnBone:
     name: Meat on the Bone
     description: If your HP is at or below 50% at end of combat, heal 12 HP.
@@ -2471,7 +2480,7 @@ relics:
     description: Whenever you Exhaust a Card, add a random Card to your hand.
   DuVuDoll:
     name: Du-Vu Doll
-    description: For each Curse in your deck, start each combat with 1 additional Strength.
+    description: "For each Curse in your deck, start combat with 1 additional Strength. Current Curses: {curses}."
   FossilizedHelix:
     name: Fossilized Helix
     description: Prevent first time you would lose HP in combat.
@@ -2691,7 +2700,9 @@ relics:
     description: At start of each combat, add a random Power to your hand. It costs 0 Energy until end of turn.
   NeowsLament:
     name: Neow's Lament
-    description: Enemies in your first 3 combats will have 1 HP.
+    description: "Enemies in your next {remaining} combats will have 1 HP."
+    description_exhausted: "This blessing has been exhausted."
+    effect: "Neow’s Lament activated. {remaining} combats remaining."
   NlothHungryFace:
     name: N'loth's Hungry Face
     description: The next non-boss chest you open is empty.

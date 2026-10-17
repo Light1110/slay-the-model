@@ -363,6 +363,15 @@ class TinyHouse(Relic):
 @register("relic")
 class VelvetChoker(Relic):
     """Gain 1 Energy at start of each turn. You cannot play more than 6 Cards per turn."""
+    counter_limit = 6
+    counter_kind = "cards"
+
+    def counter_value(self) -> int | None:
+        combat = self._display_combat()
+        if combat is None or combat.combat_state.current_phase not in ("player_start", "player_action"):
+            return None
+        return combat.combat_state.turn_cards_played
+
     
     def __init__(self):
         super().__init__()

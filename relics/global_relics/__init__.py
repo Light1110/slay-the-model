@@ -150,7 +150,6 @@ from .event import (
     Necronomicon,
     NilrysCodex,
     Enchiridion,
-    NeowsLament,
     NlothHungryFace,
     OddMushroom,
     SsserpentHead,
@@ -161,6 +160,7 @@ from .event import (
 )
 
 from .special import (
+    NeowsLament,
     RedKey,
     BlueKey,
     GreenKey,

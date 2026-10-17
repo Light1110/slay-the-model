@@ -71,12 +71,10 @@ class MapManager:
             RoomType.ELITE: 0,        # Starts at 20% (only with deadly_events, floor 6+), +20% per non-elite visit
         }
         
-        self._tiny_chest_counter = 0
         self.relic_effects = {}
         
         # Relic effects that modify unknown room probabilities
         self._relic_effects = {
-            'tiny_chest': False,
             'juzu_bracelet': False,
         }
         
@@ -89,7 +87,7 @@ class MapManager:
         Enable or disable a relic effect that modifies unknown room probabilities.
         
         Args:
-            effect_name: Name of relic effect (e.g., 'tiny_chest', 'juzu_bracelet')
+            effect_name: Name of relic effect (e.g., 'juzu_bracelet')
             enabled: Whether the effect is active
         """
         if effect_name in self._relic_effects:
@@ -710,7 +708,7 @@ class MapManager:
 
     @property
     def has_tiny_chest(self) -> bool:
-        return self._player_has_relic("tiny_chest") or self._player_has_relic("tinychest") or self._relic_effects.get("tiny_chest", False)
+        return self._player_has_relic("tiny_chest") or self._player_has_relic("tinychest")
 
     @property
     def has_juzu_bracelet(self) -> bool:
@@ -1388,8 +1386,13 @@ class MapManager:
             The actual RoomType for this unknown room
         """
         # Check Tiny Chest relic - every 4th ? room is Treasure
-        self._tiny_chest_counter += 1
-        if self.has_tiny_chest and self._tiny_chest_counter % 4 == 0:
+        from relics.global_relics.common import TinyChest
+
+        tiny_chest = next(
+            (relic for relic in self._get_player_relics() if isinstance(relic, TinyChest)),
+            None,
+        )
+        if tiny_chest is not None and tiny_chest.advance_unknown_room():
             # Tiny Chest forces Treasure room, resets treasure visit counter
             self.unknown_room_visits[RoomType.TREASURE] = 0
             return RoomType.TREASURE

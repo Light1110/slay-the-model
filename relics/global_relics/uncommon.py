@@ -18,7 +18,10 @@ from utils.damage_phase import DamagePhase
 @register("relic")
 class HornCleat(Relic):
     """At the start of your 2nd turn, gain 14 Block."""
-    
+    counter_field = "combat_turn"
+    counter_limit = 2
+    counter_scope = "combat"
+
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
@@ -31,6 +34,7 @@ class HornCleat(Relic):
                 player = game_state.player
                 if player is None:
                     return
+                self._counter_triggered = True
                 add_actions([GainBlockAction(block=14, target=player)])
                 return
         return
@@ -189,7 +193,9 @@ class GremlinHorn(Relic):
 @register("relic")
 class InkBottle(Relic):
     """Whenever you play 10 cards, draw 1 Card."""
-    
+    counter_field = "cards_played"
+    counter_limit = 10
+
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
@@ -207,7 +213,10 @@ class InkBottle(Relic):
 @register("relic")
 class Kunai(Relic):
     """Every time you play 3 Attacks in a single turn, gain 1 Dexterity."""
-    
+    counter_field = "attacks_played_this_turn"
+    counter_limit = 3
+    counter_scope = "turn"
+
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
@@ -233,7 +242,10 @@ class Kunai(Relic):
 @register("relic")
 class LetterOpener(Relic):
     """Every time you play 3 Skills in a single turn, deal 5 damage to ALL enemies."""
-    
+    counter_field = "skills_played_this_turn"
+    counter_limit = 3
+    counter_scope = "turn"
+
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
@@ -263,7 +275,10 @@ class LetterOpener(Relic):
 @register("relic")
 class Matryoshka(Relic):
     """The next 2 Chests you open contain 2 Relics."""
-    
+    counter_field = "chests_to_spawn"
+    counter_kind = "remaining"
+    dynamic_remaining = True
+
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
@@ -391,7 +406,10 @@ class MummifiedHand(Relic):
 @register("relic")
 class OrnamentalFan(Relic):
     """Every time you play 3 Attacks in a single turn, gain 4 Block."""
-    
+    counter_field = "attacks_played_this_turn"
+    counter_limit = 3
+    counter_scope = "turn"
+
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
@@ -507,7 +525,10 @@ class SelfFormingClay(Relic):
 @register("relic")
 class Shuriken(Relic):
     """Every time you play 3 Attacks in a single turn, gain 1 Strength."""
-    
+    counter_field = "attacks_played_this_turn"
+    counter_limit = 3
+    counter_scope = "turn"
+
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
@@ -565,7 +586,9 @@ class StrikeDummy(Relic):
 @register("relic")
 class Sundial(Relic):
     """Every 3 times you shuffle your Drawpile, gain 2 Energy."""
-    
+    counter_field = "shuffle_count"
+    counter_limit = 3
+
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
