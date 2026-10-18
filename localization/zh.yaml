@@ -1906,6 +1906,10 @@ cards:
       name: 火焰纹
       description: 你的下一张攻击牌额外造成{magic.bonus}点伤害。
 powers:
+  RitualPower:
+    name: 仪式
+    description: "在你的回合结束时，获得 {amount} 点力量。"
+    description_enemy: "每轮结束时，获得 {amount} 点力量。施加后的第一轮不生效。"
   EnragePower:
     name: 激怒
     description: 当玩家打出技能牌时，获得 {amount} 点力量。
@@ -2754,7 +2758,7 @@ enemies:
     intentions:
       ritual:
         name: 念咒
-        description: 获得 3 层仪式。
+        description: 获得 {amount} 层仪式。
       cultist_attack:
         name: 攻击
         description: 造成 {damage} 点伤害。
@@ -2876,7 +2880,7 @@ enemies:
         name: 分裂
         description: 分裂成两个较小的史莱姆。
       tackle:
-        description: 造成 {damage} 点伤害
+        description: "造成 {damage} 点伤害。将 1 张黏液牌加入弃牌堆。"
   SpikeSlimeS:
     name: 尖刺史莱姆（小）
     intentions:
@@ -3401,7 +3405,7 @@ enemies:
         description: 分裂成 2 个尖刺史莱姆 (中)
       tackle:
         name: 攻击
-        description: 造成 {damage} 点伤害
+        description: "造成 {damage} 点伤害。将 2 张黏液牌加入弃牌堆。"
   TorchHead:
     name: 火炬头
     intentions:

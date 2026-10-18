@@ -2,7 +2,7 @@
 Test suite for Cultist enemy - Common enemy with Ritual+Attack pattern.
 
 Cultist:
-- HP range: 40-44
+- HP range: 48-54
 - Intentions: Ritual (first turn), then Attack
 - Common enemy type
 """
@@ -34,8 +34,8 @@ class TestCultist(unittest.TestCase):
         self.assertEqual(str(cultist.name), "Cultist")
         
         # Check HP range
-        self.assertGreaterEqual(cultist.hp, 40)
-        self.assertLessEqual(cultist.hp, 44)
+        self.assertGreaterEqual(cultist.hp, 48)
+        self.assertLessEqual(cultist.hp, 54)
         self.assertEqual(cultist.hp, cultist.max_hp)
         
         # Check type
@@ -61,10 +61,10 @@ class TestCultist(unittest.TestCase):
             cultist = Cultist()
             hps.append(cultist.hp)
         
-        # All HPs should be 40-44
+        # All HPs should be 48-54
         for hp in hps:
-            self.assertGreaterEqual(hp, 40)
-            self.assertLessEqual(hp, 44)
+            self.assertGreaterEqual(hp, 48)
+            self.assertLessEqual(hp, 54)
 
 
 if __name__ == '__main__':

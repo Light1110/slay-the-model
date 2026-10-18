@@ -27,6 +27,7 @@ class Lagavulin(Enemy):
         super().__init__(hp_range=(hp, hp))
         self.ascension = ascension
         self.start_awake = start_awake
+        self._event_opening_intent_pending = False
         self.is_sleeping = not start_awake  # Can start awake for Dead Adventurer event
         self.turns_without_damage = 0
         # For normal: starts at 0 (Attack -> Attack -> Siphon -> repeat)
@@ -49,10 +50,19 @@ class Lagavulin(Enemy):
 
     def on_combat_start(self, floor: int = 1) -> None:
         """Gain Block 8 on combat start when sleeping entry; none when start_awake."""
+        if self.start_awake:
+            self.attack_pattern_index = 2
         super().on_combat_start(floor)
+        self._event_opening_intent_pending = self.start_awake
         if not self.start_awake:
             self.gain_block(8)
     
+    def on_player_turn_start(self) -> None:
+        if self._event_opening_intent_pending:
+            self._event_opening_intent_pending = False
+            return
+        super().on_player_turn_start()
+
     def determine_next_intention(self, floor: int = 1):
         """Determine next intention based on state.
         

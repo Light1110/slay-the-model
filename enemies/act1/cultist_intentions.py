@@ -12,24 +12,25 @@ if TYPE_CHECKING:
 
 
 class CultistRitualIntention(Intention):
-    """Ritual - Gains 3 Strength."""
+    """Ritual - Applies recurring end-of-round Strength growth."""
     
     def __init__(self, enemy: 'Enemy'):
         super().__init__("ritual", enemy)
         # 在__init__中设置基础数值
-        self.base_strength_gain = 3
+        ascension = getattr(enemy, "ascension", 0)
+        self.base_amount = 5 if ascension >= 17 else 4 if ascension >= 2 else 3
     
     def execute(self) -> None:
-        """Execute Ritual: gains 3 Strength."""
+        """Execute Ritual: gain Ritual without immediate Strength."""
         from actions.combat import ApplyPowerAction
         
         from engine.game_state import game_state
         add_actions(
         [
             ApplyPowerAction(
-                power="strength",
+                power="Ritual",
                 target=self.enemy,
-                amount=self.base_strength_gain,
+                amount=self.base_amount,
                 duration=-1  # Permanent
             )
         ]

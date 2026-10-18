@@ -11,18 +11,18 @@ if TYPE_CHECKING:
 
 
 class LickIntention(Intention):
-    """Lick - Applies 2 Frail to player.
+    """Lick - Applies the configured amount of Frail.
     
     According to doc, Spike Slime (S) applies Frail.
     """
     
-    def __init__(self, enemy: 'Enemy'):
+    def __init__(self, enemy: 'Enemy', frail_amount: int = 2):
         super().__init__("lick", enemy)
-        self._frail_amount = 2
-        self.base_amount = 2  # For description variable {amount}
+        self._frail_amount = frail_amount
+        self.base_amount = frail_amount  # For description variable {amount}
     
     def execute(self) -> None:
-        """Execute Lick: applies 2 Frail to player."""
+        """Execute Lick with matching displayed and applied duration."""
         from actions.combat import ApplyPowerAction
         from engine.game_state import game_state
         
@@ -35,7 +35,7 @@ class LickIntention(Intention):
                 power="Frail",
                 target=game_state.player,
                 amount=self._frail_amount,
-                duration=2
+                duration=self._frail_amount
             )
         ]
         )
@@ -49,8 +49,9 @@ class TackleIntention(Intention):
     Spike Slime (S): 5 damage (6 on A2+)
     """
     
-    def __init__(self, enemy: 'Enemy'):
+    def __init__(self, enemy: 'Enemy', slimed_count: int = 0):
         super().__init__("tackle", enemy)
+        self.slimed_count = slimed_count
         # Determine damage based on enemy type
         if hasattr(enemy, '__class__'):
             enemy_class = enemy.__class__.__name__
@@ -66,21 +67,26 @@ class TackleIntention(Intention):
     def execute(self) -> None:
         """Execute Tackle: deals damage to player."""
         from actions.combat import AttackAction
+        from actions.card import AddCardAction
+        from cards.colorless.slimed import Slimed
         from engine.game_state import game_state
         
         if not game_state or not game_state.player:
             return
         from engine.game_state import game_state
-        add_actions(
-        [
+        actions = [
             AttackAction(
                 damage=self.base_damage,
                 target=game_state.player,
                 source=self.enemy,
                 damage_type="attack",
-            )
+            ),
         ]
+        actions.extend(
+            AddCardAction(Slimed(), dest_pile="discard_pile", source="enemy")
+            for _ in range(self.slimed_count)
         )
+        add_actions(actions)
 
 
 class SplitIntention(Intention):

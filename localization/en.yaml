@@ -1938,6 +1938,10 @@ cards:
       name: 'Wreath of Flame'
       description: 'Your next Attack deals {magic.bonus} additional damage.'
 powers:
+  RitualPower:
+    name: Ritual
+    description: "At the end of your turn, gain {amount} Strength."
+    description_enemy: "At the end of each round, gain {amount} Strength. Skips the round it is applied."
   EnragePower:
     name: Enrage
     description: When the player plays a Skill, gain {amount} Strength.
@@ -2787,7 +2791,7 @@ enemies:
     intentions:
       ritual:
         name: Incantation
-        description: Gain 3 Ritual.
+        description: Gain {amount} Ritual.
       cultist_attack:
         name: Attack
         description: Deal {damage} damage.
@@ -2909,7 +2913,7 @@ enemies:
         name: Split
         description: Split into two smaller slimes.
       tackle:
-        description: Deal {damage} damage
+        description: "Deal {damage} damage. Add 1 Slimed to your discard pile."
   SpikeSlimeS:
     name: Spike Slime (S)
     intentions:
@@ -3329,7 +3333,7 @@ enemies:
         description: Split into 2 Spike Slime (M)
       tackle:
         name: Attack
-        description: Deal {damage} damage
+        description: "Deal {damage} damage. Add 2 Slimed to your discard pile."
   BookOfStabbing:
     name: Book of Stabbing
     intentions:
