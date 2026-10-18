@@ -261,9 +261,10 @@ class GameState:
     
     def advance_act(self) -> bool:
         """
-        Advance to next act after boss treasure.
+        Resolve a confirmed act transition after boss rewards.
         Returns True if game completed (after act 4 or act 3 without keys).
-        Resets act-specific counters and generates new map.
+        Otherwise heals and resets counters; the flow initializes the next map.
+        current_act already identifies the destination act at this point.
         """
         # Check if can enter act 4
         if self.current_act == 4: # this means act3 finish
@@ -274,6 +275,14 @@ class GameState:
         
         if self.current_act > MAX_ACTS:
             return True  # Game complete after act 4
+
+        # Boss rewards have resolved and the run will actually enter another act.
+        # Heal through the normal hooks, including Mark of Bloom and powers.
+        from actions.combat import HealAction
+        missing_hp = max(0, self.player.max_hp - self.player.hp)
+        amount = (missing_hp * 3 + 2) // 4 if self.ascension >= 5 else self.player.max_hp
+        self.action_queue.add_action(HealAction(amount=amount, target=self.player))
+        self.drive_actions()
         
         # self.current_act += 1
         # self.floor_in_act = 0

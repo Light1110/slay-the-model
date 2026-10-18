@@ -131,8 +131,10 @@ class MagicFlower(Relic):
         self.rarity = RarityType.RARE
 
     def modify_heal(self, base_heal: int) -> int:
-        """Increase healing by 50%."""
-        if base_heal > 0:
+        """Increase healing only while a combat is still resolving."""
+        from engine.game_state import game_state
+        combat = game_state.current_combat
+        if base_heal > 0 and combat is not None and not combat.combat_ended:
             return int(base_heal * 1.5)
         return base_heal
 
