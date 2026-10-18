@@ -50,6 +50,7 @@ class TheMoaiHead(Event):
         if has_golden_idol:
             options.append(Option(
                 name=LocalStr('events.the_moai_head.offer_golden_idol'),
+                detail=LocalStr('events.the_moai_head.offer_golden_idol_detail'),
                 actions=[
                     LoseRelicAction(relic_type=GoldenIdol),
                     AddGoldAction(amount=333)
@@ -59,6 +60,7 @@ class TheMoaiHead(Event):
         options.extend([
             Option(
                 name=LocalStr('events.the_moai_head.jump_inside'),
+                detail=LocalStr('events.the_moai_head.jump_inside_detail', hp=int(game_state.player.max_hp * hp_percent)),
                 actions=[
                     HealAction(percent=1.0),
                     LoseHPAction(percent=hp_percent)
@@ -66,6 +68,7 @@ class TheMoaiHead(Event):
             ),
             Option(
                 name=LocalStr('events.the_moai_head.leave'),
+                detail=LocalStr('events.no_effect'),
                 actions=[]
             )
         ])

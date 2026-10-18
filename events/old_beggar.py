@@ -35,6 +35,8 @@ class OldBeggar(Event):
         options = [
             Option(
                 name=LocalStr('events.old_beggar.offer_gold'),
+                disabled_reason=LocalStr('events.require_gold', gold=75),
+                detail=LocalStr('events.old_beggar.offer_gold_detail'),
                 actions=[
                     LoseGoldAction(amount=75),
                     ChooseRemoveCardAction()
@@ -43,6 +45,7 @@ class OldBeggar(Event):
             ),
             Option(
                 name=LocalStr('events.old_beggar.leave'),
+                detail=LocalStr('events.no_effect'),
                 actions=[]
             )
         ]

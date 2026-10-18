@@ -45,6 +45,8 @@ class DesignerInSpire(Event):
         options = [
             Option(
                 name=LocalStr('events.designer_in_spire.adjustments'),
+                disabled_reason=LocalStr('events.require_gold', gold=adjust_cost),
+                detail=LocalStr('events.designer_in_spire.adjustments_detail', gold=adjust_cost),
                 actions=[
                     LoseGoldAction(amount=adjust_cost),
                     LambdaAction(lambda: (
@@ -57,6 +59,8 @@ class DesignerInSpire(Event):
             ),
             Option(
                 name=LocalStr('events.designer_in_spire.clean_up'),
+                disabled_reason=LocalStr('events.require_gold', gold=clean_cost),
+                detail=LocalStr('events.designer_in_spire.clean_up_detail', gold=clean_cost),
                 actions=[
                     LoseGoldAction(amount=clean_cost),
                     LambdaAction(lambda: (
@@ -69,6 +73,8 @@ class DesignerInSpire(Event):
             ),
             Option(
                 name=LocalStr('events.designer_in_spire.full_service'),
+                disabled_reason=LocalStr('events.require_gold', gold=full_cost),
+                detail=LocalStr('events.designer_in_spire.full_service_detail', gold=full_cost),
                 actions=[
                     LoseGoldAction(amount=full_cost),
                     ChooseRemoveCardAction(),
@@ -78,6 +84,7 @@ class DesignerInSpire(Event):
             ),
             Option(
                 name=LocalStr('events.designer_in_spire.punch'),
+                detail=LocalStr('events.designer_in_spire.punch_detail', hp=punch_hp),
                 actions=[LoseHPAction(amount=punch_hp)]
             )
         ]

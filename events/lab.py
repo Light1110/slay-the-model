@@ -34,6 +34,7 @@ class Lab(Event):
         options = [
             Option(
                 name=LocalStr('events.lab.search'),
+                detail=LocalStr('events.lab.search_detail', count=potion_count),
                 actions=potion_actions
             ),
         ]

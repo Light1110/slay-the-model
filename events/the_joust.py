@@ -36,6 +36,8 @@ class TheJoust(Event):
         options = [
             Option(
                 name=LocalStr('events.the_joust.murderer'),
+                disabled_reason=LocalStr('events.require_gold', gold=50),
+                detail=LocalStr('events.the_joust.murderer_detail'),
                 actions=[
                     LoseGoldAction(amount=50),
                     AddGoldAction(amount=100, chance=0.70)
@@ -44,6 +46,8 @@ class TheJoust(Event):
             ),
             Option(
                 name=LocalStr('events.the_joust.owner'),
+                disabled_reason=LocalStr('events.require_gold', gold=50),
+                detail=LocalStr('events.the_joust.owner_detail'),
                 actions=[
                     LoseGoldAction(amount=50),
                     AddGoldAction(amount=250, chance=0.30)

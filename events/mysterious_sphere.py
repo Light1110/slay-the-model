@@ -36,6 +36,7 @@ class MysteriousSphere(Event):
         options = [
             Option(
                 name=LocalStr('events.mysterious_sphere.open_sphere'),
+                detail=LocalStr('events.mysterious_sphere.open_sphere_detail'),
                 actions=[
                     StartFightAction(
                         enemies=orb_walkers,
@@ -49,6 +50,7 @@ class MysteriousSphere(Event):
             ),
             Option(
                 name=LocalStr('events.mysterious_sphere.leave'),
+                detail=LocalStr('events.no_effect'),
                 actions=[]
             )
         ]

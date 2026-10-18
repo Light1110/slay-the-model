@@ -28,10 +28,12 @@ class Transmogrifier(Event):
         options = [
             Option(
                 name=LocalStr('events.transmogrifier.pray'),
+                detail=LocalStr('events.transmogrifier.pray_detail'),
                 actions=[ChooseTransformCardAction()]
             ),
             Option(
                 name=LocalStr('events.transmogrifier.leave'),
+                detail=LocalStr('events.no_effect'),
                 actions=[]
             )
         ]

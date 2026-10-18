@@ -28,10 +28,12 @@ class UpgradeShrine(Event):
         options = [
             Option(
                 name=LocalStr('events.upgrade_shrine.pray'),
+                detail=LocalStr('events.upgrade_shrine.pray_detail'),
                 actions=[ChooseUpgradeCardAction()]
             ),
             Option(
                 name=LocalStr('events.upgrade_shrine.leave'),
+                detail=LocalStr('events.no_effect'),
                 actions=[]
             )
         ]

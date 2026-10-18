@@ -24,9 +24,14 @@ class WomanInBlueEvent(Event):
     [Buy 1 Potion] Lose 20 Gold. Obtain a random potion.
     [Buy 2 Potions] Lose 30 Gold. Obtain 2 random potions.
     [Buy 3 Potions] Lose 40 Gold. Obtain 3 random potions.
-    [Leave] Lose HP equal to 5% of Max HP.
+    [Leave] A15+: lose 5% of Max HP, rounded up. Otherwise free.
     """
     
+    @classmethod
+    def can_appear(cls) -> bool:
+        from engine.game_state import game_state
+        return game_state.player is not None and game_state.player.gold >= 50
+
     def trigger(self) -> None:
         """Trigger woman in blue encounter"""
         from engine.game_state import game_state
@@ -39,54 +44,24 @@ class WomanInBlueEvent(Event):
             text_key="events.woman_in_blue.description"
         ))
         
-        # Build options
         options = []
-        
-        # Option 1: Buy 1 Potion - 20 Gold
-        if game_state.player.gold >= 20:
+        for count, cost in ((1, 20), (2, 30), (3, 40)):
             options.append(Option(
-                name=LocalStr("events.woman_in_blue.option1"),
-                actions=[
-                    LoseGoldAction(amount=20),
-                    AddRandomPotionAction(character=game_state.player.character),
-                    LambdaAction(lambda: self.end_event()),
-                ]
+                name=LocalStr("events.woman_in_blue.buy", count=count),
+                detail=LocalStr("events.woman_in_blue.buy_detail", count=count, cost=cost),
+                actions=[LoseGoldAction(amount=cost),
+                         *[AddRandomPotionAction(character=game_state.player.character) for _ in range(count)],
+                         LambdaAction(self.end_event)],
             ))
-        
-        # Option 2: Buy 2 Potions - 30 Gold
-        if game_state.player.gold >= 30:
-            options.append(Option(
-                name=LocalStr("events.woman_in_blue.option2"),
-                actions=[
-                    LoseGoldAction(amount=30),
-                    AddRandomPotionAction(character=game_state.player.character),
-                    AddRandomPotionAction(character=game_state.player.character),
-                    LambdaAction(lambda: self.end_event()),
-                ]
-            ))
-        
-        # Option 3: Buy 3 Potions - 40 Gold
-        if game_state.player.gold >= 40:
-            options.append(Option(
-                name=LocalStr("events.woman_in_blue.option3"),
-                actions=[
-                    LoseGoldAction(amount=40),
-                    AddRandomPotionAction(character=game_state.player.character),
-                    AddRandomPotionAction(character=game_state.player.character),
-                    AddRandomPotionAction(character=game_state.player.character),
-                    LambdaAction(lambda: self.end_event()),
-                ]
-            ))
-        
-        # Option 4: Leave - Lose 5% of Max HP
+
+        leave_damage = (game_state.player.max_hp + 19) // 20 if game_state.ascension >= 15 else 0
         options.append(Option(
             name=LocalStr("events.woman_in_blue.option4"),
-            actions=[
-                LoseHPAction(amount=game_state.player.max_hp // 20),  # 5% of max HP
-                LambdaAction(lambda: self.end_event()),
-            ]
+            detail=LocalStr("events.lose_hp", hp=leave_damage) if leave_damage else LocalStr("events.no_effect"),
+            actions=[*([LoseHPAction(amount=leave_damage)] if leave_damage else []),
+                     LambdaAction(self.end_event)],
         ))
-        
+
         # Display options and wait for selection
         actions.append(InputRequestAction(
             title=LocalStr("events.woman_in_blue.title"),

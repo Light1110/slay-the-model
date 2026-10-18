@@ -33,6 +33,7 @@ class ShiningLight(Event):
         options = [
             Option(
                 name=LocalStr('events.shining_light.enter'),
+                detail=LocalStr('events.shining_light.enter_detail', hp=int(game_state.player.max_hp * hp_percent)),
                 actions=[
                     LoseHPAction(percent=hp_percent),
                     UpgradeRandomCardAction(),
@@ -41,6 +42,7 @@ class ShiningLight(Event):
             ),
             Option(
                 name=LocalStr('events.shining_light.leave'),
+                detail=LocalStr('events.no_effect'),
                 actions=[]
             )
         ]

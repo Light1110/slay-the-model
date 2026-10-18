@@ -29,12 +29,14 @@ class SensoryStone(Event):
         options = [
             Option(
                 name=LocalStr('events.sensory_stone.recall_1'),
+                detail=LocalStr('events.sensory_stone.recall_1_detail'),
                 actions=[
                     AddRandomCardAction(namespace='colorless')
                 ]
             ),
             Option(
                 name=LocalStr('events.sensory_stone.recall_2'),
+                detail=LocalStr('events.sensory_stone.recall_2_detail'),
                 actions=[
                     LoseHPAction(amount=5),
                     AddRandomCardAction(namespace='colorless'),
@@ -43,6 +45,7 @@ class SensoryStone(Event):
             ),
             Option(
                 name=LocalStr('events.sensory_stone.recall_3'),
+                detail=LocalStr('events.sensory_stone.recall_3_detail'),
                 actions=[
                     LoseHPAction(amount=10),
                     AddRandomCardAction(namespace='colorless'),

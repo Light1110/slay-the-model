@@ -57,6 +57,7 @@ class TheColosseum(Event):
                 options=[
                     Option(
                         name=LocalStr('events.the_colosseum.fight'),
+                        detail=LocalStr('events.the_colosseum.fight_detail'),
                         actions=[
                             StartFightAction(
                                 enemies=[BlueSlaver(), RedSlaver()],
@@ -75,6 +76,7 @@ class TheColosseum(Event):
                 options=[
                     Option(
                         name=LocalStr('events.the_colosseum.victory'),
+                        detail=LocalStr('events.the_colosseum.victory_detail'),
                         actions=[
                             StartFightAction(
                                 enemies=[Taskmaster(), GremlinNob()],
@@ -90,6 +92,7 @@ class TheColosseum(Event):
                     ),
                     Option(
                         name=LocalStr('events.the_colosseum.cowardice'),
+                        detail=LocalStr('events.the_colosseum.cowardice_detail'),
                         actions=[LambdaAction(self.end_event)],
                     ),
                 ],

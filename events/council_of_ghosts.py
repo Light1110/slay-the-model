@@ -34,6 +34,7 @@ class CouncilOfGhosts(Event):
         options = [
             Option(
                 name=LocalStr('events.council_of_ghosts.accept'),
+                detail=LocalStr('events.council_of_ghosts.accept_detail', hp=game_state.player.max_hp // 2, count=apparition_count),
                 actions=[
                     # Lose 50% of Max HP
                     LoseMaxHPAction(amount=game_state.player.max_hp // 2),
@@ -42,6 +43,7 @@ class CouncilOfGhosts(Event):
             ),
             Option(
                 name=LocalStr('events.council_of_ghosts.refuse'),
+                detail=LocalStr('events.no_effect'),
                 actions=[]
             )
         ]

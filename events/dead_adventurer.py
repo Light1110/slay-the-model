@@ -122,6 +122,7 @@ class DeadAdventurer(Event):
                 
                 options.append(Option(
                     name=LocalStr('events.dead_adventurer.search'),
+                    detail=LocalStr('events.dead_adventurer.search_detail', chance=elite_chance),
                     actions=[
                         DisplayTextAction(text_key='events.dead_adventurer.elite_appears'),
                         LambdaAction(self._count_search),
@@ -136,6 +137,7 @@ class DeadAdventurer(Event):
                 search_actions = self._get_search_reward_actions()
                 options.append(Option(
                     name=LocalStr('events.dead_adventurer.search'),
+                    detail=LocalStr('events.dead_adventurer.search_detail', chance=elite_chance),
                     actions=[
                         *search_actions,
                         LambdaAction(self._count_search),
@@ -146,6 +148,7 @@ class DeadAdventurer(Event):
         # Leave option
         options.append(Option(
             name=LocalStr('events.dead_adventurer.leave'),
+            detail=LocalStr('events.no_effect'),
             actions=[LambdaAction(lambda: self.end_event())]
         ))
         

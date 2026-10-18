@@ -30,10 +30,12 @@ class GoldenShrine(Event):
         options = [
             Option(
                 name=LocalStr('events.golden_shrine.pray'),
+                detail=LocalStr('events.gain_gold', gold=100),
                 actions=[AddGoldAction(amount=100)]
             ),
             Option(
                 name=LocalStr('events.golden_shrine.desecrate'),
+                detail=LocalStr('events.golden_shrine.desecrate_detail', gold=275),
                 actions=[
                     AddGoldAction(amount=275),
                     AddCardAction(card=Regret())
@@ -41,6 +43,7 @@ class GoldenShrine(Event):
             ),
             Option(
                 name=LocalStr('events.golden_shrine.leave'),
+                detail=LocalStr('events.no_effect'),
                 actions=[]
             )
         ]

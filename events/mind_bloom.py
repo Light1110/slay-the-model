@@ -49,6 +49,7 @@ class MindBloom(Event):
         options = [
             Option(
                 name=LocalStr('events.mind_bloom.i_am_war'),
+                detail=LocalStr('events.mind_bloom.war_detail', gold=war_gold),
                 actions=[
                     StartFightAction(
                         enemies=boss_enemies,
@@ -62,31 +63,27 @@ class MindBloom(Event):
             ),
             Option(
                 name=LocalStr('events.mind_bloom.i_am_awake'),
+                detail=LocalStr('events.mind_bloom.awake_detail'),
                 actions=[
                     UpgradeAllCardsAction(),
                     AddRelicAction(relic=MarkOfBloom())
                 ]
             ),
-            # Third option: "I am Rich" (floors 35-40) or "I am Healthy" (floor 41+)
-            Option(
-                name=LocalStr('events.mind_bloom.i_am_rich'),
-                actions=[
-                    AddGoldAction(amount=999),
-                    AddCardAction(card=Normality()),
-                    AddCardAction(card=Normality())
-                ],
-                enabled=35 <= game_state.current_floor <= 40
-            ),
-            Option(
-                name=LocalStr('events.mind_bloom.i_am_healthy'),
-                actions=[
-                    HealAction(percent=1.0),
-                    AddCardAction(card=Doubt())
-                ],
-                enabled=game_state.current_floor >= 41
-            )
         ]
-        
+        if game_state.current_floor % 50 <= 40:
+            options.append(Option(
+                name=LocalStr('events.mind_bloom.i_am_rich'),
+                detail=LocalStr('events.mind_bloom.rich_detail', gold=999),
+                actions=[AddGoldAction(amount=999), AddCardAction(card=Normality()),
+                         AddCardAction(card=Normality())],
+            ))
+        else:
+            options.append(Option(
+                name=LocalStr('events.mind_bloom.i_am_healthy'),
+                detail=LocalStr('events.mind_bloom.healthy_detail'),
+                actions=[HealAction(percent=1.0), AddCardAction(card=Doubt())],
+            ))
+
         actions.append(InputRequestAction(
             title=LocalStr('events.mind_bloom.title'),
             options=options

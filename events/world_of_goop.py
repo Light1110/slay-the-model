@@ -42,6 +42,7 @@ class WorldOfGoop(Event):
         options = [
             Option(
                 name=LocalStr('events.world_of_goop.gather'),
+                detail=LocalStr('events.world_of_goop.gather_detail'),
                 actions=[
                     LoseHPAction(amount=11),
                     AddGoldAction(amount=75)
@@ -49,6 +50,7 @@ class WorldOfGoop(Event):
             ),
             Option(
                 name=LocalStr('events.world_of_goop.leave'),
+                detail=LocalStr('events.world_of_goop.leave_detail', gold=gold_loss),
                 actions=[LoseGoldAction(amount=gold_loss)]
             )
         ]

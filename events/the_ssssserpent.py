@@ -34,6 +34,7 @@ class TheSsssserpent(Event):
         options = [
             Option(
                 name=LocalStr('events.the_ssssserpent.agree'),
+                detail=LocalStr('events.the_ssssserpent.agree_detail', gold=gold_amount),
                 actions=[
                     AddGoldAction(amount=gold_amount),
                     AddCardAction(card=Doubt(), dest_pile="deck")
@@ -41,6 +42,7 @@ class TheSsssserpent(Event):
             ),
             Option(
                 name=LocalStr('events.the_ssssserpent.disagree'),
+                detail=LocalStr('events.no_effect'),
                 actions=[]
             )
         ]

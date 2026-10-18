@@ -54,10 +54,12 @@ class DivineFountain(Event):
         options = [
             Option(
                 name=LocalStr('events.divine_fountain.drink'),
+                detail=LocalStr('events.divine_fountain.drink_detail', count=len(remove_actions)),
                 actions=remove_actions
             ),
             Option(
                 name=LocalStr('events.divine_fountain.leave'),
+                detail=LocalStr('events.no_effect'),
                 actions=[]
             )
         ]

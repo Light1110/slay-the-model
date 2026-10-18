@@ -41,6 +41,7 @@ class WingStatue(Event):
         options = [
             Option(
                 name=LocalStr('events.wing_statue.pray'),
+                detail=LocalStr('events.wing_statue.pray_detail', hp=7),
                 actions=[
                     LoseHPAction(amount=7),
                     ChooseRemoveCardAction()
@@ -48,15 +49,17 @@ class WingStatue(Event):
             )
         ]
         
-        # Only show destroy option if player has qualifying attack
-        if has_10_damage_attack:
-            options.append(Option(
-                name=LocalStr('events.wing_statue.destroy'),
-                actions=[AddGoldAction(amount=gold_amount)]
-            ))
-        
+        options.append(Option(
+            name=LocalStr('events.wing_statue.destroy'),
+            detail=LocalStr('events.gain_gold', gold=gold_amount),
+            enabled=has_10_damage_attack,
+            disabled_reason=LocalStr('events.wing_statue.require_attack', damage=10),
+            actions=[AddGoldAction(amount=gold_amount)],
+        ))
+
         options.append(Option(
             name=LocalStr('events.wing_statue.leave'),
+            detail=LocalStr('events.no_effect'),
             actions=[]
         ))
         

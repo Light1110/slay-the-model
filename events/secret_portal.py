@@ -30,10 +30,12 @@ class SecretPortal(Event):
         options = [
             Option(
                 name=LocalStr("events.secret_portal.enter"),
+                detail=LocalStr('events.secret_portal.enter_detail'),
                 actions=[SkipToBossAction()],
             ),
             Option(
                 name=LocalStr("events.secret_portal.leave"),
+                detail=LocalStr('events.no_effect'),
                 actions=[],
             ),
         ]

@@ -55,6 +55,7 @@ class KnowingSkull(Event):
         options = [
             Option(
                 name=LocalStr('events.knowing_skull.potion'),
+                detail=LocalStr('events.knowing_skull.potion_detail', hp=hp_cost),
                 actions=[
                     LoseHPAction(amount=hp_cost),
                     AddRandomPotionAction(character=game_state.player.character),
@@ -64,6 +65,7 @@ class KnowingSkull(Event):
             ),
             Option(
                 name=LocalStr('events.knowing_skull.riches'),
+                detail=LocalStr('events.knowing_skull.riches_detail', hp=hp_cost, gold=90),
                 actions=[
                     LoseHPAction(amount=hp_cost),
                     AddGoldAction(amount=90),
@@ -73,6 +75,7 @@ class KnowingSkull(Event):
             ),
             Option(
                 name=LocalStr('events.knowing_skull.success'),
+                detail=LocalStr('events.knowing_skull.success_detail', hp=hp_cost),
                 actions=[
                     LoseHPAction(amount=hp_cost),
                     AddRandomCardAction(namespace='colorless', rarity=RarityType.UNCOMMON),
@@ -82,6 +85,7 @@ class KnowingSkull(Event):
             ),
             Option(
                 name=LocalStr('events.knowing_skull.leave'),
+                detail=LocalStr('events.no_effect'),
                 actions=[LambdaAction(lambda: self.end_event())]
             )
         ]

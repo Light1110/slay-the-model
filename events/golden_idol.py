@@ -39,6 +39,7 @@ class GoldenIdolEvent(Event):
         options = [
             Option(
                 name=LocalStr('events.golden_idol.take'),
+                detail=LocalStr('events.golden_idol.take_detail'),
                 actions=[
                     AddRelicAction(relic=GoldenIdol()),
                     # Triggers trap - player must choose:
@@ -47,14 +48,17 @@ class GoldenIdolEvent(Event):
                         options=[
                             Option(
                                 name=LocalStr('events.golden_idol.outrun'),
+                                detail=LocalStr('events.golden_idol.outrun_detail'),
                                 actions=[AddCardAction(card=Injury())]
                             ),
                             Option(
                                 name=LocalStr('events.golden_idol.smash'),
+                                detail=LocalStr('events.golden_idol.smash_detail', hp=int(game_state.player.max_hp * smash_percent)),
                                 actions=[LoseHPAction(percent=smash_percent)]
                             ),
                             Option(
                                 name=LocalStr('events.golden_idol.hide'),
+                                detail=LocalStr('events.golden_idol.hide_detail', hp=-hide_hp_loss),
                                 actions=[ModifyMaxHpAction(amount=hide_hp_loss)]
                             )
                         ]
@@ -63,6 +67,7 @@ class GoldenIdolEvent(Event):
             ),
             Option(
                 name=LocalStr('events.golden_idol.leave'),
+                detail=LocalStr('events.no_effect'),
                 actions=[]
             )
         ]

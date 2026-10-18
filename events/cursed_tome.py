@@ -54,6 +54,7 @@ class CursedTome(Event):
             read_hp = self.read_count + 1  # 1, 2, 3
             options.append(Option(
                 name=LocalStr('events.cursed_tome.continue'),
+                detail=LocalStr('events.cursed_tome.continue_detail', hp=read_hp),
                 actions=[
                     LoseHPAction(amount=read_hp),
                     LambdaAction(lambda: self.trigger()),
@@ -66,6 +67,7 @@ class CursedTome(Event):
             # Take: Get a random book boss relic
             options.append(Option(
                 name=LocalStr('events.cursed_tome.take'),
+                detail=LocalStr('events.cursed_tome.take_detail', hp=take_hp_cost),
                 actions=[
                     LoseHPAction(amount=take_hp_cost),
                     AddRandomRelicAction(
@@ -78,6 +80,7 @@ class CursedTome(Event):
             # Stop: Just lose 3 HP
             options.append(Option(
                 name=LocalStr('events.cursed_tome.stop'),
+                detail=LocalStr('events.cursed_tome.stop_detail', hp=3),
                 actions=[
                     LoseHPAction(amount=3),
                     LambdaAction(lambda: self.end_event()),
@@ -87,6 +90,7 @@ class CursedTome(Event):
         # Leave option always available
         options.append(Option(
             name=LocalStr('events.cursed_tome.leave'),
+            detail=LocalStr('events.no_effect'),
             actions=[LambdaAction(lambda: self.end_event())]
         ))
         

@@ -35,6 +35,8 @@ def show_selected_options(selected_options: Dict[int, Option]):
     lines = [f"\n{t('ui.selected', default='Selected:')}"]
     for idx, option in selected_options.items():
         lines.append(f"  {idx + 1}. {resolve_text(option.name)}")
+        if option.detail:
+            lines.append(f"     {resolve_text(option.detail)}")
 
     emit_lines(lines)
     flush_runtime_events()

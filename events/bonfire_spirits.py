@@ -64,8 +64,13 @@ class BonfireSpirits(Event):
                     from relics.global_relics.event import SpiritPoop
                     reward_actions.append(AddRelicAction(relic=SpiritPoop()))
                 
+                reward_key = {
+                    RarityType.COMMON: 'common', RarityType.UNCOMMON: 'uncommon',
+                    RarityType.RARE: 'rare', RarityType.SPECIAL: 'rare', RarityType.CURSE: 'curse',
+                }.get(card.rarity, 'basic')
                 card_options.append(Option(
                     name=LocalStr(f'{card.display_name} ({t("ui.rarity." + card.rarity.name.lower(), default=card.rarity.name)})'),
+                    detail=LocalStr('events.bonfire_spirits.' + reward_key + '_detail'),
                     actions=reward_actions
                 ))
         
@@ -73,6 +78,7 @@ class BonfireSpirits(Event):
         options = card_options + [
             Option(
                 name=LocalStr('events.bonfire_spirits.leave'),
+                detail=LocalStr('events.no_effect'),
                 actions=[]
             )
         ]

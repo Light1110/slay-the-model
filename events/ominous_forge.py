@@ -31,10 +31,12 @@ class OminousForge(Event):
         options = [
             Option(
                 name=LocalStr('events.ominous_forge.forge'),
+                detail=LocalStr('events.ominous_forge.forge_detail'),
                 actions=[ChooseUpgradeCardAction()]
             ),
             Option(
                 name=LocalStr('events.ominous_forge.rummage'),
+                detail=LocalStr('events.ominous_forge.rummage_detail'),
                 actions=[
                     AddRelicAction(relic=WarpedTongs()),
                     AddCardAction(card=Pain())
@@ -42,6 +44,7 @@ class OminousForge(Event):
             ),
             Option(
                 name=LocalStr('events.ominous_forge.leave'),
+                detail=LocalStr('events.no_effect'),
                 actions=[]
             )
         ]

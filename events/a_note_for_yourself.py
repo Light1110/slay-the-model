@@ -112,6 +112,7 @@ def _leave_choice(deck_cards: list, received: Card) -> InputRequestAction:
             continue
         options.append(Option(
             name=str(card.display_name),
+            detail=LocalStr('events.a_note_for_yourself.exchange_detail', given=card.display_name, received=received.display_name),
             actions=[
                 RemoveCardAction(card=card, src_pile='deck'),
                 StoreCardForFutureAction(card),
@@ -153,11 +154,13 @@ class ANoteForYourself(Event):
         if leave_choice.options:
             options.append(Option(
                 name=LocalStr('events.a_note_for_yourself.take_and_give'),
+                detail=LocalStr('events.a_note_for_yourself.choose_detail', received=received.display_name),
                 actions=[leave_choice],
             ))
 
         options.append(Option(
             name=LocalStr('events.a_note_for_yourself.ignore'),
+            detail=LocalStr('events.no_effect'),
             actions=[]
         ))
         

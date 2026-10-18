@@ -81,6 +81,7 @@ class WheelOfChange(Event):
         options = [
             Option(
                 name=LocalStr('events.wheel_of_change.play'),
+                detail=LocalStr('events.wheel_of_change.play_detail', gold=gold_amount, hp=int(game_state.player.max_hp * hp_loss_percent)),
                 actions=chosen_outcome
             )
         ]

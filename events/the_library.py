@@ -33,6 +33,7 @@ class TheLibrary(Event):
         options = [
             Option(
                 name=LocalStr('events.the_library.read'),
+                detail=LocalStr('events.the_library.read_detail'),
                     actions=[ChooseObtainCardAction(
                     total=20,
                     namespace=game_state.player.namespace,
@@ -43,6 +44,7 @@ class TheLibrary(Event):
             ),
             Option(
                 name=LocalStr('events.the_library.sleep'),
+                detail=LocalStr('events.the_library.sleep_detail', heal=int(game_state.player.max_hp * heal_percent)),
                 actions=[HealAction(percent=heal_percent)]
             )
         ]

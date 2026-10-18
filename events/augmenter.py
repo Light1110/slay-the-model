@@ -31,10 +31,12 @@ class Augmenter(Event):
         options = [
             Option(
                 name=LocalStr('events.augmenter.test_jax'),
+                detail=LocalStr('events.augmenter.test_jax_detail'),
                 actions=[AddCardAction(card=JAX())]
             ),
             Option(
                 name=LocalStr('events.augmenter.transform'),
+                detail=LocalStr('events.augmenter.transform_detail'),
                 actions=[
                     ChooseTransformCardAction(),
                     ChooseTransformCardAction()
@@ -42,6 +44,7 @@ class Augmenter(Event):
             ),
             Option(
                 name=LocalStr('events.augmenter.mutagens'),
+                detail=LocalStr('events.augmenter.mutagens_detail'),
                 actions=[AddRelicAction(relic=MutagenicStrength())]
             )
         ]

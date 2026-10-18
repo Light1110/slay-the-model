@@ -31,6 +31,8 @@ class PleadingVagrant(Event):
         options = [
             Option(
                 name=LocalStr('events.pleading_vagrant.offer_gold'),
+                disabled_reason=LocalStr('events.require_gold', gold=85),
+                detail=LocalStr('events.pleading_vagrant.offer_gold_detail'),
                 actions=[
                     LoseGoldAction(amount=85),
                     AddRandomRelicAction()
@@ -39,6 +41,7 @@ class PleadingVagrant(Event):
             ),
             Option(
                 name=LocalStr('events.pleading_vagrant.rob'),
+                detail=LocalStr('events.pleading_vagrant.rob_detail'),
                 actions=[
                     AddRandomRelicAction(),
                     AddCardAction(card=Shame())
@@ -46,6 +49,7 @@ class PleadingVagrant(Event):
             ),
             Option(
                 name=LocalStr('events.pleading_vagrant.leave'),
+                detail=LocalStr('events.no_effect'),
                 actions=[]
             )
         ]

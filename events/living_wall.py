@@ -28,14 +28,17 @@ class LivingWall(Event):
         options = [
             Option(
                 name=LocalStr('events.living_wall.forget'),
+                detail=LocalStr('events.living_wall.forget_detail'),
                 actions=[ChooseRemoveCardAction()]
             ),
             Option(
                 name=LocalStr('events.living_wall.change'),
+                detail=LocalStr('events.living_wall.change_detail'),
                 actions=[ChooseTransformCardAction()]
             ),
             Option(
                 name=LocalStr('events.living_wall.grow'),
+                detail=LocalStr('events.living_wall.grow_detail'),
                 actions=[ChooseUpgradeCardAction()]
             )
         ]

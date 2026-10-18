@@ -28,10 +28,12 @@ class Purifier(Event):
         options = [
             Option(
                 name=LocalStr('events.purifier.pray'),
+                detail=LocalStr('events.purifier.pray_detail'),
                 actions=[ChooseRemoveCardAction()]
             ),
             Option(
                 name=LocalStr('events.purifier.leave'),
+                detail=LocalStr('events.no_effect'),
                 actions=[]
             )
         ]

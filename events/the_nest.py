@@ -35,10 +35,12 @@ class TheNest(Event):
         options = [
             Option(
                 name=LocalStr('events.the_nest.smash_and_grab'),
+                detail=LocalStr('events.the_nest.smash_and_grab_detail', gold=gold_amount),
                 actions=[AddGoldAction(amount=gold_amount)]
             ),
             Option(
                 name=LocalStr('events.the_nest.stay_in_line'),
+                detail=LocalStr('events.the_nest.stay_in_line_detail'),
                 actions=[
                     LoseHPAction(amount=6),
                     AddCardAction(card=RitualDagger())

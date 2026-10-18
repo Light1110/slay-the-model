@@ -38,10 +38,12 @@ class TombOfLordRedMask(Event):
             options.extend([
                 Option(
                     name=LocalStr('events.tomb_of_lord_red_mask.don_mask'),
+                    detail=LocalStr('events.tomb_of_lord_red_mask.don_mask_detail'),
                     actions=[AddGoldAction(amount=222)]
                 ),
                 Option(
                     name=LocalStr('events.tomb_of_lord_red_mask.leave'),
+                    detail=LocalStr('events.no_effect'),
                     actions=[]
                 )
             ])
@@ -49,6 +51,7 @@ class TombOfLordRedMask(Event):
             options.extend([
                 Option(
                     name=LocalStr('events.tomb_of_lord_red_mask.offer_gold'),
+                    detail=LocalStr('events.tomb_of_lord_red_mask.offer_gold_detail', gold=game_state.player.gold),
                     actions=[
                         LoseGoldAction(amount='all'),
                         AddRelicAction(relic=RedMask())
@@ -56,6 +59,7 @@ class TombOfLordRedMask(Event):
                 ),
                 Option(
                     name=LocalStr('events.tomb_of_lord_red_mask.leave'),
+                    detail=LocalStr('events.no_effect'),
                     actions=[]
                 )
             ])

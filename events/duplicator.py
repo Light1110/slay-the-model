@@ -28,10 +28,12 @@ class Duplicator(Event):
         options = [
             Option(
                 name=LocalStr('events.duplicator.pray'),
+                detail=LocalStr('events.duplicator.pray_detail'),
                 actions=[ChooseCopyCardAction()]
             ),
             Option(
                 name=LocalStr('events.duplicator.leave'),
+                detail=LocalStr('events.no_effect'),
                 actions=[]
             )
         ]
