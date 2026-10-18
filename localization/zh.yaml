@@ -3211,19 +3211,19 @@ enemies:
         description: 正在蓄力...
       divider:
         name: 攻击
-        description: "造成 {damage} 点伤害 {attack_times} 次。"
+        description: "造成 {damage} 点伤害 {hits} 次。"
       sear:
         name: 灼烧
-        description: 造成 {damage} 点伤害。向你的弃牌堆添加 1 层燃烧。
+        description: "造成 {damage} 点伤害。向弃牌堆添加 {cards} 张燃烧（炼狱后为升级版）。"
       tackle:
         name: 攻击
         description: 造成 {damage} 点伤害两次。
       inflame:
         name: 高热
-        description: 获得 {strength_gain} 点力量。
+        description: "获得 {block} 点格挡和 {strength_gain} 点力量。"
       inferno:
         name: 地狱火
-        description: 造成 {damage} 点伤害。消耗你手牌和弃牌堆中的所有燃烧。
+        description: "造成 {damage} 点伤害 {hits} 次。升级抽牌堆和弃牌堆中的所有燃烧，向弃牌堆添加 {cards} 张燃烧+。"
   Lagavulin:
     name: 乐加维林
     intentions:

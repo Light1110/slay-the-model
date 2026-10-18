@@ -3084,22 +3084,22 @@ enemies:
     intentions:
       divider:
         name: Attack
-        description: Deal {damage} damage {attack_times} times.
+        description: "Deal {damage} damage {hits} times."
       activate:
         name: Activate
         description: Charging up...
       sear:
         name: Sear
-        description: Deal {damage} damage. Shuffle 1 Burn into your discard pile.
+        description: "Deal {damage} damage. Add {cards} Burn(s) to your discard pile (upgraded after Inferno)."
       tackle:
         name: Attack
         description: Deal {damage} damage twice.
       inflame:
         name: Inflame
-        description: Gain {strength_gain} Strength.
+        description: "Gain {block} Block and {strength_gain} Strength."
       inferno:
         name: Inferno
-        description: Deal {damage} damage. Exhaust all Burns in your hand and discard pile.
+        description: "Deal {damage} damage {hits} times. Upgrade all Burns in your draw and discard piles. Add {cards} Burn+ to your discard pile."
   Lagavulin:
     name: Lagavulin
     intentions:

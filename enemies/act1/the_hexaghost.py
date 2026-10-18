@@ -2,7 +2,6 @@
 The Hexaghost - Act 1 Final Boss
 Complex attack pattern with Burn cards.
 """
-from typing import List, TYPE_CHECKING
 from enemies.base import Enemy
 from utils.types import EnemyType
 from enemies.act1.the_hexaghost_intentions import (
@@ -13,9 +12,6 @@ from enemies.act1.the_hexaghost_intentions import (
     InflameIntention,
     InfernoIntention
 )
-
-if TYPE_CHECKING:
-    from actions.base import Action
 
 
 class TheHexaghost(Enemy):
@@ -39,33 +35,14 @@ class TheHexaghost(Enemy):
         self.add_intention(InflameIntention(self))
         self.add_intention(InfernoIntention(self))
         
-        # Pattern tracking
-        # Turn 1: Activate, Turn 2: Divider
-        # Then pattern: Sear -> Tackle -> Sear -> Inflame -> Tackle -> Sear -> Inferno
-        self._turn_count = 0
-        
-        # Track if Inferno has been used - subsequent Sear Burns will be upgraded
         self._used_inferno = False
-    
+
     def determine_next_intention(self, floor: int = 1):
-        """Determine next intention based on turn count.
-        
-        Turn 1: Activate
-        Turn 2: Divider
-        Then repeats: Sear -> Tackle -> Sear -> Inflame -> Tackle -> Sear -> Inferno
-        """
-        self._turn_count += 1
-        
-        # First turn: Activate
-        if self._turn_count == 1:
+        """Select from executed actions; querying an intent never advances it."""
+        completed_turns = len(self.history_intentions)
+        if completed_turns == 0:
             return self.intentions["activate"]
-        
-        # Second turn: Divider
-        if self._turn_count == 2:
+        if completed_turns == 1:
             return self.intentions["divider"]
-        
-        # Main pattern (starts from turn 3)
-        pattern = ["sear", "tackle", "sear", "inflame", "tackle", "sear", "inferno"]
-        pattern_index = (self._turn_count - 3) % len(pattern)
-        
-        return self.intentions[pattern[pattern_index]]
+        pattern = ("sear", "tackle", "sear", "inflame", "tackle", "sear", "inferno")
+        return self.intentions[pattern[(completed_turns - 2) % len(pattern)]]
