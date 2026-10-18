@@ -1,4 +1,14 @@
 ui:
+  selection_locked: "已锁定：{name}"
+  selection_disabled: "此选项已锁定，请选择可用选项。"
+  selection_duplicate: "同一选项只能选择一次。"
+  selection_unavailable: "当前没有满足选择要求的可用选项。"
+  selection_skip: "跳过"
+  select_prompt_optional: "选择 (0-{count}，输入 0 跳过): "
+  selection_required_hint: "请输入恰好 {count} 个选项编号，以逗号分隔。"
+  selection_optional_hint: "最多选择 {count} 个选项，或单独输入 0 跳过。"
+  selection_ai_rules: "不可选择锁定选项。仅返回有效且不重复的选项索引。"
+  selection_ai_skip: "本次选择可跳过；返回空列表 [] 即可跳过。"
   relic_status:
     exhausted: "已耗尽"
     remaining: "剩余 {remaining} 次"

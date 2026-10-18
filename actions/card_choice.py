@@ -477,7 +477,7 @@ class ChooseDiscardCardAction(Action):
             InputRequestAction(
                 title=LocalStr("ui.choose_cards_to_move"),
                 options=options,
-                max_select=self.amount,
+                max_select=min(self.amount, len(options)) if self.amount != -1 else -1,
                 must_select=self.must_select,
             ),
             to_front=True,

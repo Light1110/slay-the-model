@@ -1,4 +1,14 @@
 ui:
+  selection_locked: "Locked: {name}"
+  selection_disabled: "This option is locked. Choose an available option."
+  selection_duplicate: "Select each option only once."
+  selection_unavailable: "No valid selection is available for this request."
+  selection_skip: "Skip"
+  select_prompt_optional: "Select (0-{count}; 0 to skip): "
+  selection_required_hint: "Enter exactly {count} option number(s), comma-separated."
+  selection_optional_hint: "Choose up to {count} option(s), or enter 0 alone to skip."
+  selection_ai_rules: "Locked options cannot be selected. Return only distinct, valid option indices."
+  selection_ai_skip: "Selection is optional. Return an empty list [] to skip."
   relic_status:
     exhausted: "Exhausted"
     remaining: "{remaining} uses left"
