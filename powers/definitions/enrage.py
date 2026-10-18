@@ -17,6 +17,7 @@ class EnragePower(Power):
     description = "When the player plays a Skill, gain 1 Strength."
     stack_type = StackType.INTENSITY
     is_buff = True
+    observes_all_player_card_plays = True
 
     def __init__(self, amount: int = 1, duration: int = -1, owner=None):
         """
@@ -31,6 +32,9 @@ class EnragePower(Power):
         from utils.types import CardType
         from powers.definitions.strength import StrengthPower
         
+        if self.owner is None or self.owner.is_dead():
+            return
+
         actions = []
         
         # Only trigger when player plays a Skill card

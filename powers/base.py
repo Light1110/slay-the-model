@@ -55,6 +55,9 @@ class Power(Localizable):
     is_buff: bool = True  # True for beneficial effects, False for harmful effects
     decays_at_round_end: bool = False  # Weak/Vulnerable/Frail/Intangible tick once per round
     
+    # Opt in to player card-play events even when this owner is not a target.
+    observes_all_player_card_plays: bool = False
+
     # Damage modification phase
     # ADDITIVE: Applied first (e.g., Strength +3)
     # MULTIPLICATIVE: Applied second (e.g., Weak 0.75x)

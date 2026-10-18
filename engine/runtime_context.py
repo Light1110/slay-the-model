@@ -243,6 +243,15 @@ class RuntimeContext:
         for target in list(getattr(message, "targets", []) or []):
             add_creature(target)
 
+        if type(message).__name__ == "CardPlayedMessage" and getattr(message, "owner", None) is self.player:
+            combat = self.current_combat
+            for enemy in list(getattr(combat, "enemies", []) or []):
+                if enemy.is_dead():
+                    continue
+                for power in list(getattr(enemy, "powers", []) or []):
+                    if getattr(power, "observes_all_player_card_plays", False):
+                        add_participant(power)
+
         for hand_card in list(getattr(message, "hand_cards", []) or []):
             add_participant(hand_card)
 

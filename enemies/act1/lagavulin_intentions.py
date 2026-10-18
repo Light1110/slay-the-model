@@ -7,26 +7,35 @@ from enemies.intention import Intention
 
 if TYPE_CHECKING:
     from enemies.base import Enemy
+    from enemies.act1.lagavulin import Lagavulin
 
 
 class SleepIntention(Intention):
     """Sleep — enemy does not act this turn."""
 
-    def __init__(self, enemy: 'Enemy'):
+    def __init__(self, enemy: 'Lagavulin'):
+        self.lagavulin = enemy
         super().__init__("sleep", enemy)
     
     def execute(self) -> None:
-        """Sleep: do nothing."""
+        """Count a completed sleep action."""
+        self.lagavulin.finish_sleep_turn()
+
+
 class StunnedIntention(Intention):
     """Stunned — does nothing for one turn."""
 
-    def __init__(self, enemy: 'Enemy'):
+    def __init__(self, enemy: 'Lagavulin'):
+        self.lagavulin = enemy
         super().__init__("stunned", enemy)
     
     def execute(self) -> None:
-        """Stunned: do nothing."""
+        """Recover from the one turn stun."""
+        self.lagavulin.finish_stunned_turn()
+
+
 class AttackIntention(Intention):
-    """Attack — deals damage (18 base, 20 on A18+)."""
+    """Attack — deals damage (18 base, 20 on A3+)."""
 
     def __init__(self, enemy: 'Enemy', damage: int = 18):
         super().__init__("attack", enemy)
