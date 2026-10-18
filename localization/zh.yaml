@@ -436,7 +436,7 @@ events:
     healthy_detail: "回复全部生命。被诅咒：疑虑。"
     rich_detail: "获得 {gold} 金币。被诅咒：2 张凡庸。"
     awake_detail: "升级所有牌。获得绽放印记：无法再回复生命。"
-    war_detail: "与首领战斗。胜利后获得一件随机稀有遗物、{gold} 金币和一张随机牌。"
+    war_detail: "与第一章首领战斗。胜利后获得一件随机稀有遗物、{gold} 金币和一次可跳过的选牌奖励。"
     title: 心灵绽放
     i_am_war: 我必凯旋
     i_am_awake: 我已觉醒

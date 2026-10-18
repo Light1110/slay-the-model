@@ -2,15 +2,20 @@
 
 Powerful choices with consequences (boss fight, upgrade all, gold, or heal).
 """
-from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
+from engine.runtime_api import add_action, add_actions
 
 from events.base_event import Event
 from events.event_pool import register_event
 from actions.display import InputRequestAction, DisplayTextAction
-from actions.card import AddRandomCardAction, UpgradeCardAction, UpgradeAllCardsAction, AddCardAction
+from actions.card import ChooseObtainCardAction, UpgradeAllCardsAction, AddCardAction
+from actions.base import LambdaAction
 from actions.reward import AddGoldAction, AddRandomRelicAction, AddRelicAction
 from actions.combat import HealAction, StartFightAction
-from utils.registry import get_registered
+from utils.types import RarityType
+from enemies.act1.the_guardian import TheGuardian
+from enemies.act1.the_hexaghost import TheHexaghost
+from enemies.act1.slime_boss import SlimeBoss
+import random
 from localization import LocalStr
 from utils.option import Option
 from engine.game_state import game_state
@@ -35,31 +40,15 @@ class MindBloom(Event):
             text_key='events.mind_bloom.description'
         ))
         
-        # Gold for "I am War" option (reduced on A15+)
-        war_gold = 25 if game_state.ascension >= 15 else 50
-        
-        # Create random Act 1 boss for "I am War" option
-        import random
-        act1_bosses = ['hexaghost', 'slaver', 'the_guardian']  # Act 1 bosses
-        boss_name = random.choice(act1_bosses)
-        boss_class = get_registered("enemy", boss_name)
-        boss_enemies = [boss_class()] if boss_class else []
+        # Gold for "I am War" option (reduced on A13+)
+        war_gold = 25 if game_state.ascension >= 13 else 50
         
         # Build options
         options = [
             Option(
                 name=LocalStr('events.mind_bloom.i_am_war'),
                 detail=LocalStr('events.mind_bloom.war_detail', gold=war_gold),
-                actions=[
-                    StartFightAction(
-                        enemies=boss_enemies,
-                        victory_actions=[
-                            AddRandomRelicAction(rarity='rare'),
-                            AddGoldAction(amount=war_gold),
-                            AddRandomCardAction()
-                        ]
-                    )
-                ]
+                actions=[LambdaAction(self._start_war, args=[war_gold])],
             ),
             Option(
                 name=LocalStr('events.mind_bloom.i_am_awake'),
@@ -91,3 +80,18 @@ class MindBloom(Event):
         
         self.end_event()
         add_actions(actions)
+
+    def _start_war(self, gold: int) -> None:
+        """Generate a real Act 1 boss only when the fight option is selected."""
+        boss_class = random.choice((TheGuardian, TheHexaghost, SlimeBoss))
+        add_action(StartFightAction(
+            enemies=[boss_class()],
+            victory_actions=[
+                AddRandomRelicAction(rarity=RarityType.RARE),
+                AddGoldAction(amount=gold),
+                ChooseObtainCardAction(
+                    namespace=game_state.player.namespace, pile="deck", can_skip=True,
+                    encounter_type="normal", use_rolling_offset=True, allow_upgraded=True,
+                ),
+            ],
+        ), to_front=True)

@@ -154,18 +154,18 @@ def test_scrap_ooze_refreshes_hp_and_probability_after_failed_attempt(player, mo
     assert player.hp == 20 - base
 
 
-@pytest.mark.parametrize('ascension,base', [(0, 6), (15, 8)])
-def test_skull_refreshes_displayed_cost_after_repeat(player, ascension, base):
+@pytest.mark.parametrize('ascension', [0, 15])
+def test_skull_refreshes_only_the_chosen_reward_cost(player, ascension):
     player.max_hp = 100
     game_state.ascension = ascension
     event = KnowingSkull()
-    for expected in (base, base + 1):
+    for costs in ((6, 6, 6), (7, 6, 6)):
         options = menu_for(event).options
-        for option in options[:3]:
+        for option, expected in zip(options[:3], costs):
             assert str(expected) in resolve_text(option.detail)
             assert isinstance(option.actions[0], LoseHPAction)
             assert option.actions[0].amount == expected
-        event._increment_use()
+        event._increment_cost('potion')
 
 
 @pytest.mark.parametrize('language', ['en', 'zh'])

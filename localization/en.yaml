@@ -449,7 +449,7 @@ events:
     healthy_detail: "Heal to full HP. Become Cursed: Doubt."
     rich_detail: "Gain {gold} Gold. Become Cursed: 2 Normality."
     awake_detail: "Upgrade all cards. Obtain Mark of the Bloom: you can no longer heal."
-    war_detail: "Fight a boss. Victory: a random Rare relic, {gold} Gold, and a random card."
+    war_detail: "Fight an Act 1 boss. Victory: a random Rare relic, {gold} Gold, and a card reward (choose or skip)."
     title: Mind Bloom
     i_am_war: I Am War
     i_am_awake: I Am Awake
