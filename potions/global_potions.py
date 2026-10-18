@@ -26,16 +26,14 @@ class AttackPotion(Potion):
         self._amount = 1  # Sacred Bark doubles to 2
 
     def on_use(self, targets) -> None:
-        from utils.types import CardType
-        actions = []
-        for _ in range(self.amount):
-            actions.append(ChooseAddRandomCardAction(
-                pile='hand',
-                total=3,
-                card_type=CardType.ATTACK,
-                cost_until_end_of_turn=0  # Set temporary cost to 0 for this turn
-            ))
-        self.queue_actions(actions)
+        self.queue_actions([ChooseAddRandomCardAction(
+            pile='hand',
+            total=3,
+            card_type=CardType.ATTACK,
+            cost_until_end_of_turn=0,
+            copies=self.amount,
+            must_select=False,
+        )])
 
 @register("potion")
 class BlockPotion(Potion):
@@ -64,16 +62,14 @@ class ColorlessPotion(Potion):
         self._amount = 1  # Sacred Bark doubles to 2
 
     def on_use(self, targets) -> None:
-        from utils.types import CardType
-        actions = []
-        for _ in range(self.amount):
-            actions.append(ChooseAddRandomCardAction(
-                pile='hand',
-                total=3,
-                namespace="colorless",
-                cost_until_end_of_turn=0  # Set temporary cost to 0 for this turn
-            ))
-        self.queue_actions(actions)
+        self.queue_actions([ChooseAddRandomCardAction(
+            pile='hand',
+            total=3,
+            namespace="colorless",
+            cost_until_end_of_turn=0,
+            copies=self.amount,
+            must_select=True,
+        )])
 
 @register("potion")
 class DexterityPotion(Potion):
@@ -202,16 +198,14 @@ class PowerPotion(Potion):
         self._amount = 1  # Sacred Bark doubles to 2
 
     def on_use(self, targets) -> None:
-        from utils.types import CardType
-        actions = []
-        for _ in range(self.amount):
-            actions.append(ChooseAddRandomCardAction(
-                pile='hand',
-                total=3,
-                card_type=CardType.POWER,
-                cost_until_end_of_turn=0  # Set temporary cost to 0 for this turn
-            ))
-        self.queue_actions(actions)
+        self.queue_actions([ChooseAddRandomCardAction(
+            pile='hand',
+            total=3,
+            card_type=CardType.POWER,
+            cost_until_end_of_turn=0,
+            copies=self.amount,
+            must_select=False,
+        )])
 
 @register("potion")
 class SkillPotion(Potion):
@@ -225,16 +219,14 @@ class SkillPotion(Potion):
         self._amount = 1  # Sacred Bark doubles to 2
 
     def on_use(self, targets) -> None:
-        from utils.types import CardType
-        actions = []
-        for _ in range(self.amount):
-            actions.append(ChooseAddRandomCardAction(
-                pile='hand',
-                total=3,
-                card_type=CardType.SKILL,
-                cost_until_end_of_turn=0  # Set temporary cost to 0 for this turn
-            ))
-        self.queue_actions(actions)
+        self.queue_actions([ChooseAddRandomCardAction(
+            pile='hand',
+            total=3,
+            card_type=CardType.SKILL,
+            cost_until_end_of_turn=0,
+            copies=self.amount,
+            must_select=False,
+        )])
 
 @register("potion")
 class SpeedPotion(Potion):
