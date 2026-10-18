@@ -18,7 +18,7 @@ from utils.types import RarityType
 from engine.game_state import game_state
 
 
-@register_event(event_id='dead_adventurer', acts=[1], weight=100)
+@register_event(category='event', event_id='dead_adventurer', acts=[1], weight=100)
 class DeadAdventurer(Event):
     """Dead Adventurer - search for loot with elite risk."""
     

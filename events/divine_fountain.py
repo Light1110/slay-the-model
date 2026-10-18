@@ -23,7 +23,7 @@ def _eligible_curse(card) -> bool:
     )
 
 
-@register_event(event_id='divine_fountain', acts='shared', weight=100)
+@register_event(category='special', event_id='divine_fountain', acts='shared', weight=100)
 class DivineFountain(Event):
     """Divine Fountain - remove all curses."""
     

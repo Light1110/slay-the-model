@@ -17,7 +17,7 @@ from engine.game_state import game_state
 import random
 
 
-@register_event(event_id='designer_in_spire', acts=[2, 3], weight=100)
+@register_event(category='special', event_id='designer_in_spire', acts=[2, 3], weight=100)
 class DesignerInSpire(Event):
     """Designer In-Spire - gold for deck services."""
     

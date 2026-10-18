@@ -13,6 +13,7 @@ from utils.option import Option
 
 
 @register_event(
+    category="special",
     event_id="woman_in_blue",
     acts='shared',
     weight=100

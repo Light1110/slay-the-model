@@ -17,7 +17,7 @@ from engine.game_state import game_state
 from utils.types import CardType
 
 
-@register_event(event_id='wing_statue', acts=[1], weight=100)
+@register_event(category='event', event_id='wing_statue', acts=[1], weight=100)
 class WingStatue(Event):
     """Wing Statue - remove card for HP or gold for attack."""
     

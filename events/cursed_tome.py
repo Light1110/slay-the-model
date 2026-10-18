@@ -16,7 +16,7 @@ from utils.option import Option
 from engine.game_state import game_state
 
 
-@register_event(event_id='cursed_tome', acts=[2], weight=100)
+@register_event(category='event', event_id='cursed_tome', acts=[2], weight=100)
 class CursedTome(Event):
     """
     Cursed Tome - HP for boss relic (book).

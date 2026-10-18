@@ -17,7 +17,7 @@ from engine.game_state import game_state
 from relics.global_relics.event import RedMask
 
 
-@register_event(event_id='masked_bandits', acts=[2], weight=100)
+@register_event(category='event', event_id='masked_bandits', acts=[2], weight=100)
 class MaskedBandits(Event):
     """Masked Bandits - pay gold or fight for Red Mask."""
     

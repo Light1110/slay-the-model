@@ -22,7 +22,7 @@ from engine.game_state import game_state
 from utils.types import RarityType
 
 
-@register_event(event_id='bonfire_spirits', acts='shared', weight=100)
+@register_event(category='special', event_id='bonfire_spirits', acts='shared', weight=100)
 class BonfireSpirits(Event):
     """Bonfire Spirits - sacrifice card for reward by rarity."""
     

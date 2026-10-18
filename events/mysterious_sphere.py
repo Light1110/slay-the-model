@@ -16,7 +16,7 @@ from localization import LocalStr
 from utils.option import Option
 
 
-@register_event(event_id='mysterious_sphere', acts=[3], weight=100)
+@register_event(category='event', event_id='mysterious_sphere', acts=[3], weight=100)
 class MysteriousSphere(Event):
     """Mysterious Sphere - fight for relic."""
     

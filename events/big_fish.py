@@ -16,6 +16,7 @@ from cards.colorless.regret import Regret
 
 
 @register_event(
+    category="event",
     event_id="big_fish",
     acts=[1],
     weight=100

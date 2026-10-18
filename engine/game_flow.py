@@ -47,19 +47,24 @@ class GameFlow:
         - Player defeats final boss (WIN)
         - Player dies (DEATH)
         """
-        # Display game welcome messages
-        self._display_welcome()
-        self.flow_phase = "init_act"
-        self.phase_act = None
+        game_state.begin_run()
+        try:
+            # Display game welcome messages
+            self._display_welcome()
+            self.flow_phase = "init_act"
+            self.phase_act = None
 
-        while self.flow_phase != "finished":
-            result = self._execute_next_phase(game_state)
-            if isinstance(result, GameTerminalState):
-                if result == GameTerminalState.GAME_EXIT:
-                    self._handle_game_exit()
-                elif result == GameTerminalState.GAME_LOSE:
-                    self._handle_game_over()
-                break
+            while self.flow_phase != "finished":
+                result = self._execute_next_phase(game_state)
+                if isinstance(result, GameTerminalState):
+                    if result == GameTerminalState.GAME_EXIT:
+                        self._handle_game_exit()
+                    elif result == GameTerminalState.GAME_LOSE:
+                        self._handle_game_over()
+                    break
+
+        finally:
+            game_state.run_clock.stop()
 
     def _execute_next_phase(self, game_state):
         """Advance the global game flow by one explicit phase."""

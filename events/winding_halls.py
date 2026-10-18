@@ -16,7 +16,7 @@ from cards.colorless.madness import Madness
 from cards.colorless.writhe import Writhe
 
 
-@register_event(event_id='winding_halls', acts=[3], weight=100)
+@register_event(category='event', event_id='winding_halls', acts=[3], weight=100)
 class WindingHalls(Event):
     """Winding Halls - trade-offs for cards/heal."""
 

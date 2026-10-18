@@ -16,7 +16,7 @@ from engine.game_state import game_state
 from cards.colorless import Writhe
 
 
-@register_event(event_id='the_mausoleum', acts=[2], weight=100)
+@register_event(category='event', event_id='the_mausoleum', acts=[2], weight=100)
 class TheMausoleum(Event):
     """The Mausoleum - relic with curse risk."""
     

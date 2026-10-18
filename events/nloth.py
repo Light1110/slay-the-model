@@ -18,7 +18,7 @@ from engine.game_state import game_state
 from relics.global_relics.event import NlothGift
 
 
-@register_event(event_id='nloth', acts=[2], weight=100)
+@register_event(category='special', event_id='nloth', acts=[2], weight=100)
 class Nloth(Event):
     """N'loth - trade a relic for N'loth's Gift (50% chance to duplicate obtained cards)."""
     

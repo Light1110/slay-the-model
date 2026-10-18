@@ -19,7 +19,7 @@ from relics.global_relics.event import (
 )
 
 
-@register_event(event_id='face_trader', acts=[1, 2], weight=100)
+@register_event(category='special', event_id='face_trader', acts=[1, 2], weight=100)
 class FaceTrader(Event):
     """Face Trader - trade HP for gold or gamble for face relics."""
     

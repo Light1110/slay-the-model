@@ -17,7 +17,7 @@ from engine.game_state import game_state
 from cards.colorless import Decay
 
 
-@register_event(event_id='wheel_of_change', acts='shared', weight=100)
+@register_event(category='shrine', event_id='wheel_of_change', acts='shared', weight=100)
 class WheelOfChange(Event):
     """Wheel of Change - random outcome wheel."""
 

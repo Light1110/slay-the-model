@@ -12,6 +12,8 @@ from typing import List, Optional
 from engine.input_protocol import InputRequest, InputSubmission
 from engine.message_bus import MessageBus
 from engine.runtime_context import RuntimeContext
+from engine.event_pool_state import EventPoolState
+from engine.run_clock import RunClock
 from utils.result_types import GameTerminalState
 from config.game_config import GameConfig
 import os
@@ -65,7 +67,7 @@ class GameState:
         # Key tracking for treasure events
         self.sapphire_key_picked = False
         self.skip_to_boss = False
-        self.elapsed_time = 0
+        self.run_clock = RunClock()
 
         # Tiny Chest relic tracking
         self.event_room_counter = 0
@@ -115,6 +117,7 @@ class GameState:
         if self.config.seed == -1:
             self.config.seed = int(time.time())
         rd.seed(self.config.seed)
+        self.event_pool_state = EventPoolState(self.config.seed)
         # character
         self.player = create_player(self.config.character)
         from relics.boss_pool import BossRelicPool
@@ -125,6 +128,25 @@ class GameState:
         self.runtime_context = RuntimeContext(game_state=self)
         self.pending_input_request = None
         self.terminal_state = None
+
+    @property
+    def elapsed_time(self) -> float:
+        return self.run_clock.elapsed
+
+    @elapsed_time.setter
+    def elapsed_time(self, seconds: float) -> None:
+        self.run_clock.elapsed = seconds
+
+    @property
+    def highest_unlocked_ascension(self) -> int:
+        values = self.config.highest_unlocked_ascension
+        character = self.player.namespace.lower()
+        return int(values.get(character, 0))
+
+    def begin_run(self) -> None:
+        self.event_pool_state.reset(self.config.seed)
+        self.run_clock.reset()
+        self.run_clock.start()
 
     def publish_message(self, message) -> None:
         """Publish a runtime message and queue follow-up actions immediately."""
@@ -272,6 +294,8 @@ class GameState:
         """Initialize map system for current act."""
         from map import MapManager
         
+        self.event_pool_state.enter_act(self.current_act)
+        self.run_clock.start()
         self.map_manager = MapManager(self.config.seed + self.current_act, act_id=self.current_act)
         self.map_data = self.map_manager.generate_map()
 

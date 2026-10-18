@@ -14,7 +14,7 @@ from utils.result_types import GameTerminalState
 from utils.types import RarityType
 
 
-@register_event(event_id='knowing_skull', acts=[2], weight=100)
+@register_event(category='special', event_id='knowing_skull', acts=[2], weight=100)
 class KnowingSkull(Event):
     """Each reward starts at 6 HP and increases only its own cost; leaving costs 6."""
 

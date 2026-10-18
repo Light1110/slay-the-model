@@ -23,7 +23,7 @@ from cards.colorless import Normality, Doubt
 from relics.global_relics.event import MarkOfBloom
 
 
-@register_event(event_id='mind_bloom', acts=[3], weight=100)
+@register_event(category='event', event_id='mind_bloom', acts=[3], weight=100)
 class MindBloom(Event):
     """Mind Bloom - powerful choices with consequences."""
     

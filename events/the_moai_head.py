@@ -15,7 +15,7 @@ from engine.game_state import game_state
 from relics.global_relics.event import GoldenIdol
 
 
-@register_event(event_id='the_moai_head', acts=[3], weight=100)
+@register_event(category='event', event_id='the_moai_head', acts=[3], weight=100)
 class TheMoaiHead(Event):
     """The Moai Head - heal or trade Golden Idol."""
     

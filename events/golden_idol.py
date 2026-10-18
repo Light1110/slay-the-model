@@ -17,7 +17,7 @@ from relics.global_relics.event import GoldenIdol
 from cards.colorless import Injury
 
 
-@register_event(event_id='golden_idol', acts=[1], weight=100)
+@register_event(category='event', event_id='golden_idol', acts=[1], weight=100)
 class GoldenIdolEvent(Event):
     """Golden Idol - take relic and face trap consequences."""
     

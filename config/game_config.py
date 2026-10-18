@@ -10,6 +10,8 @@ class GameConfig:
             "seed": -1,
             "character": "Ironclad",
             "ascension": 0,
+            "daily_run": False,
+            "highest_unlocked_ascension": {},
             "select_overflow": "truncate",
             "auto_select": False,  # Auto select for all modes (human, ai, debug)
             "human": {
@@ -44,6 +46,11 @@ class GameConfig:
         self.seed = defaults["seed"]
         self.character = defaults["character"]
         self.ascension = defaults["ascension"]
+        self.daily_run = bool(defaults["daily_run"])
+        self.highest_unlocked_ascension = {
+            str(character).lower(): int(level)
+            for character, level in defaults["highest_unlocked_ascension"].items()
+        }
         self.select_overflow = defaults["select_overflow"]
         self.auto_select = defaults["auto_select"]
         self.human = defaults["human"]

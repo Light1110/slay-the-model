@@ -16,7 +16,7 @@ from utils.option import Option
 from engine.game_state import game_state
 
 
-@register_event(event_id='scrap_ooze', acts=[1], weight=100)
+@register_event(category='event', event_id='scrap_ooze', acts=[1], weight=100)
 class ScrapOoze(Event):
     """Scrap Ooze - HP for relic chance."""
     

@@ -13,7 +13,7 @@ from localization import LocalStr
 from utils.option import Option
 
 
-@register_event(event_id='sensory_stone', acts=[3], weight=100)
+@register_event(category='event', event_id='sensory_stone', acts=[3], weight=100)
 class SensoryStone(Event):
     """Sensory Stone - colorless cards for HP."""
     

@@ -18,6 +18,7 @@ from utils.option import Option
 
 
 @register_event(
+    category="event",
     event_id="the_cleric",
     acts=[1],
     weight=100
@@ -25,6 +26,11 @@ from utils.option import Option
 class TheClericEvent(Event):
     """The Cleric - Heal or remove card for gold"""
     
+    @classmethod
+    def can_appear(cls) -> bool:
+        from engine.game_state import game_state
+        return game_state.player is not None and game_state.player.gold >= 35
+
     def trigger(self) -> None:
         """Trigger clerics encounter event"""
         from engine.game_state import game_state

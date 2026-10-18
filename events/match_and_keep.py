@@ -115,7 +115,7 @@ def _create_shuffled_deck(pairs: List[Tuple[Card, Card]]) -> List[dict]:
     return cards
 
 
-@register_event(event_id='match_and_keep', acts='shared', weight=100)
+@register_event(category='shrine', event_id='match_and_keep', acts='shared', weight=100)
 class MatchAndKeep(Event):
     """Match and Keep - card matching minigame."""
     

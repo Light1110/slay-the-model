@@ -15,7 +15,7 @@ from engine.game_state import game_state
 from cards.colorless import Apparition
 
 
-@register_event(event_id='council_of_ghosts', acts=[2], weight=100)
+@register_event(category='event', event_id='council_of_ghosts', acts=[2], weight=100)
 class CouncilOfGhosts(Event):
     """Council of Ghosts - Max HP for Apparition cards."""
     

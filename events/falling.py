@@ -14,7 +14,7 @@ from utils.types import CardType
 from engine.game_state import game_state
 
 
-@register_event(event_id='falling', acts=[3], weight=100)
+@register_event(category='event', event_id='falling', acts=[3], weight=100)
 class Falling(Event):
     """Falling - forced card loss by type."""
     
