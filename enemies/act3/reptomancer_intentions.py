@@ -44,7 +44,7 @@ class BigBiteIntention(Intention):
         from engine.game_state import game_state
         add_actions(
         [AttackAction(
-            self.enemy.calculate_damage(self.base_damage),
+            self.base_damage,
             game_state.player,
             self.enemy,
             "attack"
@@ -67,7 +67,7 @@ class SnakeStrikeIntention(Intention):
         actions = []
         for _ in range(self.base_times):
             actions.append(AttackAction(
-                self.enemy.calculate_damage(self.base_damage),
+                self.base_damage,
                 game_state.player,
                 self.enemy,
                 "attack"

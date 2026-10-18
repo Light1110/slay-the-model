@@ -12,22 +12,6 @@ if TYPE_CHECKING:
     from enemies.base import Enemy
 
 
-class _HexaghostAttackIntention(Intention):
-    """Preview physical damage using the same type as the queued attacks."""
-
-    @property
-    def description(self):
-        from engine.game_state import game_state
-        from utils.dynamic_values import resolve_potential_damage
-
-        return self.local(
-            "description",
-            damage=resolve_potential_damage(self.base_damage, self.enemy,
-                                            game_state.player, damage_type="attack"),
-            hits=self._get_hits(), cards=self.base_cards,
-        )
-
-
 class ActivateIntention(Intention):
     """Lock Divider's base damage at the end of the opening player turn."""
 
@@ -44,7 +28,7 @@ class ActivateIntention(Intention):
         self.enemy.current_intention = divider
 
 
-class DividerIntention(_HexaghostAttackIntention):
+class DividerIntention(Intention):
     """Attack six times using the base damage saved by Activate."""
 
     def __init__(self, enemy: 'Enemy'):
@@ -63,7 +47,7 @@ class DividerIntention(_HexaghostAttackIntention):
         ])
 
 
-class SearIntention(_HexaghostAttackIntention):
+class SearIntention(Intention):
     """Deal 6 damage and add Burns, upgraded after the first Inferno."""
 
     def __init__(self, enemy: 'Enemy'):
@@ -89,7 +73,7 @@ class SearIntention(_HexaghostAttackIntention):
         ])
 
 
-class TackleIntention(_HexaghostAttackIntention):
+class TackleIntention(Intention):
     """Deal 5 damage twice, or 6 twice on A4+."""
 
     def __init__(self, enemy: 'Enemy'):
@@ -129,7 +113,7 @@ class InflameIntention(Intention):
         ])
 
 
-class InfernoIntention(_HexaghostAttackIntention):
+class InfernoIntention(Intention):
     """Attack six times, upgrade existing Burns, then add three Burn+."""
 
     def __init__(self, enemy: 'Enemy'):

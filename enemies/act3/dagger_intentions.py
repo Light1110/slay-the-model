@@ -25,7 +25,7 @@ class WoundIntention(Intention):
         from engine.game_state import game_state
         add_actions(
         [AttackAction(
-            self.enemy.calculate_damage(self.base_damage),
+            self.base_damage,
             game_state.player,
             self.enemy,
             "attack"

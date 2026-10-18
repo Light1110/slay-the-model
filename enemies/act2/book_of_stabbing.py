@@ -25,6 +25,7 @@ class BookOfStabbing(Enemy):
         ascension = getattr(game_state, "ascension", 0)
         hp_range = (168, 172) if ascension >= 8 else (160, 164)
         super().__init__(hp_range=hp_range)
+        self._selected_after_turn = -1
         self.multi_stab_count = 0  # Number of times Multi Stab used
         
         # Register intentions
@@ -38,11 +39,15 @@ class BookOfStabbing(Enemy):
         if not self.has_power("Painful Stabs"):
             self.add_power(PainfulStabsPower(owner=self))
     
-    def determine_next_intention(self, floor: int) -> None:
+    def determine_next_intention(self, floor: int):
         """Determine next intention based on pattern."""
         from engine.game_state import game_state
 
         ascension = getattr(game_state, "ascension", 0)
+        completed = len(self.history_intentions)
+        if self._selected_after_turn == completed:
+            return self.current_intention
+        self._selected_after_turn = completed
         # Get last move
         last = self.history_intentions[-1] if self.history_intentions else None
         
@@ -77,6 +82,8 @@ class BookOfStabbing(Enemy):
         if self.current_intention is None:
             self.current_intention = self.intentions["Multi Stab"]
 
+        if self.current_intention.name == "Multi Stab":
+            self.intentions["Multi Stab"]._hits = self.multi_stab_count + 2
         if self.current_intention.name == "Big Stab" and ascension >= 18:
             self.multi_stab_count += 1
 
@@ -86,6 +93,7 @@ class BookOfStabbing(Enemy):
         """Execute current intention and update counter."""
         if not self.current_intention:
             return
-        if self.current_intention.name == "Multi Stab":
-            self.multi_stab_count += 1
+        is_multi_stab = self.current_intention.name == "Multi Stab"
         super().execute_intention()
+        if is_multi_stab:
+            self.multi_stab_count += 1

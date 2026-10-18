@@ -50,7 +50,7 @@ class Nip(Intention):
         from engine.game_state import game_state
         add_actions(
         [AttackAction(
-            self.enemy.calculate_damage(self.base_damage),
+            self.base_damage,
             game_state.player,
             self.enemy,
             "attack"
@@ -70,9 +70,9 @@ class Chomp(Intention):
         """Execute Chomp intention."""
         from engine.game_state import game_state
         actions = []
-        for _ in range(self.hit_count):
+        for _ in range(self._get_hits()):
             actions.append(AttackAction(
-                self.enemy.calculate_damage(self.base_damage),
+                self.base_damage,
                 game_state.player,
                 self.enemy,
                 "attack"

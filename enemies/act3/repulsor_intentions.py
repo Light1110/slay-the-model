@@ -27,19 +27,17 @@ class RepulsorAttack(Intention):
     
     def __init__(self, enemy):
         super().__init__("Attack", enemy)
-        self.base_damage = 11  # A17+: 13
+        from engine.game_state import game_state
+
+        self.base_damage = 13 if game_state.ascension >= 17 else 11
     
     def execute(self) -> None:
         """Execute Attack intention."""
         damage = self.base_damage
         from engine.game_state import game_state
-        from engine.game_state import game_state
-        if game_state.ascension >= 17:
-            damage = 13
-        from engine.game_state import game_state
         add_actions(
         [AttackAction(
-            self.enemy.calculate_damage(damage),
+            damage,
             game_state.player,
             self.enemy,
             "attack"

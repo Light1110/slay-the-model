@@ -29,6 +29,7 @@ class GiantHead(Enemy):
         
         # Internal state
         self._turn_count = 0
+        self._selected_after_turn = -1
         self._it_is_time_count = 0
 
     def determine_next_intention(self, floor: int = 1):
@@ -38,7 +39,11 @@ class GiantHead(Enemy):
         - First 4 turns: 50/50 chance of Count or Glare
         - Turn 5+: Always It Is Time
         """
-        self._turn_count += 1
+        completed = len(self.history_intentions)
+        if self._selected_after_turn == completed:
+            return self.current_intention
+        self._selected_after_turn = completed
+        self._turn_count = completed + 1
         
         # After turn 4, always use It Is Time
         if self._turn_count > 4:
@@ -66,9 +71,10 @@ class GiantHead(Enemy):
 
     def on_combat_start(self, floor: int = 1):
         """Initialize combat state."""
-        super().on_combat_start(floor)
+        self._selected_after_turn = -1
         self._turn_count = 0
         self._it_is_time_count = 0
+        super().on_combat_start(floor)
         # Giant Head starts with SlowPower
         from powers.definitions.slow import SlowPower
         self.add_power(SlowPower(owner=self))

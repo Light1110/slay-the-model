@@ -16,14 +16,15 @@ class TriAttack(Intention):
     def __init__(self, enemy):
         super().__init__("Tri Attack", enemy)
         self.base_damage = 6
+        self._hits = 3
     
     def execute(self) -> None:
         """Execute tri attack - 3 hits."""
         from engine.game_state import game_state
         
-        damage = self.base_damage + self.enemy.strength
+        damage = self.base_damage
         actions = []
-        for _ in range(3):
+        for _ in range(self._hits):
             actions.append(AttackAction(
                 damage=damage,
                 target=game_state.player,
@@ -63,7 +64,7 @@ class Scythe(Intention):
         """Execute scythe attack."""
         from engine.game_state import game_state
         
-        damage = self.base_damage + self.enemy.strength
+        damage = self.base_damage
         from engine.game_state import game_state
         add_actions(
         [AttackAction(

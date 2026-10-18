@@ -96,6 +96,10 @@ class Intention(ABC, Localizable):
         default = self.name
         return LocalStr(key=resolved_key, default=default, **kwargs)
     
+    def get_base_damage(self) -> int:
+        """Unmodified damage of one hit of the currently selected move."""
+        return self.base_damage
+
     @property
     def description(self) -> 'BaseLocalStr':
         """Return the localized intention description with dynamic values filled in."""
@@ -103,11 +107,12 @@ class Intention(ABC, Localizable):
         variables = {}
         
         # Damage value.
-        if self.base_damage > 0:
+        base_damage = self.get_base_damage()
+        if base_damage > 0:
             from utils.dynamic_values import resolve_potential_damage
             from engine.game_state import game_state
             player = game_state.player
-            variables['damage'] = resolve_potential_damage(self.base_damage, self.enemy, player)
+            variables['damage'] = resolve_potential_damage(base_damage, self.enemy, player, damage_type="attack")
         
         # Block value.
         if self.base_block > 0:
@@ -132,7 +137,7 @@ class Intention(ABC, Localizable):
         
         # Hit count for multi-hit intentions.
         hits = self._get_hits()
-        if hits > 1:
+        if hits > 0:
             variables['hits'] = hits
 
         # Some intentions expose metallicize as a dedicated field.
@@ -169,6 +174,7 @@ class Intention(ABC, Localizable):
             'hits',
             'base_hits',
             'base_times',
+            'hit_count',
             '_hits',
         ]
         

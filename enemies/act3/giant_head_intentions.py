@@ -54,37 +54,21 @@ class GlareIntention(Intention):
 
 
 class ItIsTimeIntention(Intention):
-    """Deals 30+5*N damage (N = times used, max 60). A17+: 40+5*N (max 70)."""
-    
+    """Gain 5 base damage per use, up to 60 (70 on A3+)."""
+
     def __init__(self, enemy):
         super().__init__("It Is Time", enemy)
-        self.base_damage = 30
-        self.base_damage_asc = 40
-        self.max_damage = 60
-        self.max_damage_asc = 70
-    
+        from engine.game_state import game_state
+
+        self.base_damage = 40 if game_state.ascension >= 3 else 30
+        self.max_damage = self.base_damage + 30
+
+    def get_base_damage(self) -> int:
+        return min(self.base_damage + 5 * self.enemy._it_is_time_count, self.max_damage)
+
     def execute(self) -> None:
-        """Execute the intention."""
         from engine.game_state import game_state
-        # Calculate base damage
-        if hasattr(game_state, 'ascension') and game_state.ascension >= 17:
-            base = self.base_damage_asc
-            max_dmg = self.max_damage_asc
-        else:
-            base = self.base_damage
-            max_dmg = self.max_damage
-        
-        # Increase damage based on times used
+
+        damage = self.get_base_damage()
+        add_actions([AttackAction(damage, game_state.player, self.enemy, "attack")])
         self.enemy._it_is_time_count += 1
-        damage = base + (self.enemy._it_is_time_count - 1) * 5
-        damage = min(damage, max_dmg)
-        
-        from engine.game_state import game_state
-        add_actions(
-        [AttackAction(
-            damage=damage,
-            target=game_state.player,
-            source=self.enemy,
-            damage_type="attack"
-        )]
-        )

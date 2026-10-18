@@ -3235,7 +3235,7 @@ enemies:
         description: Deal {damage} damage.
       nom_nom:
         name: Nom Nom
-        description: Deal {damage} damage.
+        description: "Deal {damage} damage {hits} time(s)."
       drool:
         name: Drool
         description: Gain 3 Strength.
@@ -3353,6 +3353,9 @@ enemies:
   Reptomancer:
     name: Reptomancer
     intentions:
+      Big Bite:
+        name: "Big Bite"
+        description: "Deal {damage} damage."
       SnakeStrike:
         name: Snake Strike
         description: Deal {damage} damage 2 times.
@@ -3365,6 +3368,12 @@ enemies:
   SpireGrowth:
     name: Writhing Mass
     intentions:
+      Smash:
+        name: "Smash"
+        description: "Deal {damage} damage."
+      Quick Tackle:
+        name: "Quick Tackle"
+        description: "Deal {damage} damage."
       Attack:
         name: Attack
         description: Deal {damage} damage.
@@ -3391,7 +3400,7 @@ enemies:
         description: Deal {damage} damage.
       Chomp:
         name: Chomp
-        description: Deal {damage} damage.
+        description: "Deal {damage} damage {hits} times."
       Harden:
         name: Harden
         description: Gain {block} Block.
@@ -3457,7 +3466,7 @@ enemies:
     intentions:
       multi_stab:
         name: Multi Stab
-        description: Deal {damage} damage X times
+        description: "Deal {damage} damage {hits} times."
       stab:
         name: Stab
         description: Deal {damage} damage
@@ -3653,6 +3662,18 @@ enemies:
   WrithingMass:
     name: Writhing Mass
     intentions:
+      Block Attack:
+        name: "Block Attack"
+        description: "Deal {damage} damage. Gain {block} Block."
+      Big Hit:
+        name: "Big Hit"
+        description: "Deal {damage} damage."
+      Debuff Attack:
+        name: "Debuff Attack"
+        description: "Deal {damage} damage. Apply 2 Weak and 2 Vulnerable."
+      Multi Hit:
+        name: "Multi Hit"
+        description: "Deal {damage} damage {hits} times."
       whim:
         name: Whim
         description: Deal {damage} damage

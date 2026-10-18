@@ -3058,7 +3058,7 @@ enemies:
         description: 造成 {damage} 点伤害。
       nom_nom:
         name: 吞噬
-        description: 造成 {damage} 点伤害。
+        description: "造成 {damage} 点伤害 {hits} 次。"
       drool:
         name: 流口水
         description: 获得 3 点力量。
@@ -3067,7 +3067,7 @@ enemies:
     intentions:
       multi_stab:
         name: 多重刺击
-        description: 造成 {damage} 点伤害 X 次
+        description: "造成 {damage} 点伤害 {hits} 次。"
       stab:
         name: 刺击
         description: 造成 {damage} 点伤害
@@ -3425,6 +3425,9 @@ enemies:
   Reptomancer:
     name: 拜蛇术士
     intentions:
+      Big Bite:
+        name: "猛咬"
+        description: "造成 {damage} 点伤害。"
       SnakeStrike:
         name: 蛇击
         description: 造成 {damage} 点伤害，共 2 次。
@@ -3437,6 +3440,12 @@ enemies:
   SpireGrowth:
     name: 扭曲团块
     intentions:
+      Smash:
+        name: "重击"
+        description: "造成 {damage} 点伤害。"
+      Quick Tackle:
+        name: "快速撞击"
+        description: "造成 {damage} 点伤害。"
       Attack:
         name: 攻击
         description: 造成 {damage} 点伤害。
@@ -3463,7 +3472,7 @@ enemies:
         description: 造成 {damage} 点伤害。
       Chomp:
         name: 猛咬
-        description: 造成 {damage} 点伤害。
+        description: "造成 {damage} 点伤害 {hits} 次。"
       Harden:
         name: 硬化
         description: 获得 {block} 点格挡。
@@ -3620,6 +3629,18 @@ enemies:
   WrithingMass:
     name: 扭曲团块
     intentions:
+      Block Attack:
+        name: "防御攻击"
+        description: "造成 {damage} 点伤害。获得 {block} 点格挡。"
+      Big Hit:
+        name: "重击"
+        description: "造成 {damage} 点伤害。"
+      Debuff Attack:
+        name: "削弱攻击"
+        description: "造成 {damage} 点伤害。施加 2 层虚弱和 2 层易伤。"
+      Multi Hit:
+        name: "多重攻击"
+        description: "造成 {damage} 点伤害 {hits} 次。"
       whim:
         name: 随意
         description: 造成 {damage} 点伤害

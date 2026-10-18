@@ -32,18 +32,17 @@ class QuickTackle(Intention):
     
     def __init__(self, enemy):
         super().__init__("Quick Tackle", enemy)
-        self.base_damage = 16  # A17+: 18
+        from engine.game_state import game_state
+
+        self.base_damage = 18 if game_state.ascension >= 17 else 16
     
     def execute(self) -> None:
         """Execute Quick Tackle intention."""
         damage = self.base_damage
         from engine.game_state import game_state
-        if game_state.ascension >= 17:
-            damage = 18
-        from engine.game_state import game_state
         add_actions(
         [AttackAction(
-            self.enemy.calculate_damage(damage),
+            damage,
             game_state.player,
             self.enemy,
             "attack"
@@ -56,18 +55,17 @@ class Smash(Intention):
     
     def __init__(self, enemy):
         super().__init__("Smash", enemy)
-        self.base_damage = 22  # A17+: 25
+        from engine.game_state import game_state
+
+        self.base_damage = 25 if game_state.ascension >= 17 else 22
     
     def execute(self) -> None:
         """Execute Smash intention."""
         damage = self.base_damage
         from engine.game_state import game_state
-        if game_state.ascension >= 17:
-            damage = 25
-        from engine.game_state import game_state
         add_actions(
         [AttackAction(
-            self.enemy.calculate_damage(damage),
+            damage,
             game_state.player,
             self.enemy,
             "attack"
