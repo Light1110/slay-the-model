@@ -12,7 +12,12 @@ from enemies.act1.sentry_intentions import BoltIntention, BeamIntention
 class Sentry(Enemy):
     enemy_type = EnemyType.ELITE
     
-    def __init__(self, ascension: int = 0, is_middle: bool = False):
+    def __init__(self, ascension: int | None = None, is_middle: bool = False):
+        if ascension is None:
+            from engine.game_state import game_state
+
+            ascension = game_state.ascension
+
         if ascension >= 8:
             hp = random.randint(39, 45)
         else:
@@ -24,7 +29,7 @@ class Sentry(Enemy):
         self.turn_count = 0
         
         beam_damage = 10 if ascension >= 3 else 9
-        dazed_count = 3 if ascension >= 3 else 2
+        dazed_count = 3 if ascension >= 18 else 2
         
         # Register intentions with keys
         self.add_intention(BoltIntention(self, dazed_count))

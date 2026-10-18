@@ -18,11 +18,6 @@ from engine.game_state import game_state
 class TheLibrary(Event):
     """The Library - choose card or heal."""
     
-    @classmethod
-    def can_appear(cls) -> bool:
-        """Only appears on Ascension 15+."""
-        return game_state.ascension >= 15
-    
     def trigger(self) -> None:
         actions = []
         
