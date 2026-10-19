@@ -1,33 +1,22 @@
-"""Transient enemy intention for Slay the Model."""
-from engine.runtime_api import add_action, add_actions
-
-from typing import List
-
+"""Transient's next attack grows only after an attack has been executed."""
 from actions.combat import AttackAction
+from engine.runtime_api import add_actions
 from enemies.intention import Intention
+
+
 class TransientAttack(Intention):
-    """Transient Attack intention - damage scales with turn number."""
-    
     def __init__(self, enemy):
         super().__init__("Attack", enemy)
-        self.base_damage = 20
-    
+        from engine.game_state import game_state
+
+        self.base_damage = 40 if game_state.ascension >= 2 else 30
+
+    def get_base_damage(self) -> int:
+        return self.base_damage + 10 * self.enemy._attacks_executed
+
     def execute(self) -> None:
-        """Execute Attack intention - deals 20+N damage where N = turn * 10."""
-        current_turn = getattr(self.enemy, '_turn_count', 1)
-        
-        damage = self.base_damage + (current_turn * 10)
         from engine.game_state import game_state
-        from engine.game_state import game_state
-        if game_state.ascension >= 17:
-            damage = 30 + (current_turn * 10)
-        
-        from engine.game_state import game_state
-        add_actions(
-        [AttackAction(
-            self.enemy.calculate_damage(damage),
-            game_state.player,
-            self.enemy,
-            "attack"
-        )]
-        )
+
+        damage = self.get_base_damage()
+        add_actions([AttackAction(damage, game_state.player, self.enemy, "attack")])
+        self.enemy._attacks_executed += 1

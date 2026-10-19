@@ -76,6 +76,7 @@ def test_wing_statue_offers_gold_for_an_attack_dealing_at_least_10():
     assert not any(
         isinstance(action, AddGoldAction)
         for option in weak_options
+        if option.enabled
         for action in option.actions
     )
     pray = next(
@@ -92,6 +93,7 @@ def test_wing_statue_offers_gold_for_an_attack_dealing_at_least_10():
         for option in _options(WingStatue())
         if any(isinstance(action, AddGoldAction) for action in option.actions)
     )
+    assert destroy.enabled
     gold = next(action for action in destroy.actions if isinstance(action, AddGoldAction))
     assert 50 <= gold.amount <= 80
 

@@ -15,7 +15,7 @@ from relics.global_relics.event import WarpedTongs
 from cards.colorless import Pain
 
 
-@register_event(event_id='ominous_forge', acts='shared', weight=100)
+@register_event(category='special', event_id='ominous_forge', acts='shared', weight=100)
 class OminousForge(Event):
     """Ominous Forge - upgrade card or get Warped Tongs + Pain."""
     
@@ -31,10 +31,12 @@ class OminousForge(Event):
         options = [
             Option(
                 name=LocalStr('events.ominous_forge.forge'),
+                detail=LocalStr('events.ominous_forge.forge_detail'),
                 actions=[ChooseUpgradeCardAction()]
             ),
             Option(
                 name=LocalStr('events.ominous_forge.rummage'),
+                detail=LocalStr('events.ominous_forge.rummage_detail'),
                 actions=[
                     AddRelicAction(relic=WarpedTongs()),
                     AddCardAction(card=Pain())
@@ -42,6 +44,7 @@ class OminousForge(Event):
             ),
             Option(
                 name=LocalStr('events.ominous_forge.leave'),
+                detail=LocalStr('events.no_effect'),
                 actions=[]
             )
         ]

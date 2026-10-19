@@ -11,20 +11,18 @@ class MultiHit(Intention):
     
     def __init__(self, enemy):
         super().__init__("Multi Hit", enemy)
-        self.base_damage = 7  # A17+: 8
+        from engine.game_state import game_state
+
+        self.base_damage = 8 if game_state.ascension >= 17 else 7
         self.base_times = 3
     
     def execute(self) -> None:
         """Execute Multi Hit intention."""
         damage = self.base_damage
         from engine.game_state import game_state
-        from engine.game_state import game_state
-        if game_state.ascension >= 17:
-            damage = 8
-        from engine.game_state import game_state
         add_actions(
         [AttackAction(
-            self.enemy.calculate_damage(damage),
+            damage,
             game_state.player,
             self.enemy,
             "attack"
@@ -37,20 +35,18 @@ class DebuffAttackMass(Intention):
     
     def __init__(self, enemy):
         super().__init__("Debuff Attack", enemy)
-        self.base_damage = 10  # A17+: 11
+        from engine.game_state import game_state
+
+        self.base_damage = 11 if game_state.ascension >= 17 else 10
     
     def execute(self) -> None:
         """Execute Debuff Attack intention."""
         damage = self.base_damage
         from engine.game_state import game_state
-        from engine.game_state import game_state
-        if game_state.ascension >= 17:
-            damage = 11
-        from engine.game_state import game_state
         add_actions(
         [
             AttackAction(
-                self.enemy.calculate_damage(damage),
+                damage,
                 game_state.player,
                 self.enemy,
                 "attack"
@@ -66,19 +62,17 @@ class BigHit(Intention):
     
     def __init__(self, enemy):
         super().__init__("Big Hit", enemy)
-        self.base_damage = 32  # A17+: 35
+        from engine.game_state import game_state
+
+        self.base_damage = 35 if game_state.ascension >= 17 else 32
     
     def execute(self) -> None:
         """Execute Big Hit intention."""
         damage = self.base_damage
         from engine.game_state import game_state
-        from engine.game_state import game_state
-        if game_state.ascension >= 17:
-            damage = 35
-        from engine.game_state import game_state
         add_actions(
         [AttackAction(
-            self.enemy.calculate_damage(damage),
+            damage,
             game_state.player,
             self.enemy,
             "attack"
@@ -91,21 +85,19 @@ class BlockAttackMass(Intention):
     
     def __init__(self, enemy):
         super().__init__("Block Attack", enemy)
-        self.base_damage = 15  # A17+: 16
+        from engine.game_state import game_state
+
+        self.base_damage = 16 if game_state.ascension >= 17 else 15
         self.base_block = 16
     
     def execute(self) -> None:
         """Execute Block Attack intention."""
         damage = self.base_damage
         from engine.game_state import game_state
-        from engine.game_state import game_state
-        if game_state.ascension >= 17:
-            damage = 16
-        from engine.game_state import game_state
         add_actions(
         [
             AttackAction(
-                self.enemy.calculate_damage(damage),
+                damage,
                 game_state.player,
                 self.enemy,
                 "attack"

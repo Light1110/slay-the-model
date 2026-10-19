@@ -16,7 +16,7 @@ from utils.option import Option
 from engine.game_state import game_state
 
 
-@register_event(event_id='scrap_ooze', acts=[1], weight=100)
+@register_event(category='event', event_id='scrap_ooze', acts=[1], weight=100)
 class ScrapOoze(Event):
     """Scrap Ooze - HP for relic chance."""
     
@@ -54,6 +54,7 @@ class ScrapOoze(Event):
         if not self.relic_obtained:
             options.append(Option(
                 name=LocalStr('events.scrap_ooze.reach'),
+                detail=LocalStr('events.scrap_ooze.reach_detail', hp=self._hp_cost(), chance=min(100, 25 + self.attempt_count * 10)),
                 actions=[
                     LoseHPAction(amount=self._hp_cost()),
                     LambdaAction(self._resolve_reach),
@@ -62,6 +63,7 @@ class ScrapOoze(Event):
         
         options.append(Option(
             name=LocalStr('events.scrap_ooze.leave'),
+            detail=LocalStr('events.no_effect'),
             actions=[LambdaAction(self.end_event)]
         ))
         

@@ -4,7 +4,7 @@ import os
 from typing import List, Optional, cast
 
 from engine.input_protocol import InputRequest, InputSubmission
-from utils.option import Option, match_option_command
+from utils.option import Option, match_option_command, option_label, selection_error
 
 NO_OVERRIDE = object()
 
@@ -107,9 +107,9 @@ class RuntimeContext:
 
     @staticmethod
     def _coerce_selected_indices(value: object) -> List[int]:
-        if not isinstance(value, list):
-            return []
-        return [index for index in value if isinstance(index, int)]
+        if not isinstance(value, list) or any(not isinstance(index, int) or isinstance(index, bool) for index in value):
+            return [-1]
+        return cast(List[int], value)
 
     @staticmethod
     def _coerce_submission(value: object) -> InputSubmission:
@@ -243,6 +243,15 @@ class RuntimeContext:
         for target in list(getattr(message, "targets", []) or []):
             add_creature(target)
 
+        if type(message).__name__ == "CardPlayedMessage" and getattr(message, "owner", None) is self.player:
+            combat = self.current_combat
+            for enemy in list(getattr(combat, "enemies", []) or []):
+                if enemy.is_dead():
+                    continue
+                for power in list(getattr(enemy, "powers", []) or []):
+                    if getattr(power, "observes_all_player_card_plays", False):
+                        add_participant(power)
+
         for hand_card in list(getattr(message, "hand_cards", []) or []):
             add_participant(hand_card)
 
@@ -277,37 +286,40 @@ class RuntimeContext:
         if not options:
             return InputSubmission([])
 
-        config = self.config
-        if bool(getattr(config, "auto_select", False)) and len(options) == 1:
-            return self.default_build_submission(options, [0])
+        from localization import t
+        from tui.print_utils import tui_print
 
+        config = self.config
         mode = str(getattr(config, "mode", "human"))
-        submission_options = options
-        if mode == "ai":
-            selected_indices_obj = self._call_game_state_override("_resolve_ai_selection", request)
-            if selected_indices_obj is NO_OVERRIDE:
-                selected_indices = self.default_resolve_ai_selection(request)
+        human_mode = mode not in ("ai", "debug")
+        attempts = 0
+        while True:
+            submission_options = options
+            if human_mode:
+                options_obj = self._call_game_state_override("_augment_human_options", request)
+                submission_options = cast(List[Option], self.default_augment_human_options(request)) if options_obj is NO_OVERRIDE else cast(List[Option], options_obj)
+            available_count = sum(bool(getattr(option, "enabled", True)) for option in submission_options)
+            required = available_count if request.max_select == -1 else request.max_select
+            if request.must_select and (available_count == 0 or required > available_count):
+                raise ValueError(t("ui.selection_unavailable"))
+            if not available_count:
+                return InputSubmission([])
+            if bool(getattr(config, "auto_select", False)) and len(submission_options) == 1 and required == 1:
+                selected_indices = [0]
             else:
-                selected_indices = self._coerce_selected_indices(selected_indices_obj)
-        elif mode == "debug":
-            selected_indices_obj = self._call_game_state_override("_resolve_debug_selection", request)
-            if selected_indices_obj is NO_OVERRIDE:
-                selected_indices = self.default_resolve_debug_selection(request)
-            else:
-                selected_indices = self._coerce_selected_indices(selected_indices_obj)
-        else:
-            options_obj = self._call_game_state_override("_augment_human_options", request)
-            if options_obj is NO_OVERRIDE:
-                submission_options = cast(List[Option], self.default_augment_human_options(request))
-            elif isinstance(options_obj, list):
-                submission_options = cast(List[Option], options_obj)
-            else:
-                submission_options = []
-            selected_indices_obj = self._call_game_state_override("_resolve_human_selection", request)
-            if selected_indices_obj is NO_OVERRIDE:
-                selected_indices = self.default_resolve_human_selection(request)
-            else:
-                selected_indices = self._coerce_selected_indices(selected_indices_obj)
+                hook = "_resolve_human_selection" if human_mode else "_resolve_ai_selection" if mode == "ai" else "_resolve_debug_selection"
+                selected_obj = self._call_game_state_override(hook, request)
+                if selected_obj is NO_OVERRIDE:
+                    resolver = self.default_resolve_human_selection if human_mode else self.default_resolve_ai_selection if mode == "ai" else self.default_resolve_debug_selection
+                    selected_obj = resolver(request)
+                selected_indices = self._coerce_selected_indices(selected_obj)
+            error = selection_error(submission_options, selected_indices, request.max_select, request.must_select)
+            if error is None:
+                break
+            tui_print(error)
+            attempts += 1
+            if not human_mode and attempts >= 3:
+                raise ValueError(error)
 
         submission_obj = self._call_game_state_override("_build_submission", submission_options, selected_indices)
         if submission_obj is NO_OVERRIDE:
@@ -359,44 +371,50 @@ class RuntimeContext:
         if is_tui_mode():
             app = get_app()
             if app:
-                return app.request_selection_sync(
-                    title=title,
-                    options=options,
-                    max_select=request.max_select,
-                    must_select=request.must_select,
-                )
+                while True:
+                    indices = app.request_selection_sync(
+                        title=title, options=options, max_select=request.max_select,
+                        must_select=request.must_select,
+                    )
+                    if selection_error(options, indices, request.max_select, request.must_select) is None:
+                        return indices
 
         while True:
             if title:
                 tui_print(title)
 
             for idx, option in enumerate(options, start=1):
-                tui_print(f"  {idx}. {resolve_text(option.name)}")
+                tui_print(f"  {idx}. {option_label(option)}")
                 detail = getattr(option, "detail", None)
                 if detail:
                     tui_print(f"     {resolve_text(detail)}")
 
             if request.must_select:
-                prompt = t("ui.select_prompt", default=f"Select (1-{len(options)}): ", count=len(options))
+                prompt = t("ui.select_prompt", count=len(options))
             else:
-                prompt = t("ui.select_prompt", default=f"Select (0-{len(options)}): ", count=len(options))
+                tui_print(f"  0. {t('ui.selection_skip')}")
+                prompt = t("ui.select_prompt_optional", count=len(options))
 
             raw = input(prompt)
             command_match = match_option_command(raw, options)
             if command_match is not None:
-                return command_match
+                error = selection_error(options, command_match, request.max_select, request.must_select)
+                if error is None:
+                    return command_match
+                tui_print(error)
+                continue
             parsed_obj = self._call_game_state_override(
                 "_parse_selection_input",
                 raw_input=raw,
                 option_count=len(options),
-                max_select=request.max_select,
+                max_select=sum(bool(getattr(option, "enabled", True)) for option in options) if request.max_select == -1 else request.max_select,
                 must_select=request.must_select,
             )
             if parsed_obj is NO_OVERRIDE:
                 parsed = self.default_parse_selection_input(
                     raw_input=raw,
                     option_count=len(options),
-                    max_select=request.max_select,
+                    max_select=sum(bool(getattr(option, "enabled", True)) for option in options) if request.max_select == -1 else request.max_select,
                     must_select=request.must_select,
                 )
             elif parsed_obj is None:
@@ -404,7 +422,10 @@ class RuntimeContext:
             else:
                 parsed = self._coerce_selected_indices(parsed_obj)
             if parsed is not None:
-                return parsed
+                error = selection_error(options, parsed, request.max_select, request.must_select)
+                if error is None:
+                    return parsed
+                tui_print(error)
 
     def default_resolve_ai_selection(self, request: InputRequest) -> List[int]:
         """Resolve a selection request through the configured AI decision engine."""
@@ -420,19 +441,24 @@ class RuntimeContext:
                 return self.default_resolve_debug_selection(request)
             return self._coerce_selected_indices(selected_indices_obj)
 
-        from localization import resolve_text
+        from localization import resolve_text, t
 
         title = resolve_text(request.title)
+        title += "\n" + t("ui.selection_ai_rules")
+        if not request.must_select:
+            title += "\n" + t("ui.selection_ai_skip")
         option_text = []
         for option in options:
-            name = resolve_text(option.name)
+            name = option_label(option)
             detail = getattr(option, "detail", None)
             if detail:
                 option_text.append(f"{name}\n{resolve_text(detail)}")
             else:
                 option_text.append(name)
-        context = request.context or {}
-        max_select = len(options) if request.max_select == -1 else request.max_select
+        context = dict(request.context or {})
+        context["must_select"] = request.must_select
+        context["disabled_indices"] = [i for i, option in enumerate(options) if not getattr(option, "enabled", True)]
+        max_select = sum(bool(getattr(option, "enabled", True)) for option in options) if request.max_select == -1 else request.max_select
 
         if is_tui_mode():
             app = get_app()
@@ -463,44 +489,27 @@ class RuntimeContext:
         return self.decision_engine.make_decision(title, option_text, context, max_select)
 
     def default_resolve_debug_selection(self, request: InputRequest) -> List[int]:
-        """Resolve a request automatically in debug mode."""
+        """Select enabled options while preserving their original indices."""
         options = list(request.options or [])
-        if not options:
+        enabled_indices = [i for i, option in enumerate(options) if getattr(option, "enabled", True)]
+        maximum = len(enabled_indices) if request.max_select == -1 else max(0, request.max_select)
+        if maximum == 0 or not enabled_indices:
             return []
-
-        actual_max_select = len(options) if request.max_select == -1 else max(0, request.max_select)
-        if actual_max_select == 0:
-            return []
-
+        sample_size = min(maximum, len(enabled_indices))
         config = self.config
-        select_type = "random"
-        if config is not None:
-            select_type = str(getattr(config, "get", lambda *_args, **_kwargs: "random")("debug.select_type", "random"))
+        select_type = str(getattr(config, "get", lambda *_args, **_kwargs: "random")("debug.select_type", "random"))
         if select_type == "first":
-            return list(range(min(actual_max_select, len(options))))
+            return enabled_indices[:sample_size]
         if select_type == "last":
-            start = max(0, len(options) - actual_max_select)
-            return list(range(start, len(options)))
-
-        heuristic_selection_obj = self._call_game_state_override(
-            "_resolve_debug_selection_with_heuristics",
-            options,
-            actual_max_select,
-        )
-        if heuristic_selection_obj is NO_OVERRIDE:
-            heuristic_selection = self.default_resolve_debug_selection_with_heuristics(
-                options,
-                actual_max_select,
-            )
-        elif heuristic_selection_obj is None:
-            heuristic_selection = None
-        else:
-            heuristic_selection = self._coerce_selected_indices(heuristic_selection_obj)
-        if heuristic_selection is not None:
-            return heuristic_selection
-
-        sample_size = min(actual_max_select, len(options))
-        return sorted(rd.sample(range(len(options)), sample_size))
+            return enabled_indices[-sample_size:]
+        heuristic = self._call_game_state_override("_resolve_debug_selection_with_heuristics", options, maximum)
+        if heuristic is NO_OVERRIDE:
+            heuristic = self.default_resolve_debug_selection_with_heuristics(options, maximum)
+        if heuristic is not None:
+            indices = self._coerce_selected_indices(heuristic)
+            if selection_error(options, indices, request.max_select, request.must_select) is None:
+                return indices
+        return sorted(rd.sample(enabled_indices, sample_size))
 
     def default_resolve_debug_selection_with_heuristics(
         self,
@@ -513,6 +522,8 @@ class RuntimeContext:
 
         scored = []
         for idx, option in enumerate(options):
+            if not getattr(option, "enabled", True):
+                continue
             score = self._call_game_state_override("_score_debug_option", option)
             if score is NO_OVERRIDE:
                 score = self.default_score_debug_option(option)
@@ -579,7 +590,7 @@ class RuntimeContext:
         if not must_select and raw_input == "0":
             return []
 
-        parts = [part.strip() for part in raw_input.split(",") if part.strip()]
+        parts = [part.strip() for part in raw_input.split(",")]
         numbers: List[int] = []
         for part in parts:
             if not part.isdigit():
@@ -591,8 +602,10 @@ class RuntimeContext:
             tui_print(t("ui.stop_option_mixed", default="0 can only be entered by itself."))
             return None
 
-        unique_numbers = list(dict.fromkeys(numbers))
-        indices = [number - 1 for number in unique_numbers]
+        if not numbers or len(numbers) != len(set(numbers)):
+            tui_print(t("ui.selection_duplicate") if numbers else t("ui.invalid_input"))
+            return None
+        indices = [number - 1 for number in numbers]
 
         for index in indices:
             if index < 0 or index >= option_count:
@@ -626,20 +639,15 @@ class RuntimeContext:
         """Turn selected option indices into an actionable submission."""
         from actions.display import build_selected_options, show_selected_options
 
-        if not selected_indices:
+        selected_options = build_selected_options(options, selected_indices)
+        if not selected_options:
             if self.game_state is not None:
                 self.game_state.last_select_idx = -1
             return InputSubmission([])
-
         if self.game_state is not None:
-            self.game_state.last_select_idx = selected_indices[0]
-        selected_options = build_selected_options(options, selected_indices)
+            self.game_state.last_select_idx = next(iter(selected_options))
         show_selected_options(selected_options)
-
         actions = []
-        for idx in selected_indices:
-            if 0 <= idx < len(options):
-                actions.extend(options[idx].actions)
+        for option in selected_options.values():
+            actions.extend(option.actions)
         return InputSubmission(actions)
-
-

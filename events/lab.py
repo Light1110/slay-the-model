@@ -13,7 +13,7 @@ from utils.option import Option
 from engine.game_state import game_state
 
 
-@register_event(event_id='lab', acts='shared', weight=100)
+@register_event(category='special', event_id='lab', acts='shared', weight=100)
 class Lab(Event):
     """Lab - obtain random potions."""
     
@@ -34,6 +34,7 @@ class Lab(Event):
         options = [
             Option(
                 name=LocalStr('events.lab.search'),
+                detail=LocalStr('events.lab.search_detail', count=potion_count),
                 actions=potion_actions
             ),
         ]

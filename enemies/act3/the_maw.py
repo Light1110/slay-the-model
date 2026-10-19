@@ -27,7 +27,8 @@ class TheMaw(Enemy):
     def __init__(self):
         super().__init__(hp_range=(300, 300))
         self._turn_count = 0
-        self._last_move = None  # Track last used move
+        self._last_move = None
+        self._selected_after_turn = -1
 
         # Register intentions
         self._roar = TheMawRoar(self)
@@ -41,45 +42,25 @@ class TheMaw(Enemy):
         self.add_intention(self._drool)
 
     def on_combat_start(self, floor: int = 1) -> None:
-        """Initialize combat state."""
-        super().on_combat_start(floor)
-        self._turn_count = 0
+        self._selected_after_turn = -1
         self._last_move = None
+        super().on_combat_start(floor)
 
-    def determine_next_intention(self, floor: int) -> Optional[str]:
-        """Determine next intention based on behavior pattern.
-
-        - Always starts with Roar
-        - After Roar: 50/50 Slam or Nom Nom
-        - After Drool: 50/50 Slam or Nom Nom
-        - After Nom Nom: 50/50 Nom Nom or Drool
-        - After Slam: 50/50 Nom Nom or Drool
-        """
-        self._turn_count += 1
-
-        # First turn always Roar
-        if self._last_move is None:
-            self._last_move = "Roar"
-            return self.intentions["Roar"]
-
-        # Determine next move based on last move
-        if self._last_move == "Roar" or self._last_move == "Drool":
-            # 50/50 between Slam and Nom Nom
-            if random.random() < 0.5:
-                self._last_move = "Slam"
-                return self.intentions["Slam"]
-            else:
-                self._last_move = "Nom Nom"
-                return self.intentions["Nom Nom"]
-        elif self._last_move == "Nom Nom" or self._last_move == "Slam":
-            # 50/50 between Nom Nom and Drool
-            if random.random() < 0.5:
-                self._last_move = "Nom Nom"
-                return self.intentions["Nom Nom"]
-            else:
-                self._last_move = "Drool"
-                return self.intentions["Drool"]
-
-        # Fallback (shouldn't reach here)
-        self._last_move = "Slam"
-        return self.intentions["Slam"]
+    def determine_next_intention(self, floor: int = 1):
+        """Select once per executed turn, preserving the existing move probabilities."""
+        completed = len(self.history_intentions)
+        if self._selected_after_turn == completed:
+            return self.intentions[self._last_move]
+        self._selected_after_turn = completed
+        self._turn_count = completed + 1
+        # Original turnCount starts at 1 and advances before the opening Roar.
+        self._nom_nom._hits = (completed + 2) // 2
+        last = self.history_intentions[-1] if self.history_intentions else None
+        if last is None:
+            selected = "Roar"
+        elif last in ("Roar", "Drool"):
+            selected = "Slam" if random.random() < 0.5 else "Nom Nom"
+        else:
+            selected = "Nom Nom" if random.random() < 0.5 else "Drool"
+        self._last_move = selected
+        return self.intentions[selected]

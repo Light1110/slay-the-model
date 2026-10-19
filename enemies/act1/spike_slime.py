@@ -33,8 +33,8 @@ class SpikeSlimeL(Enemy):
         )
         
         # Register intentions
-        self.add_intention(LickIntention(self))
-        self.add_intention(TackleIntention(self))
+        self.add_intention(LickIntention(self, frail_amount=2))
+        self.add_intention(TackleIntention(self, slimed_count=2))
         self.add_intention(SplitIntention(self))
         
         # Track if split has been triggered
@@ -117,8 +117,8 @@ class SpikeSlimeM(Enemy):
         )
         
         # Register intentions
-        self.add_intention(LickIntention(self))
-        self.add_intention(TackleIntention(self))
+        self.add_intention(LickIntention(self, frail_amount=1))
+        self.add_intention(TackleIntention(self, slimed_count=1))
     
     def determine_next_intention(self, floor: int = 1):
         """Determine next intention for medium slime.

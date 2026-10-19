@@ -11,7 +11,6 @@ from events.event_pool import register_event
 from actions.display import InputRequestAction, DisplayTextAction
 from actions.reward import AddGoldAction, AddRandomRelicAction
 from actions.combat import StartFightAction
-from utils.registry import get_registered
 from actions.base import LambdaAction
 from localization import LocalStr
 from utils.option import Option
@@ -19,7 +18,7 @@ from utils.types import RarityType
 from engine.game_state import game_state
 
 
-@register_event(event_id='dead_adventurer', acts=[1], weight=100)
+@register_event(category='event', event_id='dead_adventurer', acts=[1], weight=100)
 class DeadAdventurer(Event):
     """Dead Adventurer - search for loot with elite risk."""
     
@@ -44,19 +43,19 @@ class DeadAdventurer(Event):
         return base_chances[min(self.search_count, 3)]
     
     def _get_elite_enemies(self) -> list:
-        """Get elite enemy instances based on random type."""
-        if self.elite_type == 'gremlin_nob':
-            enemy_class = get_registered("enemy", 'gremlin_nob')
-            return [enemy_class()] if enemy_class else []
-        elif self.elite_type == 'lagavulin':
-            enemy_class = get_registered("enemy", 'lagavulin_awake')
-            return [enemy_class()] if enemy_class else []
-        else:
-            enemy_class = get_registered("enemy", 'sentry')
-            if enemy_class:
-                return [enemy_class(), enemy_class(), enemy_class()]
-            return []
-    
+        """Build the event encounter using actual classes and position-aware factories."""
+        from enemies.act1.gremlin_nob import GremlinNob
+        from enemies.act1.lagavulin import Lagavulin
+        from map.encounter_pool import _create_sentries
+
+        if self.elite_type == "gremlin_nob":
+            return [GremlinNob()]
+        if self.elite_type == "lagavulin":
+            return [Lagavulin(start_awake=True)]
+        if self.elite_type == "sentries":
+            return _create_sentries()
+        raise ValueError(f"Unknown Dead Adventurer encounter: {self.elite_type}")
+
     def _get_search_reward_actions(self) -> list:
         """Get random reward actions from remaining rewards."""
         available_rewards = []
@@ -123,6 +122,7 @@ class DeadAdventurer(Event):
                 
                 options.append(Option(
                     name=LocalStr('events.dead_adventurer.search'),
+                    detail=LocalStr('events.dead_adventurer.search_detail', chance=elite_chance),
                     actions=[
                         DisplayTextAction(text_key='events.dead_adventurer.elite_appears'),
                         LambdaAction(self._count_search),
@@ -137,6 +137,7 @@ class DeadAdventurer(Event):
                 search_actions = self._get_search_reward_actions()
                 options.append(Option(
                     name=LocalStr('events.dead_adventurer.search'),
+                    detail=LocalStr('events.dead_adventurer.search_detail', chance=elite_chance),
                     actions=[
                         *search_actions,
                         LambdaAction(self._count_search),
@@ -147,6 +148,7 @@ class DeadAdventurer(Event):
         # Leave option
         options.append(Option(
             name=LocalStr('events.dead_adventurer.leave'),
+            detail=LocalStr('events.no_effect'),
             actions=[LambdaAction(lambda: self.end_event())]
         ))
         

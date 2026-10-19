@@ -12,7 +12,7 @@ from localization import LocalStr
 from utils.option import Option
 
 
-@register_event(event_id='upgrade_shrine', acts='shared', weight=100)
+@register_event(category='shrine', event_id='upgrade_shrine', acts='shared', weight=100)
 class UpgradeShrine(Event):
     """Upgrade shrine - upgrade a card."""
     
@@ -28,10 +28,12 @@ class UpgradeShrine(Event):
         options = [
             Option(
                 name=LocalStr('events.upgrade_shrine.pray'),
+                detail=LocalStr('events.upgrade_shrine.pray_detail'),
                 actions=[ChooseUpgradeCardAction()]
             ),
             Option(
                 name=LocalStr('events.upgrade_shrine.leave'),
+                detail=LocalStr('events.no_effect'),
                 actions=[]
             )
         ]

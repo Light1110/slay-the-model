@@ -16,7 +16,7 @@ from engine.game_state import game_state
 from cards.colorless.ritual_dagger import RitualDagger
 
 
-@register_event(event_id='the_nest', acts=[2], weight=100)
+@register_event(category='event', event_id='the_nest', acts=[2], weight=100)
 class TheNest(Event):
     """The Nest - gold or Ritual Dagger."""
 
@@ -35,10 +35,12 @@ class TheNest(Event):
         options = [
             Option(
                 name=LocalStr('events.the_nest.smash_and_grab'),
+                detail=LocalStr('events.the_nest.smash_and_grab_detail', gold=gold_amount),
                 actions=[AddGoldAction(amount=gold_amount)]
             ),
             Option(
                 name=LocalStr('events.the_nest.stay_in_line'),
+                detail=LocalStr('events.the_nest.stay_in_line_detail'),
                 actions=[
                     LoseHPAction(amount=6),
                     AddCardAction(card=RitualDagger())

@@ -17,7 +17,7 @@ from cards.colorless import Decay
 from relics.global_relics.event import GoldenIdol, BloodyIdol
 
 
-@register_event(event_id='forgotten_altar', acts=[2], weight=100)
+@register_event(category='event', event_id='forgotten_altar', acts=[2], weight=100)
 class ForgottenAltar(Event):
     """Forgotten Altar - Golden Idol trade or Max HP sacrifice."""
 
@@ -43,6 +43,7 @@ class ForgottenAltar(Event):
         if has_golden_idol:
             options.append(Option(
                 name=LocalStr('events.forgotten_altar.offer_golden_idol'),
+                detail=LocalStr('events.forgotten_altar.offer_golden_idol_detail'),
                 actions=[
                     LoseRelicAction(relic_type=GoldenIdol),
                     AddRelicAction(relic=BloodyIdol())
@@ -52,6 +53,7 @@ class ForgottenAltar(Event):
         options.extend([
             Option(
                 name=LocalStr('events.forgotten_altar.sacrifice'),
+                detail=LocalStr('events.forgotten_altar.sacrifice_detail', percent=int(hp_percent * 100)),
                 actions=[
                     ModifyMaxHPAction(amount=5),
                     LoseHPAction(percent=hp_percent)
@@ -59,6 +61,7 @@ class ForgottenAltar(Event):
             ),
             Option(
                 name=LocalStr('events.forgotten_altar.desecrate'),
+                detail=LocalStr('events.forgotten_altar.desecrate_detail'),
                 actions=[AddCardAction(card=Decay())]
             ),
         ])

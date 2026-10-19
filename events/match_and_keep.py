@@ -115,7 +115,7 @@ def _create_shuffled_deck(pairs: List[Tuple[Card, Card]]) -> List[dict]:
     return cards
 
 
-@register_event(event_id='match_and_keep', acts='shared', weight=100)
+@register_event(category='shrine', event_id='match_and_keep', acts='shared', weight=100)
 class MatchAndKeep(Event):
     """Match and Keep - card matching minigame."""
     
@@ -180,23 +180,24 @@ class MatchAndKeepAction(Action):
             if card_data['matched']:
                 # Show matched card
                 options.append(Option(
-                    name=LocalStr(f"[MATCHED] {card_data['card'].info()}", 
-                                  default=f"[MATCHED] {card_data['card'].info()}"),
+                    name=LocalStr('events.match_and_keep.matched', card=card_data['card'].info()),
+                    detail=LocalStr('events.match_and_keep.matched_detail'),
                     actions=[],
                     enabled=False
                 ))
             elif card_data['revealed']:
                 # Show revealed but not matched
                 options.append(Option(
-                    name=LocalStr(f"[FACE UP] {card_data['card'].info()}",
-                                  default=f"[FACE UP] {card_data['card'].info()}"),
+                    name=LocalStr('events.match_and_keep.face_up', card=card_data['card'].info()),
+                    detail=LocalStr('events.match_and_keep.face_up_detail'),
                     actions=[],
                     enabled=False
                 ))
             else:
                 # Face-down card - can be selected
                 options.append(Option(
-                    name=LocalStr(f"Card {i+1}", default=f"Card {i+1} (Face Down)"),
+                    name=LocalStr('events.match_and_keep.face_down', number=i + 1),
+                    detail=LocalStr('events.match_and_keep.flip_detail'),
                     actions=[FlipCardAction(card_index=i)]
                 ))
         

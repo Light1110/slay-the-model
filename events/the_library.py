@@ -14,14 +14,9 @@ from utils.option import Option
 from engine.game_state import game_state
 
 
-@register_event(event_id='the_library', acts=[2], weight=100)
+@register_event(category='event', event_id='the_library', acts=[2], weight=100)
 class TheLibrary(Event):
     """The Library - choose card or heal."""
-    
-    @classmethod
-    def can_appear(cls) -> bool:
-        """Only appears on Ascension 15+."""
-        return game_state.ascension >= 15
     
     def trigger(self) -> None:
         actions = []
@@ -38,6 +33,7 @@ class TheLibrary(Event):
         options = [
             Option(
                 name=LocalStr('events.the_library.read'),
+                detail=LocalStr('events.the_library.read_detail'),
                     actions=[ChooseObtainCardAction(
                     total=20,
                     namespace=game_state.player.namespace,
@@ -48,6 +44,7 @@ class TheLibrary(Event):
             ),
             Option(
                 name=LocalStr('events.the_library.sleep'),
+                detail=LocalStr('events.the_library.sleep_detail', heal=int(game_state.player.max_hp * heal_percent)),
                 actions=[HealAction(percent=heal_percent)]
             )
         ]

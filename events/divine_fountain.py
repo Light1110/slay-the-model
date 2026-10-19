@@ -12,9 +12,18 @@ from localization import LocalStr
 from utils.option import Option
 from engine.game_state import game_state
 from utils.types import CardType
+from cards.colorless.ascenders_bane import AscendersBane
+from cards.colorless.curse_of_the_bell import CurseOfTheBell
+from cards.colorless.necronomicurse import Necronomicurse
 
 
-@register_event(event_id='divine_fountain', acts='shared', weight=100)
+def _eligible_curse(card) -> bool:
+    return card.card_type == CardType.CURSE and not isinstance(
+        card, (AscendersBane, CurseOfTheBell, Necronomicurse),
+    )
+
+
+@register_event(category='special', event_id='divine_fountain', acts='shared', weight=100)
 class DivineFountain(Event):
     """Divine Fountain - remove all curses."""
     
@@ -24,7 +33,7 @@ class DivineFountain(Event):
         player = game_state.player
         if player is None:
             return False
-        return any(card.card_type == CardType.CURSE for card in player.deck)
+        return any(_eligible_curse(card) for card in player.deck)
     
     def trigger(self) -> None:
         actions = []
@@ -37,7 +46,7 @@ class DivineFountain(Event):
         # Get all curse cards and create remove actions
         curse_cards = [
             card for card in game_state.player.deck
-            if card.card_type == CardType.CURSE
+            if _eligible_curse(card) and not card.bottled
         ]
         remove_actions = [RemoveCardAction(card=card, src_pile='deck') for card in curse_cards]
         
@@ -45,10 +54,12 @@ class DivineFountain(Event):
         options = [
             Option(
                 name=LocalStr('events.divine_fountain.drink'),
+                detail=LocalStr('events.divine_fountain.drink_detail', count=len(remove_actions)),
                 actions=remove_actions
             ),
             Option(
                 name=LocalStr('events.divine_fountain.leave'),
+                detail=LocalStr('events.no_effect'),
                 actions=[]
             )
         ]

@@ -133,10 +133,15 @@ class Combat(Localizable):
 
         self.combat_state.current_phase = "player_start"
 
-        while True:
-            result = self._execute_next_phase()
-            if result is not None:
-                return result
+        try:
+            while True:
+                result = self._execute_next_phase()
+                if result is not None:
+                    return result
+        finally:
+            # End-of-combat healing resolves inside the loop; rewards and later
+            # rooms must not inherit combat-only healing modifiers.
+            self.combat_ended = True
 
     def _execute_next_phase(self) -> GameTerminalState | None:
         """Advance combat by exactly one explicit phase transition."""

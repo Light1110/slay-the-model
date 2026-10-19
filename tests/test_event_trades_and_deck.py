@@ -210,6 +210,7 @@ def test_note_hides_the_trade_when_every_card_is_a_curse(monkeypatch, tmp_path):
 def test_note_stays_hidden_on_ascension_15():
     helper = create_test_helper()
     helper.create_player()
+    game_state.config.highest_unlocked_ascension = {game_state.player.namespace.lower(): 15}
     game_state.ascension = 14
     assert ANoteForYourself.can_appear()
     game_state.ascension = 15

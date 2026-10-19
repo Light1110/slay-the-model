@@ -1,4 +1,21 @@
 ui:
+  selection_locked: "已锁定：{name}"
+  selection_disabled: "此选项已锁定，请选择可用选项。"
+  selection_duplicate: "同一选项只能选择一次。"
+  selection_unavailable: "当前没有满足选择要求的可用选项。"
+  selection_skip: "跳过"
+  select_prompt_optional: "选择 (0-{count}，输入 0 跳过): "
+  selection_required_hint: "请输入恰好 {count} 个选项编号，以逗号分隔。"
+  selection_optional_hint: "最多选择 {count} 个选项，或单独输入 0 跳过。"
+  selection_ai_rules: "不可选择锁定选项。仅返回有效且不重复的选项索引。"
+  selection_ai_skip: "本次选择可跳过；返回空列表 [] 即可跳过。"
+  relic_status:
+    exhausted: "已耗尽"
+    remaining: "剩余 {remaining} 次"
+    used: "已举重 {progress}"
+    curses: "诅咒 {count}"
+    cards: "本回合 {count} 张"
+    ready: "已就绪"
   room_entered: 进入房间：{room_type}（第 {floor} 层，位置 {position}）
   game_welcome: 欢迎来到杀戮尖塔！
   game_awaken: 你在尖塔中醒来，准备开始攀登...
@@ -166,9 +183,15 @@ blessing:
   transform_card_option: 转化牌组中的一张卡牌
   replace_starter_relic_option: 失去你的初始遗物。获得一个随机 Boss 遗物
 events:
+  lose_hp: "失去 {hp} 点生命。"
+  gain_gold: "获得 {gold} 金币。"
+  no_effect: "无事发生。"
+  require_gold: "需要 {gold} 金币。"
   neo:
     welcome: 你好……我是涅奥……
   ancient_writing:
+    simplicity_detail: "升级所有打击和防御。"
+    elegance_detail: "从牌组中移除一张牌。"
     title: 古老文字
     elegance: 简约
     simplicity: 质朴
@@ -177,6 +200,9 @@ events:
 
       突然之间，文字的意义变得清晰了……'
   augmenter:
+    mutagens_detail: "获得突变之力。"
+    transform_detail: "变化牌组中的 2 张牌。"
+    test_jax_detail: "获得 J.A.X.。"
     title: 增益研究者
     test_jax: 试一下J.A.X.
     transform: 当一下实验对象
@@ -187,6 +213,8 @@ events:
 
       你说怎么样？ 想不想试一下？”'
   a_note_for_yourself:
+    choose_detail: "交出牌组中的一张非诅咒牌，获得 {received}。"
+    exchange_detail: "移除 {given} 并留给未来的一局。获得 {received}。"
     title: 留给自己的讯息
     take_and_give: 取之与之
     ignore: 无视
@@ -194,6 +222,9 @@ events:
     take_only: 只拿走
     give_only: 只留下
   big_fish:
+    box_detail: "获得一件随机遗物。被诅咒：悔恨。"
+    donut_detail: "最大生命值增加 {hp}。"
+    banana_detail: "回复 {heal} 点生命。"
     title: 大鱼
     option1: 香蕉
     option2: 甜甜圈
@@ -203,11 +234,17 @@ events:
 
       你会怎么做？'
   bonfire_spirits:
+    curse_detail: "移除此牌。获得精灵便便。"
+    rare_detail: "移除此牌。增加 10 点最大生命并回复全部生命。"
+    uncommon_detail: "移除此牌。回复全部生命。"
+    common_detail: "移除此牌。回复 5 点生命。"
+    basic_detail: "移除此牌。不获得额外奖励。"
     title: 篝火精灵
     offer: 献上
     leave: 离开
     description: 你遇见一群看似是 紫色火精灵 的东西在一个巨大的篝火堆旁 起舞 。
   council_of_ghosts:
+    accept_detail: "失去 {hp} 点最大生命。获得 {count} 张灵体。"
     title: 幽灵议会
     accept: 接受
     refuse: 拒绝
@@ -221,6 +258,9 @@ events:
 
       “别管那两个家伙……总之，你想不想尝试一下我们的 力量 呢？”'
   cursed_tome:
+    stop_detail: "失去 {hp} 点生命。离开。"
+    take_detail: "失去 {hp} 点生命。获得一件随机书籍遗物。"
+    continue_detail: "失去 {hp} 点生命。继续阅读。"
     title: 诅咒书本
     continue: 继续
     take: 拿走
@@ -231,6 +271,7 @@ events:
 
       你刚试着想要解读这些复杂的文本，它就自己开始 移动变化 成了你熟悉的文字。'
   dead_adventurer:
+    search_detail: "搜索金币或遗物。{chance}% 概率遭遇精英伏击。"
     title: 冒险者尸体
     search: 搜索
     leave: 离开
@@ -238,6 +279,10 @@ events:
     elite_appears: 一名精英从阴影中现身！
     nothing: 你什么有价值的东西都没有找到。
   designer_in_spire:
+    punch_detail: "失去 {hp} 点生命。"
+    full_service_detail: "支付 {gold} 金币。移除一张牌并随机升级一张牌。"
+    clean_up_detail: "支付 {gold} 金币。50% 概率选择移除一张牌，否则随机变化 2 张牌。"
+    adjustments_detail: "支付 {gold} 金币。50% 概率选择升级一张牌，否则随机升级 2 张牌。"
     title: “尖端”设计师
     adjustments: 小修一下
     clean_up: 清洁一下
@@ -250,16 +295,20 @@ events:
 
       一个穿着打扮无比荒唐的男人出现在门口把你拦了下来。'
   divine_fountain:
+    drink_detail: "从牌组中移除 {count} 张可移除且未被瓶装的诅咒牌。"
     title: 神圣泉水
     drink: 喝水
     leave: 离开
     description: 你经过墙壁上的一处饮水池，里面流淌着源源不断 闪着光的水 。
   duplicator:
+    pray_detail: "复制牌组中的一张牌。"
     title: 复制祭坛
     pray: 祈祷
     leave: 离开
     description: 在你面前是一个用来崇拜某种古老存在的华丽祭坛。
   face_trader:
+    trade_detail: "获得一件随机面具遗物，可能有利也可能有害。"
+    touch_detail: "失去 {hp} 点生命。获得 {gold} 金币。"
     title: 换脸商
     touch: 触碰
     trade: 交易
@@ -270,6 +319,9 @@ events:
 
       “请留步。”'
   falling:
+    strike_detail: "随机移除牌组中的一张攻击牌。"
+    channel_detail: "随机移除牌组中的一张能力牌。"
+    land_detail: "随机移除牌组中的一张技能牌。"
     title: 坠落
     land: 落地
     channel: 释放
@@ -279,6 +331,9 @@ events:
 
       你开始坠落。'
   forgotten_altar:
+    desecrate_detail: "被诅咒：腐朽。"
+    sacrifice_detail: "增加 5 点最大生命，然后失去最大生命值的 {percent}%。"
+    offer_golden_idol_detail: "失去黄金神像。获得鲜血神像。"
     title: 被遗忘的祭坛
     offer_golden_idol: 献上金神像
     sacrifice: 献祭
@@ -299,6 +354,7 @@ events:
     leave: 离开
     description: 在一个不引人注意的小高台上，你发现了一个闪闪发光的金神像安然放置在上面，看起来非常值钱。周围看起来完全没有什么陷阱的样子。
   golden_shrine:
+    desecrate_detail: "获得 {gold} 金币。被诅咒：悔恨。"
     title: 金色神龛
     pray: 祈祷
     desecrate: 亵渎
@@ -314,6 +370,9 @@ events:
 
       你 回复 生命值的 25% ，但同时被 感染 了。'
   knowing_skull:
+    success_detail: "失去 {hp} 点生命。获得一张随机罕见无色牌。"
+    riches_detail: "失去 {hp} 点生命。获得 {gold} 金币。"
+    potion_detail: "失去 {hp} 点生命。获得一瓶随机药水。"
     title: 全知头骨
     potion: 来点喝的？
     riches: 财富
@@ -321,6 +380,7 @@ events:
     leave: 离开
     description: 你发现自己在一个古老的有装饰的房间里，在房间正中央，有一个巨大的头骨被放在精致的高台上，在你靠近时，头骨 迸发出火焰 转向了你。
   lab:
+    search_detail: "获得 {count} 瓶随机药水。"
     title: 实验室
     search: 搜索
     description: '你发现了一个满是试管、烧杯、烧瓶、药瓶、钳子、夹子、玻璃棒、手术钳、眼镜、漏斗、吸液管、玻璃筒、冷凝器甚至还有螺旋玻璃管的房间。
@@ -328,6 +388,9 @@ events:
 
       你怎么会知道这些工具都叫什么名字的？这不重要，你四处翻找了起来。'
   living_wall:
+    grow_detail: "升级牌组中的一张牌。"
+    change_detail: "变化牌组中的一张牌。"
+    forget_detail: "从牌组中移除一张牌。"
     title: 活墙壁
     forget: 遗忘
     change: 改变
@@ -343,6 +406,8 @@ events:
 
       “如果你想要从我这里通过，你就必须有所成长。”'
   masked_bandits:
+    fight_detail: "与强盗战斗。胜利后获得红面具。"
+    pay_detail: "失去全部 {gold} 金币。"
     title: 蒙面强盗
     pay: 付钱
     fight: 战斗
@@ -352,6 +417,12 @@ events:
 
       闪闪亮的 小可爱们！'
   match_and_keep:
+    flip_detail: "翻开此牌。配对成功后获得该牌。"
+    face_up_detail: "已经翻开，请选择另一张牌。"
+    matched_detail: "已经配对，无法再次选择。"
+    face_down: "第 {number} 张牌（未翻开）"
+    face_up: "已翻开：{card}"
+    matched: "已配对：{card}"
     title: 对对碰！
     play: 玩游戏
     leave: 离开
@@ -362,6 +433,10 @@ events:
     no_matches: 你没有配对成功任何卡牌。
     won_cards: 你配对成功：{cards}
   mind_bloom:
+    healthy_detail: "回复全部生命。被诅咒：疑虑。"
+    rich_detail: "获得 {gold} 金币。被诅咒：2 张凡庸。"
+    awake_detail: "升级所有牌。获得绽放印记：无法再回复生命。"
+    war_detail: "与第一章首领战斗。胜利后获得一件随机稀有遗物、{gold} 金币和一次可跳过的选牌奖励。"
     title: 心灵绽放
     i_am_war: 我必凯旋
     i_am_awake: 我已觉醒
@@ -374,6 +449,7 @@ events:
 
       这些感觉稍纵即逝，你准备怎么做？'
   mysterious_sphere:
+    open_sphere_detail: "与 2 个球体行者战斗。胜利后获得一件随机稀有遗物、45–55 金币和一张随机牌。"
     title: 神秘圆球
     open_sphere: 打开圆球
     leave: 离开
@@ -381,17 +457,22 @@ events:
 
       你很好奇里面有什么东西，但你注意到圆球周围有一些哨兵正在看守。'
   nloth:
+    trade_detail: "失去 {relic}。获得恩洛斯的礼物。"
+    trade: "交出：{relic}"
     title: 恩洛斯
     leave: 离开
     description: '一个驼着背、背后长出几条触手的奇怪生物正在你面前的垃圾堆和废墟里来回地翻找些什么。当你靠近时，他可怜巴巴地拖着脚走到了你面前。
 
       “恩洛斯好饿，喂喂恩洛斯。”'
   old_beggar:
+    offer_gold_detail: "支付 75 金币。从牌组中移除一张牌。"
     title: 老乞丐
     offer_gold: 给金币
     leave: 离开
     description: 一个裹着毛衣的老乞丐在你经过时向你伸出了双手，他对你说：“施舍点钱吧，孩子？”
   pleading_vagrant:
+    rob_detail: "获得一件随机遗物。被诅咒：羞耻。"
+    offer_gold_detail: "支付 85 金币。获得一件随机遗物。"
     title: 流浪汉的恳求
     offer_gold: 给金币
     rob: 抢夺
@@ -404,17 +485,21 @@ events:
 
       他看起来有点疯疯癫癫的，但似乎并不危险。'
   ominous_forge:
+    rummage_detail: "获得扭曲之钳。被诅咒：疼痛。"
+    forge_detail: "升级牌组中的一张牌。"
     title: 邪恶熔炉
     forge: 锻造卡牌
     rummage: 翻查
     leave: 离开
     description: 你钻进一个小屋，在里面似乎有一个锻造熔炉，旁边的铁匠工具都已经布满了灰尘，可是炉中的火却仍然熊熊燃烧。你觉得有些不安……
   purifier:
+    pray_detail: "从牌组中移除一张牌。"
     title: 净化
     pray: 祈祷
     leave: 离开
     description: 在你面前是一个被遗忘神灵的精致神龛。
   scrap_ooze:
+    reach_detail: "失去 {hp} 点生命。{chance}% 概率获得一件随机遗物。"
     title: 破烂软泥
     reach: 伸手进去
     leave: 离开
@@ -422,6 +507,7 @@ events:
       你在这个生物的中央见到了奇怪的光芒，或许是什么有魔法的物品？看起来只要你愿意把手伸进这东西的……开口，你就能得到什么 财宝 。当然，酸液和尖锐的破烂有可能会让你
       受伤。
   secret_portal:
+    enter_detail: "直接前往首领房间。"
     title: 秘密传送门
     description: '在你面前有一样与周围奇异景观完全不符合的东西：在深处地区一面活墙壁上，奇怪地出现了一道石做的拱门，里面有一个 旋转的魔法传送门
       。
@@ -431,12 +517,16 @@ events:
     enter: 进入传送门
     leave: 离开
   sensory_stone:
+    recall_3_detail: "失去 10 点生命。获得 3 张随机无色牌。"
+    recall_2_detail: "失去 5 点生命。获得 2 张随机无色牌。"
+    recall_1_detail: "获得一张随机无色牌。"
     title: 感知石
     recall_1: 回忆1
     recall_2: 回忆2
     recall_3: 回忆3
     description: 你在高塔深处前进时，你遇到一个悬浮在空中缓慢 旋转 且 变幻 着的 发光超立方体 。
   shining_light:
+    enter_detail: "失去 {hp} 点生命。随机升级 2 张牌。"
     title: 闪耀之光
     enter: 走进
     leave: 离开
@@ -445,6 +535,8 @@ events:
 
       光柱上有着 温暖而闪烁的美丽花纹 仿佛在邀请你进入。'
   the_cleric:
+    purify_detail: "支付 {cost} 金币。从牌组中移除一张牌。"
+    heal_detail: "支付 {cost} 金币。回复 {heal} 点生命。"
     title: 牧师
     option1: 治疗
     option2: 净化
@@ -453,6 +545,9 @@ events:
 
       “ 你好啊朋友！ 我是 牧师 ！你想不想试试我的服务呐？！”那个生物大声喊叫起来。'
   the_colosseum:
+    cowardice_detail: "离开，不再战斗。"
+    victory_detail: "与监工和地精大块头战斗。胜利后获得 100 金币、一件稀有遗物、一件罕见遗物和一张随机牌。"
+    fight_detail: "与蓝衣奴隶贩子和红衣奴隶贩子战斗。胜利后选择是否继续战斗。"
     title: 竞技场
     fight: 战斗
     leave: 离开
@@ -468,6 +563,8 @@ events:
 
       你被 打晕了 ……'
   the_joust:
+    owner_detail: "支付 50 金币。30% 概率获得 250 金币。"
+    murderer_detail: "支付 50 金币。70% 概率获得 100 金币。"
     title: 长枪决斗
     murderer: 凶手
     owner: 主人
@@ -478,6 +575,8 @@ events:
 
       一名骑士用手中的长枪对你比划着，强硬地让你停下。'
   the_library:
+    sleep_detail: "回复 {heal} 点生命。"
+    read_detail: "从 20 张牌中选择获得一张。"
     title: 大图书馆
     read: 阅读
     sleep: 睡觉
@@ -489,6 +588,7 @@ events:
 
       你拿起一本，舒服地坐在沙发椅上看了好一会儿。'
   the_mausoleum:
+    open_coffin_detail: "获得一件随机遗物。{chance}% 概率被诅咒：苦恼。"
     title: 陵墓
     open_coffin: 打开棺材
     leave: 离开
@@ -496,6 +596,8 @@ events:
 
       你辨认不出石棺上的字迹，但你能注意到有 黑色的雾气 从石棺的两侧渗透出来。'
   the_moai_head:
+    jump_inside_detail: "回复全部生命，然后失去 {hp} 点生命。"
+    offer_golden_idol_detail: "失去黄金神像。获得 333 金币。"
     title: 摩艾石像
     offer_golden_idol: 献上金神像
     jump_inside: 跳进去
@@ -504,11 +606,14 @@ events:
 
       石像的嘴大张着，里面有许多巨大的染着血迹的牙齿。石像表面上写着许多象形文字，似乎是说有许多人会自己跳进嘴里被石像吞噬。为什么会有人这样做呢？'
   the_nest:
+    stay_in_line_detail: "失去 6 点生命。获得仪式匕首。"
+    smash_and_grab_detail: "获得 {gold} 金币。"
     title: 巢穴
     smash_and_grab: 抢了钱就跑
     stay_in_line: 留在队伍中
     description: 你看见一长串 戴着兜帽的人们 正鱼贯走进一座 看起来没什么特别的大教堂。
   the_ssssserpent:
+    agree_detail: "获得 {gold} 金币。被诅咒：疑虑。"
     title: 蛇～
     agree: 同意
     disagree: 不同意
@@ -521,23 +626,29 @@ events:
 
       你同意吗？”'
   tomb_of_lord_red_mask:
+    offer_gold_detail: "失去全部 {gold} 金币。获得红面具。"
+    don_mask_detail: "获得 222 金币。"
     title: 红面具大人之墓
     don_mask: 戴上红面具
     leave: 离开
     offer_gold: 献上
     description: 在一条悬浮道路的尽头，你可以看见一处装饰华丽的古墓，当你到达古墓时，你看到有一个可以投放 金币 的开口，但上面的铭文已经被划得看不清楚了。
   transmogrifier:
+    pray_detail: "变化牌组中的一张牌。"
     title: 转化神龛
     pray: 祈祷
     leave: 离开
     description: 在你面前是一个被遗忘神灵的精致神龛。
   upgrade_shrine:
+    pray_detail: "升级牌组中的一张牌。"
     title: 升级神龛
     pray: 祈祷
     leave: 离开
     upgraded: 你的 {card_name} 已升级！
     description: 在你面前是一个被遗忘神灵的精致神龛。
   vampires:
+    accept_detail: "失去 {hp} 点最大生命。移除所有打击。获得 5 张噬咬。"
+    offer_blood_vial_detail: "失去鲜血试管。移除所有打击。获得 5 张噬咬。"
     title: 吸血鬼（？）
     offer_blood_vial: 献上血瓶
     accept: 接受
@@ -546,6 +657,7 @@ events:
 
       “加入我们，兄弟。一起来感受高塔的温暖吧。”'
   wheel_of_change:
+    play_detail: "转动转盘。等概率获得：{gold} 金币、遗物、回复全部生命、腐朽诅咒、移除一张牌或失去 {hp} 点生命。"
     title: 变化大转盘
     play: 玩小游戏
     result_gold: 获得 {amount} 金币。
@@ -576,6 +688,9 @@ events:
 
       你满腹狐疑地打量着他，开始思考应该怎么做……'
   winding_halls:
+    retrace_detail: "失去最大生命值的 5%。"
+    focus_detail: "回复 {heal} 点生命。被诅咒：苦恼。"
+    embrace_madness_detail: "失去 {hp} 点生命。获得 2 张疯狂。"
     title: 蜿蜒走廊
     embrace_madness: 拥抱疯狂
     focus: 集中精神
@@ -585,6 +700,8 @@ events:
 
       更糟糕的是，你的脑中似乎还有许多声音在对你轻声低语。'
   wing_statue:
+    require_attack: "需要一张伤害至少为 {damage} 的攻击牌。"
+    pray_detail: "失去 {hp} 点生命。从牌组中移除一张牌。"
     title: 翅膀雕像
     pray: 祈祷
     destroy: 摧毁
@@ -593,6 +710,8 @@ events:
 
       你可以看见雕像的裂缝中有 金币 掉出来。或许里面还有更多……'
   woman_in_blue:
+    buy_detail: "支付 {cost} 金币。获得 {count} 瓶随机药水。"
+    buy: "购买 {count} 瓶药水"
     title: 蓝衣女子
     option1: 买 1 瓶药水
     option2: 买 2 瓶药水
@@ -602,6 +721,8 @@ events:
 
       “来买药水，快点！”她对你说。'
   world_of_goop:
+    leave_detail: "失去 {gold} 金币。"
+    gather_detail: "失去 11 点生命。获得 75 金币。"
     title: 黏液世界
     gather: 收集
     leave: 离开
@@ -616,6 +737,10 @@ events:
 
       爬出来后，你发现自己的 金币 似乎变少了。你回头一看，发现水坑里不但有你掉落的钱，还有不少其他不幸的冒险者们落下的 金币 。'
   golden_idol:
+    hide_detail: "失去 {hp} 点最大生命。"
+    smash_detail: "失去 {hp} 点生命。"
+    outrun_detail: "被诅咒：受伤。"
+    take_detail: "获得黄金神像，然后选择如何逃离陷阱。"
     title: 金神像
     description: 在一个不引人注意的小高台上，你发现了一个闪闪发光的金神像安然放置在上面，看起来非常值钱。周围看起来完全没有什么陷阱的样子。
     take: 拿走
@@ -1899,6 +2024,10 @@ cards:
       name: 火焰纹
       description: 你的下一张攻击牌额外造成{magic.bonus}点伤害。
 powers:
+  RitualPower:
+    name: 仪式
+    description: "在你的回合结束时，获得 {amount} 点力量。"
+    description_enemy: "每轮结束时，获得 {amount} 点力量。施加后的第一轮不生效。"
   EnragePower:
     name: 激怒
     description: 当玩家打出技能牌时，获得 {amount} 点力量。
@@ -2072,6 +2201,9 @@ powers:
   WaveOfTheHandPower:
     name: 摆手
     description: 每当你在本回合获得格挡时，给予所有敌人{amount}层虚弱。
+  VigorPower:
+    name: 活力
+    description: "你的下一张攻击牌额外造成{amount}点伤害。"
   WreathOfFlamePower:
     name: 火焰纹
     description: 你的下一张攻击牌额外造成{amount}点伤害。
@@ -2203,6 +2335,9 @@ potions:
     name: 混沌药水
     description: 用随机药水填满所有空的药水栏。
 relics:
+  RedCirclet:
+    name: "红头环"
+    description: "已经没有可获得的 Boss 遗物了。"
   PureWater:
     name: 至纯之水
     description: 在每场战斗开始时，将一张奇迹放入你的手牌。
@@ -2283,7 +2418,8 @@ relics:
     description: 每场战斗开始时获得 1 点敏捷。
   Omamori:
     name: 御守
-    description: 获得的下 2 个诅咒将变成正效果。
+    description: "抵消接下来获得的 {remaining} 张诅咒。"
+    description_exhausted: "已耗尽。"
   Orichalcum:
     name: 奥利哈钢
     description: 如果你在回合结束时没有格挡，获得 6 点格挡。
@@ -2358,7 +2494,8 @@ relics:
     description: 每在单回合打出 3 次技能，对所有敌人造成 5 点伤害。
   Matryoshka:
     name: 套娃
-    description: 你打开的下 2 个宝箱包含 2 个遗物。
+    description: "接下来打开的 {remaining} 个非 Boss 宝箱包含一个额外遗物。"
+    description_exhausted: "已耗尽。"
   MeatOnBone:
     name: 带骨肉
     description: 如果战斗结束时你的生命值在或低于 50%，恢复 12 点生命值。
@@ -2430,7 +2567,7 @@ relics:
     description: 每当你消耗一张卡牌，向手牌添加一张随机卡牌。
   DuVuDoll:
     name: 毒巫娃娃
-    description: 牌组中的每个诅咒使每场战斗开始时获得 1 点额外力量。
+    description: "牌组中的每个诅咒使每场战斗开始时获得 1 点额外力量。当前诅咒数：{curses}。"
   FossilizedHelix:
     name: 螺类化石
     description: 防止战斗中第一次失去生命值。
@@ -2646,7 +2783,9 @@ relics:
     description: 回合开始时，向你的手牌添加一个随机能力，持续到回合结束。
   NeowsLament:
     name: 涅奥的悲恸
-    description: 你最初 3 场战斗中的敌人有 1 点生命值。
+    description: "接下来 {remaining} 场战斗中的敌人有 1 点生命值。"
+    description_exhausted: "这个祝福已经耗尽。"
+    effect: "涅奥的悲恸已触发，剩余 {remaining} 场战斗。"
   NlothHungryFace:
     name: 恩洛斯的饥饿的脸
     description: 下一个非 Boss 宝箱是空的。
@@ -2737,7 +2876,7 @@ enemies:
     intentions:
       ritual:
         name: 念咒
-        description: 获得 3 层仪式。
+        description: 获得 {amount} 层仪式。
       cultist_attack:
         name: 攻击
         description: 造成 {damage} 点伤害。
@@ -2859,7 +2998,7 @@ enemies:
         name: 分裂
         description: 分裂成两个较小的史莱姆。
       tackle:
-        description: 造成 {damage} 点伤害
+        description: "造成 {damage} 点伤害。将 1 张黏液牌加入弃牌堆。"
   SpikeSlimeS:
     name: 尖刺史莱姆（小）
     intentions:
@@ -2919,7 +3058,7 @@ enemies:
         description: 造成 {damage} 点伤害。
       nom_nom:
         name: 吞噬
-        description: 造成 {damage} 点伤害。
+        description: "造成 {damage} 点伤害 {hits} 次。"
       drool:
         name: 流口水
         description: 获得 3 点力量。
@@ -2928,7 +3067,7 @@ enemies:
     intentions:
       multi_stab:
         name: 多重刺击
-        description: 造成 {damage} 点伤害 X 次
+        description: "造成 {damage} 点伤害 {hits} 次。"
       stab:
         name: 刺击
         description: 造成 {damage} 点伤害
@@ -3072,19 +3211,19 @@ enemies:
         description: 正在蓄力...
       divider:
         name: 攻击
-        description: "造成 {damage} 点伤害 {attack_times} 次。"
+        description: "造成 {damage} 点伤害 {hits} 次。"
       sear:
         name: 灼烧
-        description: 造成 {damage} 点伤害。向你的弃牌堆添加 1 层燃烧。
+        description: "造成 {damage} 点伤害。向弃牌堆添加 {cards} 张燃烧（炼狱后为升级版）。"
       tackle:
         name: 攻击
         description: 造成 {damage} 点伤害两次。
       inflame:
         name: 高热
-        description: 获得 {strength_gain} 点力量。
+        description: "获得 {block} 点格挡和 {strength_gain} 点力量。"
       inferno:
         name: 地狱火
-        description: 造成 {damage} 点伤害。消耗你手牌和弃牌堆中的所有燃烧。
+        description: "造成 {damage} 点伤害 {hits} 次。升级抽牌堆和弃牌堆中的所有燃烧，向弃牌堆添加 {cards} 张燃烧+。"
   Lagavulin:
     name: 乐加维林
     intentions:
@@ -3286,6 +3425,9 @@ enemies:
   Reptomancer:
     name: 拜蛇术士
     intentions:
+      Big Bite:
+        name: "猛咬"
+        description: "造成 {damage} 点伤害。"
       SnakeStrike:
         name: 蛇击
         description: 造成 {damage} 点伤害，共 2 次。
@@ -3298,6 +3440,12 @@ enemies:
   SpireGrowth:
     name: 扭曲团块
     intentions:
+      Smash:
+        name: "重击"
+        description: "造成 {damage} 点伤害。"
+      Quick Tackle:
+        name: "快速撞击"
+        description: "造成 {damage} 点伤害。"
       Attack:
         name: 攻击
         description: 造成 {damage} 点伤害。
@@ -3324,7 +3472,7 @@ enemies:
         description: 造成 {damage} 点伤害。
       Chomp:
         name: 猛咬
-        description: 造成 {damage} 点伤害。
+        description: "造成 {damage} 点伤害 {hits} 次。"
       Harden:
         name: 硬化
         description: 获得 {block} 点格挡。
@@ -3384,7 +3532,7 @@ enemies:
         description: 分裂成 2 个尖刺史莱姆 (中)
       tackle:
         name: 攻击
-        description: 造成 {damage} 点伤害
+        description: "造成 {damage} 点伤害。将 2 张黏液牌加入弃牌堆。"
   TorchHead:
     name: 火炬头
     intentions:
@@ -3481,6 +3629,18 @@ enemies:
   WrithingMass:
     name: 扭曲团块
     intentions:
+      Block Attack:
+        name: "防御攻击"
+        description: "造成 {damage} 点伤害。获得 {block} 点格挡。"
+      Big Hit:
+        name: "重击"
+        description: "造成 {damage} 点伤害。"
+      Debuff Attack:
+        name: "削弱攻击"
+        description: "造成 {damage} 点伤害。施加 2 层虚弱和 2 层易伤。"
+      Multi Hit:
+        name: "多重攻击"
+        description: "造成 {damage} 点伤害 {hits} 次。"
       whim:
         name: 随意
         description: 造成 {damage} 点伤害

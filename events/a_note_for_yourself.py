@@ -112,6 +112,7 @@ def _leave_choice(deck_cards: list, received: Card) -> InputRequestAction:
             continue
         options.append(Option(
             name=str(card.display_name),
+            detail=LocalStr('events.a_note_for_yourself.exchange_detail', given=card.display_name, received=received.display_name),
             actions=[
                 RemoveCardAction(card=card, src_pile='deck'),
                 StoreCardForFutureAction(card),
@@ -124,18 +125,16 @@ def _leave_choice(deck_cards: list, received: Card) -> InputRequestAction:
     )
 
 
-@register_event(event_id='a_note_for_yourself', acts='shared', weight=100)
+@register_event(category='special', event_id='a_note_for_yourself', acts='shared', weight=100)
 class ANoteForYourself(Event):
     """A Note For Yourself - cross-run card storage."""
     
     @classmethod
     def can_appear(cls) -> bool:
-        """Disabled on Ascension 15+ and Daily Climb."""
-        if game_state.ascension >= 15:
+        if game_state.config.daily_run or game_state.ascension >= 15:
             return False
-        # Also disabled in Daily Climb (not implemented yet)
-        return True
-    
+        return game_state.ascension == 0 or game_state.ascension < game_state.highest_unlocked_ascension
+
     def trigger(self) -> None:
         actions = []
         
@@ -153,11 +152,13 @@ class ANoteForYourself(Event):
         if leave_choice.options:
             options.append(Option(
                 name=LocalStr('events.a_note_for_yourself.take_and_give'),
+                detail=LocalStr('events.a_note_for_yourself.choose_detail', received=received.display_name),
                 actions=[leave_choice],
             ))
 
         options.append(Option(
             name=LocalStr('events.a_note_for_yourself.ignore'),
+            detail=LocalStr('events.no_effect'),
             actions=[]
         ))
         

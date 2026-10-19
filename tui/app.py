@@ -17,9 +17,9 @@ from rich.text import Text
 from rich.panel import Panel
 from rich.console import Console
 
-from localization import resolve_text
+from localization import resolve_text, t
 from . import set_app, get_app
-from utils.option import match_option_command
+from utils.option import match_option_command, option_label, selection_error
 
 
 class DisplayPanel(Widget):
@@ -45,7 +45,7 @@ class DisplayPanel(Widget):
         
         relics_str = ""
         if player.relics:
-            relic_names = [r.local('name').resolve() for r in player.relics[:5]]
+            relic_names = [r.display_name() for r in player.relics[:5]]
             relics_str = f"Relics: {', '.join(relic_names)}"
             if len(player.relics) > 5:
                 relics_str += f" (+{len(player.relics) - 5})"
@@ -119,12 +119,16 @@ class SelectionPanel(Widget):
         try:
             input_widget = self.query_one("#selection-input", Input)
             input_widget.set_class(is_ai, "hidden")
+            self.query_one("#selection-skip", Button).disabled = is_ai
         except Exception:
             pass
     
     def compose(self) -> ComposeResult:
         yield Static("[dim]Waiting...[/dim]", id="selection-content")  # Needs markup for colors
         yield Input(placeholder="Enter selection", id="selection-input")
+        skip = Button(f"0. {t('ui.selection_skip')}", id="selection-skip")
+        skip.display = False
+        yield skip
     
     def set_selection(
         self,
@@ -158,23 +162,21 @@ class SelectionPanel(Widget):
             lines.append("")
 
         for i, opt in enumerate(options):
-            name = resolve_text(opt.name) if hasattr(opt, "name") else resolve_text(opt)
-            lines.append(f"  [cyan]{i + 1}.[/cyan] {name}")
+            name = option_label(opt)
+            if getattr(opt, "enabled", True):
+                lines.append(f"  [cyan]{i + 1}.[/cyan] {name}")
+            else:
+                lines.append(f"  [dim]{i + 1}. {name}[/dim]")
             detail = resolve_text(getattr(opt, "detail", "")) if getattr(opt, "detail", None) else ""
             if detail:
                 lines.append(f"      [dim]{detail}[/dim]")
-
         lines.append("")
+        count = sum(bool(getattr(opt, "enabled", True)) for opt in options) if max_select == -1 else max_select
         if must_select:
-            required = len(options) if max_select == -1 else max_select
-            lines.append(
-                f"[dim]Enter {required} number(s), comma-separated (e.g. 1,3)[/dim]"
-            )
+            lines.append(f"[dim]{t('ui.selection_required_hint', count=count)}[/dim]")
         else:
-            actual_max_select = len(options) if max_select == -1 else max_select
-            lines.append(
-                f"[dim]Enter up to {actual_max_select} number(s), comma-separated. Enter 0 to stop.[/dim]"
-            )
+            lines.append(f"  [cyan]0.[/cyan] {t('ui.selection_skip')}")
+            lines.append(f"[dim]{t('ui.selection_optional_hint', count=count)}[/dim]")
         return lines
     
     def _refresh_display(self):
@@ -186,14 +188,25 @@ class SelectionPanel(Widget):
             must_select=self._must_select,
         )
         self.query_one("#selection-content", Static).update("\n".join(lines))
-    
+        skip = self.query_one("#selection-skip", Button)
+        skip.label = f"0. {t('ui.selection_skip')}"
+        skip.display = not self._must_select and bool(self._options_data)
+        skip.disabled = self._is_ai_mode
+
     def select_by_index(self, idx: int) -> bool:
-        """Select option by index."""
-        if 0 <= idx < len(self._options_data):
-            self._resolve_selection([idx])
-            return True
-        return False
-    
+        """Resolve only a complete, enabled selection."""
+        error = selection_error(self._options_data, [idx], self._max_select, self._must_select)
+        if error is not None:
+            self._show_validation_error(error)
+            return False
+        self._resolve_selection([idx])
+        return True
+
+    def on_button_pressed(self, event: Button.Pressed):
+        if event.button.id == "selection-skip":
+            event.stop()
+            self._resolve_selection([])
+
     def on_input_submitted(self, event: Input.Submitted):
         """Handle input submit for single and multi-select."""
         raw_value = event.value.strip()
@@ -205,59 +218,30 @@ class SelectionPanel(Widget):
     
     def _parse_indices(self, raw_value: str) -> Optional[List[int]]:
         """Parse comma-separated option numbers into zero-based indices."""
+        raw_value = raw_value.strip()
         command_match = match_option_command(raw_value, self._options_data)
         if command_match is not None:
-            return command_match
-
-        if not raw_value:
-            self._show_validation_error("Input cannot be empty.")
+            indices = command_match
+        elif raw_value == "0" and not self._must_select:
+            indices = []
+        else:
+            parts = [part.strip() for part in raw_value.split(",")]
+            if not raw_value or any(not part.isdigit() for part in parts):
+                self._show_validation_error(t("ui.invalid_input"))
+                return None
+            indices = [int(part) - 1 for part in parts]
+        error = selection_error(self._options_data, indices, self._max_select, self._must_select)
+        if error is not None:
+            self._show_validation_error(error)
             return None
-        
-        if not self._must_select and raw_value == "0":
-            return []
-        
-        parts = [part.strip() for part in raw_value.split(",") if part.strip()]
-        if not parts:
-            self._show_validation_error("Invalid input format.")
-            return None
-        
-        numbers: List[int] = []
-        for part in parts:
-            if not part.isdigit():
-                self._show_validation_error("Use comma-separated numbers only.")
-                return None
-            value = int(part)
-            if value == 0:
-                self._show_validation_error("0 can only be entered alone to stop selection.")
-                return None
-            numbers.append(value)
-        
-        unique_numbers = list(dict.fromkeys(numbers))
-        indices = [num - 1 for num in unique_numbers]
-        
-        for idx in indices:
-            if idx < 0 or idx >= len(self._options_data):
-                self._show_validation_error(f"Invalid option number: {idx + 1}")
-                return None
-        
-        if self._max_select != -1 and len(indices) > self._max_select:
-            self._show_validation_error(
-                f"Too many selections (max {self._max_select})."
-            )
-            return None
-        
-        if self._must_select:
-            required = len(self._options_data) if self._max_select == -1 else self._max_select
-            if len(indices) != required:
-                self._show_validation_error(
-                    f"Select exactly {required} option(s)."
-                )
-                return None
-        
         return indices
-    
+
     def _resolve_selection(self, indices: List[int]):
-        """Resolve callbacks/future with selected indices."""
+        """Resolve callbacks/future only after a final selection check."""
+        error = selection_error(self._options_data, indices, self._max_select, self._must_select)
+        if error is not None:
+            self._show_validation_error(error)
+            return
         if self._selection_future and not self._selection_future.done():
             self._selection_future.set_result(indices)
         elif self.selected_callback:
@@ -336,13 +320,11 @@ class SelectionPanel(Widget):
             lines.append(f"[bold]{self.title}[/bold]")
             lines.append("")
         
-        # Options
-        for i, opt in enumerate(self._options_data):
-            name = str(opt.name) if hasattr(opt, 'name') else str(opt)
-            lines.append(f"  [cyan]{i + 1}.[/cyan] {name}")
-        
-        lines.append("")
-        
+        lines = self._build_selection_lines(
+            title=self.title, options=self._options_data,
+            max_select=self._max_select, must_select=self._must_select,
+        )
+
         # AI thinking content
         if self._thinking_buffer:
             lines.append("[dim]── AI 思考过程 ──[/dim]")
@@ -390,6 +372,7 @@ class SelectionPanel(Widget):
     
     def clear(self):
         """Clear selection panel."""
+        self.query_one("#selection-skip", Button).display = False
         self.title = ""
         self._options_data = []
         self.selected_callback = None
@@ -564,9 +547,9 @@ class SlayTheModelApp(App):
         """Update display panel content."""
         self.get_display_panel().update_content(content)
     
-    def show_selection(self, title: str, options: List[Any]) -> int:
+    def show_selection(self, title: str, options: List[Any], max_select: int = 1, must_select: bool = True) -> int:
         """Show selection and wait for input. Returns selected index."""
-        self.get_selection_panel().set_selection(title, options)
+        self.get_selection_panel().set_selection(title, options, max_select=max_select, must_select=must_select)
         return 0
 
     def request_selection_sync(

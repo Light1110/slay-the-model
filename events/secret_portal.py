@@ -13,14 +13,14 @@ from localization import LocalStr
 from utils.option import Option
 
 
-@register_event(event_id="secret_portal", acts=[3], weight=100)
+@register_event(category='special', event_id="secret_portal", acts=[3], weight=100)
 class SecretPortal(Event):
     """Secret Portal - skip to boss."""
 
     @classmethod
     def can_appear(cls) -> bool:
         """Only appears if 800+ seconds (13:20) elapsed."""
-        return getattr(game_state, "elapsed_time", 0) >= 800  # TODO: Add an in-run timer strategy.
+        return game_state.current_act == 3 and game_state.elapsed_time >= 800
 
     def trigger(self) -> None:
         actions = []
@@ -30,10 +30,12 @@ class SecretPortal(Event):
         options = [
             Option(
                 name=LocalStr("events.secret_portal.enter"),
+                detail=LocalStr('events.secret_portal.enter_detail'),
                 actions=[SkipToBossAction()],
             ),
             Option(
                 name=LocalStr("events.secret_portal.leave"),
+                detail=LocalStr('events.no_effect'),
                 actions=[],
             ),
         ]

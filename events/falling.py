@@ -14,7 +14,7 @@ from utils.types import CardType
 from engine.game_state import game_state
 
 
-@register_event(event_id='falling', acts=[3], weight=100)
+@register_event(category='event', event_id='falling', acts=[3], weight=100)
 class Falling(Event):
     """Falling - forced card loss by type."""
     
@@ -35,16 +35,19 @@ class Falling(Event):
         options = [
             Option(
                 name=LocalStr('events.falling.land'),
+                detail=LocalStr('events.falling.land_detail'),
                 actions=[RemoveRandomCardAction(card_type=CardType.SKILL)],
                 enabled=has_type(CardType.SKILL),
             ),
             Option(
                 name=LocalStr('events.falling.channel'),
+                detail=LocalStr('events.falling.channel_detail'),
                 actions=[RemoveRandomCardAction(card_type=CardType.POWER)],
                 enabled=has_type(CardType.POWER),
             ),
             Option(
                 name=LocalStr('events.falling.strike'),
+                detail=LocalStr('events.falling.strike_detail'),
                 actions=[RemoveRandomCardAction(card_type=CardType.ATTACK)],
                 enabled=has_type(CardType.ATTACK),
             )

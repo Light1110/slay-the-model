@@ -12,7 +12,7 @@ from localization import LocalStr
 from utils.option import Option
 
 
-@register_event(event_id='living_wall', acts=[1], weight=100)
+@register_event(category='event', event_id='living_wall', acts=[1], weight=100)
 class LivingWall(Event):
     """Living Wall - forced choice of remove/transform/upgrade card."""
     
@@ -28,14 +28,17 @@ class LivingWall(Event):
         options = [
             Option(
                 name=LocalStr('events.living_wall.forget'),
+                detail=LocalStr('events.living_wall.forget_detail'),
                 actions=[ChooseRemoveCardAction()]
             ),
             Option(
                 name=LocalStr('events.living_wall.change'),
+                detail=LocalStr('events.living_wall.change_detail'),
                 actions=[ChooseTransformCardAction()]
             ),
             Option(
                 name=LocalStr('events.living_wall.grow'),
+                detail=LocalStr('events.living_wall.grow_detail'),
                 actions=[ChooseUpgradeCardAction()]
             )
         ]

@@ -16,7 +16,7 @@ from utils.option import Option
 from engine.game_state import game_state
 
 
-@register_event(event_id='we_meet_again', acts='shared', weight=100)
+@register_event(category='special', event_id='we_meet_again', acts='shared', weight=100)
 class WeMeetAgain(Event):
     """We Meet Again! - trade items for relic."""
 

@@ -63,9 +63,11 @@ def _create_small_slimes():
 
 
 def _create_large_slime():
-    """Create Spike Slime (AcidSlime not implemented yet)."""
+    """Create one large Acid or Spike Slime with equal probability."""
+    from enemies.act1.acid_slime import AcidSlimeL
     from enemies.act1.spike_slime import SpikeSlimeL
-    return [SpikeSlimeL()]
+
+    return [AcidSlimeL()] if random.random() < 0.5 else [SpikeSlimeL()]
 
 
 def _create_swarm_slimes():

@@ -3,6 +3,9 @@ language: en
 seed: 1
 character: Ironclad
 ascension: 0  # 0-20, 0 = no ascension
+daily_run: false
+# Per-character unlock level; missing characters default to 0.
+highest_unlocked_ascension: {}
 select_overflow: truncate # truncate | reselect
 auto_select: False  # Auto select for all modes (human, ai, debug)
 

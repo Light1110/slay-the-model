@@ -11,19 +11,17 @@ class SpikeAttack(Intention):
     
     def __init__(self, enemy):
         super().__init__("Attack", enemy)
-        self.base_damage = 7  # A17+: 9
+        from engine.game_state import game_state
+
+        self.base_damage = 9 if game_state.ascension >= 17 else 7
     
     def execute(self) -> None:
         """Execute Attack intention."""
         damage = self.base_damage
         from engine.game_state import game_state
-        from engine.game_state import game_state
-        if game_state.ascension >= 17:
-            damage = 9
-        from engine.game_state import game_state
         add_actions(
         [AttackAction(
-            self.enemy.calculate_damage(damage),
+            damage,
             game_state.player,
             self.enemy,
             "attack"

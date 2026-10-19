@@ -16,7 +16,7 @@ from localization import LocalStr
 from utils.option import Option
 
 
-@register_event(event_id='mysterious_sphere', acts=[3], weight=100)
+@register_event(category='event', event_id='mysterious_sphere', acts=[3], weight=100)
 class MysteriousSphere(Event):
     """Mysterious Sphere - fight for relic."""
     
@@ -36,6 +36,7 @@ class MysteriousSphere(Event):
         options = [
             Option(
                 name=LocalStr('events.mysterious_sphere.open_sphere'),
+                detail=LocalStr('events.mysterious_sphere.open_sphere_detail'),
                 actions=[
                     StartFightAction(
                         enemies=orb_walkers,
@@ -49,6 +50,7 @@ class MysteriousSphere(Event):
             ),
             Option(
                 name=LocalStr('events.mysterious_sphere.leave'),
+                detail=LocalStr('events.no_effect'),
                 actions=[]
             )
         ]

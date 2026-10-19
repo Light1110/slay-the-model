@@ -16,7 +16,7 @@ from engine.game_state import game_state
 from cards.colorless import Writhe
 
 
-@register_event(event_id='the_mausoleum', acts=[2], weight=100)
+@register_event(category='event', event_id='the_mausoleum', acts=[2], weight=100)
 class TheMausoleum(Event):
     """The Mausoleum - relic with curse risk."""
     
@@ -35,6 +35,7 @@ class TheMausoleum(Event):
         options = [
             Option(
                 name=LocalStr('events.the_mausoleum.open_coffin'),
+                detail=LocalStr('events.the_mausoleum.open_coffin_detail', chance=int(curse_chance * 100)),
                 actions=[
                     AddRandomRelicAction(),
                     AddCardAction(card=Writhe(), chance=curse_chance),
@@ -43,6 +44,7 @@ class TheMausoleum(Event):
             ),
             Option(
                 name=LocalStr('events.the_mausoleum.leave'),
+                detail=LocalStr('events.no_effect'),
                 actions=[LambdaAction(lambda: self.end_event())]
             )
         ]

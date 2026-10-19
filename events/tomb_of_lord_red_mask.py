@@ -14,7 +14,7 @@ from engine.game_state import game_state
 from relics.global_relics.event import RedMask
 
 
-@register_event(event_id='tomb_of_lord_red_mask', acts=[3], weight=100)
+@register_event(category='event', event_id='tomb_of_lord_red_mask', acts=[3], weight=100)
 class TombOfLordRedMask(Event):
     """Tomb of Lord Red Mask - Red Mask interaction."""
     
@@ -38,10 +38,12 @@ class TombOfLordRedMask(Event):
             options.extend([
                 Option(
                     name=LocalStr('events.tomb_of_lord_red_mask.don_mask'),
+                    detail=LocalStr('events.tomb_of_lord_red_mask.don_mask_detail'),
                     actions=[AddGoldAction(amount=222)]
                 ),
                 Option(
                     name=LocalStr('events.tomb_of_lord_red_mask.leave'),
+                    detail=LocalStr('events.no_effect'),
                     actions=[]
                 )
             ])
@@ -49,6 +51,7 @@ class TombOfLordRedMask(Event):
             options.extend([
                 Option(
                     name=LocalStr('events.tomb_of_lord_red_mask.offer_gold'),
+                    detail=LocalStr('events.tomb_of_lord_red_mask.offer_gold_detail', gold=game_state.player.gold),
                     actions=[
                         LoseGoldAction(amount='all'),
                         AddRelicAction(relic=RedMask())
@@ -56,6 +59,7 @@ class TombOfLordRedMask(Event):
                 ),
                 Option(
                     name=LocalStr('events.tomb_of_lord_red_mask.leave'),
+                    detail=LocalStr('events.no_effect'),
                     actions=[]
                 )
             ])

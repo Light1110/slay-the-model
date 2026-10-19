@@ -269,6 +269,9 @@ def get_random_relic(characters: Optional[List[str]] = None,
     
     from engine.game_state import game_state
 
+    if rarities and set(rarities) == {RarityType.BOSS}:
+        return game_state.boss_relic_pool.draw(exclude=exclude or (), characters=characters)
+
     normalized_characters: Optional[set[str]] = None
     if characters:
         normalized_characters = {str(character).lower() for character in characters}
@@ -405,33 +408,10 @@ def get_random_events(act: int = 1, count: int = 1) -> List[Any]:
     """
     from events.event_pool import event_pool
     
-    # Ensure act is valid
-    if act < 1 or act > 3:
-        act = 1
-    
-    # Get available events based on Act
-    available_metadata = event_pool.get_available_events(act)
-    
-    if not available_metadata:
-        return []
-    
-    remaining = list(available_metadata)
-    selected_metadata = []
-    while remaining and len(selected_metadata) < count:
-        chosen = random.choices(
-            remaining,
-            weights=[m.weight for m in remaining],
-            k=1
-        )[0]
-        selected_metadata.append(chosen)
-        remaining.remove(chosen)
-    
-    # Create event instances
     events = []
-    for metadata in selected_metadata:
-        event = metadata.event_class()
-        events.append(event)
-        
-        event_pool.mark_event_used(metadata.event_id)
-    
+    for _ in range(max(0, count)):
+        metadata = event_pool.draw_metadata(act)
+        if metadata is None:
+            break
+        events.append(metadata.event_class())
     return events

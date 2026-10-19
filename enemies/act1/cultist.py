@@ -12,10 +12,13 @@ class Cultist(Enemy):
     
     enemy_type = EnemyType.NORMAL
     
-    def __init__(self):
-        super().__init__(
-            hp_range=(40, 44)
-        )
+    def __init__(self, ascension: int | None = None):
+        if ascension is None:
+            from engine.game_state import game_state
+
+            ascension = game_state.ascension
+        super().__init__(hp_range=(50, 56) if ascension >= 7 else (48, 54))
+        self.ascension = ascension
         
         # Register intentions
         self.add_intention(CultistRitualIntention(self))

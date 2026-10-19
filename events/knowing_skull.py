@@ -1,106 +1,99 @@
-"""Event: Knowing Skull - Act 2 Shrine Event
-
-Repeatable HP for potion/gold/card trade.
-"""
-from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
-
+"""Knowing Skull: independent, repeatable HP costs for each reward."""
 from actions.base import LambdaAction
+from actions.card import AddRandomCardAction
 from actions.combat import LoseHPAction
+from actions.display import DisplayTextAction, InputRequestAction
+from actions.reward import AddGoldAction, AddRandomPotionAction
+from engine.game_state import game_state
+from engine.runtime_api import add_actions, set_terminal_state
 from events.base_event import Event
 from events.event_pool import register_event
-from actions.display import InputRequestAction, DisplayTextAction
-from actions.card import AddRandomCardAction
-from utils.types import RarityType
-from actions.reward import AddRandomPotionAction, AddGoldAction
 from localization import LocalStr
 from utils.option import Option
-from engine.game_state import game_state
+from utils.result_types import GameTerminalState
+from utils.types import RarityType
 
 
-@register_event(event_id='knowing_skull', acts=[2], weight=100)
+@register_event(category='special', event_id='knowing_skull', acts=[2], weight=100)
 class KnowingSkull(Event):
-    """
-    Knowing Skull - repeatable HP for rewards.
-    
-    [Potion] Lose 6% (A15+: 8%) of Max HP (+1 per use). Obtain a random potion.
-    [Riches] Lose 6% (A15+: 8%) of Max HP (+1 per use). Gain 90 Gold.
-    [Success] Lose 6% (A15+: 8%) of Max HP (+1 per use). Obtain a random Uncommon Colorless card.
-    [Leave] Nothing happens.
-    """
-    
+    """Each reward starts at 6 HP and increases only its own cost; leaving costs 6."""
+
     @classmethod
     def can_appear(cls) -> bool:
-        """Only appears if player has 13+ HP."""
-        return game_state.player.hp >= 13
-    
+        return game_state.player is not None and game_state.player.hp >= 13
+
     def __init__(self):
         super().__init__()
-        self.use_count = 0
-    
+        self.potion_cost = 6
+        self.gold_cost = 6
+        self.card_cost = 6
+        self.leave_cost = 6
+        self._intro_shown = False
+
+    def _payment_actions(self, choice: str, cost: int):
+        return [LoseHPAction(amount=cost), LambdaAction(self._after_payment, args=[choice])]
+
     def trigger(self) -> None:
         actions = []
-        
-        # Display event description only on first entry
-        if self.use_count == 0:
-            actions.append(DisplayTextAction(
-                text_key='events.knowing_skull.description'
-            ))
-        
-        # HP cost: 6% (8% A15+) of Max HP, minimum 6, +1 per use
-        hp_percent = 0.08 if game_state.ascension >= 15 else 0.06
-        base_hp = max(int(game_state.player.max_hp * hp_percent), 6)
-        hp_cost = base_hp + self.use_count
-        
-        # Build options - loop until player chooses Leave
+        if not self._intro_shown:
+            actions.append(DisplayTextAction(text_key='events.knowing_skull.description'))
+            self._intro_shown = True
         options = [
             Option(
                 name=LocalStr('events.knowing_skull.potion'),
-                actions=[
-                    LoseHPAction(amount=hp_cost),
-                    AddRandomPotionAction(character=game_state.player.character),
-                    LambdaAction(lambda: self._increment_use()),
-                    LambdaAction(lambda: self._continue_or_end()),
-                ]
+                detail=LocalStr('events.knowing_skull.potion_detail', hp=self.potion_cost),
+                actions=self._payment_actions('potion', self.potion_cost),
             ),
             Option(
                 name=LocalStr('events.knowing_skull.riches'),
-                actions=[
-                    LoseHPAction(amount=hp_cost),
-                    AddGoldAction(amount=90),
-                    LambdaAction(lambda: self._increment_use()),
-                    LambdaAction(lambda: self._continue_or_end()),
-                ]
+                detail=LocalStr('events.knowing_skull.riches_detail', hp=self.gold_cost, gold=90),
+                actions=self._payment_actions('gold', self.gold_cost),
             ),
             Option(
                 name=LocalStr('events.knowing_skull.success'),
-                actions=[
-                    LoseHPAction(amount=hp_cost),
-                    AddRandomCardAction(namespace='colorless', rarity=RarityType.UNCOMMON),
-                    LambdaAction(lambda: self._increment_use()),
-                    LambdaAction(lambda: self._continue_or_end()),
-                ]
+                detail=LocalStr('events.knowing_skull.success_detail', hp=self.card_cost),
+                actions=self._payment_actions('card', self.card_cost),
             ),
             Option(
                 name=LocalStr('events.knowing_skull.leave'),
-                actions=[LambdaAction(lambda: self.end_event())]
-            )
+                detail=LocalStr('events.lose_hp', hp=self.leave_cost),
+                actions=self._payment_actions('leave', self.leave_cost),
+            ),
         ]
-        
-        actions.append(InputRequestAction(
-            title=LocalStr('events.knowing_skull.title'),
-            options=options
-        ))
-        
+        actions.append(InputRequestAction(title=LocalStr('events.knowing_skull.title'), options=options))
         add_actions(actions)
-    
-    def _increment_use(self):
-        """Increment use count when a reward is chosen."""
-        self.use_count += 1
 
-    def _continue_or_end(self):
-        """Avoid unbounded auto-selection loops in non-interactive runs."""
-        config = getattr(game_state, "config", None)
-        if bool(getattr(config, "auto_select", False)):
+    def _after_payment(self, choice: str) -> None:
+        """Do not grant rewards or open another menu after a lethal HP payment."""
+        player = game_state.player
+        if player is None:
+            return
+        if player.is_dead():
+            self.end_event()
+            set_terminal_state(GameTerminalState.GAME_LOSE)
+            return
+        if choice == 'leave':
             self.end_event()
             return
-        self.trigger()
+        if choice == 'potion':
+            reward = AddRandomPotionAction(character=player.character)
+        elif choice == 'gold':
+            reward = AddGoldAction(amount=90)
+        else:
+            reward = AddRandomCardAction(pile='deck', namespace='colorless', rarity=RarityType.UNCOMMON)
+        add_actions([
+            reward,
+            LambdaAction(self._increment_cost, args=[choice]),
+            LambdaAction(self._continue_or_end),
+        ], to_front=True)
+
+    def _increment_cost(self, choice: str) -> None:
+        field = {'potion': 'potion_cost', 'gold': 'gold_cost', 'card': 'card_cost'}[choice]
+        setattr(self, field, getattr(self, field) + 1)
+
+    def _continue_or_end(self) -> None:
+        if bool(getattr(game_state.config, 'auto_select', False)):
+            # Keep automatic runs bounded, but use the same paid exit as the menu.
+            add_actions(self._payment_actions('leave', self.leave_cost), to_front=True)
+        else:
+            self.trigger()

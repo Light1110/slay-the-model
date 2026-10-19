@@ -5,6 +5,8 @@ Trade a relic for N'loth's Gift (50% chance to duplicate obtained cards).
 from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
 
 import random
+from typing import cast
+from relics.base import Relic
 
 from events.base_event import Event
 from events.event_pool import register_event
@@ -16,7 +18,7 @@ from engine.game_state import game_state
 from relics.global_relics.event import NlothGift
 
 
-@register_event(event_id='nloth', acts=[2], weight=100)
+@register_event(category='special', event_id='nloth', acts=[2], weight=100)
 class Nloth(Event):
     """N'loth - trade a relic for N'loth's Gift (50% chance to duplicate obtained cards)."""
     
@@ -49,10 +51,11 @@ class Nloth(Event):
         
         for relic in self.offered_relics:
             # Get relic display name
-            relic_name = getattr(relic, "name", str(relic.__class__.__name__))
+            relic_name = cast(Relic, relic).local("name")
             
             options.append(Option(
-                name=LocalStr(str(f"Trade {relic_name}")),
+                name=LocalStr('events.nloth.trade', relic=relic_name),
+                detail=LocalStr('events.nloth.trade_detail', relic=relic_name),
                 actions=[
                     LoseRelicAction(relic=relic),
                     AddRelicAction(relic=NlothGift())
@@ -62,6 +65,7 @@ class Nloth(Event):
         # Leave option
         options.append(Option(
             name=LocalStr('events.nloth.leave'),
+            detail=LocalStr('events.no_effect'),
             actions=[]
         ))
         

@@ -17,7 +17,7 @@ from engine.game_state import game_state
 from cards.colorless import Decay
 
 
-@register_event(event_id='wheel_of_change', acts='shared', weight=100)
+@register_event(category='shrine', event_id='wheel_of_change', acts='shared', weight=100)
 class WheelOfChange(Event):
     """Wheel of Change - random outcome wheel."""
 
@@ -81,6 +81,7 @@ class WheelOfChange(Event):
         options = [
             Option(
                 name=LocalStr('events.wheel_of_change.play'),
+                detail=LocalStr('events.wheel_of_change.play_detail', gold=gold_amount, hp=int(game_state.player.max_hp * hp_loss_percent)),
                 actions=chosen_outcome
             )
         ]

@@ -12,6 +12,8 @@ from typing import List, Optional
 from engine.input_protocol import InputRequest, InputSubmission
 from engine.message_bus import MessageBus
 from engine.runtime_context import RuntimeContext
+from engine.event_pool_state import EventPoolState
+from engine.run_clock import RunClock
 from utils.result_types import GameTerminalState
 from config.game_config import GameConfig
 import os
@@ -65,7 +67,7 @@ class GameState:
         # Key tracking for treasure events
         self.sapphire_key_picked = False
         self.skip_to_boss = False
-        self.elapsed_time = 0
+        self.run_clock = RunClock()
 
         # Tiny Chest relic tracking
         self.event_room_counter = 0
@@ -115,14 +117,36 @@ class GameState:
         if self.config.seed == -1:
             self.config.seed = int(time.time())
         rd.seed(self.config.seed)
+        self.event_pool_state = EventPoolState(self.config.seed)
         # character
         self.player = create_player(self.config.character)
+        from relics.boss_pool import BossRelicPool
+        self.boss_relic_pool = BossRelicPool(self.config.seed)
         
         # temp value for select result
         self.last_select_idx = -1
         self.runtime_context = RuntimeContext(game_state=self)
         self.pending_input_request = None
         self.terminal_state = None
+
+    @property
+    def elapsed_time(self) -> float:
+        return self.run_clock.elapsed
+
+    @elapsed_time.setter
+    def elapsed_time(self, seconds: float) -> None:
+        self.run_clock.elapsed = seconds
+
+    @property
+    def highest_unlocked_ascension(self) -> int:
+        values = self.config.highest_unlocked_ascension
+        character = self.player.namespace.lower()
+        return int(values.get(character, 0))
+
+    def begin_run(self) -> None:
+        self.event_pool_state.reset(self.config.seed)
+        self.run_clock.reset()
+        self.run_clock.start()
 
     def publish_message(self, message) -> None:
         """Publish a runtime message and queue follow-up actions immediately."""
@@ -237,9 +261,10 @@ class GameState:
     
     def advance_act(self) -> bool:
         """
-        Advance to next act after boss treasure.
+        Resolve a confirmed act transition after boss rewards.
         Returns True if game completed (after act 4 or act 3 without keys).
-        Resets act-specific counters and generates new map.
+        Otherwise heals and resets counters; the flow initializes the next map.
+        current_act already identifies the destination act at this point.
         """
         # Check if can enter act 4
         if self.current_act == 4: # this means act3 finish
@@ -250,6 +275,14 @@ class GameState:
         
         if self.current_act > MAX_ACTS:
             return True  # Game complete after act 4
+
+        # Boss rewards have resolved and the run will actually enter another act.
+        # Heal through the normal hooks, including Mark of Bloom and powers.
+        from actions.combat import HealAction
+        missing_hp = max(0, self.player.max_hp - self.player.hp)
+        amount = (missing_hp * 3 + 2) // 4 if self.ascension >= 5 else self.player.max_hp
+        self.action_queue.add_action(HealAction(amount=amount, target=self.player))
+        self.drive_actions()
         
         # self.current_act += 1
         # self.floor_in_act = 0
@@ -270,6 +303,8 @@ class GameState:
         """Initialize map system for current act."""
         from map import MapManager
         
+        self.event_pool_state.enter_act(self.current_act)
+        self.run_clock.start()
         self.map_manager = MapManager(self.config.seed + self.current_act, act_id=self.current_act)
         self.map_data = self.map_manager.generate_map()
 

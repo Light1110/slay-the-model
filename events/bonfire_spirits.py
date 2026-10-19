@@ -22,7 +22,7 @@ from engine.game_state import game_state
 from utils.types import RarityType
 
 
-@register_event(event_id='bonfire_spirits', acts='shared', weight=100)
+@register_event(category='special', event_id='bonfire_spirits', acts='shared', weight=100)
 class BonfireSpirits(Event):
     """Bonfire Spirits - sacrifice card for reward by rarity."""
     
@@ -64,8 +64,13 @@ class BonfireSpirits(Event):
                     from relics.global_relics.event import SpiritPoop
                     reward_actions.append(AddRelicAction(relic=SpiritPoop()))
                 
+                reward_key = {
+                    RarityType.COMMON: 'common', RarityType.UNCOMMON: 'uncommon',
+                    RarityType.RARE: 'rare', RarityType.SPECIAL: 'rare', RarityType.CURSE: 'curse',
+                }.get(card.rarity, 'basic')
                 card_options.append(Option(
                     name=LocalStr(f'{card.display_name} ({t("ui.rarity." + card.rarity.name.lower(), default=card.rarity.name)})'),
+                    detail=LocalStr('events.bonfire_spirits.' + reward_key + '_detail'),
                     actions=reward_actions
                 ))
         
@@ -73,6 +78,7 @@ class BonfireSpirits(Event):
         options = card_options + [
             Option(
                 name=LocalStr('events.bonfire_spirits.leave'),
+                detail=LocalStr('events.no_effect'),
                 actions=[]
             )
         ]

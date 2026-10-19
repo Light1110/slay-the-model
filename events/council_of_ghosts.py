@@ -15,7 +15,7 @@ from engine.game_state import game_state
 from cards.colorless import Apparition
 
 
-@register_event(event_id='council_of_ghosts', acts=[2], weight=100)
+@register_event(category='event', event_id='council_of_ghosts', acts=[2], weight=100)
 class CouncilOfGhosts(Event):
     """Council of Ghosts - Max HP for Apparition cards."""
     
@@ -34,6 +34,7 @@ class CouncilOfGhosts(Event):
         options = [
             Option(
                 name=LocalStr('events.council_of_ghosts.accept'),
+                detail=LocalStr('events.council_of_ghosts.accept_detail', hp=game_state.player.max_hp // 2, count=apparition_count),
                 actions=[
                     # Lose 50% of Max HP
                     LoseMaxHPAction(amount=game_state.player.max_hp // 2),
@@ -42,6 +43,7 @@ class CouncilOfGhosts(Event):
             ),
             Option(
                 name=LocalStr('events.council_of_ghosts.refuse'),
+                detail=LocalStr('events.no_effect'),
                 actions=[]
             )
         ]

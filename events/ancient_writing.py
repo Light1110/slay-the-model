@@ -13,7 +13,7 @@ from localization import LocalStr
 from utils.option import Option
 
 
-@register_event(event_id='ancient_writing', acts=[2], weight=100)
+@register_event(category='event', event_id='ancient_writing', acts=[2], weight=100)
 class AncientWriting(Event):
     """Ancient Writing - remove card or upgrade Strikes/Defends."""
     
@@ -44,10 +44,12 @@ class AncientWriting(Event):
         options = [
             Option(
                 name=LocalStr('events.ancient_writing.elegance'),
+                detail=LocalStr('events.ancient_writing.elegance_detail'),
                 actions=[ChooseRemoveCardAction()]
             ),
             Option(
                 name=LocalStr('events.ancient_writing.simplicity'),
+                detail=LocalStr('events.ancient_writing.simplicity_detail'),
                 # Upgrade ALL Strike and Defend cards in deck
                 actions=[LambdaAction(upgrade_all_strikes_and_defends)]
             )

@@ -19,7 +19,6 @@ class TheMawRoar(Intention):
     def execute(self) -> None:
         """Execute Roar intention - applies 3 Weak and 3 Frail."""
         from engine.game_state import game_state
-        from engine.game_state import game_state
         add_actions(
         [
             ApplyPowerAction(WeakPower(amount=3, duration=3, owner=game_state.player), game_state.player, source=self.enemy),
@@ -38,38 +37,31 @@ class TheMawSlam(Intention):
     def execute(self) -> None:
         """Execute Slam intention - deals 25 damage."""
         from engine.game_state import game_state
-        from engine.game_state import game_state
         add_actions(
         [AttackAction(
-            self.enemy.calculate_damage(self.base_damage),
+            self.base_damage,
             game_state.player,
             self.enemy,
-            "slam"
+            "attack"
         )]
         )
 
 
 class TheMawNomNom(Intention):
-    """The Maw Nom Nom intention - deals 5*N damage where N = turn/2 rounded up."""
+    """Deal 5 damage per hit, using the selected move's frozen hit count."""
 
     def __init__(self, enemy):
         super().__init__("Nom Nom", enemy)
+        self.base_damage = 5
+        self._hits = 1
 
     def execute(self) -> None:
-        """Execute Nom Nom intention - deals 5*N damage where N = turn/2 rounded up."""
         from engine.game_state import game_state
-        current_turn = getattr(self.enemy, '_turn_count', 1)
-        n = (current_turn + 1) // 2  # Round up: (turn + 1) // 2
-        damage = 5 * n
-        from engine.game_state import game_state
-        add_actions(
-        [AttackAction(
-            self.enemy.calculate_damage(damage),
-            game_state.player,
-            self.enemy,
-            "nom_nom"
-        )]
-        )
+
+        add_actions([
+            AttackAction(self.get_base_damage(), game_state.player, self.enemy, "attack")
+            for _ in range(self._get_hits())
+        ])
 
 
 class TheMawDrool(Intention):

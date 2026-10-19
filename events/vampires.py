@@ -17,7 +17,7 @@ from cards.colorless.bite import Bite
 from relics.global_relics.common import BloodVial
 
 
-@register_event(event_id='vampires', acts=[2], weight=100)
+@register_event(category='event', event_id='vampires', acts=[2], weight=100)
 class Vampires(Event):
     """Vampires - Strikes to Bites for Max HP."""
     
@@ -40,6 +40,7 @@ class Vampires(Event):
         if has_blood_vial:
             options.append(Option(
                 name=LocalStr('events.vampires.offer_blood_vial'),
+                detail=LocalStr('events.vampires.offer_blood_vial_detail'),
                 actions=[
                     LoseRelicAction(relic_type=BloodVial),
                     RemoveAllStrikesAction(),
@@ -50,6 +51,7 @@ class Vampires(Event):
         options.extend([
             Option(
                 name=LocalStr('events.vampires.accept'),
+                detail=LocalStr('events.vampires.accept_detail', hp=int(game_state.player.max_hp * 0.3)),
                 actions=[
                     LoseMaxHPAction(amount=int(game_state.player.max_hp * 0.30)),
                     RemoveAllStrikesAction(),
@@ -58,6 +60,7 @@ class Vampires(Event):
             ),
             Option(
                 name=LocalStr('events.vampires.refuse'),
+                detail=LocalStr('events.no_effect'),
                 actions=[]
             )
         ])

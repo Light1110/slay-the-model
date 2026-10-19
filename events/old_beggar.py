@@ -14,7 +14,7 @@ from utils.option import Option
 from engine.game_state import game_state
 
 
-@register_event(event_id='old_beggar', acts=[2], weight=100)
+@register_event(category='event', event_id='old_beggar', acts=[2], weight=100)
 class OldBeggar(Event):
     """Old Beggar - pay gold to remove card."""
     
@@ -35,6 +35,8 @@ class OldBeggar(Event):
         options = [
             Option(
                 name=LocalStr('events.old_beggar.offer_gold'),
+                disabled_reason=LocalStr('events.require_gold', gold=75),
+                detail=LocalStr('events.old_beggar.offer_gold_detail'),
                 actions=[
                     LoseGoldAction(amount=75),
                     ChooseRemoveCardAction()
@@ -43,6 +45,7 @@ class OldBeggar(Event):
             ),
             Option(
                 name=LocalStr('events.old_beggar.leave'),
+                detail=LocalStr('events.no_effect'),
                 actions=[]
             )
         ]

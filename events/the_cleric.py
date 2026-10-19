@@ -18,6 +18,7 @@ from utils.option import Option
 
 
 @register_event(
+    category="event",
     event_id="the_cleric",
     acts=[1],
     weight=100
@@ -25,6 +26,11 @@ from utils.option import Option
 class TheClericEvent(Event):
     """The Cleric - Heal or remove card for gold"""
     
+    @classmethod
+    def can_appear(cls) -> bool:
+        from engine.game_state import game_state
+        return game_state.player is not None and game_state.player.gold >= 35
+
     def trigger(self) -> None:
         """Trigger clerics encounter event"""
         from engine.game_state import game_state
@@ -40,37 +46,27 @@ class TheClericEvent(Event):
         # Determine purify cost based on ascension
         purify_cost = 75 if game_state.ascension >= 15 else 50
 
-        # Build options
-        options = []
-
-        # Option 1: Heal - Lose 35 Gold, Heal 25% Max HP
-        if game_state.player.gold >= 35:
-            heal_amount = game_state.player.max_hp // 4  # 25% of max HP
-            options.append(Option(
+        heal_amount = game_state.player.max_hp // 4
+        options = [
+            Option(
                 name=LocalStr("events.the_cleric.option1"),
-                actions=[
-                    LoseGoldAction(amount=35),
-                    HealAction(amount=heal_amount),
-                    LambdaAction(lambda: self.end_event()),
-                ]
-            ))
-
-        # Option 2: Purify - Lose 50/75 Gold, Remove a card
-        if game_state.player.gold >= purify_cost:
-            options.append(Option(
+                detail=LocalStr("events.the_cleric.heal_detail", cost=35, heal=heal_amount),
+                enabled=game_state.player.gold >= 35,
+                disabled_reason=LocalStr("events.require_gold", gold=35),
+                actions=[LoseGoldAction(amount=35), HealAction(amount=heal_amount),
+                         LambdaAction(self.end_event)],
+            ),
+            Option(
                 name=LocalStr("events.the_cleric.option2"),
-                actions=[
-                    LoseGoldAction(amount=purify_cost),
-                    ChooseRemoveCardAction(pile="deck", amount=1),
-                    LambdaAction(lambda: self.end_event()),
-                ]
-            ))
-
-        # Option 3: Leave - Nothing happens
-        options.append(Option(
-            name=LocalStr("events.the_cleric.option3"),
-            actions=[LambdaAction(lambda: self.end_event())]
-        ))
+                detail=LocalStr("events.the_cleric.purify_detail", cost=purify_cost),
+                enabled=game_state.player.gold >= purify_cost,
+                disabled_reason=LocalStr("events.require_gold", gold=purify_cost),
+                actions=[LoseGoldAction(amount=purify_cost),
+                         ChooseRemoveCardAction(pile="deck", amount=1), LambdaAction(self.end_event)],
+            ),
+            Option(name=LocalStr("events.the_cleric.option3"),
+                   detail=LocalStr("events.no_effect"), actions=[LambdaAction(self.end_event)]),
+        ]
 
         # Display options and wait for selection
         actions.append(InputRequestAction(

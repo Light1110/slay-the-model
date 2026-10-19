@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 class BoltIntention(Intention):
-    """Bolt - Add 2 Dazed cards to player's discard pile (3 on A3+)."""
+    """Bolt - Add 2 Dazed cards to player's discard pile (3 on A18+)."""
     
     def __init__(self, enemy: 'Enemy', dazed_count: int = 2):
         super().__init__("bolt", enemy)

@@ -40,11 +40,10 @@ class TestLagavulin(unittest.TestCase):
         # First intention is sleep
         self.assertEqual(enemy.current_intention.name, "sleep")
 
-        # Second turn (still sleeping)
-        enemy.on_player_turn_start()
-        self.assertEqual(enemy.current_intention.name, "sleep")
-
-        # Third turn (now attacks)
+        for _ in range(3):
+            enemy.on_player_turn_start()
+            self.assertEqual(enemy.current_intention.name, "sleep")
+            enemy.execute_intention()
         enemy.on_player_turn_start()
         self.assertEqual(enemy.current_intention.name, "attack")
 

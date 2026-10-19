@@ -20,13 +20,14 @@ class MultiStab(Intention):
 
         ascension = getattr(game_state, "ascension", 0)
         self.base_damage = 7 if ascension >= 3 else 6
+        self._hits = 2
     
     def execute(self) -> None:
         """Execute multi-stab attack."""
         from engine.game_state import game_state
         
         actions = []
-        num_hits = self.enemy.multi_stab_count + 1
+        num_hits = self._get_hits()
         
         for _ in range(num_hits):
             actions.append(AttackAction(

@@ -12,7 +12,7 @@ from localization import LocalStr
 from utils.option import Option
 
 
-@register_event(event_id='purifier', acts='shared', weight=100)
+@register_event(category='shrine', event_id='purifier', acts='shared', weight=100)
 class Purifier(Event):
     """Purifier shrine - remove a card."""
     
@@ -28,10 +28,12 @@ class Purifier(Event):
         options = [
             Option(
                 name=LocalStr('events.purifier.pray'),
+                detail=LocalStr('events.purifier.pray_detail'),
                 actions=[ChooseRemoveCardAction()]
             ),
             Option(
                 name=LocalStr('events.purifier.leave'),
+                detail=LocalStr('events.no_effect'),
                 actions=[]
             )
         ]

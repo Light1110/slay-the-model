@@ -23,6 +23,11 @@ class DexterityPower(Power):
         """
         super().__init__(amount=amount, duration=duration, owner=owner)
 
+    @Power.amount.setter
+    def amount(self, value: int):
+        """Dexterity may stack below zero, including repeated Siphon Soul."""
+        self._amount = int(value)
+
     def modify_block_gained(self, base_block: int) -> int:
         """Modify block gained from cards by Dexterity amount.
         

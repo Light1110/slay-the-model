@@ -19,7 +19,7 @@ from relics.global_relics.event import OddMushroom
 from cards.colorless import Parasite
 
 
-@register_event(event_id='hypnotizing_mushrooms', acts=[1], weight=100)
+@register_event(category='event', event_id='hypnotizing_mushrooms', acts=[1], weight=100)
 class HypnotizingColoredMushrooms(Event):
     """Hypnotizing Colored Mushrooms - heal with curse or fight for relic."""
     

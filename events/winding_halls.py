@@ -16,7 +16,7 @@ from cards.colorless.madness import Madness
 from cards.colorless.writhe import Writhe
 
 
-@register_event(event_id='winding_halls', acts=[3], weight=100)
+@register_event(category='event', event_id='winding_halls', acts=[3], weight=100)
 class WindingHalls(Event):
     """Winding Halls - trade-offs for cards/heal."""
 
@@ -36,6 +36,7 @@ class WindingHalls(Event):
         options = [
             Option(
                 name=LocalStr('events.winding_halls.embrace_madness'),
+                detail=LocalStr('events.winding_halls.embrace_madness_detail', hp=int(game_state.player.max_hp * hp_percent)),
                 actions=[
                     LoseHPAction(percent=hp_percent),
                     AddCardAction(card=Madness()),
@@ -44,6 +45,7 @@ class WindingHalls(Event):
             ),
             Option(
                 name=LocalStr('events.winding_halls.focus'),
+                detail=LocalStr('events.winding_halls.focus_detail', heal=int(game_state.player.max_hp * heal_percent)),
                 actions=[
                     HealAction(percent=heal_percent),
                     AddCardAction(card=Writhe())
@@ -51,6 +53,7 @@ class WindingHalls(Event):
             ),
             Option(
                 name=LocalStr('events.winding_halls.retrace'),
+                detail=LocalStr('events.winding_halls.retrace_detail'),
                 actions=[ModifyMaxHpAction(amount=-0.05*game_state.player.max_hp)]
             )
         ]

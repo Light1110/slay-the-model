@@ -15,14 +15,9 @@ from utils.option import Option
 from engine.game_state import game_state
 
 
-@register_event(event_id='world_of_goop', acts=[1], weight=100)
+@register_event(category='event', event_id='world_of_goop', acts=[1], weight=100)
 class WorldOfGoop(Event):
     """World of Goop - lose gold or gain gold for HP."""
-    
-    @classmethod
-    def can_appear(cls) -> bool:
-        """Only appears on Ascension 15+."""
-        return game_state.ascension >= 15
     
     def trigger(self) -> None:
         actions = []
@@ -42,6 +37,7 @@ class WorldOfGoop(Event):
         options = [
             Option(
                 name=LocalStr('events.world_of_goop.gather'),
+                detail=LocalStr('events.world_of_goop.gather_detail'),
                 actions=[
                     LoseHPAction(amount=11),
                     AddGoldAction(amount=75)
@@ -49,6 +45,7 @@ class WorldOfGoop(Event):
             ),
             Option(
                 name=LocalStr('events.world_of_goop.leave'),
+                detail=LocalStr('events.world_of_goop.leave_detail', gold=gold_loss),
                 actions=[LoseGoldAction(amount=gold_loss)]
             )
         ]

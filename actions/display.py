@@ -8,7 +8,7 @@ from engine.input_protocol import InputRequest
 from engine.runtime_events import emit_lines, emit_text
 from engine.runtime_presenter import flush_runtime_events
 from localization import BaseLocalStr, LocalStr, resolve_text, t
-from utils.option import Option
+from utils.option import Option, selection_error
 from utils.registry import register
 from utils.result_types import GameTerminalState
 
@@ -22,11 +22,9 @@ def build_selected_options(
     selected_indices: List[int],
 ) -> Dict[int, Option]:
     """Build a stable selection map keyed by original option index."""
-    return {
-        idx: options[idx]
-        for idx in selected_indices
-        if 0 <= idx < len(options)
-    }
+    if selection_error(options, selected_indices) is not None:
+        return {}
+    return {idx: options[idx] for idx in selected_indices}
 
 
 def show_selected_options(selected_options: Dict[int, Option]):
@@ -37,6 +35,8 @@ def show_selected_options(selected_options: Dict[int, Option]):
     lines = [f"\n{t('ui.selected', default='Selected:')}"]
     for idx, option in selected_options.items():
         lines.append(f"  {idx + 1}. {resolve_text(option.name)}")
+        if option.detail:
+            lines.append(f"     {resolve_text(option.detail)}")
 
     emit_lines(lines)
     flush_runtime_events()

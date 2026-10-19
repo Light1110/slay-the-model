@@ -19,7 +19,7 @@ from relics.global_relics.event import (
 )
 
 
-@register_event(event_id='face_trader', acts=[1, 2], weight=100)
+@register_event(category='special', event_id='face_trader', acts=[1, 2], weight=100)
 class FaceTrader(Event):
     """Face Trader - trade HP for gold or gamble for face relics."""
     
@@ -39,6 +39,7 @@ class FaceTrader(Event):
         options = [
             Option(
                 name=LocalStr('events.face_trader.touch'),
+                detail=LocalStr('events.face_trader.touch_detail', hp=int(game_state.player.max_hp * hp_percent), gold=gold_amount),
                 actions=[
                     LoseHPAction(percent=hp_percent),
                     AddGoldAction(amount=gold_amount)
@@ -46,6 +47,7 @@ class FaceTrader(Event):
             ),
             Option(
                 name=LocalStr('events.face_trader.trade'),
+                detail=LocalStr('events.face_trader.trade_detail'),
                 actions=[
                     # Receive one of the five face relics (20% each)
                     AddRelicAction(relic=random.choice([
@@ -59,6 +61,7 @@ class FaceTrader(Event):
             ),
             Option(
                 name=LocalStr('events.face_trader.leave'),
+                detail=LocalStr('events.no_effect'),
                 actions=[]
             )
         ]

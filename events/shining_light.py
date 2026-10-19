@@ -14,7 +14,7 @@ from utils.option import Option
 from engine.game_state import game_state
 
 
-@register_event(event_id='shining_light', acts=[1], weight=100)
+@register_event(category='event', event_id='shining_light', acts=[1], weight=100)
 class ShiningLight(Event):
     """Shining Light - upgrade cards for HP."""
     
@@ -33,6 +33,7 @@ class ShiningLight(Event):
         options = [
             Option(
                 name=LocalStr('events.shining_light.enter'),
+                detail=LocalStr('events.shining_light.enter_detail', hp=int(game_state.player.max_hp * hp_percent)),
                 actions=[
                     LoseHPAction(percent=hp_percent),
                     UpgradeRandomCardAction(),
@@ -41,6 +42,7 @@ class ShiningLight(Event):
             ),
             Option(
                 name=LocalStr('events.shining_light.leave'),
+                detail=LocalStr('events.no_effect'),
                 actions=[]
             )
         ]

@@ -265,7 +265,7 @@ class ChooseExhaustCardAction(Action):
 
 @register("action")      
 class ChooseAddRandomCardAction(Action):
-    """Choose a random card to add to pile
+    """Choose once from random candidates and add independent copies to a pile.
     
     Required:
         pile (str): Card location ('deck' or 'hand')
@@ -276,19 +276,23 @@ class ChooseAddRandomCardAction(Action):
         cost_until_end_of_turn (int): Cost override for the added card until end of turn
         
     Optional:
-        None
+        copies (int): Number of copies of the selected card, default 1
+        must_select (bool): Require a selection instead of allowing skip, default False
     """
 
     cost_until_end_of_turn: Optional[int]
 
     def __init__(self, pile: str = 'hand', total: int = 3, namespace: Optional[str] = None, rarity: Optional[RarityType] = None,
-                 card_type: Optional[CardType] = None, cost_until_end_of_turn: Optional[int] = None):
+                 card_type: Optional[CardType] = None, cost_until_end_of_turn: Optional[int] = None,
+                 copies: int = 1, must_select: bool = False):
         self.pile = pile
         self.total = total
         self.namespace = namespace
         self.rarity = rarity
         self.card_type = card_type
         self.cost_until_end_of_turn = cost_until_end_of_turn
+        self.copies = copies
+        self.must_select = must_select
     
     def execute(self) -> None:
         from engine.game_state import game_state
@@ -318,7 +322,8 @@ class ChooseAddRandomCardAction(Action):
                 Option(
                     name = option,
                     actions = [
-                        AddCardAction(card=random_card, dest_pile=self.pile),
+                        AddCardAction(card=random_card.copy(), dest_pile=self.pile)
+                        for _ in range(self.copies)
                     ]
                 )
             )
@@ -328,7 +333,7 @@ class ChooseAddRandomCardAction(Action):
             title = LocalStr("ui.choose_random_card_to_add"),
             options = options,
             max_select = 1,
-            must_select = False,  # Allow skipping if none of the options are desirable.
+            must_select = self.must_select,
         )
         add_action(select_action, to_front=True)
 
@@ -477,7 +482,7 @@ class ChooseDiscardCardAction(Action):
             InputRequestAction(
                 title=LocalStr("ui.choose_cards_to_move"),
                 options=options,
-                max_select=self.amount,
+                max_select=min(self.amount, len(options)) if self.amount != -1 else -1,
                 must_select=self.must_select,
             ),
             to_front=True,
