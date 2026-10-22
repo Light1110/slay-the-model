@@ -1,8 +1,6 @@
 """Defect Echo Form power."""
 
 from powers.base import Power, StackType
-from actions.base import LambdaAction
-from engine.runtime_api import add_action
 from utils.registry import register
 
 
@@ -15,16 +13,24 @@ class EchoFormPower(Power):
 
     def __init__(self, amount: int = 1, duration: int = -1, owner=None):
         super().__init__(amount=amount, duration=duration, owner=owner)
-        self.cards_left_this_turn = amount
+        self.cards_doubled_this_turn = 0
 
     def on_turn_start(self):
-        self.cards_left_this_turn = self.amount
+        self.cards_doubled_this_turn = 0
 
     def on_card_play(self, card, targets):
-        if self.cards_left_this_turn <= 0:
+        if getattr(card, "_is_replay", False) or self.amount <= 0:
             return
-        # Build the repeated effects only after the first play has resolved;
-        # its debuffs and threshold reactions must affect the new snapshot.
-        replay_targets = list(targets or [])
-        add_action(LambdaAction(lambda: card.on_play(targets=replay_targets)))
-        self.cards_left_this_turn -= 1
+        from engine.game_state import game_state
+
+        combat = game_state.current_combat
+        if combat is None:
+            return
+        # The shared play protocol increments this count before its use hooks.
+        # A direct hook call with no recorded play still represents card one.
+        played = max(1, combat.combat_state.turn_cards_played)
+        if played - self.cards_doubled_this_turn > self.amount:
+            return
+        from actions.autoplay import queue_replay
+        queue_replay(card)
+        self.cards_doubled_this_turn += 1

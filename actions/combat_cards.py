@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, List, Optional
 
 from actions.base import Action
 from actions.combat_damage import DealDamageAction, LoseHPAction
+from actions.card_play_lifecycle import CardPlayRequest, queue_card_play, put_in_limbo, finalize_card_play
 from entities.creature import Creature
 from localization import LocalStr
 from utils.registry import register
@@ -110,10 +111,11 @@ class RandomCardAttackAction(Action):
 class PlayCardAction(Action):
     """Resolve targets and prepare a card play."""
 
-    def __init__(self, card: "Card", is_auto: bool = False, ignore_energy: bool = False):
+    def __init__(self, card: "Card", is_auto: bool = False, ignore_energy: bool = False, *, request: CardPlayRequest | None = None):
         self.card = card
         self.is_auto = is_auto
         self.ignore_energy = ignore_energy
+        self.request = request
 
     def execute(self) -> None:
         from actions.display import InputRequestAction
@@ -125,15 +127,38 @@ class PlayCardAction(Action):
         if not self.card:
             return
 
+        request = getattr(self, "request", None)
+        if self.is_auto and request is None:
+            queue_card_play(self.card)
+            return
         can_play, reason = self.card.can_play(self.ignore_energy)
         if not can_play:
             print(f"Cannot play card: {reason}")
+            if request is not None:
+                request.cancelled = True
+                finalize_card_play(request)
             return
 
+        if (request is not None and request.targets is not None
+                and self.card.target_type == TargetType.ENEMY_SELECT):
+            targets = [target for target in request.targets
+                       if not target.is_dead() and not getattr(target, "half_dead", False)]
+            if not targets:
+                request.cancelled = True
+                finalize_card_play(request)
+                return
+            add_action(PlayCardBHAction(self.card, targets, self.ignore_energy,
+                                       request=request), to_front=True)
+            return
         if self.card.target_type == TargetType.ENEMY_SELECT and self.is_auto:
             targets = resolve_target(TargetType.ENEMY_RANDOM)
+            if not any(target is not None for target in targets):
+                if request is not None:
+                    request.cancelled = True
+                    finalize_card_play(request)
+                return
             add_action(
-                PlayCardBHAction(card=self.card, targets=targets, ignore_energy=self.ignore_energy),
+                PlayCardBHAction(card=self.card, targets=targets, ignore_energy=self.ignore_energy, request=request),
                 to_front=True,
             )
             return
@@ -154,6 +179,7 @@ class PlayCardAction(Action):
                                 card=self.card,
                                 targets=[enemy],
                                 ignore_energy=self.ignore_energy,
+                                request=request,
                             )
                         ],
                     )
@@ -174,7 +200,7 @@ class PlayCardAction(Action):
             )
             return
         add_action(
-            PlayCardBHAction(card=self.card, targets=targets, ignore_energy=self.ignore_energy),
+            PlayCardBHAction(card=self.card, targets=targets, ignore_energy=self.ignore_energy, request=request),
             to_front=True,
         )
 
@@ -183,13 +209,13 @@ class PlayCardAction(Action):
 class PlayCardBHAction(Action):
     """Finish playing a card once targets are resolved."""
 
-    def __init__(self, card: "Card", targets: List[Optional[Creature]], ignore_energy: bool = False):
+    def __init__(self, card: "Card", targets: List[Optional[Creature]], ignore_energy: bool = False, *, request: CardPlayRequest | None = None):
         self.card = card
         self.targets = targets
         self.ignore_energy = ignore_energy
+        self.request = request
 
     def execute(self) -> None:
-        from actions.card import DiscardCardAction, ExhaustCardAction
         from cards.base import COST_X
         from engine.game_state import game_state
         from engine.messages import CardPlayedMessage
@@ -200,6 +226,17 @@ class PlayCardBHAction(Action):
         current_combat = game_state.current_combat
         if player is None or current_combat is None:
             return
+        request = getattr(self, "request", None)
+        if request is None:
+            request = CardPlayRequest(self.card, is_auto=False,
+                                      ignore_energy=self.ignore_energy)
+        if request.started or request.finalized:
+            return
+        request.started = True
+        put_in_limbo(self.card)
+        if not hasattr(game_state, "active_card_plays"):
+            game_state.active_card_plays = []
+        game_state.active_card_plays.append(request)
         enemies = current_combat.enemies
         resolved_targets = [target for target in self.targets if target is not None]
         message_targets: List[Optional[Creature]] = list(resolved_targets)
@@ -211,12 +248,11 @@ class PlayCardBHAction(Action):
 
         cost = self.card.cost
         if getattr(self.card, "_cost", None) == COST_X:
-            cost = player.energy
+            cost = request.energy_on_use if request.energy_on_use is not None else player.energy
             setattr(self.card, "_x_cost_energy", cost)
         if cost > 0 and not self.ignore_energy:
             player.gain_energy(-cost)
             current_combat.combat_state.player_energy_spent_this_turn += cost
-        self.card.cost_until_played = None
 
         if len(resolved_targets) == 1:
             target = resolved_targets[0]
@@ -231,6 +267,13 @@ class PlayCardBHAction(Action):
             add_actions(play_actions)
         current_combat.combat_state.last_played_card = self.card
 
+        current_combat.combat_state.turn_cards_played += 1
+        if self.card.card_type == CardType.ATTACK:
+            current_combat.combat_state.turn_attack_cards_played += 1
+        if self.card.card_type == CardType.POWER:
+            current_combat.combat_state.power_cards_played += 1
+        current_combat.combat_state.player_actions_this_turn += 1
+
         publish_message(
             CardPlayedMessage(
                 card=self.card,
@@ -238,13 +281,6 @@ class PlayCardBHAction(Action):
                 targets=message_targets,
             )
         )
-
-        current_combat.combat_state.turn_cards_played += 1
-        if self.card.card_type == CardType.ATTACK:
-            current_combat.combat_state.turn_attack_cards_played += 1
-        if self.card.card_type == CardType.POWER:
-            current_combat.combat_state.power_cards_played += 1
-        current_combat.combat_state.player_actions_this_turn += 1
 
         card_name = self.card.display_name.resolve() if hasattr(self.card, "display_name") else str(self.card)
         print(t("combat.play_card", card=card_name))
@@ -264,27 +300,7 @@ class PlayCardBHAction(Action):
             or has_corruption
         )
 
-        prevent_exhaust = False
-        if will_exhaust:
-            for relic in player.relics:
-                hook = getattr(relic, "should_prevent_exhaust", None)
-                if not hook:
-                    continue
-                if hook(card=self.card):
-                    prevent_exhaust = True
-                    break
-
-        is_power_card = self.card.card_type == CardType.POWER
-
-        if will_exhaust and prevent_exhaust:
-            add_action(DiscardCardAction(card=self.card, trigger_effects=False))
-        elif will_exhaust:
-            add_action(ExhaustCardAction(card=self.card))
-        else:
-            if is_power_card:
-                player.card_manager.remove_from_pile(self.card, "hand")
-            else:
-                add_action(DiscardCardAction(card=self.card, trigger_effects=False))
+        request.will_exhaust = will_exhaust
 
         if should_exhaust_curse:
             hp_loss = 1

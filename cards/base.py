@@ -421,7 +421,7 @@ class Card(Localizable):
                 GainEnergyAction,
                 LoseHPAction,
             )
-            from actions.card import ExhaustCardAction, DrawCardsAction
+            from actions.card import DrawCardsAction
             
             from utils.dynamic_values import attack_base_damage, resolve_card_value
             from engine.game_state import game_state
@@ -473,9 +473,7 @@ class Card(Localizable):
                 energy_value = resolve_card_value(self, 'energy_gain')
                 actions.append(GainEnergyAction(energy=lambda: energy_value))
             
-            # 消耗
-            if self.exhaust:
-                actions.append(ExhaustCardAction(card=self, source_pile="hand"))
+            # The play request owns exhaustion after all card effects resolve.
             
             add_actions(actions)
             return

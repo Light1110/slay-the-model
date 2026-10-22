@@ -97,6 +97,8 @@ class EndTurnAction(Action):
         if game_state.current_combat is None:
             return
         game_state.current_combat.combat_state.current_phase = "player_end"
+        from actions.card_play_lifecycle import cancel_pending_card_plays
+        cancel_pending_card_plays()
         print(t("combat.end_turn"))
 
 

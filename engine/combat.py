@@ -596,6 +596,8 @@ class Combat(Localizable):
         
         # Set current combat reference
         game_state.current_combat = self
+        game_state.pending_card_plays = []
+        game_state.active_card_plays = []
         
         # Reset and setup combat state
         self.combat_state.reset_combat_info()
