@@ -39,6 +39,13 @@ class AttackAction(Action):
         self.card = card
         self.source = source
         self.cancel_on_source_death = cancel_on_source_death
+        self.damage_is_calculated = card is not None and damage_type in (DamageType.PHYSICAL, "attack")
+        if self.damage_is_calculated:
+            from utils.dynamic_values import resolve_potential_damage
+            self.damage = resolve_potential_damage(
+                damage, source, target, card=card, damage_type=damage_type,
+                for_card_snapshot=True,
+            )
 
     def execute(self) -> None:
         from engine.game_state import game_state
@@ -51,6 +58,7 @@ class AttackAction(Action):
             card=self.card,
             source=self.source,
             cancel_on_source_death=getattr(self, "cancel_on_source_death", None),
+            damage_is_calculated=getattr(self, "damage_is_calculated", False),
         )
         # DamageAction's guard also precedes attack side effects such as theft.
         # Check again inside the damage action if the source changes meanwhile.
@@ -67,6 +75,35 @@ class AttackAction(Action):
         )
 
         add_action(damage_action, to_front=True)
+
+
+@register("action")
+class RandomCardAttackAction(Action):
+    """Select a living target and recalculate the card for this hit only."""
+
+    def __init__(self, card: "Card", source: Creature):
+        self.card = card
+        self.source = source
+
+    def execute(self) -> None:
+        import random
+        from engine.game_state import game_state
+        from utils.dynamic_values import attack_base_damage
+
+        if self.source.is_dead() or getattr(self.source, "half_dead", False):
+            return
+        combat = game_state.current_combat
+        if combat is None:
+            return
+        enemies = [enemy for enemy in combat.enemies
+                   if enemy.is_alive and not enemy.half_dead]
+        if not enemies:
+            return
+        target = random.choice(enemies)
+        add_action(AttackAction(
+            attack_base_damage(self.card), target=target,
+            source=self.source, card=self.card,
+        ), to_front=True)
 
 
 @register("action")
@@ -102,7 +139,10 @@ class PlayCardAction(Action):
             return
 
         assert self.card.target_type is not None
-        targets = [target for target in resolve_target(self.card.target_type) if target is not None]
+        # Random card attacks choose per hit; resolving here consumes an extra
+        # random choice and incorrectly binds the whole card to one enemy.
+        targets = ([] if self.card.target_type == TargetType.ENEMY_RANDOM else
+                   [target for target in resolve_target(self.card.target_type) if target is not None])
         if self.card.target_type == TargetType.ENEMY_SELECT and targets:
             options = []
             for enemy in targets:
@@ -163,6 +203,10 @@ class PlayCardBHAction(Action):
         enemies = current_combat.enemies
         resolved_targets = [target for target in self.targets if target is not None]
         message_targets: List[Optional[Creature]] = list(resolved_targets)
+        if self.card.target_type == TargetType.ENEMY_RANDOM:
+            # Enemy card-play observers still see the play even though its
+            # actual attack targets will only be selected by the hit actions.
+            message_targets = [enemy for enemy in enemies if enemy.is_alive and not enemy.half_dead]
         current_combat.combat_state.last_card_targets = list(resolved_targets)
 
         cost = self.card.cost

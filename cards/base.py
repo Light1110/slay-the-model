@@ -437,7 +437,12 @@ class Card(Localizable):
             # 伤害
             if self.damage > 0:
                 hits = max(1, resolve_card_value(self, 'attack_times'))
+                if self.target_type == TargetType.ENEMY_RANDOM and source is not None:
+                    from actions.combat_cards import RandomCardAttackAction
+                    actions.extend(RandomCardAttackAction(self, source) for _ in range(hits))
                 for target in targets:
+                    if self.target_type == TargetType.ENEMY_RANDOM:
+                        break
                     for _ in range(hits):
                         # Use unified damage pipeline via AttackAction so Strength/Weak/Vulnerable etc. are applied correctly.
                         action = AttackAction(

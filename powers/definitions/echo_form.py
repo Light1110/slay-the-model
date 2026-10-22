@@ -1,6 +1,8 @@
 """Defect Echo Form power."""
 
 from powers.base import Power, StackType
+from actions.base import LambdaAction
+from engine.runtime_api import add_action
 from utils.registry import register
 
 
@@ -21,5 +23,8 @@ class EchoFormPower(Power):
     def on_card_play(self, card, targets):
         if self.cards_left_this_turn <= 0:
             return
-        card.on_play(targets=targets or [])
+        # Build the repeated effects only after the first play has resolved;
+        # its debuffs and threshold reactions must affect the new snapshot.
+        replay_targets = list(targets or [])
+        add_action(LambdaAction(lambda: card.on_play(targets=replay_targets)))
         self.cards_left_this_turn -= 1

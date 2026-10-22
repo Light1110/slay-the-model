@@ -283,12 +283,13 @@ class LoseHPAction(Action):
 class DealDamageAction(Action):
     """Deal damage to a target creature."""
 
-    def __init__(self, damage: int, target: Creature, damage_type: str | DamageType = DamageType.MAGICAL, card=None, source=None, direct: bool | None = None, *, cancel_on_source_death: bool | None = None):
+    def __init__(self, damage: int, target: Creature, damage_type: str | DamageType = DamageType.MAGICAL, card=None, source=None, direct: bool | None = None, *, cancel_on_source_death: bool | None = None, damage_is_calculated: bool = False):
         self.damage = damage
         self.target = target
         self.damage_type = _normalize_damage_type(damage_type, direct=bool(direct))
         self.card = card
         self.source = source
+        self.damage_is_calculated = damage_is_calculated
         # Ordinary single-target attacks follow DamageAction's source guard.
         # AoE producers opt out; magical/orb/power effects have other contracts.
         self.cancel_on_source_death = (
@@ -323,20 +324,22 @@ class DealDamageAction(Action):
             PhysicalAttackDealtMessage,
             PhysicalAttackTakenMessage,
         )
-        from utils.dynamic_values import resolve_potential_damage
+        from utils.dynamic_values import resolve_calculated_damage, resolve_potential_damage
 
         if not self.target or self.target.is_dead():
             return
         if self.should_cancel_source():
             return
 
-        damage_amount = resolve_potential_damage(
-            self.damage,
-            self.source,
-            self.target,
-            card=self.card,
-            damage_type=self.damage_type,
-        )
+        if getattr(self, "damage_is_calculated", False):
+            damage_amount = resolve_calculated_damage(
+                self.damage, self.source, self.target, self.damage_type,
+            )
+        else:
+            damage_amount = resolve_potential_damage(
+                self.damage, self.source, self.target,
+                card=self.card, damage_type=self.damage_type,
+            )
 
         block_absorbed = min(self.target.block, damage_amount)
         hp_loss = damage_amount - block_absorbed
