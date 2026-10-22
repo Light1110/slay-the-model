@@ -446,6 +446,7 @@ class Card(Localizable):
                             source=source,
                             damage_type=DamageType.PHYSICAL,
                             card=self,
+                            cancel_on_source_death=self.target_type != TargetType.ENEMY_ALL,
                         )
                         actions.append(action)
             

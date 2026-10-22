@@ -32,16 +32,30 @@ def _build_enemy_target_option_name(card: "Card", enemy: Creature) -> LocalStr:
 class AttackAction(Action):
     """Publish attack hooks before dealing damage."""
 
-    def __init__(self, damage: int, target: Creature, source: Creature, damage_type: str | DamageType = DamageType.PHYSICAL, card=None):
+    def __init__(self, damage: int, target: Creature, source: Creature, damage_type: str | DamageType = DamageType.PHYSICAL, card=None, *, cancel_on_source_death: bool | None = None):
         self.damage = damage
         self.target = target
         self.damage_type = damage_type
         self.card = card
         self.source = source
+        self.cancel_on_source_death = cancel_on_source_death
 
     def execute(self) -> None:
         from engine.game_state import game_state
         from engine.messages import AttackPerformedMessage
+
+        damage_action = DealDamageAction(
+            self.damage,
+            target=self.target,
+            damage_type=self.damage_type,
+            card=self.card,
+            source=self.source,
+            cancel_on_source_death=getattr(self, "cancel_on_source_death", None),
+        )
+        # DamageAction's guard also precedes attack side effects such as theft.
+        # Check again inside the damage action if the source changes meanwhile.
+        if damage_action.should_cancel_source():
+            return
 
         publish_message(
             AttackPerformedMessage(
@@ -52,13 +66,6 @@ class AttackAction(Action):
             )
         )
 
-        damage_action = DealDamageAction(
-            self.damage,
-            target=self.target,
-            damage_type=self.damage_type,
-            card=self.card,
-            source=self.source,
-        )
         add_action(damage_action, to_front=True)
 
 

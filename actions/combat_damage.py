@@ -6,7 +6,7 @@ from actions.base import Action
 from entities.creature import Creature
 from localization import LocalStr, t
 from utils.registry import register
-from utils.types import DamageType
+from utils.types import DamageType, TargetType
 if TYPE_CHECKING:
     from enemies.base import Enemy
 
@@ -283,12 +283,33 @@ class LoseHPAction(Action):
 class DealDamageAction(Action):
     """Deal damage to a target creature."""
 
-    def __init__(self, damage: int, target: Creature, damage_type: str | DamageType = DamageType.MAGICAL, card=None, source=None, direct: bool | None = None):
+    def __init__(self, damage: int, target: Creature, damage_type: str | DamageType = DamageType.MAGICAL, card=None, source=None, direct: bool | None = None, *, cancel_on_source_death: bool | None = None):
         self.damage = damage
         self.target = target
         self.damage_type = _normalize_damage_type(damage_type, direct=bool(direct))
         self.card = card
         self.source = source
+        # Ordinary single-target attacks follow DamageAction's source guard.
+        # AoE producers opt out; magical/orb/power effects have other contracts.
+        self.cancel_on_source_death = (
+            self.damage_type == DamageType.PHYSICAL and getattr(card, "target_type", None) != TargetType.ENEMY_ALL
+            if cancel_on_source_death is None else cancel_on_source_death
+        )
+
+    def should_cancel_source(self) -> bool:
+        """Check the current source, including temporary zero-HP phases."""
+        # Pickled queues from before this policy field was added retain their
+        # known card AoE contract instead of failing or gaining a new guard.
+        cancel_on_source_death = getattr(
+            self, "cancel_on_source_death",
+            self.damage_type == DamageType.PHYSICAL and getattr(self.card, "target_type", None) != TargetType.ENEMY_ALL,
+        )
+        return (
+            cancel_on_source_death
+            and self.damage_type != DamageType.THORNS
+            and isinstance(self.source, Creature)
+            and (self.source.is_dead() or bool(getattr(self.source, "half_dead", False)))
+        )
 
     def execute(self) -> None:
         from enemies.base import Enemy
@@ -305,6 +326,8 @@ class DealDamageAction(Action):
         from utils.dynamic_values import resolve_potential_damage
 
         if not self.target or self.target.is_dead():
+            return
+        if self.should_cancel_source():
             return
 
         damage_amount = resolve_potential_damage(

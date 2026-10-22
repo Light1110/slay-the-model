@@ -64,6 +64,7 @@ class Whirlwind(Card):
                         damage_type=DamageType.PHYSICAL,
                         card=self,
                         source=game_state.player,
+                        cancel_on_source_death=False,
                     )
                 )
         from engine.game_state import game_state
