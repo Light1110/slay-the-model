@@ -76,7 +76,9 @@ class Enemy(Creature):
 
     @Creature.hp.setter
     def hp(self, value: int) -> None:
-        Creature.hp.fset(self, value)
+        set_hp = Creature.hp.fset
+        assert set_hp is not None
+        set_hp(self, value)
         if self._hp > 0:
             self._hp_depletion_handled = False
             self._death_notified = False

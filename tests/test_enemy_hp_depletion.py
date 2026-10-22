@@ -116,7 +116,9 @@ def test_half_dead_collapse_triggers_explosion_before_power_cleanup(kind, enemy_
     assert len(collapse) == 1 and collapse[0].half_dead
     assert not any(isinstance(m, CreatureDiedMessage) and m.creature is target for m in messages)
     assert not any(isinstance(m, FatalDamageMessage) and m.target is target for m in messages)
-    assert helper.game_state.current_combat._check_combat_end() is None
+    combat = helper.game_state.current_combat
+    assert combat is not None
+    assert combat._check_combat_end() is None
 
     kill(helper, target, "hp_loss")
     kill(helper, target, "attack")
@@ -135,7 +137,9 @@ def test_fungi_death_reaction_runs_once_for_every_kill_path(kind, monkeypatch):
         target.add_power(PoisonPower(amount=3, duration=3, owner=target))
     kill(helper, target, kind)
     kill(helper, target, "hp_loss")
-    assert helper.game_state.player.get_power("Vulnerable").amount == 2
+    vulnerable = helper.game_state.player.get_power("Vulnerable")
+    assert vulnerable is not None
+    assert vulnerable.amount == 2
     assert sum(isinstance(m, CreatureDiedMessage) and m.creature is target for m in messages) == 1
 
 
@@ -171,7 +175,9 @@ def test_link_survives_power_cleanup_and_reincarnation():
     kill(helper, second, "hp_loss")
     # The revived sibling has no Life Link power, but is still a Darkling.
     assert second.half_dead and not second.is_dead()
-    assert helper.game_state.current_combat._check_combat_end() is None
+    combat = helper.game_state.current_combat
+    assert combat is not None
+    assert combat._check_combat_end() is None
 
 
 def test_last_darkling_collapse_finalizes_group_without_repeating_reactions(monkeypatch):
@@ -186,7 +192,9 @@ def test_last_darkling_collapse_finalizes_group_without_repeating_reactions(monk
         assert sum(isinstance(m, EnemyHpDepletedMessage) and m.creature is enemy for m in messages) == 1
         assert sum(isinstance(m, CreatureDiedMessage) and m.creature is enemy for m in messages) == 1
     assert sum(isinstance(m, FatalDamageMessage) for m in messages) == 1
-    assert helper.game_state.current_combat._check_combat_end() == GameTerminalState.COMBAT_WIN
+    combat = helper.game_state.current_combat
+    assert combat is not None
+    assert combat._check_combat_end() == GameTerminalState.COMBAT_WIN
 
 
 def test_chained_explosions_do_not_repeat_or_trigger_a_living_owners_power(monkeypatch):
@@ -207,7 +215,9 @@ def test_chained_explosions_do_not_repeat_or_trigger_a_living_owners_power(monke
     for enemy in enemies[:3]:
         assert sum(isinstance(m, EnemyHpDepletedMessage) and m.creature is enemy for m in messages) == 1
         assert sum(isinstance(m, CreatureDiedMessage) and m.creature is enemy for m in messages) == 1
-    assert helper.game_state.current_combat._check_combat_end() is None
+    combat = helper.game_state.current_combat
+    assert combat is not None
+    assert combat._check_combat_end() is None
 
 
 def test_poison_death_does_not_grant_a_hand_cards_fatal_reward():

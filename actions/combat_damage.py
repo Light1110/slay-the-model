@@ -80,26 +80,29 @@ def _resolve_enemy_hp_depletion(
 
     if not isinstance(target, Enemy) or previous_hp <= 0 or target.hp > 0:
         return
-    if getattr(target, "_hp_depletion_handled", False):
+    # The untyped registry decorator prevents static isinstance narrowing.
+    # The runtime guard above establishes the enemy lifecycle contract.
+    enemy_target = cast(Enemy, target)
+    if getattr(enemy_target, "_hp_depletion_handled", False):
         return
 
     # Mark before dispatch: reactions may queue further damage or chain kills.
-    target._hp_depletion_handled = True
-    target.on_hp_depleted()
+    enemy_target._hp_depletion_handled = True
+    enemy_target.on_hp_depleted()
     publish_message(EnemyHpDepletedMessage(
-        creature=target, source=source, card=card, damage_type=damage_type,
-        half_dead=target.half_dead,
+        creature=enemy_target, source=source, card=card, damage_type=damage_type,
+        half_dead=enemy_target.half_dead,
     ))
-    target.after_hp_depleted()
+    enemy_target.after_hp_depleted()
 
-    if target.is_dead() and not getattr(target, "_death_notified", False):
-        target._death_notified = True
+    if enemy_target.is_dead() and not getattr(enemy_target, "_death_notified", False):
+        enemy_target._death_notified = True
         publish_message(FatalDamageMessage(
-            target=target, amount=amount, source=source, card=card,
+            target=enemy_target, amount=amount, source=source, card=card,
             damage_type=damage_type,
         ))
         publish_message(CreatureDiedMessage(
-            creature=target, source=source, card=card, damage_type=damage_type,
+            creature=enemy_target, source=source, card=card, damage_type=damage_type,
         ))
 
     # The last linked enemy collapsing can make earlier half-dead enemies
@@ -107,7 +110,7 @@ def _resolve_enemy_hp_depletion(
     # and must not receive another killing-blow reward for this damage.
     combat = game_state.current_combat
     for enemy in list(combat.enemies) if combat is not None else []:
-        if (enemy is not target and getattr(enemy, "_hp_depletion_handled", False)
+        if (enemy is not enemy_target and getattr(enemy, "_hp_depletion_handled", False)
                 and enemy.is_dead() and not getattr(enemy, "_death_notified", False)):
             enemy._death_notified = True
             publish_message(CreatureDiedMessage(
