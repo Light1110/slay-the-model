@@ -208,15 +208,11 @@ class LizardTail(Relic):
         self.rarity = RarityType.RARE
         self.can_revive = True
 
-    def on_death(self, damage, source, player):
-        """Revive when would die"""
-        from engine.game_state import game_state
-        if self.can_revive:
+    def revive(self, player) -> None:
+        """Heal immediately so queued attacks observe the revived player."""
+        if self.can_revive and player.hp <= 0:
+            HealAction(target=player, amount=max(1, player.max_hp // 2)).execute()
             self.can_revive = False
-            from engine.game_state import game_state
-            add_actions([HealAction(target=player, amount=player.max_hp // 2)])
-            return
-        return
 @register("relic")
 class Mango(Relic):
     """Upon pickup, raise your Max HP by 14."""

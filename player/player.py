@@ -1,5 +1,5 @@
 from engine.runtime_api import add_action, add_actions
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, cast
 
 from entities import Creature
 from player.card_manager import CardManager
@@ -53,6 +53,28 @@ class Player(Creature):
 
         # Draw count (base, can be modified by relics/powers)
         self.base_draw_count = 5
+
+    def try_revive(self) -> bool:
+        """Resolve one lethal hit before death notifications or the next action."""
+        from potions.global_potions import FairyInABottle
+        from relics.global_relics.rare import LizardTail
+
+        if self.hp > 0 or any(getattr(relic, "idstr", None) == "MarkOfBloom" for relic in self.relics):
+            return False
+
+        for potion in list(self.potions):
+            if isinstance(potion, FairyInABottle):
+                fairy = cast(FairyInABottle, potion)
+                fairy.on_use([self])
+                return self.hp > 0
+
+        for relic in self.relics:
+            if isinstance(relic, LizardTail):
+                tail = cast(LizardTail, relic)
+                if tail.can_revive:
+                    tail.revive(self)
+                    return self.hp > 0
+        return False
 
     def on_death(self):
         """Handle player death by setting game over phase."""

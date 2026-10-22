@@ -118,6 +118,42 @@ def _resolve_enemy_hp_depletion(
             ))
 
 
+def _publish_death_notifications(
+    target: Creature,
+    amount: int,
+    source=None,
+    card=None,
+    damage_type: str | DamageType = DamageType.MAGICAL,
+) -> None:
+    from engine.messages import CreatureDiedMessage, FatalDamageMessage
+
+    publish_message(FatalDamageMessage(
+        target=target, amount=amount, source=source, card=card,
+        damage_type=damage_type,
+    ))
+    publish_message(CreatureDiedMessage(
+        creature=target, source=source, card=card, damage_type=damage_type,
+    ))
+
+
+def _resolve_player_hp_depletion(
+    target: Creature,
+    previous_hp: int,
+    amount: int,
+    source=None,
+    card=None,
+    damage_type: str | DamageType = DamageType.MAGICAL,
+) -> None:
+    """Complete revival synchronously, or notify actual player death once."""
+    from player.player import Player
+
+    if not isinstance(target, Player) or previous_hp <= 0 or target.hp > 0:
+        return
+    if target.try_revive():
+        return
+    _publish_death_notifications(target, amount, source, card, damage_type)
+
+
 @register("action")
 class HealAction(Action):
     """Heal a creature for a specified amount or percentage."""
@@ -182,6 +218,12 @@ class LoseHPAction(Action):
 
         lose_target = self.target if self.target else game_state.player
 
+        # A defeated player cannot consume another revival item or die twice.
+        # Enemy zero-HP reactions retain their separate half-dead protocol.
+        from player.player import Player
+        if isinstance(lose_target, Player) and lose_target.is_dead():
+            return
+
         if lose_target:
             if self.percent is not None:
                 hp_loss = int(lose_target.max_hp * self.percent)
@@ -231,6 +273,10 @@ class LoseHPAction(Action):
                 lose_target, old_hp, lost, source=self.source, card=self.card,
                 damage_type=DamageType.HP_LOSS,
             )
+            _resolve_player_hp_depletion(
+                lose_target, old_hp, lost, source=self.source, card=self.card,
+                damage_type=DamageType.HP_LOSS,
+            )
 
 
 @register("action")
@@ -246,6 +292,7 @@ class DealDamageAction(Action):
 
     def execute(self) -> None:
         from enemies.base import Enemy
+        from player.player import Player
         from engine.game_state import game_state
         from engine.messages import (
             AnyHpLostMessage,
@@ -339,23 +386,15 @@ class DealDamageAction(Action):
                 self.target, old_hp, damage_dealt, source=self.source,
                 card=self.card, damage_type=self.damage_type,
             )
-        elif self.target.is_dead():
-            publish_message(
-                FatalDamageMessage(
-                    amount=damage_dealt,
-                    target=self.target,
-                    source=self.source,
-                    card=self.card,
-                    damage_type=self.damage_type,
-                )
+        elif isinstance(self.target, Player):
+            _resolve_player_hp_depletion(
+                self.target, old_hp, damage_dealt, source=self.source,
+                card=self.card, damage_type=self.damage_type,
             )
-            publish_message(
-                CreatureDiedMessage(
-                    creature=self.target,
-                    source=self.source,
-                    card=self.card,
-                    damage_type=self.damage_type,
-                )
+        elif self.target.is_dead():
+            _publish_death_notifications(
+                self.target, damage_dealt, source=self.source,
+                card=self.card, damage_type=self.damage_type,
             )
 
 
