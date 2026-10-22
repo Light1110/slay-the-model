@@ -184,7 +184,14 @@ def test_awakened_one_rebirth_preserves_buffs_but_clears_curiosity_and_debuffs()
     helper.start_combat([boss])
     boss.add_power(WeakPower(duration=1, owner=boss))
     boss.add_power(StrengthPower(amount=3, owner=boss))
-    boss.hp = 0
+    from actions.combat_damage import DealDamageAction
+    DealDamageAction(boss.hp, boss).execute()
+    helper.game_state.drive_actions()
+
+    # Debuffs and Curiosity are removed on collapse, before the rebirth turn.
+    assert boss.get_power("Curiosity") is None
+    assert boss.get_power("Weak") is None
+    assert boss.half_dead
 
     boss.intentions["Rebirth"].execute()
 

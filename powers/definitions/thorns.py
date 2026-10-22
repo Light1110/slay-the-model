@@ -41,6 +41,6 @@ class ThornsPower(Power):
                     source=self.owner,
                     damage_type=DamageType.THORNS,
                 )
-            ])
+            ], to_front=True)
             return
         return

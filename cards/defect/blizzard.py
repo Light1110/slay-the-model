@@ -34,4 +34,4 @@ class Blizzard(Card):
         from engine.runtime_api import add_action
 
         for target in targets:
-            add_action(AttackAction(damage=self.damage, target=target, source=game_state.player, damage_type=DamageType.PHYSICAL, card=self))
+            add_action(AttackAction(damage=self.damage, target=target, source=game_state.player, damage_type=DamageType.PHYSICAL, card=self, cancel_on_source_death=False))

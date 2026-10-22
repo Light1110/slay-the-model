@@ -520,8 +520,19 @@ class FairyInABottle(Potion):
         super().__init__()
         self._amount = 30  # Sacred Bark doubles to 60 (percentage)
 
+    def can_use(self, targets) -> bool:
+        """Only the lethal-damage resolver may use this passive potion."""
+        return False
+
     def on_use(self, targets) -> None:
-        self.queue_actions([HealAction(target=targets[0], amount=int(targets[0].max_hp * (self.amount / 100.0)))])
+        player = targets[0]
+        amount = max(1, int(player.max_hp * (self.amount / 100.0)))
+        HealAction(target=player, amount=amount).execute()
+        # Passive revival consumes this exact bottle, preserving slot order.
+        for index, potion in enumerate(player.potions):
+            if potion is self:
+                del player.potions[index]
+                break
 
 @register("potion")
 class FruitJuice(Potion):

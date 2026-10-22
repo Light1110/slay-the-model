@@ -56,20 +56,13 @@ class SoulStrike(Intention):
         from engine.game_state import game_state
         add_actions(actions)
 class Rebirth(Intention):
-    """Heals to full HP. Removes all debuffs. Loses 1 Curiosity."""
+    """Restore HP and enter phase two after the zero-HP cleanup."""
     
     def __init__(self, enemy):
         super().__init__("Rebirth", enemy)
     
     def execute(self) -> None:
         """Execute the intention."""
-        self.enemy.powers = [
-            power
-            for power in self.enemy.powers
-            if getattr(power, "is_buff", True)
-            and getattr(power, "name", "") not in {"Curiosity", "Unawakened", "Shackled"}
-        ]
-
         # Heal to full HP
         self.enemy.heal(self.enemy.max_hp)
         # Switch to phase 2

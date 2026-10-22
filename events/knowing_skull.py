@@ -5,12 +5,11 @@ from actions.combat import LoseHPAction
 from actions.display import DisplayTextAction, InputRequestAction
 from actions.reward import AddGoldAction, AddRandomPotionAction
 from engine.game_state import game_state
-from engine.runtime_api import add_actions, set_terminal_state
+from engine.runtime_api import add_actions
 from events.base_event import Event
 from events.event_pool import register_event
 from localization import LocalStr
 from utils.option import Option
-from utils.result_types import GameTerminalState
 from utils.types import RarityType
 
 
@@ -70,7 +69,9 @@ class KnowingSkull(Event):
             return
         if player.is_dead():
             self.end_event()
-            set_terminal_state(GameTerminalState.GAME_LOSE)
+            # LoseHPAction has already queued the formal death action. Let it
+            # finish after this callback instead of leaving it behind a second
+            # terminal result from the event.
             return
         if choice == 'leave':
             self.end_event()
