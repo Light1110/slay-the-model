@@ -224,6 +224,13 @@ class RuntimeContext:
                 for pile_card in list(card_manager.get_pile(pile_name) or []):
                     add_participant(pile_card)
 
+        if type(message).__name__ == "EnemyHpDepletedMessage":
+            # Half-dead transitions notify the owner's powers before cleanup,
+            # without invoking the creature's permanent-death handler.
+            for power in list(getattr(message.creature, "powers", [])):
+                add_participant(power)
+            return participants
+
         if type(message).__name__ == "CreatureDiedMessage":
             add_creature(getattr(message, "creature", None))
             add_participant(getattr(message, "card", None))

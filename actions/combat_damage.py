@@ -65,6 +65,56 @@ def _localize_character_name(raw_name: str) -> str:
     return raw_name
 
 
+def _resolve_enemy_hp_depletion(
+    target: Creature,
+    previous_hp: int,
+    amount: int,
+    source=None,
+    card=None,
+    damage_type: str | DamageType = DamageType.MAGICAL,
+) -> None:
+    """Resolve one enemy collapse before deciding permanent death notifications."""
+    from enemies.base import Enemy
+    from engine.game_state import game_state
+    from engine.messages import EnemyHpDepletedMessage, CreatureDiedMessage, FatalDamageMessage
+
+    if not isinstance(target, Enemy) or previous_hp <= 0 or target.hp > 0:
+        return
+    if getattr(target, "_hp_depletion_handled", False):
+        return
+
+    # Mark before dispatch: reactions may queue further damage or chain kills.
+    target._hp_depletion_handled = True
+    target.on_hp_depleted()
+    publish_message(EnemyHpDepletedMessage(
+        creature=target, source=source, card=card, damage_type=damage_type,
+        half_dead=target.half_dead,
+    ))
+    target.after_hp_depleted()
+
+    if target.is_dead() and not getattr(target, "_death_notified", False):
+        target._death_notified = True
+        publish_message(FatalDamageMessage(
+            target=target, amount=amount, source=source, card=card,
+            damage_type=damage_type,
+        ))
+        publish_message(CreatureDiedMessage(
+            creature=target, source=source, card=card, damage_type=damage_type,
+        ))
+
+    # The last linked enemy collapsing can make earlier half-dead enemies
+    # permanently dead. They already ran their power reactions on collapse,
+    # and must not receive another killing-blow reward for this damage.
+    combat = game_state.current_combat
+    for enemy in list(combat.enemies) if combat is not None else []:
+        if (enemy is not target and getattr(enemy, "_hp_depletion_handled", False)
+                and enemy.is_dead() and not getattr(enemy, "_death_notified", False)):
+            enemy._death_notified = True
+            publish_message(CreatureDiedMessage(
+                creature=enemy, source=source, card=None, damage_type=damage_type,
+            ))
+
+
 @register("action")
 class HealAction(Action):
     """Heal a creature for a specified amount or percentage."""
@@ -174,6 +224,10 @@ class LoseHPAction(Action):
                     card=self.card,
                 )
             )
+            _resolve_enemy_hp_depletion(
+                lose_target, old_hp, lost, source=self.source, card=self.card,
+                damage_type=DamageType.HP_LOSS,
+            )
 
 
 @register("action")
@@ -221,6 +275,7 @@ class DealDamageAction(Action):
             print(t("combat.buffer_prevented", default="{target_name}'s Buffer prevented the damage!", target_name=target_name))
             return
 
+        old_hp = self.target.hp
         damage_dealt = self.target.take_damage(
             damage_amount,
             source=self.source,
@@ -276,7 +331,12 @@ class DealDamageAction(Action):
 
         if isinstance(self.target, Enemy) and self.target.is_dead():
             print(t("combat.enemy_killed", default="Enemy {target_name} has been defeated!", target_name=target_name))
-        if self.target.is_dead():
+        if isinstance(self.target, Enemy):
+            _resolve_enemy_hp_depletion(
+                self.target, old_hp, damage_dealt, source=self.source,
+                card=self.card, damage_type=self.damage_type,
+            )
+        elif self.target.is_dead():
             publish_message(
                 FatalDamageMessage(
                     amount=damage_dealt,

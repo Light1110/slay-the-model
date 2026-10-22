@@ -305,6 +305,17 @@ class ScryMessage(GameMessage):
 
 
 @dataclass(frozen=True)
+class EnemyHpDepletedMessage(GameMessage):
+    """An enemy has reached zero HP, including a temporary half-dead phase."""
+
+    creature: "Creature"
+    source: Any = None
+    card: Optional["Card"] = None
+    damage_type: str = "direct"
+    half_dead: bool = False
+
+
+@dataclass(frozen=True)
 class CreatureDiedMessage(GameMessage):
     """A creature has already died."""
 
@@ -325,6 +336,7 @@ EXPLICIT_SUBSCRIPTION_MESSAGE_TYPES = (
     CombatEndedMessage,
     CombatStartedMessage,
     CreatureDiedMessage,
+    EnemyHpDepletedMessage,
     DamageDealtMessage,
     FatalDamageMessage,
     DirectHpLossMessage,

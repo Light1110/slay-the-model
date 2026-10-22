@@ -128,13 +128,24 @@ class Darkling(Enemy):
         self._consecutive_chomp = 0
         self._consecutive_harden = 0
 
-    def on_any_hp_lost(self, amount: int, source=None, card=None):
-        """Check if HP reaches 0 to start regrowing."""
-        if self.hp <= 0:
-            self.hp = 0
-            self._is_regrowing = True
-            self.current_intention = self.intentions["Regrowing..."]
-        return
+    @property
+    def half_dead(self) -> bool:
+        return self._is_regrowing and self.hp <= 0 and not self.is_dead()
+
+    def on_hp_depleted(self) -> None:
+        self._is_regrowing = True
+        self.current_intention = self.intentions["Regrowing..."]
+
+    def after_hp_depleted(self) -> None:
+        self.powers.clear()
+        if self.is_dead():
+            from engine.game_state import game_state
+
+            combat = game_state.current_combat
+            for enemy in combat.enemies if combat is not None else [self]:
+                if isinstance(enemy, Darkling) and enemy.hp <= 0:
+                    enemy._is_regrowing = False
+                    enemy.current_intention = None
     def is_dead(self) -> bool:
         """Darkling only dies when no other linked enemy is alive."""
         if self.hp > 0:
@@ -149,7 +160,9 @@ class Darkling(Enemy):
         for enemy in combat.enemies:
             if enemy is self:
                 continue
-            if enemy.hp > 0 and enemy.has_power("Life Link"):
+            # The Life Link power is cleared on collapse; group membership
+            # must survive that cleanup and a subsequent reincarnation.
+            if isinstance(enemy, Darkling) and enemy.hp > 0:
                 return False
         return True
 

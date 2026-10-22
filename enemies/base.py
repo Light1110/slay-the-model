@@ -70,6 +70,27 @@ class Enemy(Creature):
         self.intentions: Dict[str, 'Intention'] = {}
         self.current_intention: Optional['Intention'] = None
         self.history_intentions: List[str] = []
+
+        self._hp_depletion_handled = False
+        self._death_notified = False
+
+    @Creature.hp.setter
+    def hp(self, value: int) -> None:
+        Creature.hp.fset(self, value)
+        if self._hp > 0:
+            self._hp_depletion_handled = False
+            self._death_notified = False
+
+    @property
+    def half_dead(self) -> bool:
+        """Whether zero HP is a temporary phase rather than permanent death."""
+        return False
+
+    def on_hp_depleted(self) -> None:
+        """Enter any temporary zero-HP phase before power death reactions."""
+
+    def after_hp_depleted(self) -> None:
+        """Perform species-specific cleanup after power death reactions."""
     
     @property
     def name(self) -> BaseLocalStr:

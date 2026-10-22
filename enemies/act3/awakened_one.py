@@ -85,12 +85,21 @@ class AwakenedOne(Enemy):
         """
         return self._phase == 2 and self.hp <= 0
 
-    def on_any_hp_lost(self, amount: int, source=None, card=None) -> None:
-        """Check for phase transition."""
-        # Trigger rebirth when HP reaches 0 in phase 1
-        if self._phase == 1 and self.hp <= 0:
-            self.hp = 0  # Keep at 0, rebirth will heal
+    @property
+    def half_dead(self) -> bool:
+        return self._phase == 1 and self.hp <= 0
+
+    def on_hp_depleted(self) -> None:
+        if self.half_dead:
             self.current_intention = self.intentions["Rebirth"]
+
+    def after_hp_depleted(self) -> None:
+        if self.half_dead:
+            self.powers = [
+                power for power in self.powers
+                if getattr(power, "is_buff", True)
+                and getattr(power, "name", "") not in {"Curiosity", "Unawakened", "Shackled"}
+            ]
     
     def determine_next_intention(self, floor: int) -> Optional[str]:
         """Determine the next intention based on AI pattern."""

@@ -93,9 +93,8 @@ class TestSilentFinalBatch:
         card = CorpseExplosion()
         self.helper.add_card_to_hand(card)
         assert self.helper.play_card(card, target=enemy_a)
-        enemy_a.hp = 0
-        from engine.messages import CreatureDiedMessage
-        self.helper.game_state.publish_message(CreatureDiedMessage(creature=enemy_a, source=self.player))
+        from actions.combat_damage import DealDamageAction
+        DealDamageAction(enemy_a.hp, enemy_a, source=self.player).execute()
         self.helper.game_state.drive_actions()
         assert enemy_b.hp == 10
 

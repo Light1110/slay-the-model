@@ -32,5 +32,5 @@ class CorpseExplosion(Card):
         poison = self.get_magic_value("poison")
         add_actions([
             ApplyPowerAction(PoisonPower(amount=poison, duration=poison, owner=target), target),
-            ApplyPowerAction(CorpseExplosionPower(owner=target), target),
+            ApplyPowerAction(CorpseExplosionPower(amount=1, owner=target), target),
         ])
