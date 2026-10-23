@@ -33,6 +33,9 @@ def _build_enemy_target_option_name(card: "Card", enemy: Creature) -> LocalStr:
 class AttackAction(Action):
     """Publish attack hooks before dealing damage."""
 
+    preserve_after_combat = True
+    damage_action_type = DealDamageAction
+
     def __init__(self, damage: int, target: Creature, source: Creature, damage_type: str | DamageType = DamageType.PHYSICAL, card=None, *, cancel_on_source_death: bool | None = None):
         self.damage = damage
         self.target = target
@@ -52,7 +55,7 @@ class AttackAction(Action):
         from engine.game_state import game_state
         from engine.messages import AttackPerformedMessage
 
-        damage_action = DealDamageAction(
+        damage_action = self.damage_action_type(
             self.damage,
             target=self.target,
             damage_type=self.damage_type,
@@ -81,6 +84,8 @@ class AttackAction(Action):
 @register("action")
 class RandomCardAttackAction(Action):
     """Select a living target and recalculate the card for this hit only."""
+
+    preserve_after_combat = True
 
     def __init__(self, card: "Card", source: Creature):
         self.card = card

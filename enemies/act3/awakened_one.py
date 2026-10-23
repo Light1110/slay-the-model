@@ -100,6 +100,9 @@ class AwakenedOne(Enemy):
                 if getattr(power, "is_buff", True)
                 and getattr(power, "name", "") not in {"Curiosity", "Unawakened", "Shackled"}
             ]
+            from actions.card_play_lifecycle import ClearPendingCardPlaysAction
+            from engine.runtime_api import add_action
+            add_action(ClearPendingCardPlaysAction(), to_front=True)
     
     def determine_next_intention(self, floor: int) -> Optional[str]:
         """Determine the next intention based on AI pattern."""

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
+from actions.base import Action
 
 from utils.types import CardType, PilePosType
 
@@ -104,6 +105,22 @@ def cancel_pending_card_plays() -> None:
     for request in pending:
         request.cancelled = True
         finalize_card_play(request)
+
+
+class ClearPendingCardPlaysAction(Action):
+    """Clear a phase transition's queue without discard/exhaust use hooks."""
+
+    def execute(self) -> None:
+        from engine.game_state import game_state
+
+        pending = list(game_state.pending_card_plays)
+        game_state.pending_card_plays = []
+        cm = game_state.player.card_manager
+        for request in pending:
+            request.cancelled = True
+            request.finalized = True
+            if cm.get_card_location(request.card) == "limbo":
+                cm.remove_from_pile(request.card, "limbo")
 
 
 def cleanup_terminal_card_plays() -> None:
