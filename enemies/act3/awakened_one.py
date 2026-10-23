@@ -103,8 +103,8 @@ class AwakenedOne(Enemy):
     
     def determine_next_intention(self, floor: int) -> Optional[str]:
         """Determine the next intention based on AI pattern."""
-        # If rebirth is queued, use it
-        if self.current_intention and self.current_intention.name == "Rebirth":
+        # Preserve rebirth only while waiting to revive, then enter phase two.
+        if self.half_dead:
             return self.intentions["Rebirth"]
         
         # Phase 1 pattern
