@@ -1,4 +1,4 @@
-"""PWR-037: enemy observers receive each player play irrespective of its target.
+"""PWR-030: enemy observers receive each player play irrespective of its target.
 
 This verifies delivery, not complete Slow or Time Warp behavior. In particular,
 their preexisting damage timing and Time Warp's Strength amount are out of scope.
