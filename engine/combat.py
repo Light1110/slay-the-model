@@ -718,11 +718,13 @@ class Combat(Localizable):
         if game_state.player.status_manager.status == StatusType.DIVINITY:
             ChangeStanceAction(StatusType.NEUTRAL).execute()
 
-        alive_enemies = [e for e in self.enemies if e.hp > 0]
+        # Half-dead enemies still need to select their revival intention.
+        # Attack target selection separately excludes creatures with zero HP.
+        turn_enemies = [e for e in self.enemies if not e.is_dead()]
         publish_message(
             PlayerTurnStartedMessage(
                 owner=game_state.player,
-                enemies=alive_enemies,
+                enemies=turn_enemies,
             )
         )
 
