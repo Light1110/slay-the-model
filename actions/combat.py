@@ -28,7 +28,12 @@ class ModifyMaxHpAction(Action):
         from engine.game_state import game_state
 
         if game_state.player:
-            game_state.player.max_hp += self.amount
+            player = game_state.player
+            old_max_hp = player.max_hp
+            player.max_hp += self.amount
+            gained = player.max_hp - old_max_hp
+            if gained > 0:
+                HealAction(amount=gained, target=player).execute()
             print(t("ui.max_hp_changed", default=f"Max HP changed by {self.amount}!", amount=self.amount))
 
 
