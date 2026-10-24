@@ -12,6 +12,8 @@ from enemies.act1.acid_slime import AcidSlimeL
 from enemies.act1.cultist import Cultist
 from enemies.act1.slime_boss import SlimeBoss
 from enemies.act1.spike_slime import SpikeSlimeL
+from player.player import Player
+from relics.base import Relic
 from relics.character.ironclad import MagicFlower
 from relics.global_relics.boss import BlackStar, BustedCrown
 from relics.global_relics.event import MarkOfBloom
@@ -20,6 +22,14 @@ from relics.global_relics.uncommon import QuestionCard, SingingBowl
 from rooms.combat import CombatRoom
 from tests.test_combat_utils import create_test_helper
 from utils.types import RarityType, RoomType
+
+
+def relic_ids(player: Player) -> list[str]:
+    ids = []
+    for relic in player.relics:
+        assert isinstance(relic, Relic)
+        ids.append(relic.idstr)
+    return ids
 
 
 @pytest.mark.parametrize('hp,loss,expected', [(30,10,30),(80,10,70),(1,80,1),(30,100,1)])
@@ -121,8 +131,10 @@ def test_elite_relic_tier_boundaries_use_live_pool(monkeypatch,roll,expected):
     monkeypatch.setattr('random.randint',lambda *args:roll)
     AddEliteRelicAction().execute()
     h.game_state.drive_actions()
-    assert len(p.relics) == 1 and p.relics[0].rarity == expected
-    assert p.relics[0].idstr in h.game_state.obtained_relics
+    assert len(p.relics) == 1
+    relic = p.relics[0]
+    assert isinstance(relic, Relic) and relic.rarity == expected
+    assert relic.idstr in h.game_state.obtained_relics
 
 
 def test_elite_relic_exhaustion_falls_through_and_excludes_owned(monkeypatch):
@@ -132,7 +144,7 @@ def test_elite_relic_exhaustion_falls_through_and_excludes_owned(monkeypatch):
     h.game_state.obtained_relics.update(list_registered('relic'))
     monkeypatch.setattr('random.randint',lambda *args:0)
     AddEliteRelicAction().execute()
-    assert [r.idstr for r in p.relics] == ['RedCirclet']
+    assert relic_ids(p) == ['RedCirclet']
 
 
 def test_elite_reward_excludes_held_relic_even_without_obtain_history(monkeypatch):
@@ -143,7 +155,7 @@ def test_elite_reward_excludes_held_relic_even_without_obtain_history(monkeypatc
     monkeypatch.setattr('random.randint', lambda *args: 0)
     AddEliteRelicAction().execute()
     assert len(p.relics) == 2
-    assert p.relics[1].idstr != 'RedSkull'
+    assert relic_ids(p)[1] != 'RedSkull'
 
 
 @pytest.mark.parametrize('black_star', [False,True])
@@ -158,12 +170,12 @@ def test_elite_rewards_are_obtained_once_and_survive_next_combat(black_star):
     h.game_state.add_actions(room._handle_victory())
     h.game_state.drive_actions()
     assert len(p.relics) == initial + (2 if black_star else 1)
-    assert len({r.idstr for r in p.relics}) == len(p.relics)
-    obtained = [r.idstr for r in p.relics]
+    assert len(set(relic_ids(p))) == len(p.relics)
+    obtained = relic_ids(p)
     room.leave()
     h.start_combat([Cultist()])
     h.game_state.drive_actions()
-    assert [r.idstr for r in p.relics] == obtained
+    assert relic_ids(p) == obtained
 
 
 @pytest.mark.parametrize('room_type', [RoomType.MONSTER,RoomType.ELITE])
