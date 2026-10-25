@@ -193,6 +193,7 @@ def test_wings_normal_move_free_and_cross_path_consumes_one(act):
     MoveToMapNodeAction(start + 2, 1).execute()
     assert boots.charges == 2
     assert manager.map_data.current_position == 1
+    assert gs.current_room is not None
     assert gs.current_room.room_type == RoomType.REST
 
 
