@@ -119,8 +119,11 @@ class AwakenedOne(Enemy):
             # Count consecutive uses
             slash_count = 0
             soul_strike_count = 0
+            last_move = self.history_intentions[-1]
             
             for move in reversed(self.history_intentions):
+                if move != last_move:
+                    break
                 if move == "Slash":
                     slash_count += 1
                 elif move == "Soul Strike":
@@ -147,8 +150,11 @@ class AwakenedOne(Enemy):
             # Count consecutive uses
             tackle_count = 0
             sludge_count = 0
+            last_move = self.history_intentions[-1]
             
             for move in reversed(self.history_intentions):
+                if move != last_move:
+                    break
                 if move == "Tackle":
                     tackle_count += 1
                 elif move == "Sludge":
