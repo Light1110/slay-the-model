@@ -6,6 +6,7 @@ from actions.combat import EndTurnAction
 from actions.combat_cards import PlayCardAction
 from actions.combat_cards import PlayCardBHAction
 from cards.colorless.burn import Burn
+from cards.base import Card
 from cards.colorless.decay import Decay
 from cards.colorless.regret import Regret
 from cards.colorless.doubt import Doubt
@@ -95,7 +96,7 @@ def test_orb_victory_cancels_burns_without_spending_saves(save, orbs):
     elif save == "tail":
         player.relics.append(tail)
     player.orb_manager.orbs[:] = [LightningOrb() for _ in range(orbs)]
-    burns = [Burn(), Burn()]
+    burns: list[Card] = [Burn(), Burn()]
     burns[1].upgrade()
     player.card_manager.piles["hand"] = burns
     assert combat._end_player_phase() is None
