@@ -1,5 +1,6 @@
 """LGT-012/CARD-029: independent snapshots and legal dynamic cost writes."""
 import pytest
+from typing import cast
 
 from actions.autoplay import make_replay_copy
 from actions.card import ChooseUpgradeCardAction, DiscardCardAction, DrawCardsAction
@@ -44,7 +45,7 @@ def test_upgrade_preview_does_not_mutate_original(factory, key, value):
     ChooseUpgradeCardAction(pile="deck").execute()
     assert original.get_magic_value(key) == before == value
     assert original.upgrade_level == 0
-    request = gs.action_queue.peek_next()
+    request = cast(InputRequestAction, gs.action_queue.peek_next())
     assert isinstance(request, InputRequestAction)
     assert '->' in str(request.options[0].name)
 
