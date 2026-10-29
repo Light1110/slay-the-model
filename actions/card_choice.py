@@ -953,7 +953,7 @@ class SetNightmarePowerAction(Action):
         from engine.game_state import game_state
         from powers.definitions.nightmare import NightmarePower
         if game_state.player is not None and self.card is not None:
-            game_state.player.add_power(NightmarePower(owner=game_state.player, stored_card=self.card.copy()))
+            game_state.player.add_power(NightmarePower(owner=game_state.player, stored_card=self.card))
 
 
 @register("action")

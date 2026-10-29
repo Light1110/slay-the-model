@@ -229,6 +229,12 @@ class DiscardCardAction(Action):
             if discarded and self.trigger_effects:
                 if game_state.current_combat is not None:
                     game_state.current_combat.combat_state.discarded_cards_this_turn += 1
+                # The original notifies the remaining hand's didDiscard hooks
+                # separately from the discarded card's own discard trigger.
+                for hand_card in list(game_state.player.card_manager.get_pile("hand")):
+                    hook = getattr(hand_card, "did_discard", None)
+                    if callable(hook):
+                        hook()
                 publish_message(
                     CardDiscardedMessage(
                         card=self.card,
