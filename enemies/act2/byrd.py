@@ -35,7 +35,6 @@ class Byrd(Enemy):
     
     def on_combat_start(self, floor: int = 1):
         """Initialize combat state."""
-        super().on_combat_start(floor)
         self._is_flying = True
         self._grounded_pattern_index = 0
         # Add 3 (4 in A7+) stacks of FlyingPower
@@ -43,6 +42,8 @@ class Byrd(Enemy):
         from engine.game_state import game_state
         flying_stacks = 4 if game_state.ascension >= 7 else 3
         self.add_power(FlyingPower(amount=flying_stacks, owner=self))
+        # The opening selector reads Flying; initialize it before selecting.
+        super().on_combat_start(floor)
     
     def determine_next_intention(self, floor: int = 1):
         """Determine next intention based on flying state and history."""

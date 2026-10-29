@@ -470,6 +470,10 @@ class Combat(Localizable):
             self.combat_state.current_phase = "enemy_end"
             return None
 
+        # An actual enemy phase consumes the opening preservation even when
+        # a component caller did not drive the initial player-start phase.
+        self.combat_state.preserve_enemy_intent_once = False
+
         # Print enemy turn header
         tui_print(f"\n{t('ui.enemy_turn', default='=== Enemy Turn ===')}")
 
@@ -607,6 +611,9 @@ class Combat(Localizable):
         
         # Reset and setup combat state
         self.combat_state.reset_combat_info()
+        # CombatStarted already selects the opening move. The first player
+        # turn must display that choice rather than advance AI/RNG again.
+        self.combat_state.preserve_enemy_intent_once = True
 
         if hasattr(game_state.player, "orb_manager"):
             game_state.player.orb_manager.clear_all()

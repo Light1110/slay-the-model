@@ -46,11 +46,11 @@ class CorruptHeart(Enemy):
         from engine.game_state import game_state
 
         ascension = getattr(game_state, "ascension", 0)
-        super().on_combat_start(floor)
         self._turn_number = 0
         self._pair_sequence = []
         self._pair_index = 0
         self._buff_count = 0
+        super().on_combat_start(floor)
         self.remove_power("Beat of Death")
         self.remove_power("Invincible")
         self.remove_power("Painful Stabs")

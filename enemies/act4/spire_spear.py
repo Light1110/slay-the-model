@@ -39,10 +39,10 @@ class SpireSpear(Enemy):
     
     def on_combat_start(self, floor: int):
         """Initialize combat state."""
-        super().on_combat_start(floor)
         self._turn_number = 0
         self._pair_sequence = []
         self._pair_index = 0
+        super().on_combat_start(floor)
     
     def on_death(self):
         """Clean up BackAttack mechanics when Spear dies."""

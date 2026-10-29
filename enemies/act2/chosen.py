@@ -32,8 +32,8 @@ class Chosen(Enemy):
     
     def on_combat_start(self, floor: int = 1):
         """Initialize combat state."""
-        super().on_combat_start(floor)
         self._turn_count = 0
+        super().on_combat_start(floor)
     
     def determine_next_intention(self, floor: int = 1):
         """Determine next intention based on pattern."""

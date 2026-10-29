@@ -35,8 +35,8 @@ class ShelledParasite(Enemy):
     
     def on_combat_start(self, floor: int = 1):
         """Initialize combat state."""
-        super().on_combat_start(floor)
         self._has_been_stunned = False
+        super().on_combat_start(floor)
         
         # Add Plated Armor x 14
         from powers.definitions.plated_armor import PlatedArmorPower

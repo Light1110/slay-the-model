@@ -26,9 +26,9 @@ class BronzeOrb(Enemy):
 
     def on_combat_start(self, floor: int):
         """Initialize combat state."""
-        super().on_combat_start(floor)
         self._has_used_steal = False
         self._beam_count = 0
+        super().on_combat_start(floor)
 
     def determine_next_intention(self, floor: int):
         """Determine next intention based on pattern.

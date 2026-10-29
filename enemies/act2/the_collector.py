@@ -63,8 +63,8 @@ class TheCollector(Enemy):
     
     def on_combat_start(self, floor: int) -> None:
         """Initialize combat state."""
-        super().on_combat_start(floor)
         self._turn_count = 0
+        super().on_combat_start(floor)
     
     def _count_torch_heads(self) -> int:
         """Count alive Torch Heads in battle."""

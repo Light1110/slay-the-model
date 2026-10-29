@@ -57,8 +57,8 @@ class AwakenedOne(Enemy):
         - Curiosity: 1 (2 on Ascension 19+)
         - Strength: 2 on Ascension 4+
         """
-        super().on_combat_start(floor)
         self._phase = 1
+        super().on_combat_start(floor)
         
         # Get ascension level from game state
         from engine.game_state import game_state

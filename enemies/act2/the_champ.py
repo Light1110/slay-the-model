@@ -87,12 +87,12 @@ class TheChamp(Enemy):
     
     def on_combat_start(self, floor: int) -> None:
         """Initialize combat state."""
-        super().on_combat_start(floor)
         self._turn_count = 0
         self._phase = 1
         self._phase_two_turn = 0
         self._anger_used = False
         self._execute_after_anger = False
+        super().on_combat_start(floor)
     
     def on_any_hp_lost(self, amount: int, source=None, card=None) -> None:
         """Check for phase transition."""
