@@ -118,7 +118,7 @@ class Combat(Localizable):
         Start combat execution.
 
         Returns:
-            Execution result: WIN / LOSE / ESCAPE
+            Execution result: WIN / LOSE / ESCAPE / EXIT
         """
         from engine.game_state import game_state
 
@@ -129,11 +129,12 @@ class Combat(Localizable):
         game_state.action_queue.add_action(DisplayTextAction(
             text_key="combat.enter"
         ))
-        game_state.drive_actions()
-
-        self.combat_state.current_phase = "player_start"
-
         try:
+            result = game_state.drive_actions()
+            if result is not None:
+                return result
+
+            self.combat_state.current_phase = "player_start"
             while True:
                 result = self._execute_next_phase()
                 if result is not None:
@@ -167,11 +168,7 @@ class Combat(Localizable):
 
         self._start_player_turn()
         result = game_state.drive_actions()
-        if result in (
-            GameTerminalState.COMBAT_WIN,
-            GameTerminalState.GAME_LOSE,
-            GameTerminalState.COMBAT_ESCAPE,
-        ):
+        if result is not None:
             return result
 
         result = self._check_combat_end()
@@ -189,11 +186,7 @@ class Combat(Localizable):
         self._build_player_action()
 
         result = game_state.drive_actions()
-        if result in (
-            GameTerminalState.COMBAT_WIN,
-            GameTerminalState.GAME_LOSE,
-            GameTerminalState.COMBAT_ESCAPE,
-        ):
+        if result is not None:
             return result
 
         result = self._check_combat_end()

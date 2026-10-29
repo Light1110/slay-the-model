@@ -78,7 +78,7 @@ class CombatRoom(Room):
             actions.append(LeaveRoomAction(room=self))
         # ESCAPE：没有reward
         
-        if result == GameTerminalState.GAME_LOSE:
+        if result in (GameTerminalState.GAME_LOSE, GameTerminalState.GAME_EXIT):
             return result
         if actions:
             add_actions(actions)
