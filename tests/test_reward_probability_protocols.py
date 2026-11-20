@@ -93,7 +93,8 @@ def test_open_chest_gold_and_existing_receipt_modifiers(role, ascension, size, b
     rng = cast(StreamRandom, get_rng("treasure"))
     rng.seed(seed)
     # Explicit gold/tier gates isolate the conditional amount protocol.
-    monkeypatch.setattr(rng, "random", lambda: 0.1)
+    monkeypatch.setattr(rng, "randint", lambda _lo, _hi: 0)
+    room.init()
     observed = []
     original = rng.random_float
 
@@ -126,7 +127,8 @@ def test_chest_without_gold_skips_amount_draw(size, monkeypatch):
     room = TreasureRoom()
     room.chest_type = size
     rng = cast(StreamRandom, get_rng("treasure"))
-    monkeypatch.setattr(rng, "random", lambda: 0.99)
+    monkeypatch.setattr(rng, "randint", lambda _lo, _hi: 99)
+    room.init()
     calls = []
     original = rng.random_float
 

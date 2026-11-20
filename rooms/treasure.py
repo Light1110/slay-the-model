@@ -11,7 +11,15 @@ from localization import LocalStr, t
 from rooms.base import Room
 from utils.option import Option
 from utils.registry import register
-from utils.types import RoomType
+from utils.types import RarityType, RoomType
+
+
+# Base gold, gold cutoff, common cutoff, cumulative uncommon cutoff.
+CHEST_REWARD_THRESHOLDS = {
+    "small": (25, 50, 75, 100),
+    "medium": (50, 35, 35, 85),
+    "large": (75, 50, 0, 75),
+}
 
 
 @register("room")
@@ -25,21 +33,38 @@ class TreasureRoom(Room):
         self.is_boss = is_boss
         self.chest_type = None
         self.chest_opened = False
+        self.chest_reward: tuple[int, RarityType] | None = None
         self._boss_relic_choices = None
         self.boss_choice_resolved = False
 
     def init(self):
-        """Initialize the treasure room"""
-        # Determine chest type
-        self._determine_chest_type()
+        """Generate the chest and its base reward together on room entry."""
+        if self.chest_opened:
+            return
+        if self.chest_type is None:
+            self._determine_chest_type()
+        # Prepared rooms and older room states can have a size without a reward.
+        if self.chest_type == "boss" or getattr(self, "chest_reward", None) is not None:
+            return
+        if self.chest_type not in CHEST_REWARD_THRESHOLDS:
+            raise ValueError(f"Invalid chest type: {self.chest_type}")
+        base_gold, gold_cutoff, common_cutoff, uncommon_cutoff = CHEST_REWARD_THRESHOLDS[self.chest_type]
+        roll = get_rng("treasure").randint(0, 99)
+        if roll < common_cutoff:
+            rarity = RarityType.COMMON
+        elif roll < uncommon_cutoff:
+            rarity = RarityType.UNCOMMON
+        else:
+            rarity = RarityType.RARE
+        self.chest_reward = (base_gold if roll < gold_cutoff else 0, rarity)
 
     def _determine_chest_type(self):
         """Determine type of chest based on random roll. Returns a chest type string."""
         if self.is_boss:
             self.chest_type = "boss"
         else:
-            roll = get_rng("treasure").random()
-            self.chest_type = "small" if roll < 0.50 else "medium" if roll < 0.83 else "large"
+            roll = get_rng("treasure").randint(0, 99)
+            self.chest_type = "small" if roll < 50 else "medium" if roll < 83 else "large"
         return self.chest_type
 
     def _get_small_chest_contents(self):

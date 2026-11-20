@@ -13,7 +13,6 @@ from utils.option import Option
 from utils.random import get_random_relic
 from utils.registry import register
 from utils.result_types import GameTerminalState
-from utils.types import RarityType
 from tui.print_utils import tui_print
 from utils.compatible_random import float32, java_round_float
 
@@ -240,6 +239,7 @@ class OpenChestAction(Action):
         if self.treasure_room.chest_opened:
             return
 
+        self.treasure_room.init()
         self.treasure_room.chest_opened = True
         chest_open_actions = self.treasure_room.get_chest_open_actions()
         empty_chest = False
@@ -267,68 +267,18 @@ class OpenChestAction(Action):
             add_actions([*chest_open_actions, ChooseBossRelicAction(room=self.treasure_room)])
             return
 
-        elif self.treasure_room.chest_type == "small":
-            actions = []
-            if get_rng("treasure").random() < 0.50:
-                gold = _chest_gold(25)
-                actions.append(AddGoldAction(amount=gold, source="treasure"))
-            if get_rng("treasure").random() < 0.75:
-                rarities = [RarityType.COMMON]
-            else:
-                rarities = [RarityType.UNCOMMON]
-            relic = get_random_relic(rarities=rarities)
-            if relic:
-                actions.append(AddRelicByNameAction(relic_id=relic.idstr))
+        base_gold, rarity = self.treasure_room.chest_reward
+        actions = []
+        if base_gold:
+            actions.append(AddGoldAction(amount=_chest_gold(base_gold), source="treasure"))
+        relic = get_random_relic(rarities=[rarity])
+        if relic:
+            actions.append(AddRelicByNameAction(relic_id=relic.idstr))
 
-            add_actions(
-                [*chest_open_actions, *actions, LeaveRoomAction(room=self.treasure_room)],
-                to_front=True,
-            )
-            return
-            
-        elif self.treasure_room.chest_type == "medium":
-            actions = []
-            if get_rng("treasure").random() < 0.35:
-                gold = _chest_gold(50)
-                actions.append(AddGoldAction(amount=gold, source="treasure"))
-            relic_random = get_rng("treasure").random()
-            if relic_random < 0.35:
-                rarities = [RarityType.COMMON]
-            elif relic_random < 0.85:
-                rarities = [RarityType.UNCOMMON]
-            else:
-                rarities = [RarityType.RARE]
-            relic = get_random_relic(rarities=rarities)
-            if relic:
-                actions.append(AddRelicByNameAction(relic_id=relic.idstr))
-
-            add_actions(
-                [*chest_open_actions, *actions, LeaveRoomAction(room=self.treasure_room)],
-                to_front=True,
-            )
-            return
-
-        elif self.treasure_room.chest_type == "large":
-            actions = []
-            if get_rng("treasure").random() < 0.50:
-                gold = _chest_gold(75)
-                actions.append(AddGoldAction(amount=gold, source="treasure"))
-            if get_rng("treasure").random() < 0.75:
-                rarities = [RarityType.UNCOMMON]
-            else:
-                rarities = [RarityType.RARE]
-            relic = get_random_relic(rarities=rarities)
-            if relic:
-                actions.append(AddRelicByNameAction(relic_id=relic.idstr))
-
-            add_actions(
-                [*chest_open_actions, *actions, LeaveRoomAction(room=self.treasure_room)],
-                to_front=True,
-            )
-            return
-        
-        else:
-            raise ValueError(f"Invalid chest type: {self.treasure_room.chest_type}")
+        add_actions(
+            [*chest_open_actions, *actions, LeaveRoomAction(room=self.treasure_room)],
+            to_front=True,
+        )
 
 
 @register("action")

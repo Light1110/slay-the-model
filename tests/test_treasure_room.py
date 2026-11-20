@@ -1,5 +1,5 @@
 """Test TreasureRoom basic functionality."""
-from engine.random_streams import get_rng, StreamRandom
+from engine.random_streams import get_rng
 import pytest
 from unittest.mock import Mock
 
@@ -30,40 +30,15 @@ class TestTreasureRoomBasic:
         assert boss_treasure.is_boss
         assert boss_treasure.room_type == RoomType.TREASURE
     
-    def test_treasure_room_init_determines_chest_type(self):
-        """Test init() determines chest type for non-boss."""
-        random = get_rng("treasure")
-        original_random = random.random
-        
-        # Mock random to test
-        def mock_random_small():
-            return 0.3
-        def mock_random_medium():
-            return 0.6
-        def mock_random_large():
-            return 0.9
-        
-        # Test small chest
-        random.random = mock_random_small
+    @pytest.mark.parametrize("roll,size", [(0, "small"), (49, "small"), (50, "medium"),
+                                          (82, "medium"), (83, "large"), (99, "large")])
+    def test_treasure_room_init_determines_chest_type(self, roll, size, monkeypatch):
+        draws = iter([roll, 99])
+        monkeypatch.setattr(get_rng("treasure"), "randint", lambda _lo, _hi: next(draws))
         treasure_room = TreasureRoom()
         treasure_room.init()
-        assert treasure_room.chest_type == "small"
-        
-        # Test medium chest
-        random.random = mock_random_medium
-        treasure_room2 = TreasureRoom()
-        treasure_room2.init()
-        assert treasure_room2.chest_type == "medium"
-        
-        # Test large chest
-        random.random = mock_random_large
-        treasure_room3 = TreasureRoom()
-        treasure_room3.init()
-        assert treasure_room3.chest_type == "large"
-        
-        # Restore
-        random.random = original_random
-    
+        assert treasure_room.chest_type == size
+
     def test_boss_treasure_chest_type(self):
         """Test boss treasure always has boss chest type."""
         boss_treasure = TreasureRoom(is_boss=True)
@@ -112,7 +87,6 @@ class TestTreasureRoomBasic:
         treasure_room = TreasureRoom()
         treasure_room.chest_type = "small"
 
-        monkeypatch.setattr(get_rng("treasure"), "random", lambda: 0.0)
         monkeypatch.setattr(get_rng("treasure"), "randint", lambda a, b: a)
         monkeypatch.setattr(misc_actions, "get_random_relic", lambda rarities=None: None)
 

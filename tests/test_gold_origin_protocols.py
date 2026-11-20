@@ -163,7 +163,8 @@ def test_actual_chest_excludes_golden_idol(size, monkeypatch):
     room = TreasureRoom()
     room.chest_type = size
     game_state.current_room = room
-    monkeypatch.setattr(get_rng('treasure'), 'random', lambda: .1)
+    monkeypatch.setattr(get_rng('treasure'), 'randint', lambda _lo, _hi: 0)
+    room.init()
     OpenChestAction(room).execute()
     action = next(action for action in game_state.action_queue.queue if isinstance(action, AddGoldAction))
     game_state.action_queue.clear()

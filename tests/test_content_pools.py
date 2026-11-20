@@ -190,7 +190,8 @@ def test_elite_and_chest_obtain_share_exhausted_pool_fallback(monkeypatch):
     AddEliteRelicAction().execute()
     room = TreasureRoom()
     room.chest_type = 'small'
-    monkeypatch.setattr(get_rng('treasure'), 'random', lambda:0.99)
+    monkeypatch.setattr(get_rng('treasure'), 'randint', lambda _lo, _hi: 99)
+    room.init()
     OpenChestAction(room).execute()
     game_state.drive_actions()
     circlets = [cast(Circlet, relic) for relic in game_state.player.relics if isinstance(relic, Circlet)]
