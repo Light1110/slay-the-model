@@ -1,7 +1,7 @@
 """
 Neo blessing event.
 """
-from engine.random_streams import get_rng
+from engine.random_streams import StreamRandom, current_streams
 from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
 from utils.result_types import GameTerminalState
 from events.event_pool import register_event
@@ -81,11 +81,9 @@ class NeoEvent(Event):
         )
     
     def _show_four_blessings(self):
-        # Original generateBlessing starts a separate RNG from the run seed.
-        from engine.random_streams import current_streams, StreamRandom
+        """Build the advanced blessing menu from its dedicated stream."""
         streams = current_streams()
-        streams.neow_rng = StreamRandom(streams.seed)
-        """Show advanced blessing options (after reaching boss)"""
+        rng = streams.neow_rng = StreamRandom(streams.seed)
         max_hp_small_increase = game_stats.neow_max_hp_small_increases.get(game_state.player.character, 0)
         max_hp_large_increase = game_stats.neow_max_hp_large_increases.get(game_state.player.character, 0)
         max_hp_small_decrease = game_stats.neow_max_hp_small_decreases.get(game_state.player.character, 0)
@@ -94,33 +92,44 @@ class NeoEvent(Event):
         # Card blessings
         card_blessings = [
             Option(
-                name=LocalStr("blessing.remove_card_option"),
-                actions=[ChooseRemoveCardAction(pile="deck", amount=1)]
+                name=LocalStr("blessing.choose_card_option"),
+                actions=[ChooseAddRandomCardAction(pile="deck", total=3, namespace=game_state.player.namespace, rarity=None, selection_kind="neow")]
             ),
             Option(
-                name=LocalStr("blessing.transform_card_option"),
-                actions=[ChooseTransformCardAction(pile="deck", amount=1)]
+                name=LocalStr("blessing.random_rare_card_option"),
+                actions=[AddRandomCardAction(pile="deck", namespace=game_state.player.character, rarity=RarityType.RARE)]
+            ),
+            Option(
+                name=LocalStr("blessing.remove_card_option"),
+                actions=[ChooseRemoveCardAction(pile="deck", amount=1)]
             ),
             Option(
                 name=LocalStr("blessing.upgrade_card_option"),
                 actions=[ChooseUpgradeCardAction(pile="deck", amount=1)]
             ),
             Option(
-                name=LocalStr("blessing.choose_card_option"),
-                actions=[ChooseAddRandomCardAction(pile="deck", total=3, namespace=game_state.player.namespace, rarity=None, selection_kind="neow")]
+                name=LocalStr("blessing.transform_card_option"),
+                actions=[ChooseTransformCardAction(pile="deck", amount=1)]
             ),
             Option(
                 name=LocalStr("blessing.uncommon_colorless_option"),
                 actions=[ChooseAddRandomCardAction(pile="deck", total=3, namespace="colorless", rarity=RarityType.UNCOMMON, selection_kind="neow")]
             ),
-            Option(
-                name=LocalStr("blessing.random_rare_card_option"),
-                actions=[AddRandomCardAction(pile="deck", namespace=game_state.player.character, rarity=RarityType.RARE)]
-            )
         ]
         
         # Non-card blessings
         non_card_blessings = [
+            Option(
+                name=LocalStr("blessing.three_random_potions_option"),
+                actions=[
+                    AddRandomPotionAction(character=game_state.player.character),
+                    AddRandomPotionAction(character=game_state.player.character)
+                ]
+            ),
+            Option(
+                name=LocalStr("blessing.random_common_relic_option"),
+                actions=[AddRandomRelicAction(rarities=[RarityType.COMMON])]
+            ),
             Option(
                 name=LocalStr("blessing.max_hp_option", amount=max_hp_small_increase),
                 actions=[ModifyMaxHpAction(amount=max_hp_small_increase)]
@@ -130,20 +139,9 @@ class NeoEvent(Event):
                 actions=[AddRelicByNameAction(relic_id="NeowsLament")]
             ),
             Option(
-                name=LocalStr("blessing.random_common_relic_option"),
-                actions=[AddRandomRelicAction(rarities=[RarityType.COMMON])]
-            ),
-            Option(
                 name=LocalStr("blessing.receive_100_gold_option"),
                 actions=[AddGoldAction(amount=100)]
             ),
-            Option(
-                name=LocalStr("blessing.three_random_potions_option"),
-                actions=[
-                    AddRandomPotionAction(character=game_state.player.character),
-                    AddRandomPotionAction(character=game_state.player.character)
-                ]
-            )
         ]
         
         # Disadvantage blessings
@@ -153,58 +151,67 @@ class NeoEvent(Event):
                 actions=[ModifyMaxHpAction(amount=-max_hp_small_decrease)]
             ),
             Option(
-                name=LocalStr("blessing.take_damage_option", amount=damage_taken),
-                actions=[LoseHPAction(amount=damage_taken)]
+                name=LocalStr("blessing.lose_all_gold_option"),
+                actions=[LoseGoldAction(amount=game_state.player.gold)]
             ),
             Option(
                 name=LocalStr("blessing.obtain_curse_option"),
                 actions=[AddRandomCardAction(pile="deck", card_type=CardType.CURSE, rarity=None)]
             ),
             Option(
-                name=LocalStr("blessing.lose_all_gold_option"),
-                actions=[LoseGoldAction(amount=game_state.player.gold)]
-            )
+                name=LocalStr("blessing.take_damage_option", amount=damage_taken),
+                actions=[LoseHPAction(amount=damage_taken)]
+            ),
         ]
         
         # Advantage blessings
         advantage_blessings = [
             Option(
-                name=LocalStr("blessing.remove_two_cards_option"),
-                actions=[ChooseRemoveCardAction(pile="deck", amount=2)]
-            ),
-            Option(
-                name=LocalStr("blessing.transform_two_cards_option"),
-                actions=[ChooseTransformCardAction(pile="deck", amount=2)]
-            ),
-            Option(
-                name=LocalStr("blessing.gain_250_gold_option"),
-                actions=[AddGoldAction(amount=250)]
-            ),
-            Option(
-                name=LocalStr("blessing.choose_rare_card_option"),
-                actions=[ChooseAddRandomCardAction(pile="deck", total=3, namespace=game_state.player.namespace, rarity=RarityType.RARE, selection_kind="neow")]
-            ),
-            Option(
                 name=LocalStr("blessing.choose_rare_colorless_card_option"),
                 actions=[ChooseAddRandomCardAction(pile="deck", total=3, namespace="colorless", rarity=RarityType.RARE, selection_kind="neow")]
+            ),
+            Option(
+                name=LocalStr("blessing.remove_two_cards_option"),
+                actions=[ChooseRemoveCardAction(pile="deck", amount=2)]
             ),
             Option(
                 name=LocalStr("blessing.random_rare_relic_option"),
                 actions=[AddRandomRelicAction(rarities=[RarityType.RARE])]
             ),
             Option(
+                name=LocalStr("blessing.choose_rare_card_option"),
+                actions=[ChooseAddRandomCardAction(pile="deck", total=3, namespace=game_state.player.namespace, rarity=RarityType.RARE, selection_kind="neow")]
+            ),
+            Option(
+                name=LocalStr("blessing.gain_250_gold_option"),
+                actions=[AddGoldAction(amount=250)]
+            ),
+            Option(
+                name=LocalStr("blessing.transform_two_cards_option"),
+                actions=[ChooseTransformCardAction(pile="deck", amount=2)]
+            ),
+            Option(
                 name=LocalStr("blessing.big_max_hp_option", amount=max_hp_large_increase),
                 actions=[ModifyMaxHpAction(amount=max_hp_large_increase)]
-            )
+            ),
         ]
         
         
-        # Randomly select one from each category
-        card_blessing = get_rng("neow").choice(card_blessings)
-        non_card_blessing = get_rng("neow").choice(non_card_blessings)
-        disadvantage_blessing = get_rng("neow").choice(disadvantage_blessings)
-        advantage_blessing = get_rng("neow").choice(advantage_blessings)
-        
+        card_blessing = rng.choice(card_blessings)
+        non_card_blessing = rng.choice(non_card_blessings)
+        disadvantage_blessing = rng.choice(disadvantage_blessings)
+        excluded_benefit = {
+            "blessing.lose_max_hp_option": "blessing.big_max_hp_option",
+            "blessing.lose_all_gold_option": "blessing.gain_250_gold_option",
+            "blessing.obtain_curse_option": "blessing.remove_two_cards_option",
+        }.get(getattr(disadvantage_blessing.name, "key", ""))
+        advantage_blessing = rng.choice([
+            option for option in advantage_blessings
+            if getattr(option.name, "key", "") != excluded_benefit
+        ])
+        # The single exchange candidate advances the stream during menu generation.
+        rng.randint(0, 0)
+
         # Mixed blessing (disadvantage + advantage)
         mixed_blessing = Option(
             name=disadvantage_blessing.name + advantage_blessing.name,
