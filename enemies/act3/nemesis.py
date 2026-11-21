@@ -1,7 +1,7 @@
 """Nemesis elite enemy - Act 3 Elite."""
-from engine.random_streams import get_rng
+from typing import cast
 
-from typing import Optional
+from engine.random_streams import StreamRandom, get_rng
 
 from enemies.act3.nemesis_intentions import (
     TriAttack,
@@ -19,76 +19,70 @@ class Nemesis(Enemy):
     Pattern:
     - First turn: 50% Tri Attack or 50% Tri Burn
     - Afterwards:
-      - Tri Burn (10% chance)
-      - Tri Attack (30% chance)
-      - Scythe (60% chance)
+      - Tri Burn (35% primary branch)
+      - Tri Attack (35% primary branch)
+      - Scythe (30% primary branch)
     - Cannot use Tri Burn or Scythe twice in a row
     - Cannot use Tri Attack three times in a row
     """
     
     enemy_type = EnemyType.ELITE
+    select_intention_after_enemy_turn = True
     
     def __init__(self):
-        super().__init__(hp_range=(185, 185)) # todo: 200 a8
+        from engine.game_state import game_state
+
+        ascension = game_state.ascension
+        hp = 200 if ascension >= 8 else 185
+        super().__init__(hp_range=(hp, hp))
         self.add_intention(TriAttack(self))
         self.add_intention(TriBurn(self))
         self.add_intention(Scythe(self))
-        self._turn_count = 0
-    
+        self.intentions["Tri Attack"].base_damage = 7 if ascension >= 3 else 6
+        self.intentions["Tri Burn"].base_amount = 5 if ascension >= 18 else 3
+        self._scythe_cooldown = 0
+
     def on_combat_start(self, floor: int):
-        """Reset state on combat start."""
-        self._turn_count = 0
+        self._scythe_cooldown = 0
         super().on_combat_start(floor)
-    
+
+    def execute_intention(self) -> None:
+        from actions.combat import ApplyPowerAction
+        from engine.runtime_api import add_action
+
+        will_gain_intangible = not self.has_power("Intangible")
+        super().execute_intention()
+        if will_gain_intangible:
+            add_action(ApplyPowerAction(IntangiblePower(duration=1, owner=self), self, source=self))
+
     def determine_next_intention(self, floor: int):
-        """Determine next intention based on Nemesis pattern."""
-        self._turn_count += 1
-        
-        # Every even turn, gain IntangiblePower (duration=1)
-        if self._turn_count % 2 == 0:
-            self.add_power(IntangiblePower(duration=1, owner=self))
-        
-        # First turn: 50% Tri Attack or 50% Tri Burn
-        if self._turn_count == 1:
-            if get_rng("ai").random() < 0.5:
-                self.current_intention = self.intentions["Tri Attack"]
+        self._scythe_cooldown -= 1
+        rng = cast(StreamRandom, get_rng("ai"))
+        roll = rng.randint(0, 99)
+        history = self.history_intentions
+        if not history:
+            return self.intentions["Tri Attack" if roll < 50 else "Tri Burn"]
+
+        last = history[-1]
+        can_tri_attack = history[-2:] != ["Tri Attack", "Tri Attack"]
+        can_scythe = self._scythe_cooldown <= 0
+        if roll < 30:
+            if last != "Scythe" and can_scythe:
+                move = "Scythe"
+            elif rng.random_boolean():
+                move = "Tri Attack" if can_tri_attack else "Tri Burn"
             else:
-                self.current_intention = self.intentions["Tri Burn"]
-            return
-        
-        # Get last move
-        last_move = self.history_intentions[-1] if self.history_intentions else None
-        
-        # Check consecutive uses
-        tri_attack_count = 0
-        for intent in reversed(self.history_intentions):
-            if intent == "Tri Attack":
-                tri_attack_count += 1
+                move = "Tri Attack" if last == "Tri Burn" else "Tri Burn"
+        elif roll < 65:
+            if can_tri_attack:
+                move = "Tri Attack"
             else:
-                break
-        
-        # Build valid options list
-        valid_options = []
-        
-        # Tri Attack: Cannot use 3 times in a row
-        if tri_attack_count < 2:
-            # 30% chance for Tri Attack
-            valid_options.extend(["Tri Attack"] * 30)
-        
-        # Tri Burn: Cannot use twice in a row
-        if last_move != "Tri Burn":
-            # 10% chance for Tri Burn
-            valid_options.extend(["Tri Burn"] * 10)
-        
-        # Scythe: Cannot use twice in a row
-        if last_move != "Scythe":
-            # 60% chance for Scythe
-            valid_options.extend(["Scythe"] * 60)
-        
-        # Random selection
-        if valid_options:
-            choice = get_rng("ai").choice(valid_options)
-            self.current_intention = self.intentions[choice]
+                move = "Scythe" if rng.random_boolean() and can_scythe else "Tri Burn"
+        elif last != "Tri Burn":
+            move = "Tri Burn"
         else:
-            # Fallback to Tri Attack if nothing valid
-            self.current_intention = self.intentions["Tri Attack"]
+            move = "Scythe" if rng.random_boolean() and can_scythe else "Tri Attack"
+
+        if move == "Scythe":
+            self._scythe_cooldown = 2
+        return self.intentions[move]

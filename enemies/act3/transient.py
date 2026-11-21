@@ -16,6 +16,7 @@ class Transient(Enemy):
     """
 
     enemy_type = EnemyType.NORMAL
+    roll_fixed_opening_intention = True
 
     def __init__(self):
         super().__init__(hp_range=(999, 999))

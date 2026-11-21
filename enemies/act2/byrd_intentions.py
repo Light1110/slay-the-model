@@ -16,8 +16,8 @@ class PeckIntention(Intention):
     
     def __init__(self, enemy: 'Enemy'):
         super().__init__("peck", enemy)
-        self.base_damage = 5
-        self.hits = 5
+        self.base_damage = 1
+        self.hits = 6 if enemy.ascension >= 2 else 5
     
     def execute(self) -> None:
         """Execute Peck: deals 1x5 damage to player."""
@@ -67,7 +67,7 @@ class SwoopIntention(Intention):
     
     def __init__(self, enemy: 'Enemy'):
         super().__init__("swoop", enemy)
-        self.base_damage = 12
+        self.base_damage = 14 if enemy.ascension >= 2 else 12
     
     def execute(self) -> None:
         """Execute Swoop: deals damage to player."""
@@ -129,20 +129,19 @@ class GoAirborneIntention(Intention):
     
     def __init__(self, enemy: 'Enemy'):
         super().__init__("go_airborne", enemy)
-        self.base_flying_gain = 3
+        self.base_flying_gain = enemy.flight_stacks
     
     def execute(self) -> None:
         """Execute Go Airborne: gains Flying status."""
         from actions.combat import ApplyPowerAction
         
-        from engine.game_state import game_state
-        add_actions(
-        [
+        self.enemy._is_flying = True
+        self.enemy._grounded_pattern_index = 0
+        add_actions([
             ApplyPowerAction(
                 power="Flying",
                 target=self.enemy,
                 amount=self.base_flying_gain,
-                duration=-1
+                duration=-1,
             )
-        ]
-        )
+        ])

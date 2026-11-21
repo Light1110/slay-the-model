@@ -7,7 +7,9 @@ Act 3 Hard Mode (Jaw Worm Horde):
 - Strength: 3 (A2+: 4, A17+: 5)
 - Block: 6 (A17+: 9)
 """
-from engine.random_streams import get_rng
+from typing import cast
+
+from engine.random_streams import StreamRandom, get_rng
 from enemies.base import Enemy
 from utils.types import EnemyType
 from enemies.act1.jaw_worm_intentions import ChompIntention, BellowIntention, ThrashIntention
@@ -21,6 +23,7 @@ class JawWorm(Enemy):
     """
     
     enemy_type = EnemyType.NORMAL
+    select_intention_after_enemy_turn = True
     
     def __init__(self, is_hard: bool = False):
         super().__init__(
@@ -56,69 +59,23 @@ class JawWorm(Enemy):
             self.gain_block(block)
     
     def determine_next_intention(self, floor: int = 1):
-        """Determine next intention based on history and floor."""
-        # First turn logic
-        if not self.history_intentions:
-            # Check if in Act 3+ (floor 17+)
-            if floor >= 17:
-                # 45% Bellow, 30% Thrash, 25% Chomp
-                roll = get_rng("ai").random()
-                if roll < 0.45:
-                    return self.intentions["bellow"]
-                elif roll < 0.75:  # 0.45 + 0.30
-                    return self.intentions["thrash"]
-                else:
-                    return self.intentions["chomp"]
-            else:
-                # Always start with Chomp in Act 1-2
-                return self.intentions["chomp"]
-        
-        # Get last intention
-        last = self.history_intentions[-1]
-        
-        # Check for consecutive Thrash
-        thrash_count = 0
-        for intention in reversed(self.history_intentions):
-            if intention == "thrash":
-                thrash_count += 1
-            else:
-                break
-        
-        # After Chomp: 59% Bellow, 41% Thrash
-        if last == "chomp":
-            roll = get_rng("ai").random()
-            if roll < 0.59:
-                return self.intentions["bellow"]
-            else:
-                return self.intentions["thrash"]
-        
-        # After Bellow: 56% Thrash, 44% Chomp
-        elif last == "bellow":
-            roll = get_rng("ai").random()
-            if roll < 0.56:
-                return self.intentions["thrash"]
-            else:
-                return self.intentions["chomp"]
-        
-        # After Thrash
-        elif last == "thrash":
-            # If Thrash used 2 times in a row
-            if thrash_count >= 2:
-                # 64% Bellow, 36% Chomp
-                roll = get_rng("ai").random()
-                if roll < 0.64:
-                    return self.intentions["bellow"]
-                else:
-                    return self.intentions["chomp"]
-            else:
-                # 45% Bellow, 30% Thrash, 25% Chomp
-                roll = get_rng("ai").random()
-                if roll < 0.45:
-                    return self.intentions["bellow"]
-                elif roll < 0.75:  # 0.45 + 0.30
-                    return self.intentions["thrash"]
-                else:
-                    return self.intentions["chomp"]
-        
-        # Fallback
-        return self.intentions["chomp"]
+        rng = cast(StreamRandom, get_rng("ai"))
+        roll = rng.randint(0, 99)
+        history = self.history_intentions
+        if not history and not self.is_hard:
+            return self.intentions["chomp"]
+
+        last = history[-1] if history else None
+        if roll < 25:
+            move = "chomp"
+            if last == "chomp":
+                move = "bellow" if rng.random_boolean(0.5625) else "thrash"
+        elif roll < 55:
+            move = "thrash"
+            if history[-2:] == ["thrash", "thrash"]:
+                move = "chomp" if rng.random_boolean(0.357) else "bellow"
+        else:
+            move = "bellow"
+            if last == "bellow":
+                move = "chomp" if rng.random_boolean(0.416) else "thrash"
+        return self.intentions[move]

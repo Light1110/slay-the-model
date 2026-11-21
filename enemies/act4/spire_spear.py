@@ -1,7 +1,7 @@
 """Spire Spear - Act 4 Elite."""
-from engine.random_streams import get_rng
+from engine.random_streams import StreamRandom, get_rng
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, cast
 
 from enemies.act4.spire_spear_intentions import BurnStrike, Piercer, Skewer
 from enemies.base import Enemy
@@ -25,24 +25,26 @@ class SpireSpear(Enemy):
     """
     
     enemy_type = EnemyType.ELITE
+    select_intention_after_enemy_turn = True
     
     def __init__(self):
-        super().__init__(hp_range=(38, 42))
+        from engine.game_state import game_state
+
+        self.ascension = game_state.ascension
+        hp = 180 if self.ascension >= 8 else 160
+        super().__init__(hp_range=(hp, hp))
         self.add_intention(BurnStrike(self))
         self.add_intention(Skewer(self))
         self.add_intention(Piercer(self))
 
-        self._turn_number = 0
-        self._pair_sequence = []
-        self._pair_index = 0
         self._back_attack_manager: Optional["BackAttackManager"] = None
     
     def on_combat_start(self, floor: int):
         """Initialize combat state."""
-        self._turn_number = 0
-        self._pair_sequence = []
-        self._pair_index = 0
+        from powers.definitions.artifact import ArtifactPower
+
         super().on_combat_start(floor)
+        self.add_power(ArtifactPower(amount=2 if self.ascension >= 18 else 1, owner=self))
     
     def on_death(self):
         """Clean up BackAttack mechanics when Spear dies."""
@@ -51,22 +53,12 @@ class SpireSpear(Enemy):
             self._back_attack_manager = None
         super().on_death()
     
-    def determine_next_intention(self, floor: int) -> Optional[str]:
-        """Follow documented Spire Spear turn pattern."""
-        self._turn_number += 1
-
-        if self._turn_number == 1:
-            return "Burn Strike"
-
-        if self._turn_number >= 2 and (self._turn_number - 2) % 3 == 0:
+    def determine_next_intention(self, floor: int) -> str:
+        rng = cast(StreamRandom, get_rng("ai"))
+        rng.randint(0, 99)
+        phase = len(self.history_intentions) % 3
+        if phase == 0:
+            return "Piercer" if self.history_intentions[-1:] == ["Burn Strike"] else "Burn Strike"
+        if phase == 1:
             return "Skewer"
-
-        if self._pair_index >= len(self._pair_sequence):
-            self._pair_sequence = get_rng("ai").choice(
-                [["Burn Strike", "Piercer"], ["Piercer", "Burn Strike"]]
-            )
-            self._pair_index = 0
-
-        intention_name = self._pair_sequence[self._pair_index]
-        self._pair_index += 1
-        return intention_name
+        return "Piercer" if rng.random_boolean() else "Burn Strike"

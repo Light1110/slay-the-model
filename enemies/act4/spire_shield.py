@@ -1,7 +1,7 @@
 """Spire Shield - Act 4 Elite."""
-from engine.random_streams import get_rng
+from engine.random_streams import StreamRandom, get_rng
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, cast
 
 from enemies.act4.spire_shield_intentions import Bash, Fortify, Smash
 from enemies.base import Enemy
@@ -26,24 +26,26 @@ class SpireShield(Enemy):
     """
     
     enemy_type = EnemyType.ELITE
+    select_intention_after_enemy_turn = True
     
     def __init__(self):
-        super().__init__(hp_range=(42, 48))
+        from engine.game_state import game_state
+
+        self.ascension = game_state.ascension
+        hp = 125 if self.ascension >= 8 else 110
+        super().__init__(hp_range=(hp, hp))
         self.add_intention(Bash(self))
         self.add_intention(Fortify(self))
         self.add_intention(Smash(self))
 
-        self._turn_number = 0
-        self._pair_sequence = []
-        self._pair_index = 0
         self._back_attack_manager: Optional["BackAttackManager"] = None
     
     def on_combat_start(self, floor: int):
         """Initialize combat state and BackAttack mechanics."""
-        self._turn_number = 0
-        self._pair_sequence = []
-        self._pair_index = 0
+        from powers.definitions.artifact import ArtifactPower
+
         super().on_combat_start(floor)
+        self.add_power(ArtifactPower(amount=2 if self.ascension >= 18 else 1, owner=self))
         
         # Initialize BackAttack manager if Spear is present
         self._init_back_attack_mechanics()
@@ -90,19 +92,12 @@ class SpireShield(Enemy):
             self._back_attack_manager = None
         super().on_death()
     
-    def determine_next_intention(self, floor: int) -> Optional[str]:
-        """Follow documented Spire Shield turn pattern."""
-        self._turn_number += 1
-
-        if self._turn_number >= 3 and self._turn_number % 3 == 0:
-            return "Smash"
-
-        if self._pair_index >= len(self._pair_sequence):
-            self._pair_sequence = get_rng("ai").choice(
-                [["Bash", "Fortify"], ["Fortify", "Bash"]]
-            )
-            self._pair_index = 0
-
-        intention_name = self._pair_sequence[self._pair_index]
-        self._pair_index += 1
-        return intention_name
+    def determine_next_intention(self, floor: int) -> str:
+        rng = cast(StreamRandom, get_rng("ai"))
+        rng.randint(0, 99)
+        phase = len(self.history_intentions) % 3
+        if phase == 0:
+            return "Fortify" if rng.random_boolean() else "Bash"
+        if phase == 1:
+            return "Fortify" if self.history_intentions[-1] == "Bash" else "Bash"
+        return "Smash"

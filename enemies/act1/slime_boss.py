@@ -21,14 +21,15 @@ class SlimeBoss(Enemy):
     """Slime Boss - Act 1 Boss that splits at 50% HP."""
     
     enemy_type = EnemyType.BOSS
+    roll_fixed_opening_intention = True
+    select_intention_after_enemy_turn = True
     
     def __init__(self):
         from engine.game_state import game_state
 
         ascension = getattr(game_state, "ascension", 0)
-        super().__init__(
-            hp_range=(150, 150) if ascension >= 9 else (140, 140)
-        )
+        hp = 150 if ascension >= 9 else 140
+        super().__init__(hp_range=(hp, hp))
         
         # Register intentions
         self.add_intention(GoopSprayIntention(self))
@@ -47,7 +48,7 @@ class SlimeBoss(Enemy):
         When HP <= 50%, current intent changes to Split.
         """
         # Check for split
-        if self.hp <= self.max_hp / 2 and not self._split_triggered:
+        if self._split_triggered or self.hp <= self.max_hp / 2:
             return self.intentions["split"]
         
         # Normal pattern
@@ -61,7 +62,7 @@ class SlimeBoss(Enemy):
         """Check for split trigger when taking damage."""
         actions = []
         # Check if HP threshold reached
-        if self.hp <= self.max_hp / 2 and not self._split_triggered:
+        if 0 < self.hp <= self.max_hp / 2 and not self._split_triggered:
             self._split_triggered = True
             self.current_intention = self.intentions["split"]
         

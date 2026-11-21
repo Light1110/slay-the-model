@@ -3,6 +3,7 @@ Cultist - Common enemy
 Quick attacks with weak damage.
 """
 from enemies.base import Enemy
+from engine.random_streams import get_rng
 from utils.types import EnemyType
 from enemies.act1.cultist_intentions import CultistRitualIntention, CultistAttackIntention
 
@@ -11,6 +12,7 @@ class Cultist(Enemy):
     """Cultist - Quick attacks with weak damage"""
     
     enemy_type = EnemyType.NORMAL
+    select_intention_after_enemy_turn = True
     
     def __init__(self, ascension: int | None = None):
         if ascension is None:
@@ -32,6 +34,8 @@ class Cultist(Enemy):
         - After Ritual: Always Attack
         - After Attack: Always Attack
         """
+        get_rng("ai").randint(0, 99)
+
         # First turn: Always Ritual
         if not self.history_intentions:
             return self.intentions["ritual"]

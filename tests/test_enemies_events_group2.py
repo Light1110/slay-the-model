@@ -124,12 +124,16 @@ def test_enemy_ritual_stacks_without_resetting_first_round_or_using_amount_as_du
     assert strength.duration == -1
 
 
-@pytest.mark.parametrize('slime_cls,expected_frail,expected_slimed,damage', [
-    (SpikeSlimeM, 1, 1, 10), (SpikeSlimeL, 2, 2, 16),
+@pytest.mark.parametrize('slime_cls,ascension,expected_frail,expected_slimed,damage', [
+    (SpikeSlimeM, 0, 1, 1, 8), (SpikeSlimeM, 2, 1, 1, 10),
+    (SpikeSlimeL, 0, 2, 2, 16), (SpikeSlimeL, 17, 3, 2, 18),
 ])
-def test_spike_slime_applies_correct_frail_and_adds_slimed_after_damage(slime_cls, expected_frail, expected_slimed, damage):
+def test_spike_slime_applies_correct_frail_and_adds_slimed_after_damage(
+    slime_cls, ascension, expected_frail, expected_slimed, damage
+):
     helper = create_test_helper()
     player = helper.create_player()
+    game_state.ascension = ascension
     slime = slime_cls()
     helper.start_combat([slime])
     slime.intentions['lick'].execute()

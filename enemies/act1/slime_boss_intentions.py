@@ -84,34 +84,13 @@ class SplitIntention(Intention):
         super().__init__("split", enemy)
     
     def execute(self) -> None:
-        """Execute Split: spawns two Large Slimes."""
-        from actions.combat import RemoveEnemyAction, AddEnemyAction
-        
+        from actions.combat import AddEnemyAction, RemoveEnemyAction
+        from enemies.act1.acid_slime import AcidSlimeL
+        from enemies.act1.spike_slime import SpikeSlimeL
+
         current_hp = self.enemy.hp
-        
-        actions = [
+        add_actions([
             RemoveEnemyAction(enemy=self.enemy),
-        ]
-        
-        # Spawn Acid Slime (L) and Spike Slime (L); each gets parent's current HP
-        try:
-            from enemies.act1.acid_slime import AcidSlimeL
-            from enemies.act1.spike_slime import SpikeSlimeL
-            
-            acid_slime = AcidSlimeL()
-            acid_slime.max_hp = current_hp
-            acid_slime.hp = current_hp
-            
-            spike_slime = SpikeSlimeL()
-            spike_slime.max_hp = current_hp
-            spike_slime.hp = current_hp
-            
-            actions.append(AddEnemyAction(enemy=acid_slime))
-            actions.append(AddEnemyAction(enemy=spike_slime))
-        except Exception:
-            pass
-        
-        from engine.game_state import game_state
-        
-        add_actions(actions)
-        
+            AddEnemyAction(enemy=SpikeSlimeL(max_hp=current_hp)),
+            AddEnemyAction(enemy=AcidSlimeL(max_hp=current_hp)),
+        ])

@@ -24,11 +24,15 @@ class TheGuardian(Enemy):
     """The Guardian - Act 1 Boss with Mode Shift and Sharp Hide."""
     
     enemy_type = EnemyType.BOSS
+    roll_fixed_opening_intention = True
+    select_intention_after_enemy_turn = True
     
     def __init__(self):
-        super().__init__(
-            hp_range=(240, 240)  # todo: 250 a9
-        )
+        from engine.game_state import game_state
+
+        ascension = game_state.ascension
+        hp = 250 if ascension >= 9 else 240
+        super().__init__(hp_range=(hp, hp))
         
         # Register intentions
         self.add_intention(ChargingUpIntention(self))
@@ -40,9 +44,8 @@ class TheGuardian(Enemy):
         self.add_intention(TwinSlamIntention(self))
         
         # Mode Shift: After losing X HP, switch to Defensive Mode
-        self._mode_shift_threshold = 30
+        self._mode_shift_threshold = 40 if ascension >= 19 else 35 if ascension >= 9 else 30
         self._damage_taken_since_last_shift = 0
-        self._mode_shift_count = 0
         self._in_defensive_mode = False
         
         # Pattern tracking
@@ -57,10 +60,7 @@ class TheGuardian(Enemy):
         """
         # Check if in defensive mode
         if self._in_defensive_mode:
-            if self._defensive_pattern_index == 0:
-                self._defensive_pattern_index = 1
-                return self.intentions["defensive_mode"]
-            elif self._defensive_pattern_index == 1:
+            if self._defensive_pattern_index == 1:
                 self._defensive_pattern_index = 2
                 return self.intentions["roll_attack"]
             elif self._defensive_pattern_index == 2:
@@ -80,30 +80,16 @@ class TheGuardian(Enemy):
         return self.intentions[intention_name]
     
     def on_any_hp_lost(self, amount: int, source=None, card=None) -> None:
-        """Check for Mode Shift trigger."""
-        actions = []
-        if not self._in_defensive_mode:
-            self._damage_taken_since_last_shift += amount
-            
-            # Check if Mode Shift threshold reached
-            if self._damage_taken_since_last_shift >= self._mode_shift_threshold:
-                self._trigger_mode_shift()
-        
-        from engine.game_state import game_state
-        
-        add_actions(actions)
-        
-    def _trigger_mode_shift(self):
-        """Trigger Mode Shift: gain block and switch to defensive mode."""
-        from actions.combat import GainBlockAction
-        
+        if self.is_dead() or self._in_defensive_mode:
+            return
+        self._damage_taken_since_last_shift += amount
+        if self._damage_taken_since_last_shift >= self._mode_shift_threshold:
+            self._trigger_mode_shift()
+
+    def _trigger_mode_shift(self) -> None:
         self._in_defensive_mode = True
-        self._defensive_pattern_index = 0
+        self._defensive_pattern_index = 1
         self._damage_taken_since_last_shift = 0
-        self._mode_shift_count += 1
-        
-        # Increase threshold for next Mode Shift
-        self._mode_shift_threshold = 30 + (10 * self._mode_shift_count)
-        
-        # Gain 20 Block
+        self._mode_shift_threshold += 10
+        self.current_intention = self.intentions["defensive_mode"]
         self.gain_block(20)

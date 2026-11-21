@@ -14,6 +14,7 @@ class Centurion(Enemy):
     """Centurion - Warrior enemy that protects Mystic."""
     
     enemy_type = EnemyType.NORMAL
+    select_intention_after_enemy_turn = True
     
     def __init__(self):
         super().__init__(
@@ -26,59 +27,15 @@ class Centurion(Enemy):
         self.add_intention(FuryIntention(self))
     
     def determine_next_intention(self, floor: int = 1):
-        """Determine next intention based on Mystic status."""
         from engine.game_state import game_state
-        
-        # Check if Mystic is alive
-        mystic_alive = False
-        if game_state and game_state.combat:
-            for enemy in game_state.combat.enemies:
-                if enemy.__class__.__name__ == 'Mystic' and enemy.is_alive:
-                    mystic_alive = True
-                    break
-        
-        # Get last intention
-        last = self.history_intentions[-1] if self.history_intentions else None
-        
-        # Count consecutive same moves
-        def count_consecutive(intention_name: str) -> int:
-            count = 0
-            for intent in reversed(self.history_intentions):
-                if intent == intention_name:
-                    count += 1
-                else:
-                    break
-            return count
-        
-        # If Mystic is alive: Slash (60%), Protect (20%)
-        if mystic_alive:
-            # Can't use same move three times in a row
-            slash_count = count_consecutive("slash")
-            protect_count = count_consecutive("protect")
-            
-            if slash_count >= 2:
-                return self.intentions["protect"]
-            if protect_count >= 2:
-                return self.intentions["slash"]
-            
-            roll = get_rng("ai").random()
-            if roll < 0.60:
-                return self.intentions["slash"]
-            else:
-                return self.intentions["protect"]
-        
-        # If Mystic is dead: Slash (60%), Fury (20%)
-        else:
-            slash_count = count_consecutive("slash")
-            fury_count = count_consecutive("fury")
-            
-            if slash_count >= 2:
-                return self.intentions["fury"]
-            if fury_count >= 2:
-                return self.intentions["slash"]
-            
-            roll = get_rng("ai").random()
-            if roll < 0.60:
-                return self.intentions["slash"]
-            else:
-                return self.intentions["fury"]
+
+        roll = get_rng("ai").randint(0, 99)
+        recent = self.history_intentions[-2:]
+        may_support = recent not in (["protect", "protect"], ["fury", "fury"])
+        if not (roll >= 65 and may_support) and recent != ["slash", "slash"]:
+            return self.intentions["slash"]
+        combat = game_state.current_combat
+        has_ally = combat is not None and any(
+            enemy is not self and enemy.is_alive for enemy in combat.enemies
+        )
+        return self.intentions["protect" if has_ally else "fury"]

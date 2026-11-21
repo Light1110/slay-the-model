@@ -1,5 +1,4 @@
 """Gremlin Leader intentions - Act 2 Elite enemy."""
-from engine.random_streams import get_rng
 from engine.runtime_api import add_action, add_actions
 
 from typing import TYPE_CHECKING, List
@@ -10,6 +9,8 @@ from powers.definitions.strength import StrengthPower
 
 if TYPE_CHECKING:
     from enemies.act2.gremlin_leader import GremlinLeader
+
+GREMLIN_POSITIONS = (-366, -170, -532)
 
 
 class Encourage(Intention):
@@ -81,45 +82,15 @@ class Rally(Intention):
         super().__init__("Rally!", enemy)
     
     def execute(self) -> None:
-        """Execute rally - summon 2 random gremlins."""
-        from engine.game_state import game_state
         from actions.combat import AddEnemyAction
-        enemies = (
-            game_state.current_combat.enemies
-            if game_state.current_combat is not None
-            else []
-        )
-        
-        # Import gremlin types from act1
-        from enemies.act1.gremlin import (
-            FatGremlin, SneakyGremlin, MadGremlin,
-            ShieldGremlin, GremlinWizard
-        )
-        
-        # Available gremlin types for summoning
-        GREMLIN_TYPES = [
-            FatGremlin, SneakyGremlin, MadGremlin,
-            ShieldGremlin, GremlinWizard
-        ]
-        
-        actions = []
-        
-        # Check how many gremlins are already present
-        gremlin_count = sum(1 for e in enemies
-                          if e.is_alive and hasattr(e, '_is_gremlin'))
-        
-        # Can only have max 3 small gremlins
-        to_summon = min(2, 3 - gremlin_count)
-        
-        for _ in range(to_summon):
-            gremlin_class = get_rng("ai").choice(GREMLIN_TYPES)
-            # Summoned gremlins are minions and should not trigger on_fatal
-            gremlin = gremlin_class()
-            gremlin.is_minion = True
-            gremlin._is_gremlin = True
-            actions.append(AddEnemyAction(gremlin))
-        
+        from enemies.act1.gremlin import create_leader_minion
         from engine.game_state import game_state
-        
-        add_actions(actions)
-        
+
+        combat = game_state.current_combat
+        if combat is None:
+            return
+        positions = combat.open_formation_positions(GREMLIN_POSITIONS)[:2]
+        add_actions([
+            AddEnemyAction(create_leader_minion("ai"), position=position)
+            for position in positions
+        ])

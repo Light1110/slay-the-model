@@ -9,10 +9,10 @@ from actions.combat_cards import PlayCardAction
 from actions.reward import AddEliteRelicAction
 from cards.ironclad.combust import Combust
 from cards.ironclad.strike import Strike
-from enemies.act1.acid_slime import AcidSlimeL
+from enemies.act1.acid_slime import AcidSlimeL, AcidSlimeM
 from enemies.act1.cultist import Cultist
 from enemies.act1.slime_boss import SlimeBoss
-from enemies.act1.spike_slime import SpikeSlimeL
+from enemies.act1.spike_slime import SpikeSlimeL, SpikeSlimeM
 from player.player import Player
 from relics.base import Relic
 from relics.character.ironclad import MagicFlower
@@ -70,10 +70,18 @@ def test_real_damage_split_preserves_child_hp_and_allows_following_action(parent
     h.game_state.drive_actions()
     assert parent.hp == residual
     assert parent.current_intention is not None and parent.current_intention.name == 'split'
+    hp_state = h.game_state.random_streams["monster_hp"].export_state()
     c.execute_enemy_phase()
     children = list(c.enemies)
     assert len(children) == 2 and parent not in children
     assert [(e.hp,e.max_hp) for e in children] == [(residual,residual)]*2
+    if parent_cls is AcidSlimeL:
+        assert all(isinstance(child, AcidSlimeM) for child in children)
+    elif parent_cls is SpikeSlimeL:
+        assert all(isinstance(child, SpikeSlimeM) for child in children)
+    else:
+        assert [type(child) for child in children] == [SpikeSlimeL, AcidSlimeL]
+    assert h.game_state.random_streams["monster_hp"].export_state() == hp_state
     assert c._check_combat_end() is None
     c._execute_next_phase()
     c._execute_next_phase()

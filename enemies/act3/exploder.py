@@ -1,4 +1,5 @@
 """Exploder enemy for Act 3."""
+from engine.random_streams import get_rng
 
 from enemies.act3.exploder_intentions import Attack, Explode
 from enemies.base import Enemy
@@ -9,6 +10,7 @@ class Exploder(Enemy):
     """Exploder enemy - explodes after 2 attacks."""
 
     enemy_type = EnemyType.NORMAL
+    select_intention_after_enemy_turn = True
 
     def __init__(self):
         super().__init__(hp_range=(30, 30)) # todo: 30-35 a7
@@ -26,6 +28,7 @@ class Exploder(Enemy):
         
         Pattern: Attack -> Attack -> Explode
         """
+        get_rng("ai").randint(0, 99)
         self._turn_count += 1
 
         if self._turn_count <= 2:

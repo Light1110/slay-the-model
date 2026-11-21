@@ -3498,7 +3498,13 @@ enemies:
     intentions:
       Bash:
         name: 重击
-        description: 造成 {damage} 点伤害。施加 1 层易伤。
+        description: 造成 {damage} 点伤害，使玩家失去 1 点力量或集中。
+      Fortify:
+        name: 防御
+        description: 使所有敌人获得 {block} 点格挡。
+      Smash:
+        name: 盾击
+        description: 造成 {damage} 点伤害并获得格挡。
       ShieldBash:
         name: 盾击
         description: 造成 {damage} 点伤害。
@@ -3510,7 +3516,13 @@ enemies:
     intentions:
       Skewer:
         name: 穿刺
-        description: 造成 {damage} 点伤害，共 4 次。
+        description: 造成 {damage} 点伤害，共 {hits} 次。
+      BurnStrike:
+        name: 灼烧
+        description: 造成 {damage} 点伤害，共 {hits} 次，并添加 2 张灼伤。
+      Piercer:
+        name: 刺穿
+        description: 使所有敌人获得 {strength_gain} 点力量。
       Sear:
         name: 灼烧
         description: 造成 {damage} 点伤害。向你的弃牌堆添加 2 张燃烧。

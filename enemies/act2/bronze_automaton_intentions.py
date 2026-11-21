@@ -20,13 +20,8 @@ class SpawnOrbs(Intention):
     def execute(self) -> None:
         """Summon 2 Bronze Orb minions."""
         from enemies.act2.bronze_orb import BronzeOrb
-        actions = []
-        # Summon 2 Bronze Orbs
-        for _ in range(2):
-            orb = BronzeOrb()
-            actions.append(AddEnemyAction(orb))
-        from engine.game_state import game_state
-        add_actions(actions)
+
+        add_actions([AddEnemyAction(BronzeOrb(), position=position) for position in (-300, 200)])
 class Flail(Intention):
     """Deal 7x2 damage."""
 

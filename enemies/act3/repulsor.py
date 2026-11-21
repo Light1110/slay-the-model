@@ -17,31 +17,16 @@ class Repulsor(Enemy):
     """
     
     enemy_type = EnemyType.NORMAL
+    select_intention_after_enemy_turn = True
     
     def __init__(self):
         super().__init__(hp_range=(40, 45))
-        self._turn_count = 0
-        self._last_was_attack = False
         
         # Register intentions
         self.add_intention(DazeIntention(self))
         self.add_intention(RepulsorAttack(self))
     
     def determine_next_intention(self, floor: int):
-        """Determine next intention based on pattern."""
-        self._turn_count += 1
-        
-        # 80% Daze, 20% Attack
-        # Cannot use Attack twice in a row
-        
-        if self._last_was_attack:
-            # Must use Daze
-            self._last_was_attack = False
-            return self.intentions["Daze"]
-        
-        if get_rng("ai").random() < 0.2:  # 20% Attack
-            self._last_was_attack = True
-            return self.intentions["Attack"]
-        else:  # 80% Daze
-            self._last_was_attack = False
-            return self.intentions["Daze"]
+        roll = get_rng("ai").randint(0, 99)
+        use_attack = roll < 20 and self.history_intentions[-1:] != ["Attack"]
+        return self.intentions["Attack" if use_attack else "Daze"]

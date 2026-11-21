@@ -3,6 +3,7 @@ The Hexaghost - Act 1 Final Boss
 Complex attack pattern with Burn cards.
 """
 from enemies.base import Enemy
+from engine.random_streams import get_rng
 from utils.types import EnemyType
 from enemies.act1.the_hexaghost_intentions import (
     ActivateIntention,
@@ -18,14 +19,14 @@ class TheHexaghost(Enemy):
     """The Hexaghost - Act 1 Final Boss with complex attack pattern."""
     
     enemy_type = EnemyType.BOSS
+    select_intention_after_enemy_turn = True
     
     def __init__(self):
         from engine.game_state import game_state
 
         ascension = getattr(game_state, "ascension", 0)
-        super().__init__(
-            hp_range=(264, 264) if ascension >= 9 else (250, 250)
-        )
+        hp = 264 if ascension >= 9 else 250
+        super().__init__(hp_range=(hp, hp))
         
         # Register intentions
         self.add_intention(ActivateIntention(self))
@@ -40,6 +41,8 @@ class TheHexaghost(Enemy):
     def determine_next_intention(self, floor: int = 1):
         """Select from executed actions; querying an intent never advances it."""
         completed_turns = len(self.history_intentions)
+        if completed_turns != 1:
+            get_rng("ai").randint(0, 99)
         if completed_turns == 0:
             return self.intentions["activate"]
         if completed_turns == 1:

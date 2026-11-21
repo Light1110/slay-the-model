@@ -1,4 +1,5 @@
 """Donu - Act 3 Boss (fights alongside Deca)."""
+from engine.random_streams import get_rng
 
 from enemies.act3.donu_intentions import (
     CircleOfPower,
@@ -23,6 +24,7 @@ class Donu(Enemy):
     """
     
     enemy_type = EnemyType.BOSS
+    select_intention_after_enemy_turn = True
     
     def __init__(self):
         from engine.game_state import game_state
@@ -46,6 +48,7 @@ class Donu(Enemy):
     
     def determine_next_intention(self, floor: int):
         """Determine next intention - alternates between Circle of Power and Beam."""
+        get_rng("ai").randint(0, 99)
         if self._use_circle_of_power:
             intention = self.intentions["Circle of Power"]
         else:

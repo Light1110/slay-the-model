@@ -31,14 +31,15 @@ class PerplexingGlareIntention(Intention):
                 power="confused",
                 target=game_state.player,
                 amount=1,
-                duration=1
+                duration=-1,
+                source=self.enemy
             )
         ]
         )
 
 
 class BiteIntention(Intention):
-    """Bite - Deals 15 damage (8 on A3+ - note: actually lower on A3+!)."""
+    """Bite - Deals 15 damage (18 on A2+)."""
     
     def __init__(self, enemy: 'Enemy'):
         super().__init__("bite", enemy)
@@ -65,7 +66,7 @@ class BiteIntention(Intention):
 
 
 class TailWhipIntention(Intention):
-    """Tail Whip - Deals 8 damage, applies 2 Vulnerable (10 dmg, 2 Weak + 2 Vuln on A3+)."""
+    """Tail Whip - Deals 8 damage, applies 2 Vulnerable (10 damage on A2+, 2 Weak on A17+)."""
     
     def __init__(self, enemy: 'Enemy'):
         super().__init__("tail_whip", enemy)
@@ -73,26 +74,18 @@ class TailWhipIntention(Intention):
         self.vulnerable_stacks = 2
     
     def execute(self) -> None:
-        """Execute Tail Whip: deals damage and applies Vulnerable."""
-        from actions.combat import AttackAction, ApplyPowerAction
+        from actions.combat import ApplyPowerAction, AttackAction
         from engine.game_state import game_state
-        
-        if not game_state or not game_state.player:
+        from powers.definitions.vulnerable import VulnerablePower
+        from powers.definitions.weak import WeakPower
+
+        player = game_state.player
+        if player is None:
             return
-        from engine.game_state import game_state
-        add_actions(
-        [
-            AttackAction(
-                damage=self.base_damage,
-                target=game_state.player,
-                source=self.enemy,
-                damage_type="attack",
-            ),
-            ApplyPowerAction(
-                power="vulnerable",
-                target=game_state.player,
-                amount=self.vulnerable_stacks,
-                duration=1
-            )
-        ]
-        )
+        actions = [AttackAction(self.base_damage, player, self.enemy, "attack")]
+        if game_state.ascension >= 17:
+            actions.append(ApplyPowerAction(WeakPower(amount=2, duration=2, owner=player), player, source=self.enemy))
+        actions.append(ApplyPowerAction(
+            VulnerablePower(amount=2, duration=2, owner=player), player, source=self.enemy
+        ))
+        add_actions(actions)

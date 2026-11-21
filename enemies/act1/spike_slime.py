@@ -1,219 +1,72 @@
-"""
-Spike Slime enemies - Large, Medium, and Small variants.
-Large can split into smaller slimes when damaged.
-"""
-from engine.random_streams import get_rng
-from engine.runtime_api import add_action, add_actions
-from typing import List, TYPE_CHECKING
+"""Spike Slime enemies and their move selection."""
+from enemies.act1.spike_slime_intentions import LickIntention, SplitIntention, TackleIntention
 from enemies.base import Enemy
-from utils.types import EnemyType
-from enemies.act1.spike_slime_intentions import (
-    LickIntention,
-    TackleIntention,
-    SplitIntention
-)
+from engine.random_streams import get_rng
 
-if TYPE_CHECKING:
-    from actions.base import Action
+
+def _spike_slime_move(history: list[str]) -> str:
+    from engine.game_state import game_state
+
+    roll = get_rng("ai").randint(0, 99)
+    if roll < 30:
+        return "lick" if history[-2:] == ["tackle", "tackle"] else "tackle"
+    lick_limit = 1 if game_state.ascension >= 17 else 2
+    return "tackle" if history[-lick_limit:] == ["lick"] * lick_limit else "lick"
 
 
 class SpikeSlimeL(Enemy):
-    """Spike Slime (L) - Large variant that can split at 50% HP.
-    
-    According to doc: This is referenced in Slime Boss split,
-    but the detailed pattern is not specified in the doc.
-    Using similar pattern to AcidSlimeL.
-    """
-    
-    enemy_type = EnemyType.NORMAL
-    
-    def __init__(self):
-        super().__init__(
-            hp_range=(64, 70) # todo: 67-73 >= ancension7
-        )
-        
-        # Register intentions
-        self.add_intention(LickIntention(self, frail_amount=2))
-        self.add_intention(TackleIntention(self, slimed_count=2))
+    """Large variant that splits at half HP."""
+
+    select_intention_after_enemy_turn = True
+
+    def __init__(self, max_hp: int | None = None):
+        from engine.game_state import game_state
+
+        ascension = game_state.ascension
+        super().__init__(hp_range=(67, 73) if ascension >= 7 else (64, 70), max_hp=max_hp)
+        self.add_intention(LickIntention(self, frail_amount=3 if ascension >= 17 else 2))
+        self.add_intention(TackleIntention(self, damage=18 if ascension >= 2 else 16, slimed_count=2))
         self.add_intention(SplitIntention(self))
-        
-        # Track if split has been triggered
         self._split_triggered = False
-    
+
     def determine_next_intention(self, floor: int = 1):
-        """Determine next intention based on history.
-        
-        SpikeSlimeL pattern (similar to Acid Slime L):
-        - 30% Tackle, 70% Lick
-        - Cannot use Tackle twice in a row
-        - Cannot use other moves 3 times in a row
-        - If HP <= 50%, current intention changes to Split
-        """
-        # Check if HP threshold reached
-        if self.hp <= self.max_hp / 2 and not self._split_triggered:
+        if self.history_intentions[-1:] != ["split"] and (
+            self._split_triggered or self.hp <= self.max_hp / 2
+        ):
             return self.intentions["split"]
-        
-        # If split already triggered, no more intentions (will be removed)
-        if self._split_triggered:
-            return self.intentions["lick"]  # Fallback
-        
-        # First move: 30% Tackle, 70% Lick
-        if not self.history_intentions:
-            roll = get_rng("ai").random()
-            if roll < 0.30:
-                return self.intentions["tackle"]
-            else:
-                return self.intentions["lick"]
-        
-        last = self.history_intentions[-1]
-        
-        # Count consecutive uses
-        consecutive_count = 0
-        for intention in reversed(self.history_intentions):
-            if intention == last:
-                consecutive_count += 1
-            else:
-                break
-        
-        # Cannot use Tackle twice in a row
-        if last == "tackle" and consecutive_count >= 1:
-            return self.intentions["lick"]
-        
-        # Cannot use other moves 3 times in a row
-        if consecutive_count >= 2:
-            if last == "lick":
-                return self.intentions["tackle"]
-        
-        # Normal pattern: 30% Tackle, 70% Lick
-        roll = get_rng("ai").random()
-        if roll < 0.30:
-            return self.intentions["tackle"]
-        else:
-            return self.intentions["lick"]
-    
+        return self.intentions[_spike_slime_move(self.history_intentions)]
+
     def on_any_hp_lost(self, amount: int, source=None, card=None) -> None:
-        """Check for split condition when taking damage."""
-        actions = []
-        # Check if HP threshold reached and not already triggered
-        if self.hp <= self.max_hp / 2 and not self._split_triggered:
+        if 0 < self.hp <= self.max_hp / 2 and not self._split_triggered:
             self._split_triggered = True
             self.current_intention = self.intentions["split"]
-        
-        from engine.game_state import game_state
-        
-        add_actions(actions)
-        
+
+
 class SpikeSlimeM(Enemy):
-    """Spike Slime (M) - Medium variant.
-    
-    Used after SpikeSlimeL splits.
-    """
-    
-    enemy_type = EnemyType.NORMAL
-    
-    def __init__(self):
-        super().__init__(
-            hp_range=(28, 32) # todo: 29-34 >= ancension7
-        )
-        
-        # Register intentions
+    select_intention_after_enemy_turn = True
+
+    def __init__(self, max_hp: int | None = None):
+        from engine.game_state import game_state
+
+        ascension = game_state.ascension
+        super().__init__(hp_range=(29, 34) if ascension >= 7 else (28, 32), max_hp=max_hp)
         self.add_intention(LickIntention(self, frail_amount=1))
-        self.add_intention(TackleIntention(self, slimed_count=1))
-    
+        self.add_intention(TackleIntention(self, damage=10 if ascension >= 2 else 8, slimed_count=1))
+
     def determine_next_intention(self, floor: int = 1):
-        """Determine next intention for medium slime.
-        
-        SpikeSlimeM pattern:
-        - 30% Tackle, 70% Lick
-        - Cannot use same move 3 times in a row
-        """
-        # First move: 30% Tackle, 70% Lick
-        if not self.history_intentions:
-            roll = get_rng("ai").random()
-            if roll < 0.30:
-                return self.intentions["tackle"]
-            else:
-                return self.intentions["lick"]
-        
-        last = self.history_intentions[-1]
-        
-        # Count consecutive uses
-        consecutive_count = 0
-        for intention in reversed(self.history_intentions):
-            if intention == last:
-                consecutive_count += 1
-            else:
-                break
-        
-        # Cannot use same move 3 times in a row
-        if consecutive_count >= 2:
-            if last == "lick":
-                return self.intentions["tackle"]
-            else:
-                return self.intentions["lick"]
-        
-        # Normal pattern: 30% Tackle, 70% Lick
-        roll = get_rng("ai").random()
-        if roll < 0.30:
-            return self.intentions["tackle"]
-        else:
-            return self.intentions["lick"]
+        return self.intentions[_spike_slime_move(self.history_intentions)]
 
 
 class SpikeSlimeS(Enemy):
-    """Spike Slime (S) - Small variant.
-    
-    According to doc:
-    - Tackle: Deals 5 damage (6 on A2+)
-    - Health: 10-14 (11-15 on A7+)
-    """
-    
-    enemy_type = EnemyType.NORMAL
-    
+    select_intention_after_enemy_turn = True
+
     def __init__(self):
-        super().__init__(
-            hp_range=(10, 14) # todo: 11-15 >= ancension7
-        )
-        
-        # Register intentions
-        self.add_intention(LickIntention(self))
-        self.add_intention(TackleIntention(self))
-    
+        from engine.game_state import game_state
+
+        ascension = game_state.ascension
+        super().__init__(hp_range=(11, 15) if ascension >= 7 else (10, 14))
+        self.add_intention(TackleIntention(self, damage=6 if ascension >= 2 else 5))
+
     def determine_next_intention(self, floor: int = 1):
-        """Determine next intention for small slime.
-        
-        SpikeSlimeS pattern:
-        - Tackle only (no Lick mentioned in doc)
-        - But pattern shows both Lick and Tackle
-        """
-        # First move: 50% Lick, 50% Tackle
-        if not self.history_intentions:
-            roll = get_rng("ai").random()
-            if roll < 0.50:
-                return self.intentions["lick"]
-            else:
-                return self.intentions["tackle"]
-        
-        last = self.history_intentions[-1]
-        
-        # Count consecutive uses
-        consecutive_count = 0
-        for intention in reversed(self.history_intentions):
-            if intention == last:
-                consecutive_count += 1
-            else:
-                break
-        
-        # Cannot use same move 3 times in a row
-        if consecutive_count >= 2:
-            if last == "lick":
-                return self.intentions["tackle"]
-            else:
-                return self.intentions["lick"]
-        
-        # Normal pattern: 50% Lick, 50% Tackle
-        roll = get_rng("ai").random()
-        if roll < 0.50:
-            return self.intentions["lick"]
-        else:
-            return self.intentions["tackle"]
+        get_rng("ai").randint(0, 99)
+        return self.intentions["tackle"]

@@ -225,7 +225,7 @@ def _create_chosen_byrd():
     """Create Chosen and Byrd encounter."""
     from enemies.act2.chosen import Chosen
     from enemies.act2.byrd import Byrd
-    return [Chosen(), Byrd()]
+    return [Byrd(), Chosen()]
 
 
 def _create_sentry_spheric_guardian():
@@ -255,8 +255,14 @@ def _create_book_of_stabbing():
 
 
 def _create_gremlin_leader():
+    from enemies.act1.gremlin import create_leader_minion
     from enemies.act2.gremlin_leader import GremlinLeader
-    return [GremlinLeader()]
+    from enemies.act2.gremlin_leader_intentions import GREMLIN_POSITIONS
+
+    minions = [create_leader_minion("misc") for _ in range(2)]
+    for minion, position in zip(minions, GREMLIN_POSITIONS):
+        minion.formation_position = position
+    return [*minions, GremlinLeader()]
 
 
 def _create_taskmaster():
@@ -373,6 +379,17 @@ def _create_nemesis():
     return [Nemesis()]
 
 
+def _create_reptomancer():
+    """Create the elite with one dagger on each side."""
+    from enemies.act3.dagger import Dagger
+    from enemies.act3.reptomancer import Reptomancer
+    from enemies.act3.reptomancer_intentions import DAGGER_POSITIONS
+
+    left, boss, right = Dagger(), Reptomancer(), Dagger()
+    right.formation_position, left.formation_position = DAGGER_POSITIONS[:2]
+    return [left, boss, right]
+
+
 # Act 3 boss factory functions
 def _create_boss_time_eater():
     """Create Time Eater boss."""
@@ -382,18 +399,19 @@ def _create_boss_time_eater():
 
 def _create_boss_awakened_one():
     """Create Awakened One boss."""
+    from enemies.act1.cultist import Cultist
     from enemies.act3.awakened_one import AwakenedOne
-    return [AwakenedOne()]
+    return [Cultist(), Cultist(), AwakenedOne()]
 
 
 def _create_boss_donu_deca():
     """Create Donu and Deca boss encounter.
     
-    Order: Donu - Deca
+    Order: Deca - Donu
     """
     from enemies.act3.donu import Donu
     from enemies.act3.deca import Deca
-    return [Donu(), Deca()]
+    return [Deca(), Donu()]
 
 
 # Act 4 encounter factory functions
@@ -518,6 +536,7 @@ class EncounterPool:
     ACT3_ELITE_POOL = {
         "Giant Head": (_create_giant_head, 1),
         "Nemesis": (_create_nemesis, 1),
+        "Reptomancer": (_create_reptomancer, 1),
     }
     
     # Act 4 encounter pools

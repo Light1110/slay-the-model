@@ -14,6 +14,7 @@ class BronzeOrb(Enemy):
     """
 
     enemy_type = EnemyType.NORMAL
+    select_intention_after_enemy_turn = True
 
     def __init__(self):
         super().__init__(hp_range=(52, 58), is_minion=True) # todo: 54-60 a7
@@ -21,52 +22,23 @@ class BronzeOrb(Enemy):
         self.add_intention(SupportBeam(self))
         self.add_intention(Beam(self))
         self._has_used_steal = False
-        self._beam_count = 0
         self.stolen_cards = []  # Track stolen cards to return on death
 
     def on_combat_start(self, floor: int):
         """Initialize combat state."""
         self._has_used_steal = False
-        self._beam_count = 0
         super().on_combat_start(floor)
 
     def determine_next_intention(self, floor: int):
-        """Determine next intention based on pattern.
-        
-        Pattern:
-        - 75% chance to use Steal until hit once
-        - After Beam: 70% Support Beam, 30% Beam
-        - Cannot use same attack twice in a row
-        """
-        last = self.history_intentions[-1] if self.history_intentions else None
-        
-        # First turn: use Steal (75% chance) or Beam (25%)
-        if not self._has_used_steal:
-            if get_rng("ai").random() < 0.75:
-                self._has_used_steal = True
-                self.current_intention = self.intentions["Steal"]
-                return
-        
-        # After using Beam, 70% Support Beam, 30% Beam
-        if last == "Beam":
-            if get_rng("ai").random() < 0.70:
-                self.current_intention = self.intentions["Support Beam"]
-            else:
-                self._beam_count += 1
-                self.current_intention = self.intentions["Beam"]
-            return
-        
-        # Cannot use same attack twice in a row
-        if last == "Support Beam":
-            self._beam_count += 1
-            self.current_intention = self.intentions["Beam"]
-        elif last == "Steal":
-            self.current_intention = self.intentions["Support Beam"]
-        else:
-            # Default to Beam
-            self._beam_count += 1
-            self.current_intention = self.intentions["Beam"]
-    
+        roll = get_rng("ai").randint(0, 99)
+        history = self.history_intentions
+        if not self._has_used_steal and roll >= 25:
+            self._has_used_steal = True
+            return self.intentions["Steal"]
+        if roll >= 70 and history[-2:] != ["Support Beam", "Support Beam"]:
+            return self.intentions["Support Beam"]
+        return self.intentions["Support Beam" if history[-2:] == ["Beam", "Beam"] else "Beam"]
+
     def on_death(self):
         """Return stolen cards to player's draw pile."""
         from actions.card import AddCardAction

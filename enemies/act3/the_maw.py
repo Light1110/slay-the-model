@@ -1,8 +1,6 @@
 """The Maw enemy for Slay the Model."""
 from engine.random_streams import get_rng
 
-from typing import Optional
-
 from enemies.act3.the_maw_intentions import (
     TheMawRoar, TheMawSlam, TheMawNomNom, TheMawDrool
 )
@@ -17,15 +15,16 @@ class TheMaw(Enemy):
     - Always starts with Roar (applies 3 Weak and 3 Frail)
     - Afterwards has 50/50 chance of Slam or Nom Nom
     - After Drool: 50/50 between Slam and Nom Nom
-    - After Nom Nom: 50/50 between Nom Nom and Drool
+    - After Nom Nom: Drool
     - After Slam: 50/50 between Nom Nom and Drool
     - 300 HP
     """
 
     enemy_type = EnemyType.NORMAL
+    select_intention_after_enemy_turn = True
 
     def __init__(self):
-        super().__init__(hp_range=(300, 300))
+        super().__init__(max_hp=300)
         self._turn_count = 0
         self._last_move = None
         self._selected_after_turn = -1
@@ -56,11 +55,14 @@ class TheMaw(Enemy):
         # Original turnCount starts at 1 and advances before the opening Roar.
         self._nom_nom._hits = (completed + 2) // 2
         last = self.history_intentions[-1] if self.history_intentions else None
+        roll = get_rng("ai").randint(0, 99)
         if last is None:
             selected = "Roar"
-        elif last in ("Roar", "Drool"):
-            selected = "Slam" if get_rng("ai").random() < 0.5 else "Nom Nom"
+        elif roll < 50 and last != "Nom Nom":
+            selected = "Nom Nom"
+        elif last in {"Slam", "Nom Nom"}:
+            selected = "Drool"
         else:
-            selected = "Nom Nom" if get_rng("ai").random() < 0.5 else "Drool"
+            selected = "Slam"
         self._last_move = selected
         return self.intentions[selected]

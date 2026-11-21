@@ -42,17 +42,12 @@ class ExplodeIntention(Intention):
     
     def execute(self) -> None:
         """Execute Explode intention."""
+        from actions.combat import LoseHPAction, RollEnemyIntentionAction
         from engine.game_state import game_state
-        
-        from engine.game_state import game_state
-        add_actions(
-        [
-            AttackAction(
-                self.base_damage,
-                game_state.player,
-                self.enemy,
-                "attack"
-            ),
-            RemoveEnemyAction(self.enemy)
-        ]
-        )
+
+        add_actions([
+            AttackAction(self.base_damage, game_state.player, self.enemy, "attack"),
+            LoseHPAction(amount=self.enemy.hp, target=self.enemy, source=self.enemy),
+            RemoveEnemyAction(self.enemy),
+            RollEnemyIntentionAction(self.enemy),
+        ])

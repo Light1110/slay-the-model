@@ -2,7 +2,7 @@
 Spheric Guardian - Normal enemy (Act 2/3)
 Defensive orb enemy with alternating patterns.
 """
-import random
+from engine.random_streams import get_rng
 from enemies.base import Enemy
 from utils.types import EnemyType
 from enemies.act2.spheric_guardian_intentions import (
@@ -14,6 +14,7 @@ class SphericGuardian(Enemy):
     """Spheric Guardian - Defensive orb enemy."""
     
     enemy_type = EnemyType.NORMAL
+    select_intention_after_enemy_turn = True
     
     def __init__(self):
         super().__init__(
@@ -44,6 +45,7 @@ class SphericGuardian(Enemy):
     
     def determine_next_intention(self, floor: int = 1):
         """Determine next intention based on fixed pattern."""
+        get_rng("ai").randint(0, 99)
         # Always starts with Activate
         if self._pattern_index == 0:
             self._pattern_index = 1

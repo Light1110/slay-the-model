@@ -13,7 +13,7 @@ class MultiHit(Intention):
         super().__init__("Multi Hit", enemy)
         from engine.game_state import game_state
 
-        self.base_damage = 8 if game_state.ascension >= 17 else 7
+        self.base_damage = 9 if game_state.ascension >= 2 else 7
         self.base_times = 3
     
     def execute(self) -> None:
@@ -37,7 +37,7 @@ class DebuffAttackMass(Intention):
         super().__init__("Debuff Attack", enemy)
         from engine.game_state import game_state
 
-        self.base_damage = 11 if game_state.ascension >= 17 else 10
+        self.base_damage = 12 if game_state.ascension >= 2 else 10
     
     def execute(self) -> None:
         """Execute Debuff Attack intention."""
@@ -51,8 +51,8 @@ class DebuffAttackMass(Intention):
                 self.enemy,
                 "attack"
             ),
-            ApplyPowerAction("weak", game_state.player, 2, 2),
-            ApplyPowerAction("vulnerable", game_state.player, 2, 2)
+            ApplyPowerAction("weak", game_state.player, 2, 2, source=self.enemy),
+            ApplyPowerAction("vulnerable", game_state.player, 2, 2, source=self.enemy)
         ]
         )
 
@@ -64,7 +64,7 @@ class BigHit(Intention):
         super().__init__("Big Hit", enemy)
         from engine.game_state import game_state
 
-        self.base_damage = 35 if game_state.ascension >= 17 else 32
+        self.base_damage = 38 if game_state.ascension >= 2 else 32
     
     def execute(self) -> None:
         """Execute Big Hit intention."""
@@ -87,8 +87,8 @@ class BlockAttackMass(Intention):
         super().__init__("Block Attack", enemy)
         from engine.game_state import game_state
 
-        self.base_damage = 16 if game_state.ascension >= 17 else 15
-        self.base_block = 16
+        self.base_damage = 16 if game_state.ascension >= 2 else 15
+        self.base_block = self.base_damage
     
     def execute(self) -> None:
         """Execute Block Attack intention."""

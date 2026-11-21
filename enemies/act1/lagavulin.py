@@ -14,17 +14,14 @@ from enemies.act1.lagavulin_intentions import (
 @register("enemy")
 class Lagavulin(Enemy):
     enemy_type = EnemyType.ELITE
+    roll_fixed_opening_intention = True
+    select_intention_after_enemy_turn = True
     
     def __init__(self, ascension: int = 0, start_awake: bool = False):
         from engine.game_state import game_state
 
         ascension = max(ascension, getattr(game_state, "ascension", 0))
-        if ascension >= 8:
-            hp = get_rng("monster_hp").randint(112, 115)
-        else:
-            hp = 110
-        
-        super().__init__(hp_range=(hp, hp))
+        super().__init__(hp_range=(112, 115) if ascension >= 8 else (109, 111))
         self.ascension = ascension
         self.start_awake = start_awake
         self._stun_pending = False
@@ -60,6 +57,11 @@ class Lagavulin(Enemy):
         offset = 2 if self.start_awake else 0
         pattern = ("attack", "attack", "siphon_soul")
         return self.intentions[pattern[(completed + offset) % len(pattern)]]
+
+    def advance_intention_after_turn(self, floor: int) -> None:
+        if self.history_intentions[-1:] != ["sleep"] or self.is_sleeping:
+            get_rng("ai").randint(0, 99)
+        super().advance_intention_after_turn(floor)
 
     def _wake_up(self) -> None:
         """Remove the 8 Metallicize supplied by sleeping, preserving other stacks."""

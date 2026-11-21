@@ -1,6 +1,7 @@
 """Bronze Automaton boss enemy (Act 2)."""
 
 from enemies.base import Enemy
+from engine.random_streams import get_rng
 from enemies.act2.bronze_automaton_intentions import (
     SpawnOrbs,
     Flail,
@@ -24,13 +25,17 @@ class BronzeAutomaton(Enemy):
     7. Stunned
     Repeat 2-7
 
-    On A17+: Stunned is replaced with Boost
+    On A19+: Stunned is replaced with Boost
     """
 
     enemy_type = EnemyType.BOSS
+    select_intention_after_enemy_turn = True
 
     def __init__(self):
-        super().__init__(hp_range=(300, 300)) # todo: 320 a9
+        from engine.game_state import game_state
+
+        hp = self.get_hp_for_ascension(game_state.ascension)
+        super().__init__(hp_range=(hp, hp))
         self.add_intention(SpawnOrbs(self))
         self.add_intention(Flail(self))
         self.add_intention(Boost(self))
@@ -54,8 +59,9 @@ class BronzeAutomaton(Enemy):
         Pattern after Spawn Orbs:
         Flail -> Boost -> Flail -> Boost -> Hyper Beam -> Stunned -> repeat
 
-        On A17+: Stunned is replaced with Boost
+        On A19+: Stunned is replaced with Boost
         """
+        get_rng("ai").randint(0, 99)
         if self._first_turn:
             self._first_turn = False
             return self.intentions["Spawn Orbs"]  # First turn is always Spawn Orbs
@@ -63,10 +69,10 @@ class BronzeAutomaton(Enemy):
         # Pattern: 0=Flail, 1=Boost, 2=Flail, 3=Boost, 4=Hyper Beam, 5=Stunned
         pattern = ["Flail", "Boost", "Flail", "Boost", "Hyper Beam", "Stunned"]
         
-        # On A17+, replace Stunned with Boost
+        # On A19+, replace Stunned with Boost
         from engine.game_state import game_state
         intention_name = pattern[self._pattern_index % 6]
-        if game_state.ascension >= 17 and intention_name == "Stunned":
+        if game_state.ascension >= 19 and intention_name == "Stunned":
             intention_name = "Boost"
         
         self.current_intention = self.intentions[intention_name]
@@ -76,8 +82,8 @@ class BronzeAutomaton(Enemy):
         """Get HP based on ascension level.
 
         Base HP: 300
-        A17+: 320
+        A9+: 320
         """
-        if ascension >= 17:
+        if ascension >= 9:
             return 320
         return 300

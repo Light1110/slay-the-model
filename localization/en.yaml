@@ -3426,7 +3426,13 @@ enemies:
     intentions:
       Bash:
         name: Bash
-        description: Deal {damage} damage. Apply 1 Vulnerable.
+        description: Deal {damage} damage and reduce Strength or Focus by 1.
+      Fortify:
+        name: Fortify
+        description: Give every enemy {block} Block.
+      Smash:
+        name: Smash
+        description: Deal {damage} damage and gain Block.
       ShieldBash:
         name: Shield Bash
         description: Deal {damage} damage.
@@ -3438,7 +3444,13 @@ enemies:
     intentions:
       Skewer:
         name: Skewer
-        description: Deal {damage} damage 4 times.
+        description: Deal {damage} damage {hits} times.
+      BurnStrike:
+        name: Burn Strike
+        description: Deal {damage} damage {hits} times and add 2 Burns.
+      Piercer:
+        name: Piercer
+        description: Give every enemy {strength_gain} Strength.
       Sear:
         name: Sear
         description: Deal {damage} damage. Add 2 Burn to your discard pile.

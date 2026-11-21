@@ -1,7 +1,5 @@
 """Awakened One - Act 3 Boss."""
 from engine.random_streams import get_rng
-from argparse import Action
-from typing import List, Optional
 
 from enemies.act3.awakened_one_intentions import (
     Slash,
@@ -23,7 +21,7 @@ class AwakenedOne(Enemy):
     
     Phase One:
     - Always starts with Slash
-    - Soul Strike (25%), Slash (70%)
+    - Soul Strike (25%), Slash (75%)
     - No Slash 3x in a row, no Soul Strike 2x in a row
     
     Phase Two:
@@ -34,12 +32,14 @@ class AwakenedOne(Enemy):
     """
     
     enemy_type = EnemyType.BOSS
+    select_intention_after_enemy_turn = True
     
     def __init__(self):
         from engine.game_state import game_state
 
         ascension = getattr(game_state, "ascension", 0)
-        super().__init__(hp_range=(320, 320) if ascension >= 9 else (300, 300))
+        hp = 320 if ascension >= 9 else 300
+        super().__init__(hp_range=(hp, hp))
         self.add_intention(Slash(self))
         self.add_intention(SoulStrike(self))
         self.add_intention(Rebirth(self))
@@ -104,70 +104,36 @@ class AwakenedOne(Enemy):
             from engine.runtime_api import add_action
             add_action(ClearPendingCardPlaysAction(), to_front=True)
     
-    def determine_next_intention(self, floor: int) -> Optional[str]:
-        """Determine the next intention based on AI pattern."""
-        # Preserve rebirth only while waiting to revive, then enter phase two.
+    def determine_next_intention(self, floor: int):
+        roll = get_rng("ai").randint(0, 99)
+        history = self.history_intentions
         if self.half_dead:
-            return self.intentions["Rebirth"]
-        
-        # Phase 1 pattern
-        if self._phase == 1:
-            # First turn: always Slash
-            if not self.history_intentions:
-                return self.intentions["Slash"]
-            
-            # Count consecutive uses
-            slash_count = 0
-            soul_strike_count = 0
-            last_move = self.history_intentions[-1]
-            
-            for move in reversed(self.history_intentions):
-                if move != last_move:
-                    break
-                if move == "Slash":
-                    slash_count += 1
-                elif move == "Soul Strike":
-                    soul_strike_count += 1
-                else:
-                    break
-            
-            # 70% Slash, 25% Soul Strike
-            while True:
-                roll = get_rng("ai").random()
-                if roll < 0.70:  # 70% Slash
-                    if slash_count < 2:  # Not 3x in a row
-                        return self.intentions["Slash"]
-                else:  # 25% Soul Strike
-                    if soul_strike_count < 1:  # Not 2x in a row
-                        return self.intentions["Soul Strike"]
-        
-        # Phase 2 pattern
+            move = "Rebirth"
+        elif self._phase == 1:
+            if not history:
+                move = "Slash"
+            elif roll < 25:
+                move = "Slash" if history[-1] == "Soul Strike" else "Soul Strike"
+            else:
+                move = "Soul Strike" if history[-2:] == ["Slash", "Slash"] else "Slash"
+        elif not history or history[-1] == "Rebirth":
+            move = "Dark Echo"
+        elif roll < 50:
+            move = "Tackle" if history[-2:] == ["Sludge", "Sludge"] else "Sludge"
         else:
-            # First turn of phase 2: always Dark Echo
-            if not self.history_intentions or self.history_intentions[-1] == "Rebirth":
-                return self.intentions["Dark Echo"]
-            
-            # Count consecutive uses
-            tackle_count = 0
-            sludge_count = 0
-            last_move = self.history_intentions[-1]
-            
-            for move in reversed(self.history_intentions):
-                if move != last_move:
-                    break
-                if move == "Tackle":
-                    tackle_count += 1
-                elif move == "Sludge":
-                    sludge_count += 1
-                else:
-                    break
-            
-            # 50/50 Tackle or Sludge
-            while True:
-                roll = get_rng("ai").random()
-                if roll < 0.50:  # 50% Tackle
-                    if tackle_count < 2:  # Not 3x in a row
-                        return self.intentions["Tackle"]
-                else:  # 50% Sludge
-                    if sludge_count < 2:  # Not 3x in a row
-                        return self.intentions["Sludge"]
+            move = "Sludge" if history[-2:] == ["Tackle", "Tackle"] else "Tackle"
+        return self.intentions[move]
+
+    def on_death(self) -> None:
+        from actions.combat import RemoveEnemyAction
+        from enemies.act1.cultist import Cultist
+        from engine.game_state import game_state
+        from engine.runtime_api import add_actions
+
+        super().on_death()
+        combat = game_state.current_combat
+        if self._phase == 2 and combat is not None:
+            add_actions([
+                RemoveEnemyAction(enemy) for enemy in combat.enemies
+                if isinstance(enemy, Cultist) and enemy.is_alive
+            ])

@@ -95,8 +95,10 @@ class Reincarnate(Intention):
 
     def execute(self) -> None:
         """Execute Reincarnate intention."""
-        # Heal to 50% max HP
-        heal_amount = self.enemy.max_hp // 2
-        self.enemy.hp = heal_amount
-        # Reset cannot be targeted state
+        from actions.combat import notify_enemy_spawned
+        from powers.definitions.life_link import LifeLinkPower
+
+        self.enemy.hp = self.enemy.max_hp // 2
         self.enemy._is_regrowing = False
+        self.enemy.add_power(LifeLinkPower(owner=self.enemy))
+        notify_enemy_spawned(self.enemy)

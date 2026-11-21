@@ -177,6 +177,7 @@ def test_all_linked_darklings_die_without_becoming_eligible_for_revival(
         assert target.current_intention is not None
         assert target.current_intention.name == "Reincarnate"
         # Removing the final living sibling must cancel this prepared revival.
+        anchor.block = 0
         play(helper, Strike())
     else:
         play(helper, Cleave())
@@ -220,8 +221,8 @@ def test_vault_preserves_regrowing_until_a_real_enemy_turn(ascension):
     assert combat._end_player_phase() is None
     assert combat.execute_enemy_phase() is None
     assert target.hp == 0 and target.half_dead
-    assert target.current_intention.name == "Regrowing..."
-    # Once a real Regrowing turn finishes, normal scheduling resumes.
+    assert target.current_intention.name == "Reincarnate"
+    # The player phase presents the intent already selected after Regrowing.
     next_player(helper, combat)
     assert target.current_intention is not None
     assert target.current_intention.name == "Reincarnate"

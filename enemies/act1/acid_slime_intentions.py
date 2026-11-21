@@ -155,43 +155,18 @@ class TackleIntention(Intention):
 
 
 class SplitIntention(Intention):
-    """Split - Disappears and spawns Acid Slime (M) and Spike Slime (S) with current HP.
-    
-    Only used by Acid Slime (L).
-    """
-    
+    """Replace the large slime with two medium acid slimes at its current HP."""
+
     def __init__(self, enemy: 'Enemy'):
         super().__init__("split", enemy)
-    
+
     def execute(self) -> None:
-        """Execute Split: spawns smaller slimes."""
-        from actions.combat import RemoveEnemyAction, AddEnemyAction
-        
+        from actions.combat import AddEnemyAction, RemoveEnemyAction
+        from enemies.act1.acid_slime import AcidSlimeM
+
         current_hp = self.enemy.hp
-        
-        actions = [
+        add_actions([
             RemoveEnemyAction(enemy=self.enemy),
-        ]
-        
-        # Spawn Acid Slime (M) and Spike Slime (S); each gets parent's current HP
-        try:
-            from enemies.act1.acid_slime import AcidSlimeM
-            from enemies.act1.spike_slime import SpikeSlimeS
-            
-            acid_m = AcidSlimeM()
-            acid_m.max_hp = current_hp
-            acid_m.hp = current_hp
-            
-            spike_s = SpikeSlimeS()
-            spike_s.max_hp = current_hp
-            spike_s.hp = current_hp
-            
-            actions.append(AddEnemyAction(enemy=acid_m))
-            actions.append(AddEnemyAction(enemy=spike_s))
-        except Exception:
-            pass
-        
-        from engine.game_state import game_state
-        
-        add_actions(actions)
-        
+            AddEnemyAction(enemy=AcidSlimeM(max_hp=current_hp)),
+            AddEnemyAction(enemy=AcidSlimeM(max_hp=current_hp)),
+        ])

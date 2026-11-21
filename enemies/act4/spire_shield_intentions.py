@@ -1,10 +1,9 @@
 """Spire Shield Elite intentions for Act 4."""
-from engine.random_streams import get_rng
-from engine.runtime_api import add_action, add_actions
+from typing import cast
 
-from typing import List
+from engine.random_streams import StreamRandom, get_rng
+from engine.runtime_api import add_actions
 
-from actions.base import Action
 from actions.combat import ApplyPowerAction, AttackAction, GainBlockAction
 from enemies.intention import Intention
 from powers.definitions.focus import FocusPower
@@ -16,15 +15,15 @@ class Bash(Intention):
 
     def __init__(self, enemy):
         super().__init__("Bash", enemy)
+        self.base_damage = 14 if enemy.ascension >= 3 else 12
 
     def execute(self):
         from engine.game_state import game_state
 
         player = game_state.player
-        damage = get_rng("ai").choice([12, 14])
         actions = [
             AttackAction(
-                damage=damage,
+                damage=self.base_damage,
                 target=player,
                 source=self.enemy,
                 damage_type="attack",
@@ -35,10 +34,10 @@ class Bash(Intention):
             hasattr(player, "orb_manager")
             and getattr(player.orb_manager, "max_orb_slots", 0) > 0
         )
-        if has_orb_slot and get_rng("ai").choice([True, False]):
-            actions.append(ApplyPowerAction(FocusPower(amount=-1, owner=player), player))
+        if has_orb_slot and cast(StreamRandom, get_rng("ai")).random_boolean():
+            actions.append(ApplyPowerAction(FocusPower(amount=-1, owner=player), player, source=self.enemy))
         else:
-            actions.append(ApplyPowerAction(StrengthPower(amount=-1, owner=player), player))
+            actions.append(ApplyPowerAction(StrengthPower(amount=-1, owner=player), player, source=self.enemy))
 
         from engine.game_state import game_state
 
@@ -70,28 +69,22 @@ class Fortify(Intention):
         add_actions(actions)
         return
 class Smash(Intention):
-    """Deal heavy damage and gain block."""
+    """Deal heavy damage and gain Block."""
 
     def __init__(self, enemy):
         super().__init__("Smash", enemy)
+        self.base_damage = 38 if enemy.ascension >= 3 else 34
+        self.base_block = 99 if enemy.ascension >= 18 else self.base_damage
 
-    def execute(self):
+    def execute(self) -> None:
         from engine.game_state import game_state
+        from utils.dynamic_values import resolve_potential_damage
 
-        base_damage, fixed_block = get_rng("ai").choice(
-            [(34, None), (38, None), (38, 99)]
-        )
-        block_gain = fixed_block if fixed_block is not None else base_damage
-        from engine.game_state import game_state
-        add_actions(
-        [
-            AttackAction(
-                damage=base_damage,
-                target=game_state.player,
-                source=self.enemy,
-                damage_type="attack",
-            ),
-            GainBlockAction(block=block_gain, target=self.enemy),
-        ]
-        )
-        return
+        player = game_state.player
+        block = self.base_block
+        if self.enemy.ascension < 18:
+            block = resolve_potential_damage(self.base_damage, self.enemy, player, damage_type="attack")
+        add_actions([
+            AttackAction(self.base_damage, player, self.enemy, "attack"),
+            GainBlockAction(block=block, target=self.enemy),
+        ])

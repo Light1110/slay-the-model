@@ -26,14 +26,18 @@ class TheChamp(Enemy):
     """
     
     enemy_type = EnemyType.BOSS
+    select_intention_after_enemy_turn = True
     
-    def __init__(self, ascension: int = 0):
+    def __init__(self, ascension: int | None = None):
         """Initialize The Champ.
         
         Args:
             ascension: Current ascension level
         """
-        # HP: 300 (320 on A9+)
+        if ascension is None:
+            from engine.game_state import game_state
+
+            ascension = game_state.ascension
         if ascension >= 9:
             hp_max = 440
         else:
@@ -43,10 +47,8 @@ class TheChamp(Enemy):
         self._ascension = ascension
         self._turn_count = 0
         self._phase = 1
-        self._phase_two_turn = 0  # Turn counter within phase 2
-        self._anger_used = False
-        self._execute_after_anger = False
-        
+        self._stances_selected = 0
+
         # Register intentions
         self._register_intentions()
     
@@ -86,130 +88,32 @@ class TheChamp(Enemy):
         self.add_intention(execute)
     
     def on_combat_start(self, floor: int) -> None:
-        """Initialize combat state."""
         self._turn_count = 0
         self._phase = 1
-        self._phase_two_turn = 0
-        self._anger_used = False
-        self._execute_after_anger = False
+        self._stances_selected = 0
         super().on_combat_start(floor)
-    
-    def on_any_hp_lost(self, amount: int, source=None, card=None) -> None:
-        """Check for phase transition."""
-        if self.hp <= self.max_hp // 2 and self._phase == 1:
-            # Will trigger phase 2 on next intention determination
-            pass
-    
-    def determine_next_intention(self, floor: int) -> None:
-        """Determine next intention based on phase."""
+
+    def determine_next_intention(self, floor: int):
+        roll = get_rng("ai").randint(0, 99)
         self._turn_count += 1
-        
-        # Check for phase transition (HP drops below 50%)
-        if self.hp <= self.max_hp // 2 and self._phase == 1:
+        history = self.history_intentions
+        last = history[-1] if history else None
+        stance_cutoff = 30 if self._ascension >= 19 else 15
+        if self._phase == 1 and self.hp < self.max_hp // 2:
             self._phase = 2
-            self._phase_two_turn = 0
-            self._anger_used = False
-            self._execute_after_anger = False
-        
-        if self._phase == 1:
-            self._determine_phase_one_intention()
+            move = "Anger"
+        elif self._phase == 2 and "Execute" not in history[-2:]:
+            move = "Execute"
+        elif self._phase == 1 and self._turn_count == 4:
+            self._turn_count = 0
+            move = "Taunt"
+        elif last != "Defensive Stance" and self._stances_selected < 2 and roll <= stance_cutoff:
+            self._stances_selected += 1
+            move = "Defensive Stance"
+        elif last not in {"Gloat", "Defensive Stance"} and roll <= 30:
+            move = "Gloat"
+        elif last != "Face Slap" and roll <= 55:
+            move = "Face Slap"
         else:
-            self._determine_phase_two_intention()
-    
-    def _get_last_move(self) -> str:
-        """Get the name of the last used intention."""
-        if self.history_intentions:
-            return self.history_intentions[-1]
-        return ""
-    
-    def _determine_phase_one_intention(self) -> None:
-        """Determine intention in Phase One.
-        
-        Pattern:
-        - Always uses Taunt every 4 turns
-        - On other turns:
-          - Defensive Stance: 15%
-          - Gloat: 15% (replaced with Defensive Stance on A19)
-          - Face Slap: 25%
-          - Heavy Slash: 45%
-        - No move can be used twice in a row
-        - On A19, if last move was Defensive Stance and Gloat would be
-          replaced, use Gloat instead
-        """
-        last_move = self._get_last_move()
-        
-        # Taunt every 4 turns
-        if self._turn_count % 4 == 0:
-            self.current_intention = self.intentions["Taunt"]
-            return
-        
-        # Available moves with probabilities
-        moves = [
-            ("Defensive Stance", 15),
-            ("Gloat", 15),
-            ("Face Slap", 25),
-            ("Heavy Slash", 45),
-        ]
-        
-        # A19: Gloat replaced with Defensive Stance
-        if self._ascension >= 19:
-            moves = [
-                ("Defensive Stance", 30),  # 15 + 15 from Gloat
-                ("Face Slap", 25),
-                ("Heavy Slash", 45),
-            ]
-        
-        # Filter out last move (no repeat)
-        available = [(name, prob) for name, prob in moves if name != last_move]
-        
-        # A19 special case: if last move was Defensive Stance, use Gloat
-        if self._ascension >= 19 and last_move == "Defensive Stance":
-            self.current_intention = self.intentions["Gloat"]
-            return
-        
-        # Select random move based on weights
-        if available:
-            total_weight = sum(prob for _, prob in available)
-            roll = get_rng("ai").randint(1, total_weight)
-            cumulative = 0
-            for name, prob in available:
-                cumulative += prob
-                if roll <= cumulative:
-                    self.current_intention = self.intentions[name]
-                    return
-        
-        # Fallback
-        self.current_intention = self.intentions["Heavy Slash"]
-    
-    def _determine_phase_two_intention(self) -> None:
-        """Determine intention in Phase Two.
-        
-        Pattern:
-        1. First turn: Anger
-        2. Turn after Anger: Execute
-        3. Then repeat: Random, Random, Execute
-        """
-        self._phase_two_turn += 1
-        
-        # First turn of Phase Two: Anger
-        if not self._anger_used:
-            self.current_intention = self.intentions["Anger"]
-            self._anger_used = True
-            return
-        
-        # Turn after Anger: Execute
-        if self._phase_two_turn == 2:
-            self.current_intention = self.intentions["Execute"]
-            return
-        
-        # Pattern: Random, Random, Execute (repeating)
-        # _phase_two_turn starts at 1 (Anger), 2 (Execute)
-        # So pattern starts at turn 3
-        pattern_turn = (self._phase_two_turn - 3) % 3  # 0, 1, 2, 0, 1, 2...
-        
-        if pattern_turn == 2:
-            # Execute turn
-            self.current_intention = self.intentions["Execute"]
-        else:
-            # Random move (same chances as Phase One)
-            self._determine_phase_one_intention()
+            move = "Face Slap" if last == "Heavy Slash" else "Heavy Slash"
+        return self.intentions[move]

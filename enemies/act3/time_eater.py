@@ -1,6 +1,7 @@
 """Time Eater - Act 3 Boss."""
-from engine.random_streams import get_rng
-from typing import Optional
+from typing import cast
+
+from engine.random_streams import StreamRandom, get_rng
 
 from enemies.act3.time_eater_intentions import (
     Reverberate,
@@ -24,6 +25,7 @@ class TimeEater(Enemy):
     """
     
     enemy_type = EnemyType.BOSS
+    select_intention_after_enemy_turn = True
     
     def __init__(self):
         from engine.game_state import game_state
@@ -36,68 +38,36 @@ class TimeEater(Enemy):
         self.add_intention(Haste(self))
         
         self._haste_used = False
-        self._haste_triggered = False  # Flag to trigger Haste next turn
     
     def on_combat_start(self, floor: int):
         """Initialize combat state and add Time Warp power."""
         self._haste_used = False
-        self._haste_triggered = False
         super().on_combat_start(floor)
         
         # Add Time Warp power at combat start
         from powers.definitions.time_warp import TimeWarpPower
         self.add_power(TimeWarpPower(amount=1, owner=self))
     
-    def on_any_hp_lost(self, amount: int, source=None, card=None):
-        """Check if Haste should be triggered next turn."""
-        if not self._haste_used and self.hp <= self.max_hp // 2:
-            # Set flag to trigger Haste next turn instead of immediately
-            self._haste_triggered = True
+    def determine_next_intention(self, floor: int):
+        rng = cast(StreamRandom, get_rng("ai"))
+        roll = rng.randint(0, 99)
+        if not self._haste_used and self.hp < self.max_hp // 2:
             self._haste_used = True
-    
-    def determine_next_intention(self, floor: int) -> Optional[str]:
-        """Determine the next intention based on AI pattern."""
-        # If Haste was triggered by damage, use Haste next turn
-        if self._haste_triggered:
-            self._haste_triggered = False  # Reset flag
             return self.intentions["Haste"]
-        
-        # If HP below half and Haste not used, use Haste
-        if not self._haste_used and self.hp <= self.max_hp // 2:
-            self._haste_used = True
-            self._haste_triggered = False
-            return self.intentions["Haste"]
-        
-        # Get last move for constraint checking
-        last_move = self.history_intentions[-1] if self.history_intentions else None
-        
-        # Count consecutive uses
-        reverberate_count = 0
-        head_slam_count = 0
-        ripple_count = 0
-        last_move = self.history_intentions[-1] if self.history_intentions else None
-        
-        for move in reversed(self.history_intentions):
-            if move != last_move:
-                break
-            if move == "Reverberate":
-                reverberate_count += 1
-            elif move == "Head Slam":
-                head_slam_count += 1
-            elif move == "Ripple":
-                ripple_count += 1
-            else:
-                break
-        
-        # Random selection with constraints
+
+        history = self.history_intentions
+        last = history[-1] if history else None
         while True:
-            roll = get_rng("ai").random()
-            if roll < 0.45:  # 45% Reverberate
-                if reverberate_count < 2:  # Not 3x in a row
+            if roll < 45:
+                if history[-2:] != ["Reverberate", "Reverberate"]:
                     return self.intentions["Reverberate"]
-            elif roll < 0.80:  # 35% Head Slam
-                if head_slam_count < 1:  # Not 2x in a row
+                roll = rng.randint(50, 99)
+            elif roll < 80:
+                if last != "Head Slam":
                     return self.intentions["Head Slam"]
-            else:  # 20% Ripple
-                if ripple_count < 1:  # Not 2x in a row
-                    return self.intentions["Ripple"]
+                move = "Reverberate" if rng.random_boolean(0.66) else "Ripple"
+                return self.intentions[move]
+            elif last != "Ripple":
+                return self.intentions["Ripple"]
+            else:
+                roll = rng.randint(0, 74)

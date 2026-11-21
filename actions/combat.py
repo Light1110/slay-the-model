@@ -55,23 +55,52 @@ class RemoveEnemyAction(Action):
 class AddEnemyAction(Action):
     """Add an enemy to combat."""
 
-    def __init__(self, enemy: "Enemy"):
+    def __init__(self, enemy: "Enemy | type[Enemy]", *, position: int | None = None):
         self.enemy = enemy
+        self.position = position
 
     def execute(self) -> None:
         from enemies.base import Enemy
         from engine.game_state import game_state
 
-        if game_state.current_combat:
+        combat = game_state.current_combat
+        if combat:
             enemy = self.enemy() if isinstance(self.enemy, type) else self.enemy
-            if isinstance(enemy, Enemy):
-                game_state.current_combat.add_enemy(enemy)
-                player = getattr(game_state, "player", None)
-                if player is not None:
-                    for relic in list(getattr(player, "relics", [])):
-                        hook = getattr(relic, "on_spawn_monster", None)
-                        if callable(hook):
-                            hook(enemy, player)
+            if isinstance(enemy, Enemy) and enemy not in combat.enemies:
+                if self.position is not None:
+                    enemy.formation_position = self.position
+                combat.add_enemy(enemy)
+                notify_enemy_spawned(enemy)
+                if enemy in combat.enemies and not enemy.is_dead():
+                    enemy.initialize_spawn_intention(game_state.current_floor)
+
+
+def notify_enemy_spawned(enemy: "Enemy") -> None:
+    """Notify the player's relics about a summon or a returning enemy."""
+    from engine.game_state import game_state
+
+    player = game_state.player
+    if player is not None:
+        for relic in list(player.relics):
+            hook = getattr(relic, "on_spawn_monster", None)
+            if callable(hook):
+                hook(enemy, player)
+
+
+class RollEnemyIntentionAction(Action):
+    """Resolve an intent roll already queued by an enemy's move."""
+
+    def __init__(self, enemy: "Enemy"):
+        self.enemy = enemy
+
+    def execute(self) -> None:
+        from engine.game_state import game_state
+
+        combat = game_state.current_combat
+        if combat is not None and not combat.combat_ended and any(
+            not enemy.is_dead() for enemy in combat.enemies
+        ):
+            self.enemy.advance_intention_after_turn(game_state.current_floor)
 
 
 @register("action")

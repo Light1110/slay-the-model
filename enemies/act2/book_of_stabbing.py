@@ -18,6 +18,7 @@ class BookOfStabbing(Enemy):
     """
     
     enemy_type = EnemyType.ELITE
+    select_intention_after_enemy_turn = True
     
     def __init__(self):
         from engine.game_state import game_state
@@ -48,47 +49,18 @@ class BookOfStabbing(Enemy):
         if self._selected_after_turn == completed:
             return self.current_intention
         self._selected_after_turn = completed
-        # Get last move
-        last = self.history_intentions[-1] if self.history_intentions else None
-        
-        # Count consecutive Multi Stab uses
-        multi_stab_consecutive = 0
-        for move in reversed(self.history_intentions):
-            if move == "Multi Stab":
-                multi_stab_consecutive += 1
-            else:
-                break
-        
-        # Determine valid moves
-        can_multi_stab = multi_stab_consecutive < 2
-        can_big_stab = last != "Big Stab"
-        
-        # Select move based on weights
-        if not can_big_stab:
-            # Must use Multi Stab
-            if can_multi_stab:
-                self.current_intention = self.intentions["Multi Stab"]
-        elif not can_multi_stab:
-            # Must use Big Stab
-            if can_big_stab:
-                self.current_intention = self.intentions["Big Stab"]
+        roll = get_rng("ai").randint(0, 99)
+        history = self.history_intentions
+        use_big_stab = (roll < 15 and history[-1:] != ["Big Stab"]) or history[-2:] == ["Multi Stab", "Multi Stab"]
+        if use_big_stab:
+            self.current_intention = self.intentions["Big Stab"]
+            if ascension >= 18:
+                self.multi_stab_count += 1
         else:
-            # Both available - 15% Big Stab, 85% Multi Stab
-            if get_rng("ai").random() < 0.15:
-                self.current_intention = self.intentions["Big Stab"]
-            else:
-                self.current_intention = self.intentions["Multi Stab"]
-
-        if self.current_intention is None:
             self.current_intention = self.intentions["Multi Stab"]
-
-        if self.current_intention.name == "Multi Stab":
-            self.intentions["Multi Stab"]._hits = self.multi_stab_count + 2
-        if self.current_intention.name == "Big Stab" and ascension >= 18:
-            self.multi_stab_count += 1
-
+            self.current_intention._hits = self.multi_stab_count + 2
         return self.current_intention
-    
+
     def execute_intention(self) -> None:
         """Execute current intention and update counter."""
         if not self.current_intention:

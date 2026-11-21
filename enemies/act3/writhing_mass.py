@@ -1,7 +1,7 @@
 """Writhing Mass enemy for Slay the Model."""
-from engine.random_streams import get_rng
+from typing import cast
 
-from typing import List, Optional, TYPE_CHECKING
+from engine.random_streams import StreamRandom, get_rng
 
 from enemies.act3.writhing_mass_intentions import (
     MultiHit, DebuffAttackMass, BigHit, BlockAttackMass, ParasiteIntention
@@ -9,25 +9,22 @@ from enemies.act3.writhing_mass_intentions import (
 from enemies.base import Enemy
 from utils.types import EnemyType
 
-if TYPE_CHECKING:
-    from actions.base import Action
-
-
 class WrithingMass(Enemy):
     """Writhing Mass is a normal Enemy found in Act 3.
     
     Special mechanics:
-    - First turn: equal chance of Multi Hit, Big Hit, or Debuff Attack
-    - After: Parasite 10%, Block Attack 30%, Debuff Attack 30%, Big Hit 30%
-    - Cannot use same move twice in a row
+    Changes intention after qualifying attacks and can implant Parasite once.
     """
     
     enemy_type = EnemyType.NORMAL
+    select_intention_after_enemy_turn = True
     
     def __init__(self):
-        super().__init__(hp_range=(160, 160)) # 175 a7
-        self._turn_count = 0
-        self._last_intention = None
+        from engine.game_state import game_state
+
+        hp = 175 if game_state.ascension >= 7 else 160
+        super().__init__(hp_range=(hp, hp))
+        self._first_move = True
         
         # Register intentions
         self.add_intention(MultiHit(self))
@@ -37,95 +34,67 @@ class WrithingMass(Enemy):
         self.add_intention(ParasiteIntention(self))
     
     def determine_next_intention(self, floor: int):
-        """Determine next intention based on pattern."""
-        self._turn_count += 1
-        
-        if self._turn_count == 1:
-            # First turn: equal chance of Multi Hit, Big Hit, or Debuff Attack
-            choice = get_rng("ai").choice(["Multi Hit", "Big Hit", "Debuff Attack"])
-            self._last_intention = choice
-            return self.intentions[choice]
-        
-        # After first turn:
-        # Parasite 10%, Block Attack 30%, Debuff Attack 30%, Big Hit 30%
-        roll = get_rng("ai").random()
-        
-        if roll < 0.1:  # 10% Parasite
-            if self._last_intention != "Parasite":
-                self._last_intention = "Parasite"
-                return self.intentions["Parasite"]
-        elif roll < 0.4:  # 30% Block Attack
-            if self._last_intention != "Block Attack":
-                self._last_intention = "Block Attack"
+        rng = cast(StreamRandom, get_rng("ai"))
+        roll = rng.randint(0, 99)
+        history = self.history_intentions
+        if self._first_move:
+            self._first_move = False
+            if roll < 33:
+                move = "Multi Hit"
+            elif roll < 66:
+                move = "Block Attack"
+            else:
+                move = "Debuff Attack"
+            return self.intentions[move]
+
+        last = history[-1] if history else None
+        used_parasite = "Parasite" in history
+        while True:
+            if roll < 10:
+                if last != "Big Hit":
+                    return self.intentions["Big Hit"]
+                roll = rng.randint(10, 99)
+            elif roll < 20:
+                if not used_parasite:
+                    return self.intentions["Parasite"]
+                if rng.random_boolean(0.1):
+                    return self.intentions["Big Hit"]
+                roll = rng.randint(20, 99)
+            elif roll < 40:
+                if last != "Debuff Attack":
+                    return self.intentions["Debuff Attack"]
+                bounds = (0, 19) if rng.random_boolean(0.4) else (40, 99)
+                roll = rng.randint(*bounds)
+            elif roll < 70:
+                if last != "Multi Hit":
+                    return self.intentions["Multi Hit"]
+                if rng.random_boolean(0.3):
+                    return self.intentions["Block Attack"]
+                roll = rng.randint(0, 39)
+            elif last != "Block Attack":
                 return self.intentions["Block Attack"]
-        elif roll < 0.7:  # 30% Debuff Attack
-            if self._last_intention != "Debuff Attack":
-                self._last_intention = "Debuff Attack"
-                return self.intentions["Debuff Attack"]
-        else:  # 30% Big Hit
-            if self._last_intention != "Big Hit":
-                self._last_intention = "Big Hit"
-                return self.intentions["Big Hit"]
-        
-        # If we hit a repeat, try again with a different option
-        available = ["Multi Hit", "Debuff Attack", "Big Hit", "Block Attack"]
-        if self._last_intention in available:
-            available.remove(self._last_intention)
-        choice = get_rng("ai").choice(available)
-        self._last_intention = choice
-        return self.intentions[choice]
-    
+            else:
+                roll = rng.randint(0, 69)
+
     def on_combat_start(self, floor: int = 1) -> None:
-        """Called when combat starts.
-        
-        Apply Malleable and Reactive powers at the start of combat.
-        
-        Args:
-            floor: Current floor number
-        """
-        super().on_combat_start(floor)
-        
-        # Apply Malleable 4
         from powers.definitions.malleable import MalleablePower
-        self.add_power(MalleablePower(amount=4, owner=self))
-        
-        # Apply Reactive
         from powers.definitions.reactive import ReactivePower
+
+        self._first_move = True
+        super().on_combat_start(floor)
+        self.add_power(MalleablePower(amount=3, owner=self))
         self.add_power(ReactivePower(owner=self))
-    
-    def on_physical_attack_taken(
-        self,
-        damage: int,
-        source=None,
-        card=None,
-        damage_type: str = "physical",
-    ) -> None:
-        """Called when enemy takes damage.
-        
-        Due to Reactive power, changes its intention when hit by attack damage.
-        
-        Args:
-            damage: Amount of damage being taken
-            source: Source of damage
-            card: Card that caused damage
-            damage_type: Type of damage
-            
-        Returns:
-            List of actions to queue after taking damage
-        """
-        # Check for Reactive power - if hit by attack, change intention
-        if damage > 0:
-            # Check if we have Reactive power
-            if self.get_power("Reactive"):
-                # Change to a random different intention
-                available = ["Multi Hit", "Debuff Attack", "Big Hit", 
-                            "Block Attack", "Parasite"]
-                if self._last_intention in available:
-                    available.remove(self._last_intention)
-                if available:
-                    new_intention = get_rng("ai").choice(available)
-                    self._last_intention = new_intention
-                    # Update current_intention
-                    if new_intention in self.intentions:
-                        self.current_intention = self.intentions[new_intention]
-        
+
+    def on_physical_attack_taken(self, damage: int, source=None, card=None, damage_type: str = "physical") -> None:
+        from actions.base import LambdaAction
+        from engine.game_state import game_state
+        from engine.runtime_api import add_action
+
+        if damage <= 0 or source is None or not self.is_alive or not self.has_power("Reactive"):
+            return
+
+        def roll_after_hit():
+            if self.is_alive:
+                self._select_intention(game_state.current_floor)
+
+        add_action(LambdaAction(func=roll_after_hit))

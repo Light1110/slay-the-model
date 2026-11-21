@@ -11,6 +11,7 @@ from enemies.act1.sentry_intentions import BoltIntention, BeamIntention
 @register("enemy")
 class Sentry(Enemy):
     enemy_type = EnemyType.ELITE
+    select_intention_after_enemy_turn = True
     
     def __init__(self, ascension: int | None = None, is_middle: bool = False):
         if ascension is None:
@@ -23,7 +24,7 @@ class Sentry(Enemy):
         else:
             hp = get_rng("monster_hp").randint(38, 42)
         
-        super().__init__(hp_range=(hp, hp))
+        super().__init__(max_hp=hp)
         self.ascension = ascension
         self.is_middle = is_middle
         self.turn_count = 0
@@ -44,6 +45,7 @@ class Sentry(Enemy):
         
         Also updates turn count for next decision.
         """
+        get_rng("ai").randint(0, 99)
         if self.is_middle:
             # Middle: Beam first, then Bolt
             intention = self.intentions["beam"] if self.turn_count % 2 == 0 else self.intentions["bolt"]

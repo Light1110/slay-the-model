@@ -1,4 +1,4 @@
-from engine.random_streams import get_rng
+from engine.random_streams import StreamRandom, get_rng
 # -*- coding: utf-8 -*-
 from engine.runtime_api import add_action, add_actions
 """Looter - Common enemy in Act 1 and Act 2.
@@ -6,7 +6,7 @@ from engine.runtime_api import add_action, add_actions
 Steals gold when attacking and tries to escape after a few turns.
 """
 
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from enemies.base import Enemy
 from enemies.act1.looter_intentions import (
@@ -41,29 +41,36 @@ class Looter(Enemy):
     """
     
     enemy_type = EnemyType.NORMAL
+    roll_fixed_opening_intention = True
+    select_intention_after_enemy_turn = True
     
     def __init__(self):
+        from engine.game_state import game_state
+
+        self.ascension = game_state.ascension
         super().__init__(
-            hp_range=(44, 48)  # todo: 46-50 a7
+            hp_range=(46, 50) if self.ascension >= 7 else (44, 48)
         )
         
         # Turn tracking for AI pattern
         self._turn_count = 0
         self._used_lunge = False
         self._used_smoke_bomb = False
+        self._use_smoke_after_mug: bool | None = None
         
         # Register intentions
         self.add_intention(LooterMugIntention(self))
         self.add_intention(LooterLungeIntention(self))
         self.add_intention(LooterSmokeBombIntention(self))
         self.add_intention(LooterEscapeIntention(self))
+        self.intentions["mug"].base_damage = 11 if self.ascension >= 2 else 10
+        self.intentions["lunge"].base_damage = 14 if self.ascension >= 2 else 12
     
     def on_combat_start(self, floor: int = 1) -> None:
         """Called when combat starts - apply Thievery power."""
         super().on_combat_start(floor)
         
-        # Apply Thievery power (15 gold on normal, 20 on Ascension 7+)
-        thievery_amount = 15  # todo: 20 in Ascension 7+
+        thievery_amount = 20 if self.ascension >= 17 else 15
         thievery = ThieveryPower(amount=thievery_amount, owner=self)
         self.add_power(thievery)
         mug_intention = self.intentions.get("mug")
@@ -98,16 +105,24 @@ class Looter(Enemy):
         
         # Turn 3: 50% Lunge or 50% Smoke Bomb
         if next_turn == 3:
-            if get_rng("ai").random() < 0.5:
-                return self.intentions["lunge"]
-            else:
-                return self.intentions["smoke_bomb"]
+            use_smoke = self._use_smoke_after_mug
+            if use_smoke is None:
+                use_smoke = cast(StreamRandom, get_rng("ai")).random_boolean(0.5)
+            return self.intentions["smoke_bomb" if use_smoke else "lunge"]
         
         # Turn 4+ (if we got here without smoke bomb somehow): Smoke Bomb then Escape
         return self.intentions["smoke_bomb"]
     
     def execute_intention(self) -> None:
         """Execute the current intention and update turn tracking."""
+        if self.current_intention is None:
+            return
+        if self.current_intention.name == "mug":
+            rng = cast(StreamRandom, get_rng("ai"))
+            if self._turn_count == 0:
+                rng.random_boolean(0.6)
+            elif self._turn_count == 1:
+                self._use_smoke_after_mug = rng.random_boolean(0.5)
         # Update turn tracking before executing
         self._turn_count += 1
         

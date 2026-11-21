@@ -2,7 +2,9 @@
 Byrd - Normal enemy (Act 2)
 Flying bird that uses aerial attacks.
 """
-from engine.random_streams import get_rng
+from typing import cast
+
+from engine.random_streams import StreamRandom, get_rng
 from enemies.base import Enemy
 from utils.types import EnemyType
 from enemies.act2.byrd_intentions import (
@@ -15,11 +17,14 @@ class Byrd(Enemy):
     """Byrd - Flying bird enemy with aerial attack patterns."""
     
     enemy_type = EnemyType.NORMAL
+    select_intention_after_enemy_turn = True
     
     def __init__(self):
-        super().__init__(
-            hp_range=(25, 31) # todo: 26-33 a7
-        )
+        from engine.game_state import game_state
+
+        self.ascension = game_state.ascension
+        super().__init__(hp_range=(26, 33) if self.ascension >= 7 else (25, 31))
+        self.flight_stacks = 4 if self.ascension >= 17 else 3
         
         # Track flying state
         self._is_flying = True
@@ -37,98 +42,41 @@ class Byrd(Enemy):
         """Initialize combat state."""
         self._is_flying = True
         self._grounded_pattern_index = 0
-        # Add 3 (4 in A7+) stacks of FlyingPower
         from powers.definitions.flying import FlyingPower
-        from engine.game_state import game_state
-        flying_stacks = 4 if game_state.ascension >= 7 else 3
-        self.add_power(FlyingPower(amount=flying_stacks, owner=self))
+        self.add_power(FlyingPower(amount=self.flight_stacks, owner=self))
         # The opening selector reads Flying; initialize it before selecting.
         super().on_combat_start(floor)
     
+    def remove_power(self, power_or_name) -> None:
+        had_flying = self.has_power("Flying")
+        super().remove_power(power_or_name)
+        if had_flying and not self.has_power("Flying") and self.is_alive:
+            self._is_flying = False
+            self._grounded_pattern_index = 1
+            self.current_intention = self.intentions["stunned"]
+
     def determine_next_intention(self, floor: int = 1):
-        """Determine next intention based on flying state and history."""
-        # Check if still flying (has flying power with amount > 0)
-        flying_power = self.get_power("Flying")
-        self._is_flying = flying_power is not None and flying_power.amount > 0
-        
-        if self._is_flying:
-            return self._determine_flying_intention()
+        history = self.history_intentions
+        last = history[-1] if history else None
+        if last == "headbutt" and not self._is_flying:
+            return self.intentions["go_airborne"]
+
+        rng = cast(StreamRandom, get_rng("ai"))
+        roll = rng.randint(0, 99)
+        if not self._is_flying:
+            return self.intentions["headbutt"]
+        if last is None:
+            return self.intentions["caw" if rng.random_boolean(0.375) else "peck"]
+        if roll < 50:
+            move = "peck"
+            if history[-2:] == ["peck", "peck"]:
+                move = "swoop" if rng.random_boolean(0.4) else "caw"
+        elif roll < 70:
+            move = "swoop"
+            if last == "swoop":
+                move = "caw" if rng.random_boolean(0.375) else "peck"
         else:
-            return self._determine_grounded_intention()
-    
-    def _determine_flying_intention(self):
-        """Determine intention while flying."""
-        # Get last intention
-        last = self.history_intentions[-1] if self.history_intentions else None
-        
-        # Cannot use Caw and Swoop twice in a row
-        # Cannot use Peck three times in a row
-        peck_count = 0
-        for intention in reversed(self.history_intentions):
-            if intention == "peck":
-                peck_count += 1
-            else:
-                break
-        
-        # Byrd never starts with Swoop
-        if not self.history_intentions:
-            roll = get_rng("ai").random()
-            if roll < 0.50:
-                return self.intentions["peck"]
-            elif roll < 0.80:  # 0.50 + 0.30
-                return self.intentions["caw"]
-            else:
-                return self.intentions["peck"]  # Don't use swoop first
-        
-        # After patterns
-        roll = get_rng("ai").random()
-        
-        # Can't use Caw twice in a row
-        if last == "caw":
-            if roll < 0.50:
-                return self.intentions["peck"]
-            else:
-                return self.intentions["swoop"]
-        
-        # Can't use Swoop twice in a row
-        if last == "swoop":
-            if roll < 0.50:
-                return self.intentions["peck"]
-            else:
-                return self.intentions["caw"]
-        
-        # Can't use Peck three times in a row
-        if peck_count >= 2:
-            if roll < 0.60:  # 30/(30+20)
-                return self.intentions["caw"]
-            else:
-                return self.intentions["swoop"]
-        
-        # Normal pattern: Peck 50%, Caw 30%, Swoop 20%
-        if roll < 0.50:
-            return self.intentions["peck"]
-        elif roll < 0.80:  # 0.50 + 0.30
-            return self.intentions["caw"]
-        else:
-            return self.intentions["swoop"]
-    
-    def _determine_grounded_intention(self):
-        """Determine intention while grounded - follows fixed pattern."""
-        # Pattern: Stunned -> Headbutt -> Go Airborne
-        result = None
-        
-        if self._grounded_pattern_index == 0:
-            result = self.intentions["stunned"]
-        elif self._grounded_pattern_index == 1:
-            result = self.intentions["headbutt"]
-        else:
-            result = self.intentions["go_airborne"]
-        
-        self._grounded_pattern_index += 1
-        
-        # After Go Airborne, reset and return to flying pattern
-        if self._grounded_pattern_index > 2:
-            self._grounded_pattern_index = 0
-            self._is_flying = True
-        
-        return result
+            move = "caw"
+            if last == "caw":
+                move = "swoop" if rng.random_boolean(0.2857) else "peck"
+        return self.intentions[move]

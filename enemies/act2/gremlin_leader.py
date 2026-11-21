@@ -18,6 +18,7 @@ class GremlinLeader(Enemy):
     """
     
     enemy_type = EnemyType.ELITE
+    select_intention_after_enemy_turn = True
     
     def __init__(self):
         super().__init__(hp_range=(140, 148)) # todo: 145-155 a8
@@ -27,77 +28,43 @@ class GremlinLeader(Enemy):
         self.add_intention(Stab(self))
         self.add_intention(Rally(self))
     
-    def _count_gremlins(self) -> int:
-        """Count alive gremlin minions in battle."""
+    def determine_next_intention(self, floor: int):
         from engine.game_state import game_state
-        enemies = (
-            game_state.current_combat.enemies
-            if game_state.current_combat is not None
-            else []
-        )
 
-        count = 0
-        for enemy in enemies:
-            if enemy.is_alive and enemy != self:
-                # Check if it's a small gremlin (not a Leader or Nob)
-                if hasattr(enemy, '_is_gremlin') and enemy._is_gremlin:
-                    count += 1
-        return count
-    
-    def determine_next_intention(self, floor: int) -> None:
-        """Determine next intention based on gremlin count."""
-        # Get last move
-        last = self.history_intentions[-1] if self.history_intentions else None
-        
-        gremlin_count = self._count_gremlins()
-        
-        # Select move based on gremlin count
-        if gremlin_count == 0:
-            # With 0 Gremlins: 15% Rally, 85% Stab
-            if last == "Rally!":
-                # Can't use Rally twice
-                self.current_intention = self.intentions["Stab"]
-            elif last == "Stab":
-                if get_rng("ai").random() < 0.15:
-                    self.current_intention = self.intentions["Rally!"]
-                else:
-                    self.current_intention = self.intentions["Encourage"]
+        combat = game_state.current_combat
+        count = sum(enemy is not self and enemy.is_alive for enemy in combat.enemies) if combat else 0
+        history = self.history_intentions
+        last = history[-1] if history else None
+        rng = get_rng("ai")
+        roll = rng.randint(0, 99)
+        if count == 0:
+            use_rally = last == "Stab" or (roll < 75 and last != "Rally!")
+            return self.intentions["Rally!" if use_rally else "Stab"]
+        if count >= 2:
+            use_encourage = last == "Stab" or (roll < 66 and last != "Encourage")
+            return self.intentions["Encourage" if use_encourage else "Stab"]
+
+        while True:
+            if roll < 50:
+                if last != "Rally!":
+                    return self.intentions["Rally!"]
+                roll = rng.randint(50, 99)
+            elif roll < 80:
+                return self.intentions["Stab" if last == "Encourage" else "Encourage"]
+            elif last != "Stab":
+                return self.intentions["Stab"]
             else:
-                if get_rng("ai").random() < 0.15:
-                    self.current_intention = self.intentions["Rally!"]
-                else:
-                    self.current_intention = self.intentions["Stab"]
-                    
-        elif gremlin_count == 1:
-            # With 1 Gremlin: Complex pattern
-            if last == "Encourage":
-                if get_rng("ai").random() < 0.60:
-                    self.current_intention = self.intentions["Rally!"]
-                else:
-                    self.current_intention = self.intentions["Stab"]
-            elif last == "Stab":
-                if get_rng("ai").random() < 0.625:
-                    self.current_intention = self.intentions["Rally!"]
-                else:
-                    self.current_intention = self.intentions["Encourage"]
-            else:
-                # After Rally or first turn
-                if get_rng("ai").random() < 0.50:
-                    self.current_intention = self.intentions["Stab"]
-                else:
-                    self.current_intention = self.intentions["Encourage"]
-                    
-        else:
-            # With 2+ Gremlins: 66% Encourage, 34% Stab
-            if last == "Encourage":
-                self.current_intention = self.intentions["Stab"]
-            elif last == "Stab":
-                if get_rng("ai").random() < 0.66:
-                    self.current_intention = self.intentions["Encourage"]
-                else:
-                    self.current_intention = self.intentions["Stab"]
-            else:
-                if get_rng("ai").random() < 0.66:
-                    self.current_intention = self.intentions["Encourage"]
-                else:
-                    self.current_intention = self.intentions["Stab"]
+                roll = rng.randint(0, 80)
+
+    def on_death(self) -> None:
+        from actions.combat import RemoveEnemyAction
+        from engine.game_state import game_state
+        from engine.runtime_api import add_actions
+
+        super().on_death()
+        combat = game_state.current_combat
+        if combat is not None:
+            add_actions([
+                RemoveEnemyAction(enemy) for enemy in combat.enemies
+                if enemy is not self and enemy.is_alive and enemy.is_minion
+            ])

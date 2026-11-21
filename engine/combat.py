@@ -59,8 +59,18 @@ class Combat(Localizable):
 
     def add_enemy(self, enemy: Enemy):
         """Add an enemy to combat."""
-        if enemy not in self.enemies:
+        if enemy in self.enemies:
+            return
+        position = enemy.formation_position
+        if position is None:
             self.enemies.append(enemy)
+        else:
+            index = sum((existing.formation_position or 0) < position for existing in self.enemies)
+            self.enemies.insert(index, enemy)
+
+    def open_formation_positions(self, positions: tuple[int, ...]) -> list[int]:
+        occupied = {enemy.formation_position for enemy in self.enemies if not enemy.is_dead()}
+        return [position for position in positions if position not in occupied]
 
     def remove_enemy(self, enemy: Enemy):
         """Remove an enemy from combat (e.g., when killed)."""
@@ -473,23 +483,23 @@ class Combat(Localizable):
         # DEBUG: Print combat state at start of enemy phase
         # _debug_print_combat_state("ENEMY_PHASE_START", self.enemies)
 
-        # For each alive enemy, resolve that enemy's own turn, then act.
-        for enemy in self.enemies:
-            if enemy.is_dead():
+        for enemy in tuple(self.enemies):
+            if enemy not in self.enemies or enemy.is_dead():
                 continue
-
-            for power in enemy.powers[:]:
-                power.on_turn_start()
-            result = game_state.drive_actions()
-            if result is not None:
-                return result
-            if enemy.is_dead():
-                continue
-
-            # Clear block at start of enemy turn (unless Barricade)
-            has_barricade = any(p.name == "Barricade" for p in enemy.powers)
-            if not has_barricade:
+            if not enemy.has_power("Barricade"):
                 enemy.block = 0
+            for power in enemy.powers[:]:
+                start_result = power.on_turn_start()
+                if start_result:
+                    game_state.action_queue.add_actions(start_result)
+        result = game_state.drive_actions()
+        if result is not None:
+            return result
+
+        # Only enemies present when monster actions are queued can act this round.
+        for enemy in tuple(self.enemies):
+            if enemy not in self.enemies or enemy.is_dead():
+                continue
 
             # Print enemy intention before executing (hidden if player has RunicDome)
             has_runic_dome = any(r.__class__.__name__ == "RunicDome" for r in game_state.player.relics)
@@ -504,18 +514,23 @@ class Combat(Localizable):
             result = game_state.drive_actions()
             if result is not None:
                 return result
-            if enemy.is_dead():
+            if enemy not in self.enemies or enemy.is_dead():
                 continue
 
+            enemy.advance_intention_after_turn(game_state.current_floor)
+
+        for enemy in tuple(self.enemies):
+            if enemy not in self.enemies or enemy.is_dead():
+                continue
             for power in enemy.powers[:]:
                 end_result = power.on_turn_end()
                 if end_result:
                     game_state.action_queue.add_actions(end_result)
                 if power.duration == 0:
                     enemy.remove_power(power)
-            result = game_state.drive_actions()
-            if result is not None:
-                return result
+        result = game_state.drive_actions()
+        if result is not None:
+            return result
 
         alive_enemies = [enemy for enemy in self.enemies if not enemy.is_dead()]
         publish_message(

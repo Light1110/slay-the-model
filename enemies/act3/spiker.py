@@ -17,41 +17,17 @@ class Spiker(Enemy):
     """
     
     enemy_type = EnemyType.NORMAL
+    select_intention_after_enemy_turn = True
     
     def __init__(self):
         super().__init__(hp_range=(42, 56)) # todo: 44-60 a7
-        self._turn_count = 0
-        self._buff_thorns_count = 0
-        self._last_was_attack = False
         
         # Register intentions
         self.add_intention(SpikeAttack(self))
         self.add_intention(BuffThorns(self))
     
     def determine_next_intention(self, floor: int):
-        """Determine next intention based on pattern."""
-        self._turn_count += 1
-        
-        # 50/50 Attack or Buff Thorns
-        # Cannot use Attack twice in a row
-        # Cannot use Buff Thorns if used 6 times
-        
-        if self._buff_thorns_count >= 6:
-            # Must use Attack
-            self._last_was_attack = True
-            return self.intentions["Attack"]
-        
-        if self._last_was_attack:
-            # Can only use Buff Thorns
-            self._last_was_attack = False
-            self._buff_thorns_count += 1
-            return self.intentions["Buff Thorns"]
-        
-        # 50/50 choice
-        if get_rng("ai").random() < 0.5:
-            self._last_was_attack = True
-            return self.intentions["Attack"]
-        else:
-            self._last_was_attack = False
-            self._buff_thorns_count += 1
-            return self.intentions["Buff Thorns"]
+        roll = get_rng("ai").randint(0, 99)
+        history = self.history_intentions
+        use_attack = history.count("Buff Thorns") >= 6 or (roll < 50 and history[-1:] != ["Attack"])
+        return self.intentions["Attack" if use_attack else "Buff Thorns"]

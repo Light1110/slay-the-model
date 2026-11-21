@@ -34,9 +34,9 @@ CASES = [
     (TheMaw, 'Slam', 25, 25, 1), (TheMaw, 'Nom Nom', 5, 5, 1),
     (SpireGrowth, 'Quick Tackle', 16, 18, 1), (SpireGrowth, 'Smash', 22, 25, 1),
     (Repulsor, 'Attack', 11, 13, 1), (Spiker, 'Attack', 7, 9, 1),
-    (WrithingMass, 'Multi Hit', 7, 8, 3), (WrithingMass, 'Debuff Attack', 10, 11, 1),
-    (WrithingMass, 'Big Hit', 32, 35, 1), (WrithingMass, 'Block Attack', 15, 16, 1),
-    (Nemesis, 'Tri Attack', 6, 6, 3), (Nemesis, 'Scythe', 45, 45, 1),
+    (WrithingMass, 'Multi Hit', 7, 9, 3), (WrithingMass, 'Debuff Attack', 10, 12, 1),
+    (WrithingMass, 'Big Hit', 32, 38, 1), (WrithingMass, 'Block Attack', 15, 16, 1),
+    (Nemesis, 'Tri Attack', 6, 7, 3), (Nemesis, 'Scythe', 45, 45, 1),
 ]
 
 
@@ -119,12 +119,12 @@ def test_transient_preview_tracks_temporary_strength_loss():
     assert enemy.strength == 0
 
 
-@pytest.mark.parametrize('ascension,start,cap', [(2, 30, 60), (3, 40, 70), (17, 40, 70)])
-def test_giant_head_next_damage_is_stable_and_caps_in_real_turns(monkeypatch, ascension, start, cap):
+@pytest.mark.parametrize('ascension,start,cap,heavy_turn', [(2, 30, 60, 4), (17, 40, 70, 4), (18, 40, 70, 3)])
+def test_giant_head_next_damage_is_stable_and_caps_in_real_turns(monkeypatch, ascension, start, cap, heavy_turn):
     helper = create_test_helper()
     player = helper.create_player(hp=10000, max_hp=10000)
     game_state.ascension = ascension
-    monkeypatch.setattr(get_rng("ai"), "random", lambda: 0.9)
+    monkeypatch.setattr(get_rng("ai"), "randint", lambda _start, _end: 90)
     enemy = GiantHead()
     combat = helper.start_combat([enemy])
     time_attacks = 0
@@ -137,11 +137,13 @@ def test_giant_head_next_damage_is_stable_and_caps_in_real_turns(monkeypatch, as
             enemy.determine_next_intention()
             assert enemy.current_intention is selected
         damage = selected.get_base_damage()
-        if turn >= 4:
+        if turn >= heavy_turn:
             assert selected is enemy.intentions['It Is Time']
             assert damage == min(start + time_attacks * 5, cap)
             assert cast(LocalStr, selected.description).kwargs['damage'] == damage
             time_attacks += 1
+        else:
+            assert selected.name != 'It Is Time'
         before = player.hp
         finish_turn(combat)
         assert player.hp == before - damage
@@ -150,8 +152,7 @@ def test_giant_head_next_damage_is_stable_and_caps_in_real_turns(monkeypatch, as
 def test_maw_real_turn_count_uses_original_initial_offset(monkeypatch):
     helper = create_test_helper()
     player = helper.create_player(hp=1000, max_hp=1000)
-    rolls = iter([0.9, 0.1, 0.1, 0.1, 0.1])
-    monkeypatch.setattr(get_rng("ai"), "random", lambda: next(rolls))
+    monkeypatch.setattr(get_rng("ai"), "randint", lambda _start, _end: 10)
     enemy = TheMaw()
     combat = helper.start_combat([enemy])
     enemy.add_power(StrengthPower(amount=3))
@@ -165,11 +166,14 @@ def test_maw_real_turn_count_uses_original_initial_offset(monkeypatch):
         before = player.hp
         if turn == 1:
             assert selected.name == 'Roar'
-        else:
+        elif turn % 2 == 0:
             assert selected.name == 'Nom Nom'
             assert cast(LocalStr, selected.description).kwargs['hits'] == (turn + 1) // 2
+        else:
+            assert selected.name == 'Drool'
+        damage = (5 + enemy.strength) * ((turn + 1) // 2) if turn % 2 == 0 else 0
         finish_turn(combat)
-        assert player.hp == before - (0 if turn == 1 else 8 * ((turn + 1) // 2))
+        assert player.hp == before - damage
 
 
 @pytest.mark.parametrize('intangible,block,loss', [(False, 10, 14), (True, 0, 3), (True, 2, 1)])
@@ -194,7 +198,7 @@ def test_book_freezes_hits_before_execution_and_a18_big_stab_growth(monkeypatch,
     helper = create_test_helper()
     player = helper.create_player(hp=1000, max_hp=1000)
     game_state.ascension = ascension
-    monkeypatch.setattr(get_rng("ai"), "random", lambda: 0.9)
+    monkeypatch.setattr(get_rng("ai"), "randint", lambda _start, _end: 90)
     enemy = BookOfStabbing()
     combat = helper.start_combat([enemy])
     for hits in counts:

@@ -10,7 +10,8 @@ HP values based on Slay the Spire Ascension 0:
 - Shield Gremlin: 12-15 HP
 - Gremlin Wizard: 9-12 HP
 """
-from engine.runtime_api import add_action, add_actions
+from engine.random_streams import get_rng
+from engine.runtime_api import add_action
 
 import random
 from typing import Optional
@@ -36,13 +37,19 @@ class FatGremlin(Enemy):
     """
     
     enemy_type = EnemyType.NORMAL
+    select_intention_after_enemy_turn = True
     
-    def __init__(self, hp_range: tuple[int, int] = (13, 17)):
-        super().__init__(hp_range) # todo: 14-18 a7
+    def __init__(self, hp_range: tuple[int, int] | None = None):
+        from engine.game_state import game_state
+
+        ascension = game_state.ascension
+        super().__init__(hp_range if hp_range is not None else ((14, 18) if ascension >= 7 else (13, 17)))
         self.add_intention(FatGremlinSmashIntention(self))
+        self.intentions["fat_gremlin_smash"].base_damage = 5 if ascension >= 2 else 4
     
     def determine_next_intention(self, current_floor: int = 1):
         """Fat Gremlin always smashes."""
+        get_rng("ai").randint(0, 99)
         self.current_intention = self.intentions["fat_gremlin_smash"]
 
 
@@ -54,6 +61,7 @@ class SneakyGremlin(Enemy):
     """
     
     enemy_type = EnemyType.NORMAL
+    roll_fixed_opening_intention = True
     
     def __init__(self, hp_range: tuple[int, int] = (10, 14)):
         super().__init__(hp_range) # todo: 11-15 a7
@@ -73,6 +81,7 @@ class MadGremlin(Enemy):
     """
     
     enemy_type = EnemyType.NORMAL
+    roll_fixed_opening_intention = True
     
     def __init__(self, hp_range: tuple[int, int] = (8, 15)):
         super().__init__(hp_range)
@@ -105,56 +114,62 @@ class MadGremlin(Enemy):
 
 
 class ShieldGremlin(Enemy):
-    """Shield Gremlin - alternates between block and attack.
-    
-    Behavior: Alternates between Protect (6 Block) and Bash (6 damage).
-    HP: 12-15
-    """
-    
-    enemy_type = EnemyType.NORMAL
-    
-    def __init__(self, hp_range: tuple[int, int] = (12, 15)):
-        super().__init__(hp_range) # todo: 13-17 a7
+    """Protect allies until left alone."""
+
+    select_intention_after_enemy_turn = True
+    roll_fixed_opening_intention = True
+
+    def __init__(self, hp_range: tuple[int, int] | None = None):
+        from engine.game_state import game_state
+
+        ascension = game_state.ascension
+        super().__init__(hp_range if hp_range is not None else ((13, 17) if ascension >= 7 else (12, 15)))
         self.add_intention(ShieldGremlinProtectIntention(self))
         self.add_intention(ShieldGremlinBashIntention(self))
-        self._use_protect_next = True
-    
+        self.intentions["shield_gremlin_protect"].base_block = 11 if ascension >= 17 else 8 if ascension >= 7 else 7
+        self.intentions["shield_gremlin_bash"].base_damage = 8 if ascension >= 2 else 6
+
     def determine_next_intention(self, current_floor: int = 1):
-        """Shield Gremlin alternates between Protect and Bash."""
-        if self._use_protect_next:
-            self.current_intention = self.intentions["shield_gremlin_protect"]
-        else:
-            self.current_intention = self.intentions["shield_gremlin_bash"]
-        self._use_protect_next = not self._use_protect_next
+        from engine.game_state import game_state
+
+        combat = game_state.current_combat
+        has_ally = combat is not None and any(
+            ally is not self and ally.is_alive for ally in combat.enemies
+        )
+        history = self.history_intentions
+        protect = not history or (has_ally and history[-1] != "shield_gremlin_bash")
+        return self.intentions["shield_gremlin_protect" if protect else "shield_gremlin_bash"]
 
 
 class GremlinWizard(Enemy):
-    """Gremlin Wizard - charges for 2 turns then attacks.
-    
-    Behavior: Charges for 2 turns (no action), then uses Ultimate Blast
-    (25 damage). Resets charge counter after attacking.
-    HP: 9-12
-    """
-    
-    enemy_type = EnemyType.NORMAL
-    
-    def __init__(self, hp_range: tuple[int, int] = (21, 25)):
-        super().__init__(hp_range) # todo: 22-26 a7
+    """Charge three times before unleashing a blast."""
+
+    select_intention_after_enemy_turn = True
+    roll_fixed_opening_intention = True
+
+    def __init__(self, hp_range: tuple[int, int] | None = None):
+        from engine.game_state import game_state
+
+        self.ascension = game_state.ascension
+        super().__init__(hp_range if hp_range is not None else ((22, 26) if self.ascension >= 7 else (21, 25)))
         self.add_intention(GremlinWizardChargeIntention(self))
         self.add_intention(GremlinWizardUltimateBlastIntention(self))
-        self._charge_count = 0
-        self._charge_threshold = 2
-    
+        self.intentions["gremlin_wizard_ultimate_blast"].base_damage = 30 if self.ascension >= 2 else 25
+
     def determine_next_intention(self, floor: int = 1):
-        """Wizard charges for 2 turns, then blasts."""
-        if self._charge_count >= self._charge_threshold:
-            self.current_intention = self.intentions["gremlin_wizard_ultimate_blast"]
-            self._charge_count = 0
-        else:
-            self.current_intention = self.intentions["gremlin_wizard_charge"]
-            self._charge_count += 1
-    
-    def execute_intention(self, *args, **kwargs):
-        """Execute intention and track charge state."""
-        result = super().execute_intention(*args, **kwargs)
-        return result
+        history = self.history_intentions
+        charge = "gremlin_wizard_charge"
+        blast = "gremlin_wizard_ultimate_blast"
+        ready = history[-3:] == [charge] * 3 or (self.ascension >= 17 and history[-1:] == [blast])
+        return self.intentions[blast if ready else charge]
+
+
+def create_leader_minion(rng_domain: str) -> Enemy:
+    """Draw from the weighted pool used for a leader's initial and summoned allies."""
+    pool = (
+        MadGremlin, MadGremlin, SneakyGremlin, SneakyGremlin,
+        FatGremlin, FatGremlin, ShieldGremlin, GremlinWizard,
+    )
+    enemy = pool[get_rng(rng_domain).randint(0, len(pool) - 1)]()
+    enemy.is_minion = True
+    return enemy

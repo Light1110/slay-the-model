@@ -8,7 +8,8 @@ different behavior:
 - Shield Gremlin: Block or damage
 - Gremlin Wizard: Charges for big attack
 """
-from engine.runtime_api import add_action, add_actions
+from engine.random_streams import get_rng
+from engine.runtime_api import add_actions
 
 from typing import List
 
@@ -30,25 +31,18 @@ class FatGremlinSmashIntention(Intention):
         self.base_amount = 1  # Weak duration
     
     def execute(self) -> None:
-        """Deal damage and apply Weak to player."""
+        from engine.game_state import game_state
+        from powers.definitions.frail import FrailPower
         from powers.definitions.weak import WeakPower
-        from engine.game_state import game_state
-        from engine.game_state import game_state
-        add_actions(
-        [
-            AttackAction(
-                damage=self.base_damage,
-                target=game_state.player,
-                source=self.enemy,
-                damage_type="attack",
-            ),
-            ApplyPowerAction(
-                WeakPower(amount=1, duration=-1, owner=game_state.player),
-                game_state.player,
-                source=self.enemy,
-            ),
+
+        player = game_state.player
+        actions = [
+            AttackAction(self.base_damage, player, self.enemy, "attack"),
+            ApplyPowerAction(WeakPower(amount=1, duration=1, owner=player), player, source=self.enemy),
         ]
-        )
+        if game_state.ascension >= 17:
+            actions.append(ApplyPowerAction(FrailPower(amount=1, duration=1, owner=player), player, source=self.enemy))
+        add_actions(actions)
 
 
 class SneakyGremlinStabIntention(Intention):
@@ -105,16 +99,16 @@ class ShieldGremlinProtectIntention(Intention):
         self.base_block = 6
     
     def execute(self) -> None:
-        """Gain block."""
         from engine.game_state import game_state
-        add_actions(
-        [
-            GainBlockAction(
-                target=self.enemy,
-                amount=self.base_block,
-            ),
-        ]
-        )
+
+        combat = game_state.current_combat
+        allies = [
+            enemy for enemy in combat.enemies
+            if enemy is not self.enemy and enemy.is_alive
+            and (enemy.current_intention is None or enemy.current_intention.name != "escape")
+        ] if combat is not None else []
+        target = get_rng("ai").choice(allies) if allies else self.enemy
+        add_actions([GainBlockAction(block=self.base_block, target=target, source=self.enemy)])
 
 
 class ShieldGremlinBashIntention(Intention):

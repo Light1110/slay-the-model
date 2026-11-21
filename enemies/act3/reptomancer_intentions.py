@@ -9,6 +9,8 @@ from enemies.act3.dagger import Dagger
 from enemies.intention import Intention
 from powers.definitions.weak import WeakPower
 
+DAGGER_POSITIONS = (210, -220, 180, -250)
+
 
 class SpawnDaggerIntention(Intention):
     """Reptomancer Spawn Dagger intention - summons a Dagger."""
@@ -23,13 +25,10 @@ class SpawnDaggerIntention(Intention):
         if combat is None:
             return
         
-        # Maximum 4 Daggers can be in play
-        dagger_count = sum(1 for e in combat.enemies if isinstance(e, Dagger))
-        
-        if dagger_count < 4:
-            from engine.game_state import game_state
-            add_actions([AddEnemyAction(Dagger())])
-            return
+        positions = combat.open_formation_positions(DAGGER_POSITIONS)[:self.enemy.daggers_per_spawn]
+        add_actions([AddEnemyAction(Dagger(), position=position) for position in positions])
+
+
 class BigBiteIntention(Intention):
     """Reptomancer Big Bite intention - 30 damage."""
     

@@ -1,5 +1,5 @@
 """Test Act 4 monsters - Spire Shield, Spire Spear, Corrupt Heart"""
-from engine.random_streams import get_rng, StreamRandom
+from engine.random_streams import StreamRandom
 import unittest
 from unittest.mock import patch
 
@@ -28,11 +28,9 @@ class TestSpireShield(unittest.TestCase):
     def tearDown(self):
         self.helper._reset_game_state()
     
-    def test_hp_range(self):
-        """Test Spire Shield has correct HP range (42-48)"""
+    def test_base_hp(self):
         shield = SpireShield()
-        self.assertGreaterEqual(shield.hp, 42)
-        self.assertLessEqual(shield.hp, 48)
+        self.assertEqual(shield.hp, 110)
     
     def test_is_elite(self):
         """Test Spire Shield is Elite type"""
@@ -56,8 +54,7 @@ class TestSpireShield(unittest.TestCase):
     def test_pattern_starts_with_bash(self):
         """Test Spire Shield starts with Bash"""
         with patch.object(
-            StreamRandom, "choice",
-            return_value=["Bash", "Fortify"],
+            StreamRandom, "random_boolean", return_value=False,
         ):
             shield = SpireShield()
             intention = shield.determine_next_intention(1)
@@ -66,19 +63,13 @@ class TestSpireShield(unittest.TestCase):
     def test_pattern_sequence(self):
         """Test Spire Shield turn pattern with Smash every 3 turns."""
         with patch.object(
-            StreamRandom, "choice",
-            side_effect=[
-                ["Bash", "Fortify"],
-                ["Fortify", "Bash"],
-            ],
+            StreamRandom, "random_boolean", side_effect=[False, True],
         ):
             shield = SpireShield()
-            self.assertEqual(shield.determine_next_intention(1), "Bash")
-            self.assertEqual(shield.determine_next_intention(2), "Fortify")
-            self.assertEqual(shield.determine_next_intention(3), "Smash")
-            self.assertEqual(shield.determine_next_intention(4), "Fortify")
-            self.assertEqual(shield.determine_next_intention(5), "Bash")
-            self.assertEqual(shield.determine_next_intention(6), "Smash")
+            for expected in ("Bash", "Fortify", "Smash", "Fortify", "Bash", "Smash"):
+                move = shield.determine_next_intention(55)
+                self.assertEqual(move, expected)
+                shield.history_intentions.append(move)
 
 
 class TestSpireSpear(unittest.TestCase):
@@ -90,11 +81,9 @@ class TestSpireSpear(unittest.TestCase):
     def tearDown(self):
         self.helper._reset_game_state()
     
-    def test_hp_range(self):
-        """Test Spire Spear has correct HP range (38-42)"""
+    def test_base_hp(self):
         spear = SpireSpear()
-        self.assertGreaterEqual(spear.hp, 38)
-        self.assertLessEqual(spear.hp, 42)
+        self.assertEqual(spear.hp, 160)
     
     def test_is_elite(self):
         """Test Spire Spear is Elite type"""
@@ -124,15 +113,13 @@ class TestSpireSpear(unittest.TestCase):
     def test_pattern_sequence(self):
         """Test Spear turn pattern with Skewer every 3 turns from turn 2."""
         with patch.object(
-            StreamRandom, "choice",
-            return_value=["Burn Strike", "Piercer"],
+            StreamRandom, "random_boolean", return_value=False,
         ):
             spear = SpireSpear()
-            self.assertEqual(spear.determine_next_intention(1), "Burn Strike")
-            self.assertEqual(spear.determine_next_intention(2), "Skewer")
-            self.assertEqual(spear.determine_next_intention(3), "Burn Strike")
-            self.assertEqual(spear.determine_next_intention(4), "Piercer")
-            self.assertEqual(spear.determine_next_intention(5), "Skewer")
+            for expected in ("Burn Strike", "Skewer", "Burn Strike", "Piercer", "Skewer"):
+                move = spear.determine_next_intention(55)
+                self.assertEqual(move, expected)
+                spear.history_intentions.append(move)
 
 
 class TestCorruptHeart(unittest.TestCase):
@@ -173,20 +160,13 @@ class TestCorruptHeart(unittest.TestCase):
     def test_pattern_rules(self):
         """Test Corrupt Heart uses Debilitate first and Buff every 3 turns."""
         with patch.object(
-            StreamRandom, "choice",
-            side_effect=[
-                ["Blood Shots", "Echo"],
-                ["Echo", "Blood Shots"],
-            ],
+            StreamRandom, "random_boolean", side_effect=[True, False],
         ):
             heart = CorruptHeart()
-            self.assertEqual(heart.determine_next_intention(1), "Debilitate")
-            self.assertEqual(heart.determine_next_intention(2), "Blood Shots")
-            self.assertEqual(heart.determine_next_intention(3), "Echo")
-            self.assertEqual(heart.determine_next_intention(4), "Buff")
-            self.assertEqual(heart.determine_next_intention(5), "Echo")
-            self.assertEqual(heart.determine_next_intention(6), "Blood Shots")
-            self.assertEqual(heart.determine_next_intention(7), "Buff")
+            for expected in ("Debilitate", "Blood Shots", "Echo", "Buff", "Echo", "Blood Shots", "Buff"):
+                move = heart.determine_next_intention(55)
+                self.assertEqual(move, expected)
+                heart.history_intentions.append(move)
     
     def test_debilitate_actions(self):
         """Test Debilitate applies 3 debuffs and adds 5 status cards."""

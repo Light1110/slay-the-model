@@ -127,7 +127,7 @@ class BuffHeart(Intention):
             actions.append(LambdaAction(func=self._add_painful_stabs))
         elif buff_count == 4:
             actions.append(ApplyPowerAction(StrengthPower(amount=10, owner=self.enemy), self.enemy))
-        elif buff_count == 5:
+        else:
             actions.append(ApplyPowerAction(StrengthPower(amount=50, owner=self.enemy), self.enemy))
 
         from engine.game_state import game_state

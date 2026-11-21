@@ -1,4 +1,5 @@
 """Deca - Act 3 Boss (fights alongside Donu)."""
+from engine.random_streams import get_rng
 
 from enemies.act3.deca_intentions import (
     DecaBeam,
@@ -23,6 +24,7 @@ class Deca(Enemy):
     """
     
     enemy_type = EnemyType.BOSS
+    select_intention_after_enemy_turn = True
     
     def __init__(self):
         from engine.game_state import game_state
@@ -53,6 +55,7 @@ class Deca(Enemy):
     
     def determine_next_intention(self, floor: int):
         """Determine next intention - alternates between Beam and Square of Protection."""
+        get_rng("ai").randint(0, 99)
         if self._use_beam:
             intention = self.intentions["Beam"]
         else:

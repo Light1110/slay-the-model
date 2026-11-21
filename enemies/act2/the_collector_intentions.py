@@ -26,27 +26,12 @@ class Spawn(Intention):
         from engine.game_state import game_state
         from actions.combat import AddEnemyAction
         from enemies.act2.the_collector import TorchHead
-        enemies = (
-            game_state.current_combat.enemies
-            if game_state.current_combat is not None
-            else []
-        )
-        
-        actions = []
-        
-        # Count alive Torch Heads
-        torch_head_count = sum(1 for e in enemies
-                             if e.is_alive and isinstance(e, TorchHead))
-        
-        # Can only have max 2 Torch Heads
-        to_summon = min(2, 2 - torch_head_count)
-        
-        for _ in range(to_summon):
-            actions.append(AddEnemyAction(TorchHead))
-        
-        from engine.game_state import game_state
-        
-        add_actions(actions)
+        combat = game_state.current_combat
+        if combat is None:
+            return
+
+        positions = combat.open_formation_positions((-285, -470))
+        add_actions([AddEnemyAction(TorchHead(), position=position) for position in positions])
         
 class Fireball(Intention):
     """Deals 18 damage."""

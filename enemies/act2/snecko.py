@@ -14,41 +14,25 @@ class Snecko(Enemy):
     """Snecko - Snake enemy that confuses the player."""
     
     enemy_type = EnemyType.NORMAL
+    select_intention_after_enemy_turn = True
     
     def __init__(self):
-        super().__init__(
-            hp_range=(114, 120) # todo: 120-125 a7
-        )
+        from engine.game_state import game_state
+
+        self.ascension = game_state.ascension
+        super().__init__(hp_range=(120, 125) if self.ascension >= 7 else (114, 120))
         
         # Register intentions
         self.add_intention(PerplexingGlareIntention(self))
         self.add_intention(BiteIntention(self))
         self.add_intention(TailWhipIntention(self))
+        if self.ascension >= 2:
+            self.intentions["bite"].base_damage = 18
+            self.intentions["tail_whip"].base_damage = 10
     
     def determine_next_intention(self, floor: int = 1):
-        """Determine next intention based on pattern."""
-        # Always starts with Perplexing Glare
+        roll = get_rng("ai").randint(0, 99)
         if not self.history_intentions:
             return self.intentions["perplexing_glare"]
-        
-        # Count consecutive Bites
-        def count_consecutive_bite() -> int:
-            count = 0
-            for intent in reversed(self.history_intentions):
-                if intent == "bite":
-                    count += 1
-                else:
-                    break
-            return count
-        
-        bite_count = count_consecutive_bite()
-        
-        # Cannot use Bite three times in a row
-        if bite_count >= 2:
-            return self.intentions["tail_whip"]
-        
-        # Normal pattern after first turn: Bite (60%), Tail Whip (40%)
-        if get_rng("ai").random() < 0.60:
-            return self.intentions["bite"]
-        else:
-            return self.intentions["tail_whip"]
+        tail_whip = roll < 40 or self.history_intentions[-2:] == ["bite", "bite"]
+        return self.intentions["tail_whip" if tail_whip else "bite"]

@@ -17,6 +17,7 @@ class FungiBeast(Enemy):
     """Fungi Beast - Gains strength and applies Vulnerable on death."""
     
     enemy_type = EnemyType.NORMAL
+    select_intention_after_enemy_turn = True
     
     def __init__(self):
         super().__init__(
@@ -31,45 +32,14 @@ class FungiBeast(Enemy):
         self._spore_cloud_stacks = 2
     
     def determine_next_intention(self, floor: int = 1):
-        """Determine next intention based on history.
-        
-        Fungi Beast pattern:
-        - 60% Bite, 40% Grow
-        - Cannot use Bite 3 times in a row
-        - Cannot use Grow 2 times in a row
-        """
-        # First turn: random choice
-        if not self.history_intentions:
-            roll = get_rng("ai").random()
-            if roll < 0.60:
-                return self.intentions["bite"]
-            else:
-                return self.intentions["grow"]
-        
-        # Count consecutive uses
-        last = self.history_intentions[-1]
-        consecutive_count = 0
-        for intention in reversed(self.history_intentions):
-            if intention == last:
-                consecutive_count += 1
-            else:
-                break
-        
-        # Cannot use Bite 3 times in a row
-        if last == "bite" and consecutive_count >= 2:
-            return self.intentions["grow"]
-        
-        # Cannot use Grow 2 times in a row
-        if last == "grow" and consecutive_count >= 1:
-            return self.intentions["bite"]
-        
-        # Normal pattern: 60% Bite, 40% Grow
-        roll = get_rng("ai").random()
-        if roll < 0.60:
-            return self.intentions["bite"]
+        roll = get_rng("ai").randint(0, 99)
+        history = self.history_intentions
+        if roll < 60:
+            move = "grow" if history[-2:] == ["bite", "bite"] else "bite"
         else:
-            return self.intentions["grow"]
-    
+            move = "bite" if history[-1:] == ["grow"] else "grow"
+        return self.intentions[move]
+
     def on_death(self) -> None:
         """Apply Spore Cloud on death: applies 2 Vulnerable to player."""
         from actions.combat import ApplyPowerAction

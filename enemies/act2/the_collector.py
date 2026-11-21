@@ -1,8 +1,6 @@
 """The Collector - Act 2 Elite enemy."""
 from engine.random_streams import get_rng
 
-from typing import List
-
 from enemies.act2.the_collector_intentions import Buff, Fireball, MegaDebuff, Spawn
 from enemies.base import Enemy
 from utils.types import EnemyType
@@ -16,6 +14,7 @@ class TorchHead(Enemy):
     """
     
     enemy_type = EnemyType.NORMAL
+    roll_fixed_opening_intention = True
     
     def __init__(self):
         from engine.game_state import game_state
@@ -46,25 +45,20 @@ class TheCollector(Enemy):
     """
     
     enemy_type = EnemyType.BOSS
+    select_intention_after_enemy_turn = True
     
     def __init__(self):
         from engine.game_state import game_state
 
         ascension = getattr(game_state, "ascension", 0)
-        super().__init__(hp_range=(300, 300) if ascension >= 9 else (282, 282))
-        self._turn_count = 0
-        self._used_mega_debuff = False
+        hp = 300 if ascension >= 9 else 282
+        super().__init__(hp_range=(hp, hp))
         
         # Register intentions
         self.add_intention(Spawn(self))
         self.add_intention(Fireball(self))
         self.add_intention(Buff(self))
         self.add_intention(MegaDebuff(self))
-    
-    def on_combat_start(self, floor: int) -> None:
-        """Initialize combat state."""
-        self._turn_count = 0
-        super().on_combat_start(floor)
     
     def _count_torch_heads(self) -> int:
         """Count alive Torch Heads in battle."""
@@ -81,69 +75,30 @@ class TheCollector(Enemy):
                 count += 1
         return count
     
-    def determine_next_intention(self, floor: int) -> None:
-        """Determine next intention based on pattern."""
-        self._turn_count += 1
-        
-        # Turn 1: Always Spawn
-        if self._turn_count == 1:
-            self.current_intention = self.intentions["Spawn"]
-            return
-        
-        # Turn 4: Always Mega Debuff (once)
-        if self._turn_count == 4 and not self._used_mega_debuff:
-            self._used_mega_debuff = True
-            self.current_intention = self.intentions["Mega Debuff"]
-            return
-        
-        # Get last move
-        last = self.history_intentions[-1] if self.history_intentions else None
-        
-        # Count consecutive Fireball uses
-        fireball_consecutive = 0
-        for move in reversed(self.history_intentions):
-            if move == "Fireball":
-                fireball_consecutive += 1
-            else:
-                break
-        
-        # Determine valid moves
-        can_spawn = self._count_torch_heads() < 2
-        can_buff = last != "Buff"
-        can_fireball = fireball_consecutive < 2
-        
-        # Pattern based on Torch Head count
-        torch_heads = self._count_torch_heads()
-        
-        if torch_heads >= 2:
-            # Both Torch Heads alive: 70% Fireball, 30% Buff
-            if can_fireball and can_buff:
-                if get_rng("ai").random() < 0.70:
-                    self.current_intention = self.intentions["Fireball"]
-                else:
-                    self.current_intention = self.intentions["Buff"]
-            elif can_fireball:
-                self.current_intention = self.intentions["Fireball"]
-            else:
-                self.current_intention = self.intentions["Buff"]
+    def determine_next_intention(self, floor: int):
+        roll = get_rng("ai").randint(0, 99)
+        history = self.history_intentions
+        if not history:
+            move = "Spawn"
+        elif len(history) >= 3 and "Mega Debuff" not in history:
+            move = "Mega Debuff"
+        elif roll <= 25 and self._count_torch_heads() < 2 and history[-1] != "Spawn":
+            move = "Spawn"
+        elif roll <= 70 and history[-2:] != ["Fireball", "Fireball"]:
+            move = "Fireball"
         else:
-            # 0-1 Torch Heads: 25% Spawn, 45% Fireball, 30% Buff
-            if can_spawn and can_fireball and can_buff:
-                roll = get_rng("ai").random()
-                if roll < 0.25:
-                    self.current_intention = self.intentions["Spawn"]
-                elif roll < 0.70:
-                    self.current_intention = self.intentions["Fireball"]
-                else:
-                    self.current_intention = self.intentions["Buff"]
-            elif can_fireball and can_buff:
-                if get_rng("ai").random() < 0.60:
-                    self.current_intention = self.intentions["Fireball"]
-                else:
-                    self.current_intention = self.intentions["Buff"]
-            elif can_fireball:
-                self.current_intention = self.intentions["Fireball"]
-            elif can_buff:
-                self.current_intention = self.intentions["Buff"]
-            else:
-                self.current_intention = self.intentions["Spawn"]
+            move = "Fireball" if history[-1] == "Buff" else "Buff"
+        return self.intentions[move]
+
+    def on_death(self) -> None:
+        from actions.combat import RemoveEnemyAction
+        from engine.game_state import game_state
+        from engine.runtime_api import add_actions
+
+        super().on_death()
+        combat = game_state.current_combat
+        if combat is not None:
+            add_actions([
+                RemoveEnemyAction(enemy) for enemy in combat.enemies
+                if isinstance(enemy, TorchHead) and enemy.is_alive
+            ])

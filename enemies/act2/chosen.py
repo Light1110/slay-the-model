@@ -14,14 +14,12 @@ class Chosen(Enemy):
     """Chosen - Cultist enemy with hex and drain abilities."""
     
     enemy_type = EnemyType.NORMAL
+    select_intention_after_enemy_turn = True
     
     def __init__(self):
         super().__init__(
             hp_range=(95, 99) # todo: 98-103 a7
         )
-        
-        # Track pattern phase
-        self._turn_count = 0
         
         # Register intentions
         self.add_intention(PokeIntention(self))
@@ -30,38 +28,17 @@ class Chosen(Enemy):
         self.add_intention(DrainIntention(self))
         self.add_intention(ZapIntention(self))
     
-    def on_combat_start(self, floor: int = 1):
-        """Initialize combat state."""
-        self._turn_count = 0
-        super().on_combat_start(floor)
-    
     def determine_next_intention(self, floor: int = 1):
-        """Determine next intention based on pattern."""
-        self._turn_count += 1
-        
-        # Always starts with Poke followed by Hex
-        if self._turn_count == 1:
-            return self.intentions["poke"]
-        
-        if self._turn_count == 2:
-            return self.intentions["hex"]
-        
-        # After that, repeat pattern:
-        # 1. Debilitate (50%) or Drain (50%)
-        # 2. Poke (60%) or Zap (40%)
-        
-        # Determine which step of the repeating pattern we're on
-        pattern_step = (self._turn_count - 3) % 2
-        
-        if pattern_step == 0:
-            # Step 1: Debilitate or Drain
-            if get_rng("ai").random() < 0.50:
-                return self.intentions["debilitate"]
-            else:
-                return self.intentions["drain"]
+        from engine.game_state import game_state
+
+        roll = get_rng("ai").randint(0, 99)
+        history = self.history_intentions
+        if not history:
+            move = "hex" if game_state.ascension >= 17 else "poke"
+        elif len(history) == 1 and history[-1] == "poke":
+            move = "hex"
+        elif history[-1] in {"debilitate", "drain"}:
+            move = "zap" if roll < 40 else "poke"
         else:
-            # Step 2: Poke or Zap
-            if get_rng("ai").random() < 0.60:
-                return self.intentions["poke"]
-            else:
-                return self.intentions["zap"]
+            move = "debilitate" if roll < 50 else "drain"
+        return self.intentions[move]

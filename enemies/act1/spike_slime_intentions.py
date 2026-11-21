@@ -42,28 +42,13 @@ class LickIntention(Intention):
 
 
 class TackleIntention(Intention):
-    """Tackle - Deals damage to player.
-    
-    Spike Slime (L): 16 damage
-    Spike Slime (M): 10 damage  
-    Spike Slime (S): 5 damage (6 on A2+)
-    """
-    
-    def __init__(self, enemy: 'Enemy', slimed_count: int = 0):
+    """Deal damage and add the configured number of Slimed cards."""
+
+    def __init__(self, enemy: 'Enemy', damage: int, slimed_count: int = 0):
         super().__init__("tackle", enemy)
         self.slimed_count = slimed_count
-        # Determine damage based on enemy type
-        if hasattr(enemy, '__class__'):
-            enemy_class = enemy.__class__.__name__
-            if enemy_class == 'SpikeSlimeL':
-                self.base_damage = 16
-            elif enemy_class == 'SpikeSlimeM':
-                self.base_damage = 10
-            else:  # SpikeSlimeS
-                self.base_damage = 5
-        else:
-            self.base_damage = 5
-    
+        self.base_damage = damage
+
     def execute(self) -> None:
         """Execute Tackle: deals damage to player."""
         from actions.combat import AttackAction
@@ -99,33 +84,13 @@ class SplitIntention(Intention):
         super().__init__("split", enemy)
     
     def execute(self) -> None:
-        """Execute Split: spawns 2 smaller slimes."""
-        from actions.combat import RemoveEnemyAction, AddEnemyAction
-        
+        from actions.combat import AddEnemyAction, RemoveEnemyAction, RollEnemyIntentionAction
+        from enemies.act1.spike_slime import SpikeSlimeM
+
         current_hp = self.enemy.hp
-        
-        actions = [
+        add_actions([
             RemoveEnemyAction(enemy=self.enemy),
-        ]
-        
-        # Spawn 2 Spike Slimes (M); each gets parent's current HP
-        try:
-            from enemies.act1.spike_slime import SpikeSlimeM
-            
-            slime_m1 = SpikeSlimeM()
-            slime_m1.max_hp = current_hp
-            slime_m1.hp = current_hp
-            
-            slime_m2 = SpikeSlimeM()
-            slime_m2.max_hp = current_hp
-            slime_m2.hp = current_hp
-            
-            actions.append(AddEnemyAction(enemy=slime_m1))
-            actions.append(AddEnemyAction(enemy=slime_m2))
-        except Exception:
-            pass
-        
-        from engine.game_state import game_state
-        
-        add_actions(actions)
-        
+            AddEnemyAction(enemy=SpikeSlimeM(max_hp=current_hp)),
+            AddEnemyAction(enemy=SpikeSlimeM(max_hp=current_hp)),
+            RollEnemyIntentionAction(self.enemy),
+        ])

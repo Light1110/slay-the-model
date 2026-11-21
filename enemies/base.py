@@ -32,6 +32,7 @@ class Enemy(Creature):
     localization_prefix: str = "enemies"
     
     enemy_type: EnemyType = EnemyType.NORMAL
+    formation_position: int | None = None
     
     def __init__(
         self,
@@ -70,6 +71,7 @@ class Enemy(Creature):
         self.intentions: Dict[str, 'Intention'] = {}
         self.current_intention: Optional['Intention'] = None
         self.history_intentions: List[str] = []
+        self._awaiting_first_spawn_turn = False
 
         self._hp_depletion_handled = False
         self._death_notified = False
@@ -163,17 +165,16 @@ class Enemy(Creature):
             f"{type(selection).__name__}"
         )
     
+    roll_fixed_opening_intention = False
+    select_intention_after_enemy_turn = False
+
     def execute_intention(self) -> None:
         """Execute the current intention."""
         if not self.current_intention:
             return
+        self._awaiting_first_spawn_turn = False
         
-        # Record in history
-        if self.current_intention.name not in self.history_intentions:
-            self.history_intentions.append(self.current_intention.name)
-        else:
-            self.history_intentions.append(self.current_intention.name)
-        
+        self.history_intentions.append(self.current_intention.name)
         self.current_intention.execute()
     
     @subscribe(CombatStartedMessage, priority=MessagePriority.ENEMY)
@@ -183,9 +184,26 @@ class Enemy(Creature):
         Args:
             floor: Current floor number
         """
-        # Set initial intention when combat starts
+        self._initialize_intention(floor)
+
+    def initialize_spawn_intention(self, floor: int) -> None:
+        """Select an initial intention and hold it until the summon acts."""
+        if self.current_intention is None:
+            self._initialize_intention(floor)
+        self._awaiting_first_spawn_turn = True
+
+    def _initialize_intention(self, floor: int) -> None:
+        if self.roll_fixed_opening_intention:
+            get_rng("ai").randint(0, 99)
+        self._select_intention(floor)
+
+    def _select_intention(self, floor: int) -> None:
         selection = self.determine_next_intention(floor)
         self.current_intention = self._resolve_next_intention(selection)
+
+    def advance_intention_after_turn(self, floor: int) -> None:
+        if self.select_intention_after_enemy_turn:
+            self._select_intention(floor)
     
     @subscribe(PlayerTurnStartedMessage, priority=MessagePriority.ENEMY)
     def on_player_turn_start(self) -> None:
@@ -195,11 +213,12 @@ class Enemy(Creature):
         """
         from engine.game_state import game_state
         combat_state = getattr(getattr(game_state, "current_combat", None), "combat_state", None)
-        if getattr(combat_state, "preserve_enemy_intent_once", False):
+        if (self.select_intention_after_enemy_turn
+                or getattr(combat_state, "preserve_enemy_intent_once", False)
+                or getattr(self, "_awaiting_first_spawn_turn", False)):
             return
         current_floor = game_state.current_floor if game_state else 1
-        selection = self.determine_next_intention(current_floor)
-        self.current_intention = self._resolve_next_intention(selection)
+        self._select_intention(current_floor)
     
     @subscribe(AnyHpLostMessage, priority=MessagePriority.ENEMY)
     def on_any_hp_lost(self, amount: int, source=None, card=None) -> None:

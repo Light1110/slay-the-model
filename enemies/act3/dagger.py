@@ -1,4 +1,5 @@
 """Dagger minion for Slay the Model."""
+from engine.random_streams import get_rng
 
 from typing import List, Optional
 
@@ -17,9 +18,10 @@ class Dagger(Enemy):
     """
     
     enemy_type = EnemyType.NORMAL  # Minions are treated as normal enemies
+    select_intention_after_enemy_turn = True
     
     def __init__(self):
-        super().__init__(hp_range=(20, 20), is_minion=True)
+        super().__init__(hp_range=(20, 25), is_minion=True)
         self._turn_count = 0
         
         # Register intentions
@@ -28,6 +30,7 @@ class Dagger(Enemy):
     
     def determine_next_intention(self, floor: int) -> Optional[str]:
         """Determine next intention - Wound then Explode."""
+        get_rng("ai").randint(0, 99)
         self._turn_count += 1
         
         if self._turn_count == 1:

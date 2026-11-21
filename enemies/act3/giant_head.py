@@ -18,6 +18,7 @@ class GiantHead(Enemy):
     """Giant Head - Elite enemy that counts down to devastating attacks."""
 
     enemy_type = EnemyType.ELITE
+    select_intention_after_enemy_turn = True
 
     def __init__(self):
         super().__init__(hp_range=(500, 500)) # todo: 520 a8
@@ -45,29 +46,17 @@ class GiantHead(Enemy):
         self._selected_after_turn = completed
         self._turn_count = completed + 1
         
-        # After turn 4, always use It Is Time
-        if self._turn_count > 4:
-            self.current_intention = self.intentions["It Is Time"]
-            return
-        
-        # First 4 turns: 50/50 chance
-        # Can't use same move 3 times in a row
-        last_moves = self.history_intentions[-2:] if len(self.history_intentions) >= 2 else []
-        count_consecutive = last_moves.count("Count")
-        glare_consecutive = last_moves.count("Glare")
-        
-        if count_consecutive >= 2:
-            # Must use Glare
-            self.current_intention = self.intentions["Glare"]
-        elif glare_consecutive >= 2:
-            # Must use Count
-            self.current_intention = self.intentions["Count"]
+        from engine.game_state import game_state
+
+        roll = get_rng("ai").randint(0, 99)
+        if self._turn_count >= (4 if game_state.ascension >= 18 else 5):
+            move = "It Is Time"
+        elif roll < 50:
+            move = "Count" if self.history_intentions[-2:] == ["Glare", "Glare"] else "Glare"
         else:
-            # 50/50 chance
-            if get_rng("ai").random() < 0.5:
-                self.current_intention = self.intentions["Count"]
-            else:
-                self.current_intention = self.intentions["Glare"]
+            move = "Glare" if self.history_intentions[-2:] == ["Count", "Count"] else "Count"
+        self.current_intention = self.intentions[move]
+        return self.current_intention
 
     def on_combat_start(self, floor: int = 1):
         """Initialize combat state."""

@@ -34,7 +34,7 @@ class TestAct3Monsters(unittest.TestCase):
 
     def test_dagger_hp(self):
         m = Dagger()
-        self.assertGreaterEqual(m.hp, 10)
+        self.assertIn(m.hp, range(20, 26))
 
     def test_darkling_hp(self):
         m = Darkling()

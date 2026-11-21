@@ -1,8 +1,6 @@
 """Darkling enemy for Slay the Model."""
 from engine.random_streams import get_rng
 
-from typing import List, Optional
-
 from enemies.act3.darkling_intentions import (
     Chomp,
     Harden,
@@ -24,15 +22,12 @@ class Darkling(Enemy):
     """
 
     enemy_type = EnemyType.NORMAL
+    select_intention_after_enemy_turn = True
 
     def __init__(self):
         super().__init__(hp_range=(50, 56))
-        self._turn_count = 0
+        self._first_move = True
         self._is_regrowing = False
-        self._is_middle = False  # Set if this is the middle Darkling
-        self._consecutive_nip = 0
-        self._consecutive_chomp = 0
-        self._consecutive_harden = 0
 
         # Register intentions
         self.add_intention(Harden(self))
@@ -47,86 +42,32 @@ class Darkling(Enemy):
         self.add_power(LifeLinkPower(owner=self))
 
     def determine_next_intention(self, floor: int):
-        """Determine next intention based on pattern."""
-        # If regrowing, use Reincarnate
+        from engine.game_state import game_state
+
+        rng = get_rng("ai")
+        roll = rng.randint(0, 99)
         if self._is_regrowing:
             return self.intentions["Reincarnate"]
+        if self._first_move:
+            self._first_move = False
+            return self.intentions["Harden" if roll < 50 else "Nip"]
 
-        # Turn 1: 50/50 Nip or Harden
-        if self._turn_count == 0:
-            self._turn_count += 1
-            if get_rng("ai").random() < 0.5:
+        combat = game_state.current_combat
+        enemies = combat.enemies if combat is not None else []
+        can_chomp = self not in enemies or enemies.index(self) % 2 == 0
+        history = self.history_intentions
+        while True:
+            if roll < 40:
+                if can_chomp and history[-1:] != ["Chomp"]:
+                    return self.intentions["Chomp"]
+                roll = rng.randint(40, 99)
+            elif roll < 70:
+                move = "Nip" if history[-1:] == ["Harden"] else "Harden"
+                return self.intentions[move]
+            elif history[-2:] != ["Nip", "Nip"]:
                 return self.intentions["Nip"]
             else:
-                return self.intentions["Harden"]
-
-        self._turn_count += 1
-
-        # Middle Darkling cannot use Chomp
-        if self._is_middle:
-            return self._determine_middle_pattern()
-
-        # Outer Darklings pattern
-        # Nip 30%, Chomp 40%, Harden 30%
-        # Cannot use Harden or Chomp twice in a row
-        # Cannot use Nip three times in a row
-
-        roll = get_rng("ai").random()
-
-        # Check constraints
-        can_nip = self._consecutive_nip < 2
-        can_chomp = self._consecutive_chomp == 0
-        can_harden = self._consecutive_harden == 0
-
-        # Weighted selection with constraints
-        if roll < 0.3 and can_nip:
-            self._reset_consecutive()
-            self._consecutive_nip = 1
-            return self.intentions["Nip"]
-        elif roll < 0.7 and can_chomp:
-            self._reset_consecutive()
-            self._consecutive_chomp = 1
-            return self.intentions["Chomp"]
-        elif can_harden:
-            self._reset_consecutive()
-            self._consecutive_harden = 1
-            return self.intentions["Harden"]
-        elif can_nip:
-            self._reset_consecutive()
-            self._consecutive_nip = 1
-            return self.intentions["Nip"]
-        elif can_chomp:
-            self._reset_consecutive()
-            self._consecutive_chomp = 1
-            return self.intentions["Chomp"]
-        else:
-            return self.intentions["Nip"]
-
-    def _determine_middle_pattern(self):
-        """Determine pattern for middle Darkling (no Chomp)."""
-        can_nip = self._consecutive_nip < 2
-        can_harden = self._consecutive_harden == 0
-
-        roll = get_rng("ai").random()
-
-        if roll < 0.5 and can_nip:
-            self._reset_consecutive()
-            self._consecutive_nip = 1
-            return self.intentions["Nip"]
-        elif can_harden:
-            self._reset_consecutive()
-            self._consecutive_harden = 1
-            return self.intentions["Harden"]
-        else:
-            self._reset_consecutive()
-            self._consecutive_nip = 1
-            return self.intentions["Nip"]
-
-    def _reset_consecutive(self):
-        """Reset consecutive counters."""
-        self._consecutive_nip = 0
-        self._consecutive_chomp = 0
-        self._consecutive_harden = 0
+                roll = rng.randint(0, 99)
 
     @property
     def half_dead(self) -> bool:
@@ -165,14 +106,3 @@ class Darkling(Enemy):
             if isinstance(enemy, Darkling) and enemy.hp > 0:
                 return False
         return True
-
-    def execute_intention(self):
-        """Execute current intention."""
-        if self.current_intention is None:
-            return
-        # If regrowing and about to reincarnate
-        if self._is_regrowing and self.current_intention.name == "Reincarnate":
-            self.current_intention.execute()
-            return
-        super().execute_intention()
-        return
