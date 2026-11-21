@@ -178,7 +178,6 @@ class StartFightAction(Action):
 
     def execute(self) -> None:
         from engine.combat import Combat
-        from engine.game_state import game_state
 
         if not self.enemies:
             return
@@ -187,17 +186,11 @@ class StartFightAction(Action):
         result = combat.start()
 
         if result == GameTerminalState.COMBAT_WIN:
-            for action in self.victory_actions:
-                add_action(action)
-            game_state.drive_actions()
-            return
-        if result == GameTerminalState.COMBAT_ESCAPE:
+            add_actions(self.victory_actions)
+        elif result == GameTerminalState.COMBAT_ESCAPE:
             add_actions(self.escape_actions)
-            game_state.drive_actions()
-            return
-        if result == GameTerminalState.GAME_LOSE:
+        elif result == GameTerminalState.GAME_LOSE:
             set_terminal_state(result)
-            return
 
 
 @register("action")

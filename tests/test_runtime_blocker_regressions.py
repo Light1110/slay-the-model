@@ -7,7 +7,7 @@ from typing import cast
 
 import pytest
 
-from actions.combat import EndTurnAction, PlayCardAction, StartFightAction, UsePotionAction
+from actions.combat import EndTurnAction, PlayCardAction, UsePotionAction
 from actions.display import InputRequestAction, MenuAction
 from engine.combat import Combat
 from engine.game_flow import GameFlow
@@ -115,7 +115,7 @@ def test_real_exhausted_event_pool_advances_to_room_selection():
 
 @pytest.mark.parametrize('ascension', [0, 15])
 @pytest.mark.parametrize('mode', ['mushroom_win', 'mushroom_escape', 'dead_escape',
-                                  'colosseum_first_escape', 'colosseum_second_escape',
+                                  'colosseum_first_escape', 'colosseum_first_death', 'colosseum_second_escape',
                                   'colosseum_second_win', 'colosseum_second_death', 'colosseum_cowardice',
                                   'sphere_win', 'sphere_escape', 'mind_win', 'mind_escape',
                                   'mind_death', 'dead_win', 'dead_death', 'dead_no_relic_escape'])
@@ -144,13 +144,16 @@ def test_native_event_fight_and_smoke_bomb_finish_room(monkeypatch, ascension, m
         state.current_floor = 42
         event = MindBloom()
     else:
+        state.current_act = 2
+        state.current_floor = 28
         event = TheColosseum()
     if not wins and not dies:
         state.player.potions.append(SmokeBomb())
     room = EventRoom()
-    room.selected_event = event
-    room.available_events = [event]
     state.current_room = room
+    flow = GameFlow()
+    flow.current_room = room
+    flow.flow_phase = 'enter_room'
     combats = []
     initial_enemies = []
     requests = []
@@ -214,18 +217,22 @@ def test_native_event_fight_and_smoke_bomb_finish_room(monkeypatch, ascension, m
 
     monkeypatch.setattr(state, 'resolve_input_request', choose)
     monkeypatch.setattr(Combat, 'start', observe_result)
-    room.enter()
-    result = state.drive_actions()
-    room._sync_leave_state()
+    monkeypatch.setattr('rooms.event.get_random_events', lambda **_: [event])
+    result = flow._execute_enter_room_phase(state)
     if dies:
+        assert result == GameTerminalState.GAME_LOSE
+        assert flow.flow_phase == 'finished'
         assert outcomes[-1] == GameTerminalState.GAME_LOSE
         assert state.player.is_dead()
     else:
         assert result is None
-        assert event.event_ended and room.should_leave
+        assert event.event_ended
+        assert flow.flow_phase == 'select_room'
+        assert flow.current_room is None
     second_fight = mode.startswith('colosseum_second')
     assert len(combats) == (2 if second_fight else 1)
     if second_fight:
+        assert outcomes[0] == GameTerminalState.COMBAT_WIN
         assert reserved == [[], ["Kunai", "BirdFacedUrn"]]
     elif mode.startswith(('sphere', 'mind')):
         assert reserved == [["BirdFacedUrn"]]
@@ -251,6 +258,8 @@ def test_native_event_fight_and_smoke_bomb_finish_room(monkeypatch, ascension, m
         acquired = state.player.relics[before[2]:]
         ids = [relic.idstr for relic in acquired if isinstance(relic, Relic)]
         assert ids == (["BirdFacedUrn", "Kunai"] if second_fight else reserved[-1])
+        if second_fight:
+            assert state.player.gold == before[0] + 100
     elif mode == 'colosseum_cowardice':
         assert before == (state.player.gold, len(state.player.deck), len(state.player.relics))
     else:
