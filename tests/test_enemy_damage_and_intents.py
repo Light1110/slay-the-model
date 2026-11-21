@@ -30,7 +30,7 @@ from tests.test_combat_utils import create_test_helper
 CASES = [
     (Dagger, 'Wound', 9, 9, 1),
     (Darkling, 'Nip', 7, 9, 1), (Darkling, 'Chomp', 8, 8, 2),
-    (Reptomancer, 'Big Bite', 30, 30, 1), (Reptomancer, 'Snake Strike', 13, 13, 2),
+    (Reptomancer, 'Big Bite', 30, 34, 1), (Reptomancer, 'Snake Strike', 13, 16, 2),
     (TheMaw, 'Slam', 25, 25, 1), (TheMaw, 'Nom Nom', 5, 5, 1),
     (SpireGrowth, 'Quick Tackle', 16, 18, 1), (SpireGrowth, 'Smash', 22, 25, 1),
     (Repulsor, 'Attack', 11, 13, 1), (Spiker, 'Attack', 7, 9, 1),
@@ -75,6 +75,30 @@ def test_attack_preview_and_actual_damage_apply_modifiers_once(
     assert all(a.damage == base for a in attacks)
     game_state.drive_actions()
     assert player.hp == 10000 - expected * hits
+
+
+@pytest.mark.parametrize('ascension,bite,strike', [(2, 30, 13), (3, 34, 16)])
+def test_reptomancer_damage_increases_at_ascension_three(ascension, bite, strike):
+    helper = create_test_helper()
+    player = helper.create_player(hp=200, max_hp=200)
+    game_state.ascension = ascension
+    enemy = Reptomancer()
+    helper.start_combat([enemy])
+
+    bite_intent = enemy.intentions['Big Bite']
+    assert cast(LocalStr, bite_intent.description).kwargs['damage'] == bite
+    bite_intent.execute()
+    game_state.drive_actions()
+    assert player.hp == 200 - bite
+
+    strike_intent = enemy.intentions['Snake Strike']
+    preview = cast(LocalStr, strike_intent.description)
+    assert (preview.kwargs['damage'], preview.kwargs['hits']) == (strike, 2)
+    strike_intent.execute()
+    game_state.drive_actions()
+    assert player.hp == 200 - bite - 2 * strike
+    weak = player.get_power('Weak')
+    assert weak is not None and weak.amount == 1
 
 
 def finish_turn(combat):

@@ -30,11 +30,13 @@ class SpawnDaggerIntention(Intention):
 
 
 class BigBiteIntention(Intention):
-    """Reptomancer Big Bite intention - 30 damage."""
+    """Reptomancer's single-hit attack."""
     
     def __init__(self, enemy):
+        from engine.game_state import game_state
+
         super().__init__("Big Bite", enemy)
-        self.base_damage = 30
+        self.base_damage = 34 if game_state.ascension >= 3 else 30
     
     def execute(self) -> None:
         """Execute Big Bite intention."""
@@ -52,11 +54,13 @@ class BigBiteIntention(Intention):
 
 
 class SnakeStrikeIntention(Intention):
-    """Reptomancer Snake Strike intention - 13x2 damage + Weak."""
+    """Reptomancer's two-hit attack that applies Weak."""
     
     def __init__(self, enemy):
+        from engine.game_state import game_state
+
         super().__init__("Snake Strike", enemy)
-        self.base_damage = 13  # A17+ only
+        self.base_damage = 16 if game_state.ascension >= 3 else 13
         self.base_times = 2
     
     def execute(self) -> None:
@@ -71,6 +75,9 @@ class SnakeStrikeIntention(Intention):
                 self.enemy,
                 "attack"
             ))
-        actions.append(ApplyPowerAction(WeakPower(amount=1, owner=game_state.player), game_state.player, source=self.enemy))
-        from engine.game_state import game_state
+        actions.append(ApplyPowerAction(
+            WeakPower(duration=1, owner=game_state.player),
+            game_state.player,
+            source=self.enemy,
+        ))
         add_actions(actions)
