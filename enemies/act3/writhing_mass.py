@@ -36,7 +36,6 @@ class WrithingMass(Enemy):
     def determine_next_intention(self, floor: int):
         rng = cast(StreamRandom, get_rng("ai"))
         roll = rng.randint(0, 99)
-        history = self.history_intentions
         if self._first_move:
             self._first_move = False
             if roll < 33:
@@ -47,15 +46,16 @@ class WrithingMass(Enemy):
                 move = "Debuff Attack"
             return self.intentions[move]
 
-        last = history[-1] if history else None
-        used_parasite = "Parasite" in history
+        # Reactive can replace an intent before it is ever executed.
+        last = self.current_intention.name if self.current_intention is not None else None
+        used_parasite = "Parasite" in self.history_intentions
         while True:
             if roll < 10:
                 if last != "Big Hit":
                     return self.intentions["Big Hit"]
                 roll = rng.randint(10, 99)
             elif roll < 20:
-                if not used_parasite:
+                if not used_parasite and last != "Parasite":
                     return self.intentions["Parasite"]
                 if rng.random_boolean(0.1):
                     return self.intentions["Big Hit"]
@@ -86,15 +86,10 @@ class WrithingMass(Enemy):
         self.add_power(ReactivePower(owner=self))
 
     def on_physical_attack_taken(self, damage: int, source=None, card=None, damage_type: str = "physical") -> None:
-        from actions.base import LambdaAction
-        from engine.game_state import game_state
+        from actions.combat import RollEnemyIntentionAction
         from engine.runtime_api import add_action
 
         if damage <= 0 or source is None or not self.is_alive or not self.has_power("Reactive"):
             return
 
-        def roll_after_hit():
-            if self.is_alive:
-                self._select_intention(game_state.current_floor)
-
-        add_action(LambdaAction(func=roll_after_hit))
+        add_action(RollEnemyIntentionAction(self))

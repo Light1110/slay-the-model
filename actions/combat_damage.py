@@ -464,11 +464,10 @@ class GainBlockAction(Action):
     def execute(self) -> None:
         from engine.messages import BlockGainedMessage
 
+        if self.target is None or self.target.is_dead():
+            return
         block_amount = self.block() if callable(self.block) else self.block
         block_amount = int(block_amount)
-        if self.target is None:
-            return
-
         self.target.gain_block(block_amount, source=self.source, card=self.card)
 
         target_name = getattr(self.target, "name", getattr(self.target, "character", "Creature"))

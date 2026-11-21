@@ -4,14 +4,19 @@ from unittest.mock import patch
 
 import pytest
 
+from actions.card_play_lifecycle import queue_card_play
 from actions.combat_damage import DealDamageAction
 from actions.watcher import SkipEnemyTurnAction
+from cards.colorless.parasite import Parasite
+from cards.silent.riddle_with_holes import RiddleWithHoles
 from enemies.act1.acid_slime import AcidSlimeL
 from enemies.act1.cultist import Cultist
 from enemies.act1.spike_slime import SpikeSlimeL, SpikeSlimeM
 from enemies.act3.dagger import Dagger
 from enemies.act3.darkling import Darkling
 from enemies.act3.reptomancer import Reptomancer
+from enemies.act3.writhing_mass import WrithingMass
+from engine.messages import BlockGainedMessage
 from engine.random_streams import StreamRandom
 from map import encounter_pool
 from powers.definitions.corpse_explosion import CorpseExplosionPower
@@ -133,6 +138,102 @@ def test_dagger_explosion_roll_only_runs_in_continuing_combat(with_other, delta,
     assert dagger.is_dead()
     assert (dagger not in combat.enemies) == with_other
     assert rng.export_state() == expected.export_state()
+
+
+def test_writhing_mass_reactive_rolls_use_latest_selected_intention(monkeypatch):
+    helper, state = environment(0)
+    rng = StreamRandom(0)
+    monkeypatch.setitem(state.random_streams.streams, "ai", rng)
+    mass = WrithingMass()
+    helper.start_combat([mass])
+    assert mass.current_intention is mass.intentions["Debuff Attack"]
+
+    card = RiddleWithHoles()
+    helper.add_card_to_hand(card)
+    queue_card_play(card, targets=[mass])
+    state.drive_actions()
+
+    assert mass.current_intention is mass.intentions["Debuff Attack"]
+    assert (mass.hp, mass.block, rng.counter) == (145, 25, 10)
+    assert mass.history_intentions == []
+
+
+def test_writhing_mass_parasite_must_be_executed_to_spend_it(monkeypatch):
+    helper, state = environment(0)
+    rng = StreamRandom(0)
+    monkeypatch.setitem(state.random_streams.streams, "ai", rng)
+    mass = WrithingMass()
+    combat = helper.start_combat([mass])
+    floor = state.current_floor
+    assert mass.current_intention is mass.intentions["Debuff Attack"]
+    rolls = iter([15, 15, 52, 15, 15, 52, 15, 72])
+
+    def draw(lower, upper):
+        result = next(rolls)
+        assert lower <= result <= upper
+        return result
+
+    monkeypatch.setattr(rng, "randint", draw)
+    monkeypatch.setattr(rng, "random_boolean", lambda chance: False)
+
+    mass.advance_intention_after_turn(floor)
+    assert mass.current_intention is mass.intentions["Parasite"]
+    mass.advance_intention_after_turn(floor)
+    assert mass.current_intention is mass.intentions["Multi Hit"]
+    mass.advance_intention_after_turn(floor)
+    assert mass.current_intention is mass.intentions["Parasite"]
+    assert mass.history_intentions == []
+
+    combat.execute_enemy_phase()
+    assert mass.history_intentions == ["Parasite"]
+    assert mass.current_intention is mass.intentions["Multi Hit"]
+    assert sum(isinstance(card, Parasite) for card in state.player.card_manager.get_pile("deck")) == 1
+
+    mass.advance_intention_after_turn(floor)
+    assert mass.current_intention is mass.intentions["Block Attack"]
+
+
+@pytest.mark.parametrize("with_survivor", [False, True])
+def test_lethal_multihit_only_clears_reactive_rolls_at_combat_end(with_survivor, monkeypatch):
+    helper, state = environment(0)
+    rng = StreamRandom(0)
+    monkeypatch.setitem(state.random_streams.streams, "ai", rng)
+    mass = WrithingMass()
+    mass.hp = 9
+    team = [mass, Dagger()] if with_survivor else [mass]
+    combat = helper.start_combat(team.copy())
+    mass.current_intention = mass.intentions["Block Attack"]
+    rng.seed(0)
+    block_messages = []
+    publish = state.publish_message
+
+    def observe_message(message, *args, **kwargs):
+        if isinstance(message, BlockGainedMessage) and message.target is mass:
+            block_messages.append(message)
+        return publish(message, *args, **kwargs)
+
+    monkeypatch.setattr(state, "publish_message", observe_message)
+    card = RiddleWithHoles()
+    helper.add_card_to_hand(card)
+    queue_card_play(card, targets=[mass])
+    state.drive_actions()
+
+    assert mass.is_dead() and mass.block == 0
+    assert not block_messages
+    assert rng.counter == (3 if with_survivor else 0)
+    if with_survivor:
+        original = rng.random_int
+        rolls = []
+
+        def observe_roll(*args):
+            result = original(*args)
+            rolls.append(result)
+            return result
+
+        monkeypatch.setattr(rng, "random_int", observe_roll)
+        run_turn(combat, state)
+        assert rolls == [92]
+        assert team[1].history_intentions == ["Wound"]
 
 
 @pytest.mark.parametrize("factory,draws", [(SpikeSlimeL, 3), (AcidSlimeL, 2)])
