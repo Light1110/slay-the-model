@@ -7,12 +7,13 @@ from actions.base import LambdaAction
 from actions.card import AddRandomCardAction
 from actions.combat import LoseHPAction, StartFightAction
 from actions.display import InputRequestAction
-from actions.reward import AddGoldAction, AddRandomRelicAction
+from actions.reward import AddGoldAction, AddRandomRelicAction, AddRelicAction
 from engine.game_state import game_state
 from events.dead_adventurer import DeadAdventurer
 from events.scrap_ooze import ScrapOoze
 from events.the_colosseum import TheColosseum
 from tests.test_combat_utils import create_test_helper
+from utils.types import RarityType
 
 
 def _requests() -> list[InputRequestAction]:
@@ -58,20 +59,19 @@ def test_colosseum_fights_slavers_then_offers_victory_or_cowardice():
     assert event.first_fight_done is True
     assert event.event_ended is False
     options = list(_requests()[-1].options)
-    victory = next(
-        option
-        for option in options
-        if any(isinstance(action, StartFightAction) for action in option.actions)
-    )
-    second = next(action for action in victory.actions if isinstance(action, StartFightAction))
+    victory, cowardice = options
+    assert game_state.relic_pools.remaining["RARE"] is None
+    assert game_state.relic_pools.remaining["UNCOMMON"] is None
+    _run_lambdas(victory)
+    second = cast(StartFightAction, game_state.action_queue.queue[0])
     assert [type(enemy).__name__ for enemy in second.enemies] == ["Taskmaster", "GremlinNob"]
     rewards = second.victory_actions
     assert any(isinstance(action, AddGoldAction) and action.amount == 100 for action in rewards)
     assert any(isinstance(action, AddRandomCardAction) for action in rewards)
-    relics = [action for action in rewards if isinstance(action, AddRandomRelicAction)]
-    assert [relic.rarities for relic in relics] == [["rare"], ["uncommon"]]
+    relics = [action.relic for action in rewards if isinstance(action, AddRelicAction)]
+    assert [relic.rarity for relic in relics] == [RarityType.RARE, RarityType.UNCOMMON]
+    assert all(relic not in game_state.player.relics for relic in relics)
 
-    cowardice = next(option for option in options if option is not victory)
     _run_lambdas(cowardice)
     assert event.event_ended is True
 
@@ -127,8 +127,8 @@ def test_dead_adventurer_ascension_15_confirms_ambush_at_first_search(monkeypatc
     assert rolls == [(0, 99), (25, 35)]
     assert event.search_count == 0
     (fight_option,) = _requests()[-1].options
-    assert isinstance(fight_option.actions[-1], StartFightAction)
     _run_lambdas(fight_option)
+    assert isinstance(game_state.action_queue.queue[0], StartFightAction)
     assert event.search_count == 1
     assert rolls == [(0, 99), (25, 35)]
 

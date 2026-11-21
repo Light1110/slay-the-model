@@ -251,13 +251,16 @@ def test_existing_event_combat_gold_producers(event_name, idol, ectoplasm, monke
         event = TheColosseum()
         event.first_fight_done = True
         event.trigger()
+        menu = cast(InputRequestAction, game_state.action_queue.queue[-1])
+        game_state.action_queue.clear()
+        menu.options[0].actions[0].execute()
     else:
         MindBloom()._start_war(25)
-    if event_name in ('mind_bloom', 'mysterious_sphere'):
-        fight = next(action for action in game_state.action_queue.queue if isinstance(action, StartFightAction))
-    else:
+    if event_name == 'dead_adventurer':
         menu = cast(InputRequestAction, game_state.action_queue.queue[-1])
-        fight = next(action for action in menu.options[0].actions if isinstance(action, StartFightAction))
+        game_state.action_queue.clear()
+        menu.options[0].actions[0].execute()
+    fight = next(action for action in game_state.action_queue.queue if isinstance(action, StartFightAction))
     rewards = [action for action in cast(StartFightAction, fight).victory_actions if isinstance(action, AddGoldAction)]
     bases = {'dead_adventurer': [33, 30], 'mysterious_sphere': [50], 'the_colosseum': [100], 'mind_bloom': [25]}[event_name]
     expected = [base + (int(base * .25 + .5) if idol else 0) for base in bases]

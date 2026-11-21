@@ -15,6 +15,7 @@ from engine.input_protocol import InputRequest
 from engine.game_state import game_state as state
 from events.dead_adventurer import DeadAdventurer
 from events.hypnotizing_mushrooms import HypnotizingColoredMushrooms
+from events.mind_bloom import MindBloom
 from events.mysterious_sphere import MysteriousSphere
 from events.the_colosseum import TheColosseum
 from map.encounter_pool import EncounterPool
@@ -115,27 +116,36 @@ def test_real_exhausted_event_pool_advances_to_room_selection():
 @pytest.mark.parametrize('ascension', [0, 15])
 @pytest.mark.parametrize('mode', ['mushroom_win', 'mushroom_escape', 'dead_escape',
                                   'colosseum_first_escape', 'colosseum_second_escape',
-                                  'sphere_win', 'sphere_escape'])
+                                  'colosseum_second_win', 'colosseum_second_death', 'colosseum_cowardice',
+                                  'sphere_win', 'sphere_escape', 'mind_win', 'mind_escape',
+                                  'mind_death', 'dead_win', 'dead_death', 'dead_no_relic_escape'])
 def test_native_event_fight_and_smoke_bomb_finish_room(monkeypatch, ascension, mode):
     state.ascension = ascension
     state.config.auto_select = False
     state.config.debug['select_type'] = 'first'
     random.seed(42)
     state.player.potions.clear()
-    wins = mode in ('mushroom_win', 'sphere_win')
+    wins = mode.endswith('_win') or mode == 'colosseum_cowardice'
+    dies = mode.endswith('_death')
     if mode.startswith('mushroom'):
         event = HypnotizingColoredMushrooms()
-    elif mode == 'dead_escape':
+    elif mode.startswith('dead'):
         event = DeadAdventurer()
         # Isolate the encounter branch; enemies, combat and potion remain real.
         monkeypatch.setattr(event, '_get_elite_chance', lambda: 100)
+        if mode == 'dead_no_relic_escape':
+            event.rewards.remove("relic")
     elif mode.startswith('sphere'):
         state.current_act = 3
         state.current_floor = 42
         event = MysteriousSphere()
+    elif mode.startswith('mind'):
+        state.current_act = 3
+        state.current_floor = 42
+        event = MindBloom()
     else:
         event = TheColosseum()
-    if not wins:
+    if not wins and not dies:
         state.player.potions.append(SmokeBomb())
     room = EventRoom()
     room.selected_event = event
@@ -145,6 +155,22 @@ def test_native_event_fight_and_smoke_bomb_finish_room(monkeypatch, ascension, m
     initial_enemies = []
     requests = []
     before = (state.player.gold, len(state.player.deck), len(state.player.relics))
+    initial_pools = {
+        "COMMON": ["Anchor", "Vajra"],
+        "UNCOMMON": ["Kunai", "Shuriken"],
+        "RARE": ["BirdFacedUrn", "Calipers"],
+    }
+    state.relic_pools.remaining.update({tier: keys.copy() for tier, keys in initial_pools.items()})
+    reserved = []
+    relic_stream = state.random_streams["relic"]
+    initial_relic_counter = relic_stream.counter
+    outcomes = []
+    start_combat = Combat.start
+
+    def observe_result(combat):
+        result = start_combat(combat)
+        outcomes.append(result)
+        return result
 
     def choose(req):
         requests.append(req)
@@ -154,14 +180,26 @@ def test_native_event_fight_and_smoke_bomb_finish_room(monkeypatch, ascension, m
             if combat not in combats:
                 combats.append(combat)
                 initial_enemies.append([type(e).__name__ for e in combat.enemies])
+                reserved.append([
+                    keys[0] for tier, keys in initial_pools.items()
+                    if state.relic_pools.remaining[tier] == keys[1:]
+                ])
+                assert len(state.player.relics) == before[2]
                 win = wins or (
-                    mode == 'colosseum_second_escape' and len(combats) == 1)
+                    mode.startswith('colosseum_second') and len(combats) == 1)
                 if win:
                     for enemy in combat.enemies:
                         enemy.hp = 1  # Native attack/win path; not a fake combat result.
+                elif dies:
+                    state.player.hp = 1
+                if mode.startswith('dead'):
+                    assert relic_stream.counter == (
+                        initial_relic_counter + (mode != 'dead_no_relic_escape')
+                    )
             escape = not wins and not (
-                mode == 'colosseum_second_escape' and len(combats) == 1)
-            index = next((i for i, option in enumerate(req.options) if option.enabled and any(
+                mode.startswith('colosseum_second') and len(combats) == 1)
+            index = next((i for i, option in enumerate(req.options) if option.enabled
+                and not (escape and dies) and any(
                 isinstance(a, UsePotionAction) if escape else
                 isinstance(a, PlayCardAction) and a.card.card_type == CardType.ATTACK
                 for a in option.actions)), None)
@@ -171,15 +209,32 @@ def test_native_event_fight_and_smoke_bomb_finish_room(monkeypatch, ascension, m
             if index is None:
                 index = next(i for i, o in enumerate(req.options) if o.enabled)
         else:
-            index = 0
+            index = 1 if mode == 'colosseum_cowardice' and combats else 0
         return state._build_submission(req.options, [index])
 
     monkeypatch.setattr(state, 'resolve_input_request', choose)
+    monkeypatch.setattr(Combat, 'start', observe_result)
     room.enter()
-    assert state.drive_actions() is None
+    result = state.drive_actions()
     room._sync_leave_state()
-    assert event.event_ended and room.should_leave
-    assert len(combats) == (2 if mode == 'colosseum_second_escape' else 1)
+    if dies:
+        assert outcomes[-1] == GameTerminalState.GAME_LOSE
+        assert state.player.is_dead()
+    else:
+        assert result is None
+        assert event.event_ended and room.should_leave
+    second_fight = mode.startswith('colosseum_second')
+    assert len(combats) == (2 if second_fight else 1)
+    if second_fight:
+        assert reserved == [[], ["Kunai", "BirdFacedUrn"]]
+    elif mode.startswith(('sphere', 'mind')):
+        assert reserved == [["BirdFacedUrn"]]
+    elif mode in ('dead_win', 'dead_escape', 'dead_death'):
+        assert len(reserved[0]) == 1
+    else:
+        assert reserved == [[]]
+    for tier, keys in initial_pools.items():
+        assert state.relic_pools.remaining[tier] == (keys[1:] if keys[0] in reserved[-1] else keys)
     if mode.startswith('mushroom'):
         assert initial_enemies[0] == ['FungiBeast'] * 3
     if mode.startswith('sphere'):
@@ -192,12 +247,18 @@ def test_native_event_fight_and_smoke_bomb_finish_room(monkeypatch, ascension, m
         assert len(state.player.relics) == before[2] + 1
         relic = state.player.relics[-1]
         assert isinstance(relic, Relic) and relic.rarity == RarityType.RARE
+    elif mode in ('mind_win', 'dead_win', 'colosseum_second_win'):
+        acquired = state.player.relics[before[2]:]
+        ids = [relic.idstr for relic in acquired if isinstance(relic, Relic)]
+        assert ids == (["BirdFacedUrn", "Kunai"] if second_fight else reserved[-1])
+    elif mode == 'colosseum_cowardice':
+        assert before == (state.player.gold, len(state.player.deck), len(state.player.relics))
     else:
         assert not state.player.potions
         assert before == (state.player.gold, len(state.player.deck), len(state.player.relics))
         assert all(e.hp > 0 for e in combats[-1].enemies)
         if isinstance(event, TheColosseum):
-            assert event.first_fight_done == (mode == 'colosseum_second_escape')
+            assert event.first_fight_done == second_fight
 
 
 @pytest.mark.parametrize('act', [1, 2, 3, 4])

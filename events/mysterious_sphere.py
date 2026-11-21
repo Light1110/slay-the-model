@@ -10,7 +10,7 @@ from events.event_pool import register_event
 from actions.base import LambdaAction
 from actions.display import InputRequestAction, DisplayTextAction
 from actions.card import ChooseObtainCardAction
-from actions.reward import AddGoldAction, AddRandomRelicAction
+from actions.reward import AddGoldAction, AddRelicAction
 from actions.combat import StartFightAction
 from enemies.act3.orb_walker import OrbWalker
 from engine.game_state import game_state
@@ -60,12 +60,16 @@ class MysteriousSphere(Event):
         ), to_front=True)
 
     def _fight(self) -> None:
-        gold = get_rng("misc").randint(*self._gold_range())
+        gold = AddGoldAction(amount=get_rng("misc").randint(*self._gold_range()), source="event_combat")
+        pool = game_state.relic_pools
+        relic = pool.draw(RarityType.RARE)
+        while relic.idstr in {"BottledFlame", "BottledLightning", "BottledTornado", "Whetstone"}:
+            relic = pool.draw(RarityType.RARE)
         add_action(StartFightAction(
             enemies=self.orb_walkers,
             victory_actions=[
-                AddGoldAction(amount=gold, source="event_combat"),
-                AddRandomRelicAction(rarity=RarityType.RARE),
+                gold,
+                AddRelicAction(relic),
                 ChooseObtainCardAction(
                     namespace=game_state.player.namespace, pile="deck", can_skip=True,
                     encounter_type="normal", use_rolling_offset=True, allow_upgraded=True,

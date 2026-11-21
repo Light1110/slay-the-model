@@ -75,11 +75,8 @@ def test_bloom_win_grants_rare_relic_gold_and_optional_deck_reward_once(player, 
     game_state.current_act = 3
     game_state.current_floor = 38
     player.namespace = 'ironclad'
-    relic_calls = []
-    def draw_relic(**kwargs):
-        relic_calls.append(kwargs)
-        return BirdFacedUrn()
-    monkeypatch.setattr('actions.reward.get_random_relic', draw_relic)
+    rare_pool = ["BirdFacedUrn", "Calipers"]
+    game_state.relic_pools.remaining["RARE"] = rare_pool
     offered = [Strike(), Defend(), Bash()]
     monkeypatch.setattr('actions.card_choice.get_card_reward_options', lambda **kwargs: offered)
     requests = []
@@ -90,6 +87,8 @@ def test_bloom_win_grants_rare_relic_gold_and_optional_deck_reward_once(player, 
     fights = []
     def win(combat):
         fights.append(combat)
+        assert rare_pool == ["Calipers"]
+        assert not player.relics
         combat._init_combat()
         return GameTerminalState.COMBAT_WIN
     monkeypatch.setattr(Combat, 'start', win)
@@ -99,7 +98,7 @@ def test_bloom_win_grants_rare_relic_gold_and_optional_deck_reward_once(player, 
     game_state.action_queue.add_actions(menu.options[0].actions)
     assert game_state.drive_actions() is None
     assert len(fights) == 1
-    assert len(relic_calls) == 1 and relic_calls[0]['rarities'] == [RarityType.RARE]
+    assert rare_pool == ["Calipers"]
     assert player.gold == initial_gold + gold
     assert len(player.relics) == 1 and isinstance(player.relics[0], BirdFacedUrn)
     assert list(player.deck) == ([] if skip_card else [offered[1]])
@@ -113,15 +112,16 @@ def test_bloom_win_grants_rare_relic_gold_and_optional_deck_reward_once(player, 
 @pytest.mark.parametrize('result', [GameTerminalState.GAME_LOSE, GameTerminalState.COMBAT_ESCAPE])
 def test_bloom_failure_or_escape_does_not_grant_rewards(player, monkeypatch, result):
     monkeypatch.setattr(Combat, 'start', lambda _: result)
-    rewards = []
-    monkeypatch.setattr('actions.reward.get_random_relic', lambda **kwargs: rewards.append(kwargs))
+    rare_pool = ["BirdFacedUrn", "Calipers"]
+    game_state.relic_pools.remaining["RARE"] = rare_pool
     MindBloom().trigger()
     menu = queued_menu()
     initial_gold = player.gold
     game_state.action_queue.add_actions(menu.options[0].actions)
     outcome = game_state.drive_actions()
     assert outcome == (GameTerminalState.GAME_LOSE if result == GameTerminalState.GAME_LOSE else None)
-    assert not rewards and not player.relics and not player.deck
+    assert rare_pool == ["Calipers"]
+    assert not player.relics and not player.deck
     assert player.gold == initial_gold
 
 

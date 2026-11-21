@@ -4,16 +4,17 @@ A risk/reward event where you search for loot with increasing chance of elite am
 Elite encounter probability: 25% -> 50% -> 75% per search (A15+: 35% -> 60% -> 85%).
 """
 from engine.random_streams import get_rng
-from engine.runtime_api import add_actions
+from engine.runtime_api import add_action, add_actions
 
 from events.base_event import Event
 from events.event_pool import register_event
 from actions.display import InputRequestAction, DisplayTextAction
-from actions.reward import AddGoldAction, AddRandomRelicAction
+from actions.reward import AddGoldAction, AddRandomRelicAction, AddRelicAction
 from actions.combat import StartFightAction
 from actions.base import Action, LambdaAction
 from localization import LocalStr
 from utils.option import Option
+from utils.random import get_random_relic
 from utils.types import RarityType
 from engine.game_state import game_state
 
@@ -70,10 +71,6 @@ class DeadAdventurer(Event):
             bounds = (0, 30) if game_state.config.daily_run else (25, 35)
             gold = AddGoldAction(amount=rng.randint(*bounds), source="event_combat")
             enemies = self._get_elite_enemies()
-            victory_rewards = [gold, *(
-                self._reward_action(reward, source="event_combat")
-                for reward in self.rewards if reward != "nothing"
-            ), LambdaAction(self.end_event)]
             add_actions([
                 DisplayTextAction(text_key="events.dead_adventurer.elite_appears"),
                 InputRequestAction(
@@ -81,14 +78,7 @@ class DeadAdventurer(Event):
                     options=[Option(
                         name=LocalStr("events.dead_adventurer.fight"),
                         detail=LocalStr("events.dead_adventurer.elite_appears"),
-                        actions=[
-                            LambdaAction(self._count_search),
-                            StartFightAction(
-                                enemies=enemies,
-                                escape_actions=[LambdaAction(self.end_event)],
-                                victory_actions=victory_rewards,
-                            ),
-                        ],
+                        actions=[LambdaAction(self._fight, args=[enemies, gold])],
                     )],
                 ),
             ], to_front=True)
@@ -100,6 +90,21 @@ class DeadAdventurer(Event):
 
     def _count_search(self) -> None:
         self.search_count += 1
+
+    def _fight(self, enemies: list, gold: AddGoldAction) -> None:
+        self._count_search()
+        victory_rewards: list[Action] = [gold]
+        for reward in self.rewards:
+            if reward == "gold":
+                victory_rewards.append(self._reward_action(reward, source="event_combat"))
+            elif reward == "relic":
+                victory_rewards.append(AddRelicAction(get_random_relic()))
+        victory_rewards.append(LambdaAction(self.end_event))
+        add_action(StartFightAction(
+            enemies=enemies,
+            escape_actions=[LambdaAction(self.end_event)],
+            victory_actions=victory_rewards,
+        ), to_front=True)
 
     def trigger(self) -> None:
         options = []

@@ -2,18 +2,19 @@
 
 Double fight for big rewards.
 """
-from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
+from engine.runtime_api import add_action, add_actions
 
 from events.base_event import Event
 from events.event_pool import register_event
 from actions.display import InputRequestAction, DisplayTextAction
 from actions.card import AddRandomCardAction
-from actions.reward import AddGoldAction, AddRandomRelicAction
+from actions.reward import AddGoldAction, AddRelicAction
 from actions.combat import StartFightAction
 from actions.base import LambdaAction
 from localization import LocalStr
 from utils.option import Option
-from utils.types import RoomType
+from utils.random import get_random_relic
+from utils.types import RarityType, RoomType
 from engine.game_state import game_state
 
 
@@ -53,6 +54,19 @@ class TheColosseum(Event):
         self.first_fight_done = True
         self.trigger()
 
+    def _start_second_fight(self, enemies: list) -> None:
+        add_action(StartFightAction(
+            enemies=enemies,
+            escape_actions=[LambdaAction(self.end_event)],
+            victory_actions=[
+                AddRelicAction(get_random_relic(rarities=[RarityType.RARE])),
+                AddRelicAction(get_random_relic(rarities=[RarityType.UNCOMMON])),
+                AddGoldAction(amount=100, source="event_combat"),
+                AddRandomCardAction(),
+                LambdaAction(self.end_event),
+            ],
+        ), to_front=True)
+
     def trigger(self) -> None:
         actions = []
         
@@ -84,25 +98,14 @@ class TheColosseum(Event):
             from enemies.act1.gremlin_nob import GremlinNob
             from enemies.act2.taskmaster import Taskmaster
 
+            enemies = [Taskmaster(), GremlinNob()]
             actions.append(InputRequestAction(
                 title=LocalStr('events.the_colosseum.title'),
                 options=[
                     Option(
                         name=LocalStr('events.the_colosseum.victory'),
                         detail=LocalStr('events.the_colosseum.victory_detail'),
-                        actions=[
-                            StartFightAction(
-                                enemies=[Taskmaster(), GremlinNob()],
-                                escape_actions=[LambdaAction(self.end_event)],
-                                victory_actions=[
-                                    AddGoldAction(amount=100, source="event_combat"),
-                                    AddRandomRelicAction(rarity='rare'),
-                                    AddRandomRelicAction(rarity='uncommon'),
-                                    AddRandomCardAction(),
-                                    LambdaAction(self.end_event),
-                                ],
-                            )
-                        ],
+                        actions=[LambdaAction(self._start_second_fight, args=[enemies])],
                     ),
                     Option(
                         name=LocalStr('events.the_colosseum.cowardice'),

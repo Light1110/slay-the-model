@@ -10,7 +10,7 @@ from events.event_pool import register_event
 from actions.display import InputRequestAction, DisplayTextAction
 from actions.card import ChooseObtainCardAction, UpgradeAllCardsAction, AddCardAction
 from actions.base import LambdaAction
-from actions.reward import AddGoldAction, AddRandomRelicAction, AddRelicAction
+from actions.reward import AddGoldAction, AddRelicAction
 from actions.combat import HealAction, StartFightAction
 from utils.types import RarityType
 from enemies.act1.the_guardian import TheGuardian
@@ -18,6 +18,7 @@ from enemies.act1.the_hexaghost import TheHexaghost
 from enemies.act1.slime_boss import SlimeBoss
 from localization import LocalStr
 from utils.option import Option
+from utils.random import get_random_relic
 from engine.game_state import game_state
 from cards.colorless import Normality, Doubt
 from relics.global_relics.event import MarkOfBloom
@@ -88,7 +89,7 @@ class MindBloom(Event):
         add_action(StartFightAction(
             enemies=[bosses[0]()],
             victory_actions=[
-                AddRandomRelicAction(rarity=RarityType.RARE),
+                AddRelicAction(get_random_relic(rarities=[RarityType.RARE])),
                 AddGoldAction(amount=gold, source="event_combat"),
                 ChooseObtainCardAction(
                     namespace=game_state.player.namespace, pile="deck", can_skip=True,
