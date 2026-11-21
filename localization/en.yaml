@@ -285,6 +285,7 @@ events:
     search_detail: "Search for Gold or a relic. {chance}% chance of an elite ambush."
     title: Dead Adventurer
     search: Search
+    fight: Fight
     leave: Leave
     description: While searching the adventurer you are caught off guard!
     elite_appears: An elite appears from the shadows!

@@ -35,14 +35,6 @@ def _run_lambdas(option) -> None:
             action.execute()
 
 
-def _search_option(options):
-    return next(
-        option
-        for option in options
-        if any(not isinstance(action, LambdaAction) for action in option.actions)
-    )
-
-
 def test_colosseum_fights_slavers_then_offers_victory_or_cowardice():
     helper = create_test_helper()
     helper.create_player()
@@ -88,58 +80,57 @@ def test_dead_adventurer_rolls_the_current_search_and_counts_it_afterward(monkey
     helper = create_test_helper()
     helper.create_player()
     game_state.ascension = 0
-    rolls = iter([100, 26, 51])
-    monkeypatch.setattr(get_rng("misc"), "choice", lambda seq: seq[0])
-    monkeypatch.setattr(get_rng("misc"), "randint", lambda a, b: next(rolls))
-
     event = DeadAdventurer()
+    rolls = iter([25, 50, 75])
+    shown = []
+
+    def roll(low, high):
+        assert (low, high) == (0, 99)
+        return next(rolls)
+
+    def choose(request):
+        if len(request.options) == 1:
+            assert event.search_count == 3
+        else:
+            shown.append(request.options[0].detail.kwargs["chance"])
+        return [0]
+
+    monkeypatch.setattr(get_rng("misc"), "randint", roll)
+    monkeypatch.setattr(game_state, "_resolve_debug_selection", choose)
     options = _options(event)
-
     assert event.search_count == 0
-    assert not any(
-        isinstance(action, StartFightAction)
-        for action in _search_option(options).actions
-    )
-
-    _run_lambdas(_search_option(options))
-    assert event.search_count == 1
-    assert not any(
-        isinstance(action, StartFightAction)
-        for action in _search_option(list(_requests()[-1].options)).actions
-    )
-
-    _run_lambdas(_search_option(list(_requests()[-1].options)))
-    assert event.search_count == 2
-    assert not any(
-        isinstance(action, StartFightAction)
-        for action in _search_option(list(_requests()[-1].options)).actions
-    )
-
-    _run_lambdas(_search_option(list(_requests()[-1].options)))
+    assert len(options) == 2
+    game_state.drive_actions()
+    assert shown == [25, 50, 75]
     assert event.search_count == 3
-    assert event.event_ended is False
-    final_options = list(_requests()[-1].options)
-    assert all(
-        all(isinstance(action, LambdaAction) for action in option.actions)
-        for option in final_options
-    )
+    assert event.rewards == []
+    assert event.event_ended is True
 
 
-def test_dead_adventurer_ascension_15_first_search_uses_ten_percent(monkeypatch):
+def test_dead_adventurer_ascension_15_confirms_ambush_at_first_search(monkeypatch):
     helper = create_test_helper()
     helper.create_player()
     game_state.ascension = 15
-    monkeypatch.setattr(get_rng("misc"), "choice", lambda seq: seq[0])
-    monkeypatch.setattr(get_rng("misc"), "randint", lambda a, b: 11)
-
     event = DeadAdventurer()
-    options = _options(event)
+    rolls = []
 
+    def roll(low, high):
+        rolls.append((low, high))
+        return 34 if high == 99 else 30
+
+    monkeypatch.setattr(get_rng("misc"), "randint", roll)
+    options = _options(event)
+    assert options[0].detail.kwargs["chance"] == 35
+    assert rolls == []
+    game_state.action_queue.clear()
+    _run_lambdas(options[0])
+    assert rolls == [(0, 99), (25, 35)]
     assert event.search_count == 0
-    assert not any(
-        isinstance(action, StartFightAction)
-        for action in _search_option(options).actions
-    )
+    (fight_option,) = _requests()[-1].options
+    assert isinstance(fight_option.actions[-1], StartFightAction)
+    _run_lambdas(fight_option)
+    assert event.search_count == 1
+    assert rolls == [(0, 99), (25, 35)]
 
 
 def test_scrap_ooze_loses_hp_and_then_rolls(monkeypatch):

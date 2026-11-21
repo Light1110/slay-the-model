@@ -208,7 +208,7 @@ def test_dead_adventurer_search_starts_fight_and_awards_remaining_loot_once(monk
     player.gold = 0
     event = DeadAdventurer()
     event.elite_type = 'lagavulin'
-    event.found_relic = True
+    event.rewards.remove("relic")
     fights = []
     def win(combat):
         fights.append(combat.enemies)
@@ -216,8 +216,7 @@ def test_dead_adventurer_search_starts_fight_and_awards_remaining_loot_once(monk
     monkeypatch.setattr(Combat, 'start', win)
     monkeypatch.setattr(get_rng("misc"), "randint", lambda low, high: low)
     event.trigger()
-    request = queued_choice()
-    game_state.action_queue.add_actions(request.options[0].actions)
+    monkeypatch.setattr(game_state, "_resolve_debug_selection", lambda request: [0])
     game_state.drive_actions()
     assert len(fights) == 1
     assert len(fights[0]) == 1

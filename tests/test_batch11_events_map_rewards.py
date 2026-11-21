@@ -248,18 +248,17 @@ def test_dead_adventurer_search_without_elite_rebuilds_event_menu(monkeypatch):
 
     event = DeadAdventurer()
 
-    monkeypatch.setattr(get_rng("misc"), "randint", lambda a, b: 100)
-    monkeypatch.setattr(get_rng("misc"), "choice", lambda seq: seq[0])
+    monkeypatch.setattr(get_rng("misc"), "randint", lambda a, b: 99)
 
     event.trigger()
 
     menu = cast(InputRequestAction, helper.game_state.action_queue.queue[-1])
     assert isinstance(menu, InputRequestAction)
 
-    for action in menu.options[0].actions:
-        action.execute()
-
-    assert any(isinstance(action, InputRequestAction) for action in helper.game_state.action_queue.queue)
+    choices = iter([[0], [1]])
+    monkeypatch.setattr(helper.game_state, "_resolve_debug_selection", lambda request: next(choices))
+    helper.game_state.drive_actions()
+    assert event.search_count == 1 and event.event_ended
 
 
 def test_event_end_marks_current_event_room_for_leave():

@@ -1,17 +1,17 @@
 """Event: Dead Adventurer - Act 1 Event (Floor 7+)
 
 A risk/reward event where you search for loot with increasing chance of elite ambush.
-Elite encounter probability: 0% -> 25% -> 50% -> 75% per search (A15+: 10% -> 35% -> 60% -> 85%)
+Elite encounter probability: 25% -> 50% -> 75% per search (A15+: 35% -> 60% -> 85%).
 """
 from engine.random_streams import get_rng
-from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
+from engine.runtime_api import add_actions
 
 from events.base_event import Event
 from events.event_pool import register_event
 from actions.display import InputRequestAction, DisplayTextAction
 from actions.reward import AddGoldAction, AddRandomRelicAction
 from actions.combat import StartFightAction
-from actions.base import LambdaAction
+from actions.base import Action, LambdaAction
 from localization import LocalStr
 from utils.option import Option
 from utils.types import RarityType
@@ -30,17 +30,15 @@ class DeadAdventurer(Event):
     def __init__(self):
         super().__init__()
         self.search_count = 0
-        self.found_gold = False
-        self.found_relic = False
-        self.found_nothing = False
-        self.elite_type = get_rng("misc").choice(['gremlin_nob', 'lagavulin', 'sentries'])
+        self.rewards = ["gold", "nothing", "relic"]
+        rng = get_rng("misc")
+        rng.shuffle(self.rewards)
+        self.elite_type = ("sentries", "gremlin_nob", "lagavulin")[rng.randint(0, 2)]
     
     def _get_elite_chance(self) -> int:
         """Get elite encounter chance based on search count."""
-        base_chances = [0, 25, 50, 75]
-        if game_state.ascension >= 15:
-            base_chances = [10, 35, 60, 85]
-        return base_chances[min(self.search_count, 3)]
+        initial_chance = 35 if game_state.ascension >= 15 else 25
+        return initial_chance + 25 * self.search_count
     
     def _get_elite_enemies(self) -> list:
         """Build the event encounter using actual classes and position-aware factories."""
@@ -56,106 +54,67 @@ class DeadAdventurer(Event):
             return _create_sentries()
         raise ValueError(f"Unknown Dead Adventurer encounter: {self.elite_type}")
 
-    def _get_search_reward_actions(self) -> list:
-        """Get random reward actions from remaining rewards."""
-        available_rewards = []
-        
-        if not self.found_gold:
-            available_rewards.append('gold')
-        if not self.found_relic:
-            available_rewards.append('relic')
-        if not self.found_nothing:
-            available_rewards.append('nothing')
-        
-        if not available_rewards:
-            return [DisplayTextAction(text_key='events.dead_adventurer.nothing')]
-        
-        reward = get_rng("misc").choice(available_rewards)
-        actions = []
-        
-        if reward == 'gold':
-            self.found_gold = True
-            actions.append(AddGoldAction(amount=30))
-        elif reward == 'relic':
-            self.found_relic = True
-            actions.append(AddRandomRelicAction(
+    @staticmethod
+    def _reward_action(reward: str, source: str = "direct") -> Action:
+        if reward == "gold":
+            return AddGoldAction(amount=30, source=source)
+        if reward == "relic":
+            return AddRandomRelicAction(
                 rarities=[RarityType.COMMON, RarityType.UNCOMMON, RarityType.RARE]
-            ))
-        else:
-            self.found_nothing = True
-            actions.append(DisplayTextAction(text_key='events.dead_adventurer.nothing'))
-        
-        return actions
+            )
+        return DisplayTextAction(text_key="events.dead_adventurer.nothing")
+
+    def _search(self) -> None:
+        rng = get_rng("misc")
+        if rng.randint(0, 99) < self._get_elite_chance():
+            bounds = (0, 30) if game_state.config.daily_run else (25, 35)
+            gold = AddGoldAction(amount=rng.randint(*bounds), source="event_combat")
+            enemies = self._get_elite_enemies()
+            victory_rewards = [gold, *(
+                self._reward_action(reward, source="event_combat")
+                for reward in self.rewards if reward != "nothing"
+            ), LambdaAction(self.end_event)]
+            add_actions([
+                DisplayTextAction(text_key="events.dead_adventurer.elite_appears"),
+                InputRequestAction(
+                    title=LocalStr("events.dead_adventurer.title"),
+                    options=[Option(
+                        name=LocalStr("events.dead_adventurer.fight"),
+                        detail=LocalStr("events.dead_adventurer.elite_appears"),
+                        actions=[
+                            LambdaAction(self._count_search),
+                            StartFightAction(
+                                enemies=enemies,
+                                escape_actions=[LambdaAction(self.end_event)],
+                                victory_actions=victory_rewards,
+                            ),
+                        ],
+                    )],
+                ),
+            ], to_front=True)
+            return
+
+        reward = self.rewards.pop(0)
+        self._count_search()
+        add_actions([self._reward_action(reward), LambdaAction(self.trigger)], to_front=True)
 
     def _count_search(self) -> None:
         self.search_count += 1
-    
+
     def trigger(self) -> None:
-        actions = []
-        
-        # Display event description
-        actions.append(DisplayTextAction(
-            text_key='events.dead_adventurer.description'
-        ))
-        
-        # Build options
         options = []
-        
-        # Option to continue searching (max 3 times)
-        if self.search_count < 3:
-            elite_chance = self._get_elite_chance()
-            
-            if get_rng("misc").randint(1, 100) <= elite_chance:
-                # Elite encounter - fight with rewards on victory
-                elite_enemies = self._get_elite_enemies()
-                
-                # Build victory rewards: remaining loot + bonus gold
-                victory_rewards = []
-                if not self.found_gold:
-                    victory_rewards.append(AddGoldAction(amount=30, source="event_combat"))
-                if not self.found_relic:
-                    victory_rewards.append(AddRandomRelicAction(
-                        rarities=[RarityType.COMMON, RarityType.UNCOMMON, RarityType.RARE]
-                    ))
-                victory_rewards.append(AddGoldAction(amount=get_rng("misc").randint(25, 35), source="event_combat"))
-                victory_rewards.append(LambdaAction(lambda: self.end_event()))
-                
-                options.append(Option(
-                    name=LocalStr('events.dead_adventurer.search'),
-                    detail=LocalStr('events.dead_adventurer.search_detail', chance=elite_chance),
-                    actions=[
-                        DisplayTextAction(text_key='events.dead_adventurer.elite_appears'),
-                        LambdaAction(self._count_search),
-                        StartFightAction(
-                            enemies=elite_enemies,
-                            escape_actions=[LambdaAction(self.end_event)],
-                            victory_actions=victory_rewards
-                        )
-                    ]
-                ))
-            else:
-                # No elite - give random reward
-                search_actions = self._get_search_reward_actions()
-                options.append(Option(
-                    name=LocalStr('events.dead_adventurer.search'),
-                    detail=LocalStr('events.dead_adventurer.search_detail', chance=elite_chance),
-                    actions=[
-                        *search_actions,
-                        LambdaAction(self._count_search),
-                        LambdaAction(self.trigger),
-                    ]
-                ))
-        
-        # Leave option
+        if self.rewards:
+            options.append(Option(
+                name=LocalStr("events.dead_adventurer.search"),
+                detail=LocalStr("events.dead_adventurer.search_detail", chance=self._get_elite_chance()),
+                actions=[LambdaAction(self._search)],
+            ))
         options.append(Option(
-            name=LocalStr('events.dead_adventurer.leave'),
-            detail=LocalStr('events.no_effect'),
-            actions=[LambdaAction(lambda: self.end_event())]
+            name=LocalStr("events.dead_adventurer.leave"),
+            detail=LocalStr("events.no_effect"),
+            actions=[LambdaAction(self.end_event)],
         ))
-        
-        actions.append(InputRequestAction(
-            title=LocalStr('events.dead_adventurer.title'),
-            options=options
-        ))
-        
-        add_actions(actions)
+        add_actions([
+            DisplayTextAction(text_key="events.dead_adventurer.description"),
+            InputRequestAction(title=LocalStr("events.dead_adventurer.title"), options=options),
+        ])

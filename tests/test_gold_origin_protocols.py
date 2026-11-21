@@ -235,8 +235,11 @@ def test_existing_event_combat_gold_producers(event_name, idol, ectoplasm, monke
         event = DeadAdventurer()
         event.search_count = 1
         # Prepare the event's combat roll and bonus amount independently.
-        monkeypatch.setattr(get_rng('misc'), 'randint', lambda lo, hi: 1 if hi == 100 else 33)
+        monkeypatch.setattr(get_rng('misc'), 'randint', lambda lo, hi: 1 if hi == 99 else 33)
         event.trigger()
+        menu = cast(InputRequestAction, game_state.action_queue.queue[-1])
+        game_state.action_queue.clear()
+        menu.options[0].actions[0].execute()
     elif event_name == 'mysterious_sphere':
         monkeypatch.setattr(get_rng('misc'), 'randint', lambda *_: 50)
         MysteriousSphere().trigger()
@@ -252,7 +255,7 @@ def test_existing_event_combat_gold_producers(event_name, idol, ectoplasm, monke
         menu = cast(InputRequestAction, game_state.action_queue.queue[-1])
         fight = next(action for action in menu.options[0].actions if isinstance(action, StartFightAction))
     rewards = [action for action in cast(StartFightAction, fight).victory_actions if isinstance(action, AddGoldAction)]
-    bases = {'dead_adventurer': [30, 33], 'mysterious_sphere': [50], 'the_colosseum': [100], 'mind_bloom': [25]}[event_name]
+    bases = {'dead_adventurer': [33, 30], 'mysterious_sphere': [50], 'the_colosseum': [100], 'mind_bloom': [25]}[event_name]
     expected = [base + (int(base * .25 + .5) if idol else 0) for base in bases]
     assert [action.amount for action in rewards] == expected
     game_state.action_queue.clear()
@@ -265,10 +268,10 @@ def test_existing_event_combat_gold_producers(event_name, idol, ectoplasm, monke
 def test_dead_adventurer_immediate_search_gold_is_direct(monkeypatch):
     player = player_with_relics()
     event = DeadAdventurer()
-    monkeypatch.setattr(get_rng('misc'), 'choice', lambda _: 'gold')
-    actions = event._get_search_reward_actions()
-    for action in actions:
-        action.execute()
+    event.rewards = ['gold']
+    monkeypatch.setattr(get_rng('misc'), 'randint', lambda *_: 99)
+    monkeypatch.setattr(game_state, '_resolve_debug_selection', lambda request: [0])
+    event.trigger()
     assert game_state.drive_actions() is None
     assert player.gold == 130
 

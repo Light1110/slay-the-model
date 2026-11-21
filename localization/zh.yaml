@@ -275,6 +275,7 @@ events:
     search_detail: "搜索金币或遗物。{chance}% 概率遭遇精英伏击。"
     title: 冒险者尸体
     search: 搜索
+    fight: 战斗
     leave: 离开
     description: 在搜刮冒险者时你被偷袭了！
     elite_appears: 一名精英从阴影中现身！
