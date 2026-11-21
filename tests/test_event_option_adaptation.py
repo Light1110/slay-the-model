@@ -15,13 +15,18 @@ from cards.ironclad.strike import Strike
 from engine.game_state import game_state
 from events.base_event import Event
 from events.big_fish import BigFishEvent
+from events.face_trader import FACE_TYPES, FaceTrader
 from events.knowing_skull import KnowingSkull
 from events.mind_bloom import MindBloom
+from events.nloth import Nloth
 from events.scrap_ooze import ScrapOoze
 from events.the_cleric import TheClericEvent
 from events.wing_statue import WingStatue
 from events.woman_in_blue import WomanInBlueEvent
 from localization import LocalStr, resolve_text, set_language, t
+from relics.global_relics.common import Anchor, Vajra
+from relics.global_relics.event import FaceOfCleric
+from relics.global_relics.special import Circlet
 from tests.test_combat_utils import create_test_helper
 from utils.option import Option, option_label
 
@@ -169,9 +174,53 @@ def test_skull_refreshes_only_the_chosen_reward_cost(player, ascension):
         event._increment_cost('potion')
 
 
+@pytest.mark.parametrize('option_index', [0, 2])
+def test_face_trader_touch_and_leave_preserve_misc_stream(player, monkeypatch, option_index):
+    rng = StreamRandom(0)
+    monkeypatch.setitem(game_state.random_streams.streams, 'misc', rng)
+    initial = rng.export_state()
+    menu = menu_for(FaceTrader())
+    assert rng.export_state() == initial
+    game_state.action_queue.add_actions(menu.options[option_index].actions)
+    game_state.drive_actions()
+    assert rng.export_state() == initial
+
+
+@pytest.mark.parametrize('all_owned,expected', [(False, FaceOfCleric), (True, Circlet)])
+def test_face_trader_uses_one_derived_shuffle_on_trade(player, monkeypatch, all_owned, expected):
+    player.relics = [face() for face in FACE_TYPES] if all_owned else []
+    rng = StreamRandom(0)
+    monkeypatch.setitem(game_state.random_streams.streams, 'misc', rng)
+    reference = StreamRandom(0)
+    menu = menu_for(FaceTrader())
+    assert rng.export_state() == reference.export_state()
+    reference.random_long()
+    game_state.action_queue.add_actions(menu.options[1].actions)
+    game_state.drive_actions()
+    assert type(player.relics[-1]) is expected
+    assert rng.export_state() == reference.export_state()
+
+
+def test_nloth_caches_both_options_from_construction(player, monkeypatch):
+    anchor, vajra = Anchor(), Vajra()
+    player.relics = [anchor, vajra]
+    rng = StreamRandom(0)
+    monkeypatch.setitem(game_state.random_streams.streams, 'misc', rng)
+    reference = StreamRandom(0)
+    reference.random_long()
+
+    event = Nloth()
+    assert event.offered_relics == [vajra, anchor]
+    assert rng.export_state() == reference.export_state()
+    for _ in range(2):
+        options = menu_for(event).options
+        assert [option.actions[0].relic for option in options[:2]] == [vajra, anchor]
+        assert rng.export_state() == reference.export_state()
+    assert player.relics == [anchor, vajra]
+
+
 @pytest.mark.parametrize('language', ['en', 'zh'])
 def test_nloth_resolves_relic_name_and_trade_effect(player, language):
-    from events.nloth import Nloth
     from relics.global_relics.event import GoldenIdol, NlothGift
     set_language(language)
     player.relics = [GoldenIdol(), NlothGift()]

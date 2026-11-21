@@ -3,9 +3,10 @@
 Trade a relic for N'loth's Gift (50% chance to duplicate obtained cards).
 """
 from engine.random_streams import get_rng
-from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
+from engine.runtime_api import add_actions
 
 from typing import cast
+
 from relics.base import Relic
 
 from events.base_event import Event
@@ -24,7 +25,12 @@ class Nloth(Event):
     
     def __init__(self):
         super().__init__()
-        self.offered_relics = []
+        self.offered_relics: list[Relic] = []
+        player = game_state.player
+        if player is not None and len(player.relics) >= 2:
+            relics = list(cast(list[Relic], player.relics))
+            get_rng("misc").shuffle(relics)
+            self.offered_relics = relics[:2]
     
     @classmethod
     def can_appear(cls) -> bool:
@@ -33,13 +39,6 @@ class Nloth(Event):
     
     def trigger(self) -> None:
         actions = []
-        
-        # Select 2 random relics to offer on first trigger
-        if not self.offered_relics and len(game_state.player.relics) >= 2:
-            self.offered_relics = get_rng("misc").sample(
-                list(game_state.player.relics), 
-                min(2, len(game_state.player.relics))
-            )
         
         # Display event description
         actions.append(DisplayTextAction(
@@ -51,7 +50,7 @@ class Nloth(Event):
         
         for relic in self.offered_relics:
             # Get relic display name
-            relic_name = cast(Relic, relic).local("name")
+            relic_name = relic.local("name")
             
             options.append(Option(
                 name=LocalStr('events.nloth.trade', relic=relic_name),

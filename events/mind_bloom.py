@@ -83,9 +83,10 @@ class MindBloom(Event):
 
     def _start_war(self, gold: int) -> None:
         """Generate a real Act 1 boss only when the fight option is selected."""
-        boss_class = get_rng("misc").choice((TheGuardian, TheHexaghost, SlimeBoss))
+        bosses = [TheGuardian, TheHexaghost, SlimeBoss]
+        get_rng("misc").shuffle(bosses)
         add_action(StartFightAction(
-            enemies=[boss_class()],
+            enemies=[bosses[0]()],
             victory_actions=[
                 AddRandomRelicAction(rarity=RarityType.RARE),
                 AddGoldAction(amount=gold, source="event_combat"),

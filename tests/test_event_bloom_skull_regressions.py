@@ -47,10 +47,11 @@ def queued_menu() -> InputRequestAction:
 def test_bloom_creates_real_boss_only_after_selection(player, monkeypatch, boss_class, ascension, gold):
     game_state.ascension = ascension
     seen = []
-    def choose(classes):
+    def shuffle(classes):
         seen.append(tuple(classes))
-        return boss_class
-    monkeypatch.setattr(get_rng("misc"), "choice", choose)
+        classes.remove(boss_class)
+        classes.insert(0, boss_class)
+    monkeypatch.setattr(get_rng("misc"), "shuffle", shuffle)
     event = MindBloom()
     event.trigger()
     menu = queued_menu()
@@ -62,7 +63,7 @@ def test_bloom_creates_real_boss_only_after_selection(player, monkeypatch, boss_
     assert isinstance(fight, StartFightAction)
     assert len(fight.enemies) == 1
     assert type(fight.enemies[0]) is boss_class
-    assert set(seen[0]) == {TheGuardian, TheHexaghost, SlimeBoss}
+    assert seen == [(TheGuardian, TheHexaghost, SlimeBoss)]
     assert fight.combat_type == CombatType.NORMAL
     assert event.event_ended
 

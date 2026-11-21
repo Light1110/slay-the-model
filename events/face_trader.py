@@ -3,10 +3,11 @@
 Trade HP for gold or gamble for face relics.
 """
 from engine.random_streams import get_rng
-from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
+from engine.runtime_api import add_action, add_actions
 
 from events.base_event import Event
 from events.event_pool import register_event
+from actions.base import LambdaAction
 from actions.display import InputRequestAction, DisplayTextAction
 from actions.reward import AddGoldAction, AddRelicAction
 from actions.combat import LoseHPAction
@@ -17,6 +18,10 @@ from relics.global_relics.event import (
     CultistHeadpiece, FaceOfCleric, GremlinVisage, 
     NlothHungryFace, SsserpentHead
 )
+from relics.global_relics.special import Circlet
+
+
+FACE_TYPES = (CultistHeadpiece, FaceOfCleric, GremlinVisage, NlothHungryFace, SsserpentHead)
 
 
 @register_event(category='special', event_id='face_trader', acts=[1, 2], weight=100)
@@ -48,16 +53,7 @@ class FaceTrader(Event):
             Option(
                 name=LocalStr('events.face_trader.trade'),
                 detail=LocalStr('events.face_trader.trade_detail'),
-                actions=[
-                    # Receive one of the five face relics (20% each)
-                    AddRelicAction(relic=get_rng("misc").choice([
-                        CultistHeadpiece(),
-                        FaceOfCleric(),
-                        GremlinVisage(),
-                        NlothHungryFace(),
-                        SsserpentHead()
-                    ]))
-                ]
+                actions=[LambdaAction(self._trade_face)]
             ),
             Option(
                 name=LocalStr('events.face_trader.leave'),
@@ -73,3 +69,9 @@ class FaceTrader(Event):
         
         self.end_event()
         add_actions(actions)
+
+    def _trade_face(self) -> None:
+        owned = {getattr(relic, "idstr", None) for relic in game_state.player.relics}
+        faces = [face for face in FACE_TYPES if face.__name__ not in owned] or [Circlet]
+        get_rng("misc").shuffle(faces)
+        add_action(AddRelicAction(relic=faces[0]()), to_front=True)
