@@ -15,17 +15,19 @@ from engine.input_protocol import InputRequest
 from engine.game_state import game_state as state
 from events.dead_adventurer import DeadAdventurer
 from events.hypnotizing_mushrooms import HypnotizingColoredMushrooms
+from events.mysterious_sphere import MysteriousSphere
 from events.the_colosseum import TheColosseum
 from map.encounter_pool import EncounterPool
 from map.map_manager import MapManager
 from potions.global_potions import SmokeBomb
+from relics.base import Relic
 from relics.global_relics.event import OddMushroom
 from relics.global_relics.special import BlueKey, RedKey, GreenKey
 from rooms.combat import CombatRoom
 from rooms.event import EventRoom
 from rooms.victory import VictoryRoom
 from utils.result_types import GameTerminalState
-from utils.types import CardType, RoomType
+from utils.types import CardType, RarityType, RoomType
 
 
 @pytest.mark.parametrize('act,ascension,floors', [
@@ -112,22 +114,28 @@ def test_real_exhausted_event_pool_advances_to_room_selection():
 
 @pytest.mark.parametrize('ascension', [0, 15])
 @pytest.mark.parametrize('mode', ['mushroom_win', 'mushroom_escape', 'dead_escape',
-                                  'colosseum_first_escape', 'colosseum_second_escape'])
+                                  'colosseum_first_escape', 'colosseum_second_escape',
+                                  'sphere_win', 'sphere_escape'])
 def test_native_event_fight_and_smoke_bomb_finish_room(monkeypatch, ascension, mode):
     state.ascension = ascension
     state.config.auto_select = False
     state.config.debug['select_type'] = 'first'
     random.seed(42)
     state.player.potions.clear()
+    wins = mode in ('mushroom_win', 'sphere_win')
     if mode.startswith('mushroom'):
         event = HypnotizingColoredMushrooms()
     elif mode == 'dead_escape':
         event = DeadAdventurer()
         # Isolate the encounter branch; enemies, combat and potion remain real.
         monkeypatch.setattr(event, '_get_elite_chance', lambda: 100)
+    elif mode.startswith('sphere'):
+        state.current_act = 3
+        state.current_floor = 42
+        event = MysteriousSphere()
     else:
         event = TheColosseum()
-    if mode != 'mushroom_win':
+    if not wins:
         state.player.potions.append(SmokeBomb())
     room = EventRoom()
     room.selected_event = event
@@ -146,12 +154,12 @@ def test_native_event_fight_and_smoke_bomb_finish_room(monkeypatch, ascension, m
             if combat not in combats:
                 combats.append(combat)
                 initial_enemies.append([type(e).__name__ for e in combat.enemies])
-                win = mode == 'mushroom_win' or (
+                win = wins or (
                     mode == 'colosseum_second_escape' and len(combats) == 1)
                 if win:
                     for enemy in combat.enemies:
                         enemy.hp = 1  # Native attack/win path; not a fake combat result.
-            escape = mode != 'mushroom_win' and not (
+            escape = not wins and not (
                 mode == 'colosseum_second_escape' and len(combats) == 1)
             index = next((i for i, option in enumerate(req.options) if option.enabled and any(
                 isinstance(a, UsePotionAction) if escape else
@@ -174,8 +182,16 @@ def test_native_event_fight_and_smoke_bomb_finish_room(monkeypatch, ascension, m
     assert len(combats) == (2 if mode == 'colosseum_second_escape' else 1)
     if mode.startswith('mushroom'):
         assert initial_enemies[0] == ['FungiBeast'] * 3
+    if mode.startswith('sphere'):
+        assert initial_enemies[0] == ['OrbWalker'] * 2
     if mode == 'mushroom_win':
         assert sum(isinstance(r, OddMushroom) for r in state.player.relics) == 1
+    elif mode == 'sphere_win':
+        assert 45 <= state.player.gold - before[0] <= 55
+        assert len(state.player.deck) == before[1] + 1
+        assert len(state.player.relics) == before[2] + 1
+        relic = state.player.relics[-1]
+        assert isinstance(relic, Relic) and relic.rarity == RarityType.RARE
     else:
         assert not state.player.potions
         assert before == (state.player.gold, len(state.player.deck), len(state.player.relics))

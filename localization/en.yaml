@@ -465,7 +465,8 @@ events:
 
       The sensation is quickly fleeting. What do you do?'
   mysterious_sphere:
-    open_sphere_detail: "Fight 2 Orb Walkers. Victory: a random Rare relic, 45-55 Gold, and a random card."
+    open_sphere_detail: "Fight 2 Orb Walkers. Victory: a random Rare relic, {minimum}–{maximum} Gold, and a card reward."
+    fight: Fight
     title: Mysterious Sphere
     open_sphere: Open Sphere
     leave: Leave
@@ -731,6 +732,7 @@ events:
 
       The constant whispering voices in the back of your head aren''t helping things either.'
   wing_statue:
+    destroy_detail: "Gain 50–80 Gold."
     require_attack: "Requires an Attack with at least {damage} damage."
     pray_detail: "Lose {hp} HP. Remove a card from your deck."
     title: Wing Statue

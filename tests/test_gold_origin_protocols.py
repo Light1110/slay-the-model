@@ -243,13 +243,17 @@ def test_existing_event_combat_gold_producers(event_name, idol, ectoplasm, monke
     elif event_name == 'mysterious_sphere':
         monkeypatch.setattr(get_rng('misc'), 'randint', lambda *_: 50)
         MysteriousSphere().trigger()
+        for _ in range(2):
+            menu = cast(InputRequestAction, game_state.action_queue.queue[-1])
+            game_state.action_queue.clear()
+            menu.options[0].actions[0].execute()
     elif event_name == 'the_colosseum':
         event = TheColosseum()
         event.first_fight_done = True
         event.trigger()
     else:
         MindBloom()._start_war(25)
-    if event_name == 'mind_bloom':
+    if event_name in ('mind_bloom', 'mysterious_sphere'):
         fight = next(action for action in game_state.action_queue.queue if isinstance(action, StartFightAction))
     else:
         menu = cast(InputRequestAction, game_state.action_queue.queue[-1])

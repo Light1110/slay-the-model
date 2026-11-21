@@ -13,7 +13,11 @@ class OrbWalker(Enemy):
     select_intention_after_enemy_turn = True
 
     def __init__(self):
-        super().__init__(hp_range=(90, 96)) # todo: 92-102 a7
+        from engine.game_state import game_state
+
+        # The initial HP roll is replaced by a second roll in the constructor.
+        get_rng("monster_hp").randint(90, 96)
+        super().__init__(hp_range=(92, 102) if game_state.ascension >= 7 else (90, 96))
         self.add_intention(Laser(self))
         self.add_intention(Claw(self))
 

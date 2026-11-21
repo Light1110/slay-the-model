@@ -3,10 +3,11 @@
 Remove a card for HP or gain gold with a high-damage attack.
 """
 from engine.random_streams import get_rng
-from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
+from engine.runtime_api import add_action, add_actions
 
 from events.base_event import Event
 from events.event_pool import register_event
+from actions.base import LambdaAction
 from actions.display import InputRequestAction, DisplayTextAction
 from actions.card import ChooseRemoveCardAction
 from actions.reward import AddGoldAction
@@ -29,9 +30,6 @@ class WingStatue(Event):
             text_key='events.wing_statue.description'
         ))
         
-        # Gold: 50-80 random
-        gold_amount = get_rng("misc").randint(50, 80)
-        
         has_10_damage_attack = any(
             card.card_type == CardType.ATTACK and card.damage >= 10
             for card in game_state.player.deck
@@ -51,10 +49,10 @@ class WingStatue(Event):
         
         options.append(Option(
             name=LocalStr('events.wing_statue.destroy'),
-            detail=LocalStr('events.gain_gold', gold=gold_amount),
+            detail=LocalStr('events.wing_statue.destroy_detail'),
             enabled=has_10_damage_attack,
             disabled_reason=LocalStr('events.wing_statue.require_attack', damage=10),
-            actions=[AddGoldAction(amount=gold_amount)],
+            actions=[LambdaAction(self._destroy)],
         ))
 
         options.append(Option(
@@ -70,3 +68,7 @@ class WingStatue(Event):
         
         self.end_event()
         add_actions(actions)
+
+    def _destroy(self) -> None:
+        gold = get_rng("misc").randint(50, 80)
+        add_action(AddGoldAction(amount=gold), to_front=True)

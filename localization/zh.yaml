@@ -451,7 +451,8 @@ events:
 
       这些感觉稍纵即逝，你准备怎么做？'
   mysterious_sphere:
-    open_sphere_detail: "与 2 个球体行者战斗。胜利后获得一件随机稀有遗物、45–55 金币和一张随机牌。"
+    open_sphere_detail: "与两只圆球行者战斗。胜利后获得一件随机稀有遗物、{minimum}–{maximum} 金币和卡牌奖励。"
+    fight: 战斗
     title: 神秘圆球
     open_sphere: 打开圆球
     leave: 离开
@@ -702,6 +703,7 @@ events:
 
       更糟糕的是，你的脑中似乎还有许多声音在对你轻声低语。'
   wing_statue:
+    destroy_detail: "获得 50–80 金币。"
     require_attack: "需要一张伤害至少为 {damage} 的攻击牌。"
     pray_detail: "失去 {hp} 点生命。从牌组中移除一张牌。"
     title: 翅膀雕像

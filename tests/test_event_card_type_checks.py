@@ -6,7 +6,6 @@ from actions.card import RemoveCardAction, RemoveRandomCardAction
 from actions.card_choice import ChooseRemoveCardAction
 from actions.combat import LoseHPAction
 from actions.display import InputRequestAction
-from actions.reward import AddGoldAction
 from cards.colorless.doubt import Doubt
 from cards.ironclad.bash import Bash
 from cards.ironclad.defend import Defend
@@ -73,12 +72,7 @@ def test_wing_statue_offers_gold_for_an_attack_dealing_at_least_10():
     player.deck.append(bash)
 
     weak_options = _options(WingStatue())
-    assert not any(
-        isinstance(action, AddGoldAction)
-        for option in weak_options
-        if option.enabled
-        for action in option.actions
-    )
+    assert not weak_options[1].enabled
     pray = next(
         option
         for option in weak_options
@@ -88,14 +82,7 @@ def test_wing_statue_offers_gold_for_an_attack_dealing_at_least_10():
     assert any(isinstance(action, ChooseRemoveCardAction) for action in pray.actions)
 
     bash.upgrade()
-    destroy = next(
-        option
-        for option in _options(WingStatue())
-        if any(isinstance(action, AddGoldAction) for action in option.actions)
-    )
-    assert destroy.enabled
-    gold = next(action for action in destroy.actions if isinstance(action, AddGoldAction))
-    assert 50 <= gold.amount <= 80
+    assert _options(WingStatue())[1].enabled
 
 
 def test_falling_removes_a_deck_card_and_locks_missing_types():

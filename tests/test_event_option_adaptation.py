@@ -73,16 +73,28 @@ def test_cleric_preserves_indices_locks_cost_boundaries_and_heals(player, ascens
 def test_wing_statue_keeps_destroy_at_same_index(player, monkeypatch, damage, enabled):
     attack = Strike(base_damage=damage)
     player.card_manager.piles['deck'] = [attack]
-    monkeypatch.setattr(get_rng("misc"), "randint", lambda *_: 67)
+    rolls = []
+
+    def roll(minimum, maximum):
+        rolls.append((minimum, maximum))
+        return 67
+
+    monkeypatch.setattr(get_rng("misc"), "randint", roll)
     options = menu_for(WingStatue()).options
     assert len(options) == 3
     assert options[1].enabled is enabled
-    assert '67' in resolve_text(options[1].detail)
+    detail = resolve_text(options[1].detail)
+    assert '50' in detail and '80' in detail
     assert '10' in resolve_text(options[1].disabled_reason)
-    assert isinstance(options[1].actions[0], AddGoldAction)
-    assert options[1].actions[0].amount == 67
+    assert rolls == []
     if not enabled:
         assert build_selected_options(options, [1]) == {}
+    else:
+        game_state.action_queue.clear()
+        options[1].actions[0].execute()
+        assert game_state.drive_actions() is None
+        assert rolls == [(50, 80)]
+        assert player.gold == 167
 
 
 @pytest.mark.parametrize('gold,available', [(49, False), (50, True)])
