@@ -3,20 +3,19 @@
 A card matching minigame where you flip cards and match pairs to add them to your deck.
 """
 from engine.random_streams import get_rng
-from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
+from engine.runtime_api import add_action, add_actions
 
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 from events.base_event import Event
 from events.event_pool import register_event
 from actions.display import InputRequestAction, DisplayTextAction
 from actions.card import AddCardAction
 from actions.base import Action
-from utils.registry import get_registered, register
+from utils.registry import get_registered, list_registered, register
 from localization import LocalStr
 from utils.option import Option
 from engine.game_state import game_state
 from cards.base import Card
-from utils.registry import get_registered
 from utils.types import CardType, RarityType
 
 
@@ -103,8 +102,9 @@ def _generate_card_pairs() -> List[Tuple[Card, Card]]:
 def _create_shuffled_deck(pairs: List[Tuple[Card, Card]]) -> List[dict]:
     """Create a shuffled deck of 12 cards from 6 pairs."""
     cards = []
-    for pair in pairs:
-        for card in pair:
+    for member in (0, 1):
+        for pair in pairs:
+            card = pair[member]
             cards.append({
                 'card': card,
                 'idstr': card.idstr,
@@ -118,7 +118,11 @@ def _create_shuffled_deck(pairs: List[Tuple[Card, Card]]) -> List[dict]:
 @register_event(category='shrine', event_id='match_and_keep', acts='shared', weight=100)
 class MatchAndKeep(Event):
     """Match and Keep - card matching minigame."""
-    
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._board = _create_shuffled_deck(_generate_card_pairs())
+
     @classmethod
     def can_appear(cls) -> bool:
         """Can appear in any act."""
@@ -127,12 +131,12 @@ class MatchAndKeep(Event):
     def trigger(self) -> None:
         global _matching_state
         
-        # Initialize minigame state
-        pairs = _generate_card_pairs()
-        deck = _create_shuffled_deck(pairs)
-        
+        # Older saved event instances did not have a prepared board.
+        if not hasattr(self, "_board"):
+            self._board = _create_shuffled_deck(_generate_card_pairs())
+
         _matching_state = {
-            'deck': deck,
+            'deck': [entry.copy() for entry in self._board],
             'tries_remaining': 5,
             'matched_cards': [],
             'first_selection': None,
@@ -304,6 +308,3 @@ class FlipCardAction(Action):
             # Continue the game
             add_action(MatchAndKeepAction(), to_front=True)
             return
-
-
-from utils.registry import list_registered
