@@ -329,9 +329,10 @@ def test_mausoleum_curse_roll_and_relic_order(
     assert misc.export_state() == expected_misc.export_state()
     assert card_random.export_state() == card_random_before
     assert relic.counter == int(opened)
-    assert [r.idstr for r in player.relics[initial_relics:]] == ([reward] if opened else [])
+    assert [getattr(r, "idstr", None) for r in player.relics[initial_relics:]] == ([reward] if opened else [])
     assert sum(isinstance(card, Writhe) for card in player.deck) == int(expected_curse)
-    assert [r.curses_to_negate for r in player.relics if isinstance(r, Omamori)] == charges
+    omamori = [cast(Omamori, r) for r in player.relics if isinstance(r, Omamori)]
+    assert [ward.curses_to_negate for ward in omamori] == charges
     assert (player.hp, player.max_hp) == (40 + health_gain, 80 + health_gain)
     assert event.event_ended and room.should_leave
 
