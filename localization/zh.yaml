@@ -365,6 +365,7 @@ events:
   hypnotizing_mushrooms:
     title: 蘑菇
     stomp: 踩扁
+    fight: 开战
     stomp_effect: 与 3 只真菌兽战斗。获得怪异蘑菇。
     eat: 吃下
     eat_effect: 恢复 25% 生命值。获得寄生诅咒。

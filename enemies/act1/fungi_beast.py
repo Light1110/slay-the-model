@@ -20,9 +20,9 @@ class FungiBeast(Enemy):
     select_intention_after_enemy_turn = True
     
     def __init__(self):
-        super().__init__(
-            hp_range=(22, 28) # todo: 24-28 a7
-        )
+        from engine.game_state import game_state
+
+        super().__init__(hp_range=(24, 28) if game_state.ascension >= 7 else (22, 28))
         
         # Register intentions
         self.add_intention(BiteIntention(self))

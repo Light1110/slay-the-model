@@ -167,6 +167,9 @@ def test_native_event_fight_and_smoke_bomb_finish_room(monkeypatch, ascension, m
     reserved = []
     relic_stream = state.random_streams["relic"]
     initial_relic_counter = relic_stream.counter
+    hp_rng = state.random_streams["monster_hp"]
+    initial_hp_counter = hp_rng.counter
+    mushroom_menus = []
     outcomes = []
     start_combat = Combat.start
 
@@ -183,6 +186,11 @@ def test_native_event_fight_and_smoke_bomb_finish_room(monkeypatch, ascension, m
             if combat not in combats:
                 combats.append(combat)
                 initial_enemies.append([type(e).__name__ for e in combat.enemies])
+                if isinstance(event, HypnotizingColoredMushrooms):
+                    assert hp_rng.counter == initial_hp_counter + 3
+                    assert [enemy.formation_position for enemy in combat.enemies] == [-450, -145, 180]
+                    minimum = 24 if ascension >= 7 else 22
+                    assert all(minimum <= enemy.hp <= 28 for enemy in combat.enemies)
                 reserved.append([
                     keys[0] for tier, keys in initial_pools.items()
                     if state.relic_pools.remaining[tier] == keys[1:]
@@ -212,6 +220,8 @@ def test_native_event_fight_and_smoke_bomb_finish_room(monkeypatch, ascension, m
             if index is None:
                 index = next(i for i, o in enumerate(req.options) if o.enabled)
         else:
+            if isinstance(event, HypnotizingColoredMushrooms):
+                mushroom_menus.append((len(req.options), hp_rng.counter - initial_hp_counter))
             index = 1 if mode == 'colosseum_cowardice' and combats else 0
         return state._build_submission(req.options, [index])
 
@@ -244,6 +254,7 @@ def test_native_event_fight_and_smoke_bomb_finish_room(monkeypatch, ascension, m
         assert state.relic_pools.remaining[tier] == (keys[1:] if keys[0] in reserved[-1] else keys)
     if mode.startswith('mushroom'):
         assert initial_enemies[0] == ['FungiBeast'] * 3
+        assert mushroom_menus == [(2, 0), (1, 3)]
     if mode.startswith('sphere'):
         assert initial_enemies[0] == ['OrbWalker'] * 2
     if mode == 'mushroom_win':

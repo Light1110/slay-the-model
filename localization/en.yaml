@@ -375,6 +375,7 @@ events:
   hypnotizing_mushrooms:
     title: Mushrooms
     stomp: Stomp
+    fight: Fight
     stomp_effect: Fight 3 Fungi Beasts. Gain Odd Mushroom.
     eat: Eat
     eat_effect: Heal 25% of your HP. Become Cursed with Parasite.

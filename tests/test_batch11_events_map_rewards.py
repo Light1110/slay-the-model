@@ -380,6 +380,8 @@ def test_hypnotizing_mushrooms_option_ends_event():
     helper.create_player()
     helper.game_state.floor_in_act = 11
     helper.game_state.action_queue.clear()
+    hp_rng = helper.game_state.random_streams["monster_hp"]
+    before = hp_rng.export_state()
 
     event = HypnotizingColoredMushrooms()
     event.trigger()
@@ -391,6 +393,7 @@ def test_hypnotizing_mushrooms_option_ends_event():
         action.execute()
 
     assert event.event_ended is True
+    assert hp_rng.export_state() == before
 
 
 def test_hypnotizing_mushrooms_option_text_describes_effects():

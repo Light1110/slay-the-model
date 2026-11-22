@@ -2,7 +2,7 @@
 
 A mushroom event offering healing with a curse or a fight for a relic.
 """
-from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
+from engine.runtime_api import add_action, add_actions
 
 from events.base_event import Event
 from events.event_pool import register_event
@@ -37,24 +37,12 @@ class HypnotizingColoredMushrooms(Event):
             text_key='events.hypnotizing_mushrooms.description'
         ))
         
-        # Create fungi beast instances for combat
-        fungi_beasts = [FungiBeast(), FungiBeast(), FungiBeast()]
-        
         # Build options
         options = [
             Option(
                 name=LocalStr('events.hypnotizing_mushrooms.stomp'),
                 detail=LocalStr('events.hypnotizing_mushrooms.stomp_effect'),
-                actions=[
-                    StartFightAction(
-                        enemies=fungi_beasts,
-                        escape_actions=[LambdaAction(self.end_event)],
-                        victory_actions=[
-                            AddRelicAction(relic=OddMushroom()),
-                            LambdaAction(lambda: self.end_event()),
-                        ]
-                    )
-                ]
+                actions=[LambdaAction(self._stomp)]
             ),
             Option(
                 name=LocalStr('events.hypnotizing_mushrooms.eat'),
@@ -62,7 +50,7 @@ class HypnotizingColoredMushrooms(Event):
                 actions=[
                     HealAction(percent=0.25),
                     AddCardAction(card=Parasite()),
-                    LambdaAction(lambda: self.end_event()),
+                    LambdaAction(self.end_event),
                 ]
             )
         ]
@@ -73,3 +61,22 @@ class HypnotizingColoredMushrooms(Event):
         ))
 
         add_actions(actions)
+
+    def _stomp(self) -> None:
+        enemies = [FungiBeast() for _ in range(3)]
+        for enemy, position in zip(enemies, (-450, -145, 180)):
+            enemy.formation_position = position
+        add_action(InputRequestAction(
+            title=LocalStr("events.hypnotizing_mushrooms.title"),
+            options=[Option(
+                name=LocalStr("events.hypnotizing_mushrooms.fight"),
+                actions=[StartFightAction(
+                    enemies=enemies,
+                    escape_actions=[LambdaAction(self.end_event)],
+                    victory_actions=[
+                        AddRelicAction(relic=OddMushroom()),
+                        LambdaAction(self.end_event),
+                    ],
+                )],
+            )],
+        ), to_front=True)
