@@ -3,13 +3,14 @@ from actions.base import LambdaAction
 from actions.card import AddRandomCardAction
 from actions.combat import LoseHPAction
 from actions.display import DisplayTextAction, InputRequestAction
-from actions.reward import AddGoldAction, AddRandomPotionAction
+from actions.reward import AddGoldAction, AddPotionAction
 from engine.game_state import game_state
 from engine.runtime_api import add_actions
 from events.base_event import Event
 from events.event_pool import register_event
 from localization import LocalStr
 from utils.option import Option
+from utils.random import get_random_potion
 from utils.types import RarityType
 
 
@@ -77,8 +78,10 @@ class KnowingSkull(Event):
             self.end_event()
             return
         if choice == 'potion':
-            reward = AddRandomPotionAction(character=player.character)
-        elif choice == 'gold':
+            self._obtain_potion()
+            self._continue_or_end()
+            return
+        if choice == 'gold':
             reward = AddGoldAction(amount=90)
         else:
             reward = AddRandomCardAction(pile='deck', namespace='colorless', rarity=RarityType.UNCOMMON)
@@ -87,6 +90,15 @@ class KnowingSkull(Event):
             LambdaAction(self._increment_cost, args=[choice]),
             LambdaAction(self._continue_or_end),
         ], to_front=True)
+
+    def _obtain_potion(self) -> None:
+        player = game_state.player
+        self._increment_cost('potion')
+        if any(getattr(relic, "idstr", None) == "Sozu" for relic in player.relics):
+            return
+        potion = get_random_potion(characters=[player.character], uniform=True)
+        if potion is not None and len(player.potions) < player.potion_limit:
+            AddPotionAction(potion).execute()
 
     def _increment_cost(self, choice: str) -> None:
         field = {'potion': 'potion_cost', 'gold': 'gold_cost', 'card': 'card_cost'}[choice]

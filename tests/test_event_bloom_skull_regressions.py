@@ -154,7 +154,7 @@ def test_skull_mixed_choices_pay_and_increment_independently(
         seen_costs.append([option.actions[0].amount for option in request.options])
         return [next(choices)]
     monkeypatch.setattr(game_state, '_resolve_debug_selection', select)
-    monkeypatch.setattr('actions.reward.get_random_potion', lambda **kwargs: EnergyPotion())
+    monkeypatch.setattr('events.knowing_skull.get_random_potion', lambda **kwargs: EnergyPotion())
     card_calls = []
     def draw_card(**kwargs):
         card_calls.append(kwargs)
@@ -180,6 +180,8 @@ def test_skull_mixed_choices_pay_and_increment_independently(
 @pytest.mark.parametrize('hp', [1, 6])
 def test_skull_lethal_payment_stops_before_reward_or_next_menu(player, monkeypatch, choice, hp):
     player.hp = hp
+    potion_rng = game_state.random_streams["potion"]
+    before_potion = potion_rng.export_state()
     monkeypatch.setattr(game_state, '_resolve_debug_selection', lambda request: [choice])
     event = KnowingSkull()
     initial_gold = player.gold
@@ -187,6 +189,7 @@ def test_skull_lethal_payment_stops_before_reward_or_next_menu(player, monkeypat
     assert game_state.drive_actions() == GameTerminalState.GAME_LOSE
     assert player.is_dead() and event.event_ended
     assert player.gold == initial_gold and not player.deck and not player.potions
+    assert potion_rng.export_state() == before_potion
     assert (event.potion_cost, event.gold_cost, event.card_cost) == (6, 6, 6)
     assert game_state.pending_input_request is None and game_state.action_queue.is_empty()
 
@@ -203,33 +206,37 @@ def test_skull_auto_selection_uses_paid_exit_and_terminates(player, monkeypatch)
     assert game_state.action_queue.is_empty()
 
 
-def test_skull_sozu_blocks_potion_but_not_payment_or_cost_growth(player, monkeypatch):
-    player.relics.append(Sozu())
-    monkeypatch.setattr('actions.reward.get_random_potion', lambda **kwargs: EnergyPotion())
-    choices = iter([0, 3])
-    monkeypatch.setattr(game_state, '_resolve_debug_selection', lambda request: [next(choices)])
-    event = KnowingSkull()
-    event.trigger()
-    game_state.drive_actions()
-    assert player.hp == 88 and not player.potions
-    assert event.potion_cost == 7 and event.event_ended
-
-
-def test_skull_full_potion_bar_uses_existing_replacement_prompt(player, monkeypatch):
-    originals = [EnergyPotion() for _ in range(player.potion_limit)]
+@pytest.mark.parametrize("sozu", [False, True])
+@pytest.mark.parametrize("full", [False, True])
+def test_skull_potion_payment_draw_and_inventory(player, monkeypatch, sozu, full):
+    player.character = "Ironclad"
+    if sozu:
+        player.relics.append(Sozu())
+    originals = [EnergyPotion() for _ in range(player.potion_limit)] if full else []
     player.potions.extend(originals)
-    monkeypatch.setattr('actions.reward.get_random_potion', lambda **kwargs: EnergyPotion())
-    choices = iter([0, 0, 3])  # Buy, skip replacement, leave.
-    requests = []
+    rng = game_state.random_streams["potion"]
+    rng.seed(42)
+    choices = iter([0, 0, 3])
+    menus = []
+
     def select(request):
-        requests.append(request)
+        assert request.title != "ui.potion_full_title"
+        menus.append((player.hp, request.options[0].detail.kwargs["hp"], rng.counter))
         return [next(choices)]
+
     monkeypatch.setattr(game_state, '_resolve_debug_selection', select)
     event = KnowingSkull()
     event.trigger()
-    game_state.drive_actions()
-    assert len(requests) == 3 and list(player.potions) == originals
-    assert player.hp == 88 and event.potion_cost == 7 and event.event_ended
+    assert game_state.drive_actions() is None
+    draw = 0 if sozu else 1
+    assert menus == [(100, 6, 0), (94, 7, draw), (87, 8, 2 * draw)]
+    if full or sozu:
+        assert list(player.potions) == originals
+    else:
+        assert [getattr(potion, "_original_potion_id", None) for potion in player.potions] == [
+            "SteroidPotion", "Fire Potion",
+        ]
+    assert player.hp == 81 and event.potion_cost == 8 and event.event_ended
 
 
 @pytest.mark.parametrize('language', ['en', 'zh'])
