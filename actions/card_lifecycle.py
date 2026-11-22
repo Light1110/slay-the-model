@@ -9,6 +9,18 @@ from utils.types import CardType, PilePosType, RarityType
 from utils.random import get_random_card, get_random_card_reward
 if TYPE_CHECKING:
     from cards.base import Card
+    from player.player import Player
+
+
+def try_block_curse_with_omamori(player: "Player", card: "Card") -> bool:
+    for relic in list(player.relics):
+        if getattr(relic, "idstr", None) != "Omamori":
+            continue
+        negate_curse = getattr(relic, "try_negate_curse", None)
+        if negate_curse is not None and negate_curse():
+            print(f"[Relic] Omamori negated curse: {card.display_name.resolve()}")
+            return True
+    return False
 
 def _print_hand_full_redirect(card) -> None:
     discard_name = t("combat.discard_pile", default="Discard Pile")
@@ -54,6 +66,7 @@ class AddCardAction(Action):
     Optional:
         source (str): Source of card ("reward", "enemy", etc.)
         position (PilePosType): Position in pile (TOP or BOTTOM), default TOP
+        omamori_checked (bool): The source already checked for a curse block.
         
     Warning:
         This action doesn't copy the card
@@ -66,12 +79,15 @@ class AddCardAction(Action):
         position: PilePosType = PilePosType.TOP,
         chance: float = 1.0,
         target=None,
+        *,
+        omamori_checked: bool = False,
     ):
         self.card = card
         self.dest_pile = dest_pile
         self.source = source
         self.position = position
         self.chance = chance
+        self.omamori_checked = omamori_checked
         # Legacy call sites still pass target=player for AddCardAction.
         # The action always resolves against game_state.player, so keep the
         # argument for backward compatibility and ignore it.
@@ -92,19 +108,13 @@ class AddCardAction(Action):
             if hasattr(game_state.player, "card_manager"):
                 target_pile = self.dest_pile or "deck"
                 # Omamori: negate curse cards that would be added to deck.
-                if target_pile == "deck" and getattr(self.card, "card_type", None) == CardType.CURSE:
-                    for relic in list(game_state.player.relics):
-                        if getattr(relic, "idstr", None) != "Omamori":
-                            continue
-                        negate_curse = getattr(relic, "try_negate_curse", None)
-                        if negate_curse is None:
-                            continue
-                        if negate_curse():
-                            print(
-                                f"[Relic] Omamori negated curse: "
-                                f"{self.card.display_name.resolve()}"
-                            )
-                            return
+                if (
+                    target_pile == "deck"
+                    and getattr(self.card, "card_type", None) == CardType.CURSE
+                    and not getattr(self, "omamori_checked", False)
+                    and try_block_curse_with_omamori(game_state.player, self.card)
+                ):
+                    return
 
                 # Egg relics: upgrade qualifying cards before adding to deck.
                 if target_pile == "deck":

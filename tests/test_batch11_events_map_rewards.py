@@ -5,14 +5,19 @@ from typing import Any
 
 from typing import cast
 
+import pytest
+
 from engine.game_flow import GameFlow
 from engine.game_state import GameState
 from actions.display import InputRequestAction
+from cards.colorless import Writhe
 from events.base_event import Event
 from events.dead_adventurer import DeadAdventurer
 from events.hypnotizing_mushrooms import HypnotizingColoredMushrooms
 from events.the_mausoleum import TheMausoleum
 from events.event_pool import EventPool
+from relics.global_relics.common import Omamori
+from relics.global_relics.uncommon import DarkstonePeriapt
 from rooms.event import EventRoom
 from rooms.rest import RestRoom
 from tests.test_combat_utils import create_test_helper
@@ -276,21 +281,59 @@ def test_event_end_marks_current_event_room_for_leave():
     assert room.should_leave is True
 
 
-def test_the_mausoleum_option_ends_event():
+@pytest.mark.parametrize(
+    "ascension,seed,opened,reward,held,expected_curse,charges,health_gain",
+    [
+        (14, 3, True, "Anchor", None, False, [], 0),
+        (14, 0, True, "Anchor", None, True, [], 0),
+        (15, 3, True, "Anchor", Omamori, False, [1], 0),
+        (15, 3, True, "Omamori", DarkstonePeriapt, True, [2], 6),
+        (15, 3, True, "DarkstonePeriapt", None, True, [], 6),
+        (15, 3, False, "Omamori", Omamori, False, [2], 0),
+    ],
+)
+def test_mausoleum_curse_roll_and_relic_order(
+    monkeypatch, ascension, seed, opened, reward, held, expected_curse, charges, health_gain,
+):
     helper = create_test_helper()
-    helper.create_player()
-    helper.game_state.action_queue.clear()
+    player = helper.create_player(hp=40)
+    state = helper.game_state
+    state.ascension = ascension
+    state.config.auto_select = False
+    if held is not None:
+        player.relics.append(held())
+    initial_relics = len(player.relics)
 
+    misc, card_random, relic = (state.random_streams[name] for name in ("misc", "card_random", "relic"))
+    misc.seed(seed)
+    expected_misc = StreamRandom(seed)
+    card_random_before = card_random.export_state()
+    tier, tier_seed = ("UNCOMMON", 1) if reward == "DarkstonePeriapt" else ("COMMON", 2)
+    relic.seed(tier_seed)
+    state.relic_pools.remaining[tier] = [reward]
     event = TheMausoleum()
-    event.trigger()
+    room = EventRoom()
+    room.selected_event = event
+    state.current_room = room
 
-    menu = cast(InputRequestAction, helper.game_state.action_queue.queue[-1])
-    assert isinstance(menu, InputRequestAction)
+    def choose(request):
+        assert misc.counter == relic.counter == 0
+        assert request.options[0].detail.kwargs["chance"] == (100 if ascension >= 15 else 50)
+        return [0 if opened else 1]
 
-    for action in menu.options[0].actions:
-        action.execute()
-
-    assert event.event_ended is True
+    monkeypatch.setattr(state, "_resolve_debug_selection", choose)
+    room.enter()
+    assert state.drive_actions() is None
+    if opened:
+        expected_misc.random_boolean()
+    assert misc.export_state() == expected_misc.export_state()
+    assert card_random.export_state() == card_random_before
+    assert relic.counter == int(opened)
+    assert [r.idstr for r in player.relics[initial_relics:]] == ([reward] if opened else [])
+    assert sum(isinstance(card, Writhe) for card in player.deck) == int(expected_curse)
+    assert [r.curses_to_negate for r in player.relics if isinstance(r, Omamori)] == charges
+    assert (player.hp, player.max_hp) == (40 + health_gain, 80 + health_gain)
+    assert event.event_ended and room.should_leave
 
 
 def test_hypnotizing_mushrooms_option_ends_event():
