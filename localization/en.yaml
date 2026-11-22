@@ -545,6 +545,10 @@ events:
     recall_2: Recall 2
     recall_3: Recall 3
     description: Navigating through the Beyond, you discover a glowing tesseract spinning and shifting gently in the air.
+    memory_1: "You remember an empty classroom at dusk. A chalk mark on the doorframe shows how tall you were."
+    memory_2: "You remember tying a red ribbon to a borrowed bicycle so you could find it in the rain."
+    memory_3: "You remember carrying a bowl of soup across a yard. By the time you reached the door, it had stopped steaming."
+    memory_4: "You remember the last ferry pulling away. Someone on the pier kept waving long after the deck lights disappeared."
   shining_light:
     enter_detail: "Lose {hp} HP. Upgrade 2 random cards."
     title: Shining Light

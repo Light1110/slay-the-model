@@ -9,11 +9,12 @@ import pytest
 
 from engine.game_flow import GameFlow
 from engine.game_state import GameState
-from actions.display import InputRequestAction
+from actions.display import DisplayTextAction, InputRequestAction
 from cards.colorless import Writhe
 from events.base_event import Event
 from events.dead_adventurer import DeadAdventurer
 from events.hypnotizing_mushrooms import HypnotizingColoredMushrooms
+from events.sensory_stone import SensoryStone
 from events.the_mausoleum import TheMausoleum
 from events.event_pool import EventPool
 from relics.global_relics.common import Omamori
@@ -335,6 +336,43 @@ def test_mausoleum_curse_roll_and_relic_order(
     assert [ward.curses_to_negate for ward in omamori] == charges
     assert (player.hp, player.max_hp) == (40 + health_gain, 80 + health_gain)
     assert event.event_ended and room.should_leave
+
+
+@pytest.mark.parametrize("count", [1, 2, 3])
+def test_sensory_stone_draws_and_displays_one_memory_before_recall_effects(monkeypatch, count):
+    helper = create_test_helper()
+    player = helper.create_player(hp=40)
+    state = helper.game_state
+    state.config.auto_select = False
+    misc = state.random_streams["misc"]
+    misc.seed(42)
+    memories = []
+    display = DisplayTextAction.execute
+
+    def observe_text(action: DisplayTextAction) -> None:
+        if action.text_key.startswith("events.sensory_stone.memory_"):
+            memories.append((action.text_key, misc.counter, player.hp, len(player.card_manager.get_pile("hand"))))
+        display(action)
+
+    def choose(request):
+        assert len(request.options) == 3
+        assert misc.counter == 0
+        return [count - 1]
+
+    monkeypatch.setattr(DisplayTextAction, "execute", observe_text)
+    monkeypatch.setattr(state, "_resolve_debug_selection", choose)
+    room = EventRoom()
+    room.selected_event = SensoryStone()
+    state.current_room = room
+    room.enter()
+
+    assert state.drive_actions() is None
+    assert memories == [("events.sensory_stone.memory_4", 1, 40, 0)]
+    assert misc.counter == 1
+    assert misc.random_long() == -1850319953427250933
+    assert player.hp == 40 - (count - 1) * 5
+    assert len(player.card_manager.get_pile("hand")) == count
+    assert room.should_leave
 
 
 def test_hypnotizing_mushrooms_option_ends_event():

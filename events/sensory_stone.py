@@ -2,10 +2,12 @@
 
 Colorless cards for HP trade.
 """
-from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
+from engine.random_streams import get_rng
+from engine.runtime_api import add_action, add_actions
 
 from events.base_event import Event
 from events.event_pool import register_event
+from actions.base import LambdaAction
 from actions.display import InputRequestAction, DisplayTextAction
 from actions.card import AddRandomCardAction
 from actions.combat import LoseHPAction
@@ -31,6 +33,7 @@ class SensoryStone(Event):
                 name=LocalStr('events.sensory_stone.recall_1'),
                 detail=LocalStr('events.sensory_stone.recall_1_detail'),
                 actions=[
+                    LambdaAction(self._show_memory),
                     AddRandomCardAction(namespace='colorless')
                 ]
             ),
@@ -38,6 +41,7 @@ class SensoryStone(Event):
                 name=LocalStr('events.sensory_stone.recall_2'),
                 detail=LocalStr('events.sensory_stone.recall_2_detail'),
                 actions=[
+                    LambdaAction(self._show_memory),
                     LoseHPAction(amount=5),
                     AddRandomCardAction(namespace='colorless'),
                     AddRandomCardAction(namespace='colorless')
@@ -47,6 +51,7 @@ class SensoryStone(Event):
                 name=LocalStr('events.sensory_stone.recall_3'),
                 detail=LocalStr('events.sensory_stone.recall_3_detail'),
                 actions=[
+                    LambdaAction(self._show_memory),
                     LoseHPAction(amount=10),
                     AddRandomCardAction(namespace='colorless'),
                     AddRandomCardAction(namespace='colorless'),
@@ -61,5 +66,9 @@ class SensoryStone(Event):
         ))
         
         self.end_event()
-        from engine.game_state import game_state
         add_actions(actions)
+
+    def _show_memory(self) -> None:
+        memories = [1, 2, 3, 4]
+        get_rng("misc").shuffle(memories)
+        add_action(DisplayTextAction(text_key=f"events.sensory_stone.memory_{memories[0]}"), to_front=True)
