@@ -1,4 +1,5 @@
 """Shop inventory state helpers."""
+from engine.card_previews import preview_deck_card
 from engine.random_streams import get_rng, route_domains
 
 from utils.random import get_random_card, get_random_potion, get_random_relic
@@ -239,10 +240,7 @@ def generate_colorless_cards(card_provider=get_random_card):
 
 def preview_shop_card(card, relics):
     """Apply obtain-preview upgrades to the actual card offered for sale."""
-    for relic in relics:
-        hook = getattr(relic, "should_upgrade_added_card", None)
-        if hook and hook(card, "deck") and card.can_upgrade():
-            card.upgrade()
+    preview_deck_card(card, relics)
 
 
 def generate_shop_items(

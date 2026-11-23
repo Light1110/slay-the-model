@@ -1,6 +1,7 @@
 """Combat reward protocol: integer rarity, duplicate rejection, then previews."""
 from typing import cast
 from engine.card_pools import current_pools, definitions, original_rarity, java_id_key
+from engine.card_previews import preview_deck_card
 from engine.random_streams import get_rng, StreamRandom
 from utils.types import CardType, RarityType
 
@@ -80,8 +81,5 @@ def reward_cards(total=3, namespaces=None, encounter_type="normal", use_rolling_
             card.upgrade()
             continue
         if preview_pile == "deck":
-            for relic in list(game_state.player.relics):
-                hook = getattr(relic, "should_upgrade_added_card", None)
-                if hook and hook(card, preview_pile) and card.can_upgrade():
-                    card.upgrade()
+            preview_deck_card(card, list(game_state.player.relics))
     return result

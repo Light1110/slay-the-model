@@ -16,6 +16,7 @@ from localization import LocalStr
 from utils.option import Option
 from engine.game_state import game_state
 from engine.card_pools import CURSE_TRANSFORM_IDS, current_pools, definitions
+from engine.card_previews import preview_deck_card
 from cards.base import Card
 from utils.random import get_random_card
 from utils.types import RarityType
@@ -61,7 +62,11 @@ def _generate_card_pairs() -> List[Tuple[Card, Card]]:
     starter_id = _STARTER_BY_CHARACTER.get(namespace)
     if starter_id is not None:
         cards.append(catalog[starter_id].make_card())
-    return [(card, card.copy()) for card in cards]
+    pairs = []
+    for card in cards:
+        preview_deck_card(card, game_state.player.relics)
+        pairs.append((card, card.copy()))
+    return pairs
 
 
 def _create_shuffled_deck(pairs: List[Tuple[Card, Card]]) -> List[dict]:

@@ -1,6 +1,9 @@
+from actions.card import AddCardAction
+from cards.ironclad.searing_blow import SearingBlow
 from cards.ironclad.strike import Strike
 from engine.game_state import game_state
 from events import match_and_keep as mod
+from relics.pools import make_relic
 
 
 def test_match_board_is_prepared_at_construction_and_reused_in_the_room(monkeypatch):
@@ -43,3 +46,27 @@ def test_match_and_keep_end_game_stringifies_card_info_and_returns_actions():
 
     assert result is not None
     assert mod._matching_state == {}
+
+
+def test_match_pair_copies_egg_upgrade_and_obtain_does_not_upgrade_again(monkeypatch):
+    searing_blow = SearingBlow()
+    game_state.player.relics.append(make_relic("MoltenEgg"))
+
+    def select_searing_blow(*, rarities, **kwargs):
+        return searing_blow if rarities == [searing_blow.rarity] else None
+
+    monkeypatch.setattr(mod, "get_random_card", select_searing_blow)
+
+    (first, second), *_ = mod._generate_card_pairs()
+
+    assert isinstance(first, SearingBlow) and isinstance(second, SearingBlow)
+    assert first is not second
+    assert first.upgrade_level == second.upgrade_level == 1
+    assert first.damage == second.damage == 16
+    assert first.info().resolve() == second.info().resolve()
+    assert second.can_upgrade()
+
+    AddCardAction(second, dest_pile="deck").execute()
+
+    assert any(card is second for card in game_state.player.deck)
+    assert second.upgrade_level == 1
