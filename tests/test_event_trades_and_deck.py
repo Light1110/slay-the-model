@@ -1,7 +1,9 @@
 """Trades and deck changes for We Meet Again, the note, and Match and Keep."""
-from engine.random_streams import get_rng, StreamRandom
+from engine.random_streams import get_rng
 
 from typing import cast
+
+import pytest
 
 from actions.card import AddCardAction, ChooseRemoveCardAction, RemoveCardAction
 from actions.display import InputRequestAction
@@ -10,13 +12,14 @@ from cards.colorless.doubt import Doubt
 from cards.ironclad.inflame import Inflame
 from cards.ironclad.iron_wave import IronWave
 from cards.ironclad.strike import Strike
+from engine.card_pools import current_pools, original_id, original_rarity
 from engine.game_state import game_state
 from events.a_note_for_yourself import ANoteForYourself, StoreCardForFutureAction
 from events.match_and_keep import _generate_card_pairs
 from events.we_meet_again import WeMeetAgain
 from potions.ironclad import BloodPotion
 from tests.test_combat_utils import create_test_helper
-from utils.types import CardType, RarityType
+from utils.types import RarityType
 
 
 def _requests_in(actions) -> list[InputRequestAction]:
@@ -218,34 +221,42 @@ def test_note_stays_hidden_on_ascension_15():
     assert not ANoteForYourself.can_appear()
 
 
-def test_match_and_keep_uses_the_current_character(monkeypatch):
-    import cards.colorless  # noqa: F401
-    import cards.ironclad  # noqa: F401
-    import cards.silent  # noqa: F401
-
+@pytest.mark.parametrize("namespace,starter", [
+    ("ironclad", "Bash"), ("silent", "Neutralize"), ("defect", "Zap"), ("watcher", "Eruption"),
+])
+@pytest.mark.parametrize("ascension", [14, 15])
+def test_match_and_keep_uses_ordered_role_slots_and_independent_eligible_curses(namespace, starter, ascension):
     helper = create_test_helper()
     player = helper.create_player()
-    player.namespace = "silent"
-    cursor = {"index": 0}
-
-    def choice(seq):
-        for item in seq:
-            if getattr(item, "rarity", None) == RarityType.CURSE or getattr(item, "card_type", None) == CardType.CURSE:
-                return item
-        picked = seq[cursor["index"] % len(seq)]
-        cursor["index"] += 1
-        return picked
-
-    monkeypatch.setattr(get_rng("card"), "choice", choice)
-    monkeypatch.setattr(get_rng("shuffle"), "choice", choice)
-
+    player.namespace = namespace
+    game_state.ascension = ascension
+    game_state.random_streams["card"].seed(9)
+    game_state.random_streams["shuffle"].seed(9)
+    pools = current_pools().current
+    last_common = pools[(namespace, "COMMON")][-1]
+    pools[(namespace, "COMMON")][:] = [last_common]
+    colorless_before = pools[("colorless", None)].copy()
     pairs = _generate_card_pairs()
+    originals = [card for card, _ in pairs]
 
-    assert len(pairs) == 6
-    assert sum(pair[0].rarity == RarityType.CURSE for pair in pairs) == 1
-    assert sum(
-        pair[0].namespace == "colorless" and pair[0].rarity != RarityType.CURSE
-        for pair in pairs
-    ) == 1
-    assert sum(pair[0].namespace == "silent" for pair in pairs) == 4
-    assert all(pair[0].rarity != RarityType.CURSE for pair in pairs if pair[0].namespace == "silent")
+    assert len(originals) == 6
+    assert len({id(card) for pair in pairs for card in pair}) == 12
+    assert all(original_id(first) == original_id(second) for first, second in pairs)
+    assert [card.namespace for card in originals[:3]] == [namespace] * 3
+    assert [original_rarity(card) for card in originals[:3]] == [
+        RarityType.RARE, RarityType.UNCOMMON, RarityType.COMMON,
+    ]
+    assert original_id(originals[2]) == last_common
+    assert original_id(originals[-1]) == starter
+    if ascension >= 15:
+        assert [original_id(card) for card in originals[3:5]] == ["Normality", "Normality"]
+        assert pools[("colorless", None)] == colorless_before
+        assert game_state.random_streams["card"].counter == 5
+        assert game_state.random_streams["shuffle"].counter == 0
+    else:
+        assert originals[3].namespace == "colorless"
+        assert original_rarity(originals[3]) == RarityType.UNCOMMON
+        assert original_rarity(originals[4]) == RarityType.CURSE
+        assert pools[("colorless", None)] != colorless_before
+        assert game_state.random_streams["card"].counter == 4
+        assert game_state.random_streams["shuffle"].counter == 1

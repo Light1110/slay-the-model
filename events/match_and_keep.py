@@ -11,92 +11,57 @@ from events.event_pool import register_event
 from actions.display import InputRequestAction, DisplayTextAction
 from actions.card import AddCardAction
 from actions.base import Action
-from utils.registry import get_registered, list_registered, register
+from utils.registry import register
 from localization import LocalStr
 from utils.option import Option
 from engine.game_state import game_state
+from engine.card_pools import CURSE_TRANSFORM_IDS, current_pools, definitions
 from cards.base import Card
-from utils.types import CardType, RarityType
+from utils.random import get_random_card
+from utils.types import RarityType
 
 
 # Global state for the matching minigame (per event instance)
 _matching_state = {}
+_STARTER_BY_CHARACTER = {
+    "ironclad": "Bash",
+    "silent": "Neutralize",
+    "defect": "Zap",
+    "watcher": "Eruption",
+}
 
 
 def _generate_card_pairs() -> List[Tuple[Card, Card]]:
-    """Generate 6 pairs of cards for the minigame.
-    
-    Always includes:
-    - 1 non-curse Colorless card pair
-    - 1 Curse pair
-    - 4 random card pairs from the current character
-    """
-    pairs = []
-    character_namespace = game_state.player.namespace if game_state.player is not None else None
-    
-    # Get all registered cards
-    all_card_classes = list_registered('card')
-    
-    # Get a colorless card pair
-    colorless_cards = []
-    for card_idstr in all_card_classes:
-        card_cls = get_registered('card', card_idstr)
-        if card_cls:
-            card_instance = card_cls()
-            if (
-                card_instance.namespace == 'colorless'
-                and card_instance.rarity != RarityType.CURSE
-                and card_instance.card_type != CardType.CURSE
-            ):
-                colorless_cards.append(card_cls)
-    
-    if colorless_cards:
-        colorless_cls = get_rng("shuffle").choice(colorless_cards)
-        pairs.append((colorless_cls(), colorless_cls()))
-    
-    # Get a curse pair
-    curse_cards = []
-    for card_idstr in all_card_classes:
-        card_cls = get_registered('card', card_idstr)
-        if card_cls:
-            card_instance = card_cls()
-            if card_instance.rarity == RarityType.CURSE:
-                curse_cards.append(card_cls)
-    
-    if curse_cards:
-        curse_cls = get_rng("card").choice(curse_cards)
-        pairs.append((curse_cls(), curse_cls()))
-    
-    # Get 4 random pairs from the current character (Common, Uncommon, or Rare)
-    character_cards = []
-    for card_idstr in all_card_classes:
-        card_cls = get_registered('card', card_idstr)
-        if card_cls and character_namespace:
-            card_instance = card_cls()
-            if (card_instance.namespace == character_namespace and 
-                card_instance.rarity in [RarityType.COMMON, RarityType.UNCOMMON, RarityType.RARE]):
-                character_cards.append(card_cls)
-    
-    # Weight by rarity (Common 50%, Uncommon 35%, Rare 15%)
-    weighted_cards = []
-    for card_cls in character_cards:
-        card = card_cls()
-        if card.rarity == RarityType.COMMON:
-            weighted_cards.extend([card_cls] * 50)
-        elif card.rarity == RarityType.UNCOMMON:
-            weighted_cards.extend([card_cls] * 35)
-        else:  # Rare
-            weighted_cards.extend([card_cls] * 15)
-    
-    # Select 4 unique card types for pairs
-    selected_classes = set()
-    while len(pairs) < 6 and weighted_cards:
-        card_cls = get_rng("card").choice(weighted_cards)
-        if card_cls not in selected_classes:
-            selected_classes.add(card_cls)
-            pairs.append((card_cls(), card_cls()))
-    
-    return pairs
+    """Generate pairs in their pre-shuffle slot order."""
+    cards: list[Card] = []
+    namespace = game_state.player.namespace
+    catalog = definitions()
+    rng = get_rng("card")
+    for rarity in (RarityType.RARE, RarityType.UNCOMMON, RarityType.COMMON):
+        selected = get_random_card(
+            namespaces=[namespace], rarities=[rarity], rng=rng, pool_kind="current",
+        )
+        if selected is not None:
+            cards.append(selected)
+
+    high_ascension = game_state.ascension >= 15
+    if not high_ascension:
+        colorless = current_pools().current[("colorless", None)]
+        get_rng("shuffle").shuffle(colorless)
+        colorless_id = next(
+            (card_id for card_id in colorless if catalog[card_id].rarity == "UNCOMMON"),
+            "Swift Strike",
+        )
+        cards.append(catalog[colorless_id].make_card())
+
+    for _ in range(2 if high_ascension else 1):
+        curse_id = CURSE_TRANSFORM_IDS[rng.randint(0, len(CURSE_TRANSFORM_IDS) - 1)]
+        cards.append(catalog[curse_id].make_card())
+
+    starter_id = _STARTER_BY_CHARACTER.get(namespace)
+    if starter_id is not None:
+        cards.append(catalog[starter_id].make_card())
+    return [(card, card.copy()) for card in cards]
 
 
 def _create_shuffled_deck(pairs: List[Tuple[Card, Card]]) -> List[dict]:
