@@ -193,14 +193,10 @@ class MatchAndKeepAction(Action):
         )
     
     def _end_game(self) -> list:
-        """End the minigame and add matched cards to deck."""
+        """Summarize the matches and clear the board."""
         global _matching_state
         
         actions = []
-        
-        # Add all matched cards to player's deck
-        for card in _matching_state['matched_cards']:
-            actions.append(AddCardAction(card=card, dest_pile='deck'))
         
         # Display results
         if _matching_state['matched_cards']:
@@ -257,15 +253,19 @@ class FlipCardAction(Action):
             add_action(MatchAndKeepAction(), to_front=True)
             return
 
+        actions = []
         first_card = deck[first_index]
         if first_card['idstr'] == card_data['idstr']:
             first_card['matched'] = True
             card_data['matched'] = True
-            _matching_state['matched_cards'].append(card_data['card'])
+            matched_card = first_card['card']
+            _matching_state['matched_cards'].append(matched_card)
+            actions.append(AddCardAction(card=matched_card.copy(), dest_pile='deck'))
         else:
             first_card['revealed'] = False
             card_data['revealed'] = False
 
         _matching_state['tries_remaining'] -= 1
         _matching_state['first_selection'] = None
-        add_action(MatchAndKeepAction(), to_front=True)
+        actions.append(MatchAndKeepAction())
+        add_actions(actions, to_front=True)

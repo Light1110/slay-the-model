@@ -48,6 +48,7 @@ def test_match_and_keep_end_game_stringifies_card_info_and_returns_actions():
     result = event._end_game()
 
     assert result is not None
+    assert all(not isinstance(action, AddCardAction) for action in result)
     assert mod._matching_state == {}
 
 
@@ -82,6 +83,7 @@ def test_match_pair_copies_egg_upgrade_and_obtain_does_not_upgrade_again(monkeyp
 def test_match_event_spends_five_attempts_and_settles_last_pair(monkeypatch, matches):
     monkeypatch.setattr(mod, "_matching_state", {})
     tries_at_menu = []
+    initial_size = len(game_state.player.deck)
 
     def choose(request):
         state = mod._matching_state
@@ -89,6 +91,7 @@ def test_match_event_spends_five_attempts_and_settles_last_pair(monkeypatch, mat
         available = [index for index, option in enumerate(request.options) if option.enabled]
         attempt = len(tries_at_menu) // 2
         assert attempt < len(matches)
+        assert len(game_state.player.deck) - initial_size == sum(matches[:attempt])
         tries_at_menu.append(state["tries_remaining"])
         if first_index is None:
             return [available[0]]
@@ -98,14 +101,15 @@ def test_match_event_spends_five_attempts_and_settles_last_pair(monkeypatch, mat
                      if (grid[index]["idstr"] == first_id) == matches[attempt])]
 
     monkeypatch.setattr(game_state, "_resolve_debug_selection", choose)
-    initial_size = len(game_state.player.deck)
     room = game_state.current_room = EventRoom()
-    room.selected_event = mod.MatchAndKeep()
+    event = room.selected_event = mod.MatchAndKeep()
+    board_ids = {id(entry["card"]) for entry in event._board}
     room.enter()
     assert game_state.drive_actions() is None
     room._sync_leave_state()
 
     assert tries_at_menu == [5, 5, 4, 4, 3, 3, 2, 2, 1, 1]
     assert len(game_state.player.deck) - initial_size == sum(matches)
+    assert board_ids.isdisjoint(id(card) for card in game_state.player.deck)
     assert not mod._matching_state
     assert room.should_leave
