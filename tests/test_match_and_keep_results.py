@@ -1,9 +1,12 @@
+import pytest
+
 from actions.card import AddCardAction
 from cards.ironclad.searing_blow import SearingBlow
 from cards.ironclad.strike import Strike
 from engine.game_state import game_state
 from events import match_and_keep as mod
 from relics.pools import make_relic
+from rooms.event import EventRoom
 
 
 def test_match_board_is_prepared_at_construction_and_reused_in_the_room(monkeypatch):
@@ -70,3 +73,39 @@ def test_match_pair_copies_egg_upgrade_and_obtain_does_not_upgrade_again(monkeyp
 
     assert any(card is second for card in game_state.player.deck)
     assert second.upgrade_level == 1
+
+
+@pytest.mark.parametrize("matches", [
+    (True, True, True, True, True),
+    (False, True, False, True, False),
+])
+def test_match_event_spends_five_attempts_and_settles_last_pair(monkeypatch, matches):
+    monkeypatch.setattr(mod, "_matching_state", {})
+    tries_at_menu = []
+
+    def choose(request):
+        state = mod._matching_state
+        first_index = state["first_selection"]
+        available = [index for index, option in enumerate(request.options) if option.enabled]
+        attempt = len(tries_at_menu) // 2
+        assert attempt < len(matches)
+        tries_at_menu.append(state["tries_remaining"])
+        if first_index is None:
+            return [available[0]]
+        grid = state["deck"]
+        first_id = grid[first_index]["idstr"]
+        return [next(index for index in available
+                     if (grid[index]["idstr"] == first_id) == matches[attempt])]
+
+    monkeypatch.setattr(game_state, "_resolve_debug_selection", choose)
+    initial_size = len(game_state.player.deck)
+    room = game_state.current_room = EventRoom()
+    room.selected_event = mod.MatchAndKeep()
+    room.enter()
+    assert game_state.drive_actions() is None
+    room._sync_leave_state()
+
+    assert tries_at_menu == [5, 5, 4, 4, 3, 3, 2, 2, 1, 1]
+    assert len(game_state.player.deck) - initial_size == sum(matches)
+    assert not mod._matching_state
+    assert room.should_leave

@@ -249,32 +249,23 @@ class FlipCardAction(Action):
         # Flip the card
         card_data['revealed'] = True
         
-        if _matching_state['first_selection'] is None:
+        first_index = _matching_state['first_selection']
+        if first_index is None:
             # First card of the pair
             _matching_state['first_selection'] = self.card_index
             # Continue selecting
             add_action(MatchAndKeepAction(), to_front=True)
             return
+
+        first_card = deck[first_index]
+        if first_card['idstr'] == card_data['idstr']:
+            first_card['matched'] = True
+            card_data['matched'] = True
+            _matching_state['matched_cards'].append(card_data['card'])
         else:
-            # Second card - check for match
-            first_index = _matching_state['first_selection']
-            first_card = deck[first_index]
-            
-            if first_card['idstr'] == card_data['idstr']:
-                # Match found!
-                first_card['matched'] = True
-                card_data['matched'] = True
-                _matching_state['matched_cards'].append(card_data['card'])
-            else:
-                # No match - hide both cards after a moment
-                # In a real UI, this would show both cards briefly
-                # For now, we'll just reset them
-                first_card['revealed'] = False
-                card_data['revealed'] = False
-                _matching_state['tries_remaining'] -= 1
-            
-            _matching_state['first_selection'] = None
-            
-            # Continue the game
-            add_action(MatchAndKeepAction(), to_front=True)
-            return
+            first_card['revealed'] = False
+            card_data['revealed'] = False
+
+        _matching_state['tries_remaining'] -= 1
+        _matching_state['first_selection'] = None
+        add_action(MatchAndKeepAction(), to_front=True)
