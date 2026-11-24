@@ -33,12 +33,11 @@ class TestSilentAdvancedExpansion:
         assert len(self.player.card_manager.get_pile('hand')) == 2
         assert card in self.player.card_manager.get_pile('exhaust_pile')
 
-    def test_all_out_attack_hits_all_enemies_and_discards_random_other_card(self, monkeypatch):
+    def test_all_out_attack_hits_all_enemies_and_discards_the_only_other_card(self):
         enemy_a = self.helper.create_enemy(Cultist, hp=40)
         enemy_b = self.helper.create_enemy(Cultist, hp=40)
         self.helper.start_combat([enemy_a, enemy_b])
         keeper = Strike()
-        monkeypatch.setattr(get_rng("card_random"), "choice", lambda seq: keeper)
         card = AllOutAttack()
         self.helper.add_card_to_hand(card)
         self.helper.add_card_to_hand(keeper)
