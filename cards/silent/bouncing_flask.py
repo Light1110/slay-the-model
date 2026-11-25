@@ -1,14 +1,41 @@
 """Silent uncommon skill card - Bouncing Flask."""
-from engine.random_streams import get_rng
-
 from typing import List
 
+from actions.base import Action
 from actions.combat import ApplyPowerAction
 from cards.base import Card
+from engine.random_streams import get_rng
+from engine.runtime_api import add_action, add_actions
 from entities.creature import Creature
 from powers.definitions.poison import PoisonPower
+from utils.combat import living_enemies
 from utils.registry import register
 from utils.types import CardType, RarityType, TargetType
+
+
+@register("action")
+class BouncingFlaskBounceAction(Action):
+    """Resolve one bounce using the target chosen by the preceding step."""
+
+    def __init__(self, target: Creature, poison: int, remaining: int):
+        self.target = target
+        self.poison = poison
+        self.remaining = remaining
+
+    def execute(self) -> None:
+        enemies = living_enemies()
+        if not enemies:
+            return
+
+        actions = []
+        # Commit the next target before applying this bounce's poison.
+        if self.remaining > 1:
+            next_target = get_rng("card_random").choice(enemies)
+            actions.append(BouncingFlaskBounceAction(next_target, self.poison, self.remaining - 1))
+        if self.target in enemies:
+            poison = PoisonPower(amount=self.poison, duration=self.poison, owner=self.target)
+            actions.insert(0, ApplyPowerAction(poison, self.target))
+        add_actions(actions, to_front=True)
 
 
 @register("card")
@@ -26,14 +53,8 @@ class BouncingFlask(Card):
 
     def on_play(self, targets: List[Creature] = []):
         super().on_play(targets)
-        enemies = [enemy for enemy in targets if enemy.hp > 0]
-        if not enemies:
-            return
-        from engine.runtime_api import add_actions
-
-        actions = []
-        for _ in range(self.get_magic_value("hits")):
+        enemies = living_enemies()
+        hits = self.get_magic_value("hits")
+        if enemies and hits > 0:
             target = get_rng("card_random").choice(enemies)
-            poison = self.get_magic_value("poison")
-            actions.append(ApplyPowerAction(PoisonPower(amount=poison, duration=poison, owner=target), target))
-        add_actions(actions)
+            add_action(BouncingFlaskBounceAction(target, self.get_magic_value("poison"), hits))

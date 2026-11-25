@@ -6,6 +6,20 @@ from utils.types import TargetType
 if TYPE_CHECKING:
     from cards.base import Card
 
+
+def living_enemies():
+    """Return eligible combat enemies in encounter order."""
+    from engine.game_state import game_state
+
+    combat = game_state.current_combat
+    if combat is None:
+        return []
+    return [enemy for enemy in combat.enemies
+            if not enemy.is_dead() and not enemy.half_dead
+            and not getattr(enemy, "is_escaping", False)
+            and not getattr(enemy, "is_dying", False)]
+
+
 def resolve_target(target_type: TargetType) -> List[Optional[Creature]]:
     """Resolve target based on TargetType enum
     

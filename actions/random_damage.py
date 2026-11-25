@@ -3,20 +3,9 @@ from actions.base import Action
 from actions.combat_damage import DealDamageAction
 from engine.random_streams import get_rng
 from engine.runtime_api import add_action, add_actions
+from utils.combat import living_enemies
 from utils.registry import register
 from utils.types import DamageType
-
-
-def _living_enemies():
-    from engine.game_state import game_state
-
-    combat = game_state.current_combat
-    if combat is None:
-        return []
-    return [enemy for enemy in combat.enemies
-            if not enemy.is_dead() and not enemy.half_dead
-            and not getattr(enemy, "is_escaping", False)
-            and not getattr(enemy, "is_dying", False)]
 
 
 @register("action")
@@ -28,7 +17,7 @@ class DamageRandomEnemyAction(Action):
         self.source = source
 
     def execute(self) -> None:
-        enemies = _living_enemies()
+        enemies = living_enemies()
         if not enemies:
             return
         target = enemies[get_rng("card_random").randint(0, len(enemies) - 1)]
@@ -48,7 +37,7 @@ class LightningDamageAction(Action):
         self.source = source
 
     def execute(self) -> None:
-        enemies = _living_enemies()
+        enemies = living_enemies()
         if not enemies:
             return
         if not self.hit_all:
