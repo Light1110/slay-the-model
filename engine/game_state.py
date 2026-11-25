@@ -327,6 +327,9 @@ class GameState:
         self.run_clock.start()
         self.map_manager = MapManager(self.random_streams.map_seed(self.current_act),
                                       act_id=self.current_act, random_streams=self.random_streams)
+        self.map_manager.encounter_pool.prepare_chapter(
+            seen_bosses=getattr(self.config, "seen_bosses", None),
+            daily_run=getattr(self.config, "daily_run", False))
         self.map_data = self.map_manager.generate_map()
 
     def execute_all_actions(self):

@@ -12,6 +12,7 @@ class GameConfig:
             "character": "Ironclad",
             "ascension": 0,
             "daily_run": False,
+            "seen_bosses": None,
             "highest_unlocked_ascension": {},
             "select_overflow": "truncate",
             "auto_select": False,  # Auto select for all modes (human, ai, debug)
@@ -63,6 +64,14 @@ class GameConfig:
         self.character = defaults["character"]
         self.ascension = defaults["ascension"]
         self.daily_run = bool(defaults["daily_run"])
+        # Older configurations use the fully seen encounter profile.
+        seen_bosses = defaults["seen_bosses"]
+        if seen_bosses is not None and (
+            not isinstance(seen_bosses, (list, tuple, set, frozenset))
+            or not all(isinstance(name, str) for name in seen_bosses)
+        ):
+            raise ValueError("seen_bosses must be a list of encounter names")
+        self.seen_bosses = None if seen_bosses is None else frozenset(seen_bosses)
         self.highest_unlocked_ascension = {
             str(character).lower(): int(level)
             for character, level in defaults["highest_unlocked_ascension"].items()

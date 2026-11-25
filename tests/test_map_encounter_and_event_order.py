@@ -17,29 +17,42 @@ ORDER = json.loads((Path(__file__).parent / "fixtures/original_event_order.json"
 @pytest.mark.parametrize("act", [1, 2, 3])
 @pytest.mark.parametrize("count", [0, 1, 2, 3, 4])
 @pytest.mark.parametrize("seed", [1, 42, 523])
-def test_native_room_factory_uses_chapter_specific_easy_count(monkeypatch, act, count, seed):
+def test_native_room_factory_consumes_chapter_queue_without_a_new_roll(act, count, seed):
     game_state.current_act = act
     game_state.random_streams = RandomStreams(seed)
     game_state.initialize_map()
-    game_state.normal_encounters_fought = count
-    game_state.encounter_history = []
     pool = game_state.map_manager.encounter_pool
-    seen = []
-    choose = pool.rng.choices
-
-    def observe(values, **kwargs):
-        seen.append(list(values))
-        return choose(values, **kwargs)
-
-    monkeypatch.setattr(pool.rng, "choices", observe)
-    room = game_state.map_manager._create_room_instance(RoomType.MONSTER, floor_in_act=5)
+    before = pool.rng.export_state()
+    queue = pool.normal_queue.copy()
     from rooms.combat import CombatRoom
-    assert isinstance(room, CombatRoom)
-    expected = pool.easy_pool if count < (3 if act == 1 else 2) else pool.hard_pool
-    assert seen == [list(expected)]
-    combat_room = cast(CombatRoom, room)
-    assert combat_room.enemies
-    assert combat_room.encounter_name in expected
+
+    for index in range(count + 1):
+        room = game_state.map_manager._create_room_instance(RoomType.MONSTER, floor_in_act=index + 1)
+        assert isinstance(room, CombatRoom)
+        combat_room = cast(CombatRoom, room)
+        expected_pool = pool.easy_pool if index < (3 if act == 1 else 2) else pool.hard_pool
+        assert combat_room.enemies
+        assert combat_room.encounter_name == queue[index]
+        assert combat_room.encounter_name in expected_pool
+    assert pool.normal_queue == queue[count + 1:]
+    assert pool.rng.export_state() == before
+
+
+def test_chapter_three_boss_rooms_read_both_prepared_slots():
+    game_state.current_act = 3
+    game_state.ascension = 20
+    game_state.random_streams = RandomStreams(0)
+    game_state.initialize_map()
+    manager = game_state.map_manager
+    pool = manager.encounter_pool
+    before = pool.rng.export_state()
+    from rooms.combat import CombatRoom
+
+    rooms = [cast(CombatRoom, manager._create_room_instance(RoomType.BOSS, floor_in_act=floor))
+             for floor in (16, 17)]
+
+    assert [room.encounter_name for room in rooms] == ["Awakened One", "Donu and Deca"]
+    assert pool.rng.export_state() == before
 
 
 @pytest.mark.parametrize("act,last,excluded", [

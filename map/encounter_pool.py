@@ -13,41 +13,29 @@ Dynamic Enemy Initialization:
 - Support for random enemy variants (e.g., Red/Green Louse 50/50)
 - Support for initial powers/intents on enemies
 """
-from engine.random_streams import get_rng
-
-from typing import Dict, List, Tuple, Optional, Callable, Any
+from typing import Dict, List, Tuple, Optional, Callable, Any, cast
+from utils.compatible_random import float32
 from utils.types import EnemyType
 from utils.registry import register
-from engine.random_streams import RandomStreams, using_streams
+from engine.random_streams import RandomStreams, StreamRandom, get_rng, using_streams
 
 
 EnemyFactory = Callable[[], List[Any]]
 
 
-def _create_louse_pair():
-    """Create 2 louses, each independently 50% red or green."""
+def _create_louse():
     from enemies.act1.louse import RedLouse, GreenLouse
-    rng = get_rng("misc")
-    louses = []
-    for _ in range(2):
-        if rng.random() < 0.5:
-            louses.append(RedLouse())
-        else:
-            louses.append(GreenLouse())
-    return louses
+
+    rng = cast(StreamRandom, get_rng("misc"))
+    return RedLouse() if rng.random_boolean() else GreenLouse()
+
+
+def _create_louse_pair():
+    return [_create_louse() for _ in range(2)]
 
 
 def _create_triple_louse():
-    """Create 3 louses, each independently 50% red or green."""
-    from enemies.act1.louse import RedLouse, GreenLouse
-    rng = get_rng("misc")
-    louses = []
-    for _ in range(3):
-        if rng.random() < 0.5:
-            louses.append(RedLouse())
-        else:
-            louses.append(GreenLouse())
-    return louses
+    return [_create_louse() for _ in range(3)]
 
 
 def _create_small_slimes():
@@ -56,11 +44,10 @@ def _create_small_slimes():
     from enemies.act1.spike_slime import SpikeSlimeM, SpikeSlimeS
     from enemies.act1.acid_slime import AcidSlimeM, AcidSlimeS
     
-    rng = get_rng("misc")
-    if rng.random() < 0.5:
-        return [SpikeSlimeM(), AcidSlimeS()]
-    else:
-        return [AcidSlimeM(), SpikeSlimeS()]
+    rng = cast(StreamRandom, get_rng("misc"))
+    if rng.random_boolean():
+        return [SpikeSlimeS(), AcidSlimeM()]
+    return [AcidSlimeS(), SpikeSlimeM()]
 
 
 def _create_large_slime():
@@ -68,18 +55,18 @@ def _create_large_slime():
     from enemies.act1.acid_slime import AcidSlimeL
     from enemies.act1.spike_slime import SpikeSlimeL
 
-    return [AcidSlimeL()] if get_rng("misc").random() < 0.5 else [SpikeSlimeL()]
+    rng = cast(StreamRandom, get_rng("misc"))
+    return [AcidSlimeL()] if rng.random_boolean() else [SpikeSlimeL()]
 
 
 def _create_swarm_slimes():
-    """Create 5 medium spike slimes (AcidSlime not implemented yet)."""
+    """Draw five small slimes, constructing each selected enemy in order."""
     from enemies.act1.spike_slime import SpikeSlimeS
     from enemies.act1.acid_slime import AcidSlimeS
 
-    slimes = [SpikeSlimeS() for _ in range(3)] + [AcidSlimeS() for _ in range(2)]
+    pool = [SpikeSlimeS] * 3 + [AcidSlimeS] * 2
     rng = get_rng("misc")
-    rng.shuffle(slimes)
-    return slimes
+    return [pool.pop(rng.randint(0, len(pool) - 1))() for _ in range(5)]
 
 
 def _create_gremlin_gang():
@@ -89,18 +76,9 @@ def _create_gremlin_gang():
     )
     rng = get_rng("misc")
 
-    valid_compositions = [
-        [FatGremlin, FatGremlin, SneakyGremlin, SneakyGremlin],
-        [FatGremlin, FatGremlin, MadGremlin, MadGremlin],
-        [SneakyGremlin, SneakyGremlin, MadGremlin, MadGremlin],
-        [FatGremlin, FatGremlin, ShieldGremlin, GremlinWizard],
-        [SneakyGremlin, SneakyGremlin, ShieldGremlin, GremlinWizard],
-        [MadGremlin, MadGremlin, ShieldGremlin, GremlinWizard],
-    ]
-
-    selected_composition = list(rng.choice(valid_compositions))
-    rng.shuffle(selected_composition)
-    return [gremlin_cls() for gremlin_cls in selected_composition]
+    pool = [MadGremlin, MadGremlin, SneakyGremlin, SneakyGremlin,
+            FatGremlin, FatGremlin, ShieldGremlin, GremlinWizard]
+    return [pool.pop(rng.randint(0, len(pool) - 1))() for _ in range(4)]
 
 
 def _create_looter():
@@ -109,28 +87,33 @@ def _create_looter():
     return [Looter()]
 
 
+def _weak_wildlife():
+    from enemies.act1.acid_slime import AcidSlimeM
+    from enemies.act1.spike_slime import SpikeSlimeM
+
+    pool = [_create_louse(), SpikeSlimeM(), AcidSlimeM()]
+    return get_rng("misc").choice(pool)
+
+
 def _create_exordium_thugs():
     """Create Exordium Thugs encounter."""
-    from enemies.act1.louse import RedLouse, GreenLouse
-    from enemies.act1.spike_slime import SpikeSlimeM
+    from enemies.act1.cultist import Cultist
     from enemies.act1.slaver import BlueSlaver, RedSlaver
     from enemies.act1.looter import Looter
-    rng = get_rng("misc")
-    first_pool = [RedLouse, GreenLouse, SpikeSlimeM]
-    second_pool = [BlueSlaver, RedSlaver, Looter]
-    return [rng.choice(first_pool)(), rng.choice(second_pool)()]
+
+    wildlife = _weak_wildlife()
+    rng = cast(StreamRandom, get_rng("misc"))
+    cultist = Cultist()
+    slaver = RedSlaver() if rng.random_boolean() else BlueSlaver()
+    return [wildlife, rng.choice([cultist, slaver, Looter()])]
 
 
 def _create_exordium_wildlife():
     """Create Exordium Wildlife encounter."""
     from enemies.act1.fungi_beast import FungiBeast
     from enemies.act1.jaw_worm import JawWorm
-    from enemies.act1.louse import RedLouse, GreenLouse
-    from enemies.act1.spike_slime import SpikeSlimeM
-    rng = get_rng("misc")
-    first_pool = [FungiBeast, JawWorm]
-    second_pool = [RedLouse, GreenLouse, SpikeSlimeM]
-    return [rng.choice(first_pool)(), rng.choice(second_pool)()]
+    strong = get_rng("misc").choice([FungiBeast(), JawWorm()])
+    return [strong, _weak_wildlife()]
 
 
 def _create_boss_guardian():
@@ -337,9 +320,9 @@ def _create_spheric_guardian_two_shapes():
     from enemies.act3.exploder import Exploder
     from enemies.act3.spiker import Spiker
     rng = get_rng("misc")
-    pool = [Repulsor, Repulsor, Exploder, Exploder, Spiker, Spiker]
-    selected = rng.sample(pool, 2)
-    return [SphericGuardian()] + [cls() for cls in selected]
+    pool = [Spiker, Repulsor, Exploder]
+    shapes = [rng.choice(pool)() for _ in range(2)]
+    return [*shapes, SphericGuardian()]
 
 
 def _create_jaw_worm_horde():
@@ -470,16 +453,16 @@ class EncounterPool:
     }
     
     ACT1_HARD_POOL = {
+        "Blue Slaver": (_create_blue_slaver, 2),
         "Gang of Gremlins": (_create_gremlin_gang, 1),
+        "Looter": (_create_looter, 2),
         "Large Slime": (_create_large_slime, 2),
         "Swarm of Slimes": (_create_swarm_slimes, 1),
-        "Blue Slaver": (_create_blue_slaver, 2),
+        "Exordium Thugs": (_create_exordium_thugs, 1.5),
+        "Exordium Wildlife": (_create_exordium_wildlife, 1.5),
         "Red Slaver": (_create_red_slaver, 1),
         "3 Louse": (_create_triple_louse, 2),
         "2 Fungi Beasts": (_create_fungi_pair, 2),
-        "Exordium Thugs": (_create_exordium_thugs, 1.5),
-        "Exordium Wildlife": (_create_exordium_wildlife, 1.5),
-        "Looter": (_create_looter, 2),
     }
     
     ACT1_ELITE_POOL = {
@@ -498,19 +481,19 @@ class EncounterPool:
     
     ACT2_HARD_POOL = {
         "Chosen and Byrds": (_create_chosen_byrd, 2),
-        "Cultist and Chosen": (_create_cultist_chosen, 3),
         "Sentry and Spheric Guardian": (_create_sentry_spheric_guardian, 2),
         "Snake Plant": (_create_snake_plant, 6),
         "Snecko": (_create_snecko, 4),
         "Centurion and Mystic": (_create_centurion_mystic, 6),
+        "Cultist and Chosen": (_create_cultist_chosen, 3),
         "3 Cultists": (_create_three_cultists, 3),
         "Shelled Parasite and Fungi": (_create_shelled_parasite_fungi, 3),
     }
     
     ACT2_ELITE_POOL = {
-        "Book of Stabbing": (_create_book_of_stabbing, 1),
         "Gremlin Leader": (_create_gremlin_leader, 1),
         "Taskmaster": (_create_taskmaster, 1),
+        "Book of Stabbing": (_create_book_of_stabbing, 1),
     }
     
     # Act 3 encounter pools
@@ -523,13 +506,13 @@ class EncounterPool:
     
     # Hard Pool (remaining encounters)
     ACT3_HARD_POOL = {
+        "Spire Growth": (_create_spire_growth, 1),
+        "Transient": (_create_transient, 1),
         "4 Shapes": (_create_four_shapes, 1),
         "The Maw": (_create_the_maw, 1),
         "Spheric Guardian and 2 Shapes": (_create_spheric_guardian_two_shapes, 1),
-        "3 Darklings": (_create_darkling, 1),
-        "Spire Growth": (_create_spire_growth, 1),
-        "Transient": (_create_transient, 1),
         "Jaw Worm Horde": (_create_jaw_worm_horde, 1),
+        "3 Darklings": (_create_darkling, 1),
         "Writhing Mass": (_create_writhing_mass, 1),
     }
     
@@ -552,8 +535,8 @@ class EncounterPool:
     # Each act has 3 possible bosses, one is randomly selected at start
     ACT1_BOSS_POOL = {
         "The Guardian": _create_boss_guardian,
-        "Slime Boss": _create_boss_slime,
         "The Hexaghost": _create_boss_hexaghost,
+        "Slime Boss": _create_boss_slime,
     }
     
     ACT2_BOSS_POOL = {
@@ -563,8 +546,8 @@ class EncounterPool:
     }
     
     ACT3_BOSS_POOL = {
-        "Time Eater": _create_boss_time_eater,
         "Awakened One": _create_boss_awakened_one,
+        "Time Eater": _create_boss_time_eater,
         "Donu and Deca": _create_boss_donu_deca,
     }
     
@@ -574,12 +557,81 @@ class EncounterPool:
     
     # Alias for backwards compatibility
     BOSS_POOL = ACT1_BOSS_POOL
+    FIRST_HARD_EXCLUSIONS = {
+        1: {"2 Louse": {"3 Louse"}, "Small Slimes": {"Large Slime", "Swarm of Slimes"},
+            "Looter": {"Exordium Thugs"}, "Blue Slaver": {"Red Slaver", "Exordium Thugs"}},
+        2: {"Spheric Guardian": {"Sentry and Spheric Guardian"}, "3 Byrds": {"Chosen and Byrds"},
+            "Chosen": {"Chosen and Byrds", "Cultist and Chosen"}},
+        3: {"3 Shapes": {"4 Shapes"}},
+    }
+    BOSS_REVEAL_ORDER = {
+        1: tuple(ACT1_BOSS_POOL),
+        2: ("The Champ", "Bronze Automaton", "The Collector"),
+        3: ("Awakened One", "Donu and Deca", "Time Eater"),
+    }
 
     def __init__(self, seed: int, act_id: int = 1, streams: RandomStreams | None = None):
         self.random_streams = streams if streams is not None else RandomStreams(seed)
         self.rng = self.random_streams["monster"]
         self.act_id = act_id
         self._load_act_pools(act_id)
+
+    def _encounter_cutoffs(self, pool):
+        ordered = sorted(pool.items(), key=lambda item: item[1][1])
+        total = float32(sum(weight for _, (_, weight) in ordered))
+        cutoff = 0.0
+        cutoffs = []
+        for name, (_, weight) in ordered:
+            cutoff = float32(cutoff + float32(weight / total))
+            cutoffs.append((name, cutoff))
+        return cutoffs
+
+    def _roll_chapter_encounter(self, cutoffs, excluded):
+        if all(name in excluded for name, _ in cutoffs):
+            excluded = ()
+        while True:
+            roll = self.rng.random_float()
+            name = next((name for name, cutoff in cutoffs if roll < cutoff), cutoffs[-1][0])
+            if name not in excluded:
+                return name
+
+    def _extend_encounter_queue(self, queue, pool, count, history_size, history=()):
+        cutoffs = self._encounter_cutoffs(pool)
+        recent = list(history[-history_size:])
+        for _ in range(count):
+            name = self._roll_chapter_encounter(cutoffs, recent)
+            queue.append(name)
+            recent = [*recent, name][-history_size:]
+
+    def _prepare_boss_queue(self, seen_bosses=None, daily_run=False):
+        names = list(self.boss_pool)
+        if self.act_id == 4:
+            return names * 3
+        if seen_bosses is not None and not daily_run:
+            for name in self.BOSS_REVEAL_ORDER.get(self.act_id, ()):
+                if name in self.boss_pool and name not in seen_bosses:
+                    return [name, name]
+        if len(names) <= 1:
+            return names * 2
+        self.rng.shuffle(names)
+        return names
+
+    def prepare_chapter(self, *, seen_bosses=None, daily_run=False):
+        """Generate encounter and boss lists on the shared chapter stream."""
+        if hasattr(self, "normal_queue"):
+            return
+        normal, elites = [], []
+        if self.act_id == 4:
+            elites = list(self.elite_pool) * 3
+        else:
+            self._extend_encounter_queue(normal, self.easy_pool, self.EASY_ENCOUNTER_COUNTS[self.act_id], 2)
+            exclusions = self.FIRST_HARD_EXCLUSIONS[self.act_id].get(normal[-1], ())
+            normal.append(self._roll_chapter_encounter(self._encounter_cutoffs(self.hard_pool), exclusions))
+            self._extend_encounter_queue(normal, self.hard_pool, 12, 2, history=normal)
+            self._extend_encounter_queue(elites, self.elite_pool, 10, 1)
+        self.boss_queue = self._prepare_boss_queue(seen_bosses, daily_run)
+        self.normal_queue = normal
+        self.elite_queue = elites
     
     def _load_act_pools(self, act_id: int):
         """Load encounter pools for specific act."""
@@ -600,15 +652,7 @@ class EncounterPool:
     def _get_available_encounters(self, pool, encounter_history, is_first_hard=False, last_encounter=None):
         """Filter out recently used encounters."""
         available = {}
-        transitions = {
-            1: {"2 Louse": {"3 Louse"}, "Small Slimes": {"Large Slime", "Swarm of Slimes"},
-                "Looter": {"Exordium Thugs"}},
-            2: {"Spheric Guardian": {"Sentry and Spheric Guardian"},
-                "3 Byrds": {"Chosen and Byrds"},
-                "Chosen": {"Chosen and Byrds", "Cultist and Chosen"}},
-            3: {"3 Shapes": {"4 Shapes"}},
-        }
-        excluded = transitions.get(self.act_id, {}).get(last_encounter, set()) if is_first_hard else set()
+        excluded = self.FIRST_HARD_EXCLUSIONS.get(self.act_id, {}).get(last_encounter, set()) if is_first_hard else set()
         for name, (factory, weight) in pool.items():
             if name in encounter_history[-2:]:
                 continue
@@ -630,6 +674,17 @@ class EncounterPool:
         """Get a normal (non-elite, non-boss) encounter."""
         if encounter_history is None:
             encounter_history = []
+        if hasattr(self, "normal_queue"):
+            if not self.normal_queue:
+                if not self.hard_pool:
+                    return [], ""
+                self._extend_encounter_queue(self.normal_queue, self.hard_pool, 12, 2, history=encounter_history)
+            name = self.normal_queue[0]
+            factory, _ = self.easy_pool.get(name) or self.hard_pool[name]
+            with using_streams(self.random_streams):
+                enemies = factory()
+            self.normal_queue.pop(0)
+            return enemies, name
         pool_name = self.get_pool_name(encounter_count)
         pool = self.easy_pool if pool_name == "easy" else self.hard_pool
         is_first_hard = pool_name == "hard" and encounter_count == self.EASY_ENCOUNTER_COUNTS.get(self.act_id, 2)
@@ -647,6 +702,20 @@ class EncounterPool:
 
     def get_elite_encounter(self, floor, last_elite=None):
         """Get an elite encounter."""
+        if hasattr(self, "elite_queue"):
+            if not self.elite_queue:
+                if self.act_id == 4:
+                    self.elite_queue = list(self.elite_pool) * 3
+                else:
+                    self._extend_encounter_queue(self.elite_queue, self.elite_pool, 10, 1,
+                                                 history=(last_elite,) if last_elite else ())
+            name = self.elite_queue[0]
+            factory, _ = self.elite_pool[name]
+            with using_streams(self.random_streams):
+                enemies = factory()
+            self.elite_queue.pop(0)
+            return enemies, name
+
         available = {name: data for name, data in self.elite_pool.items() if name != last_elite}
         if not available:
             available = self.elite_pool
@@ -677,19 +746,14 @@ class EncounterPool:
             if floor != (3 if self.act_id == 4 else 16):
                 return [], ""
         
-        boss_names = list(self.boss_pool.keys())
-        
-        if is_act3_a20 and boss_index == 0:
-            boss_name = self.rng.choice(boss_names)
-            self._act3_first_boss_name = boss_name
-        elif is_act3_a20 and boss_index == 1:
-            if not hasattr(self, '_act3_first_boss_name'):
-                self._act3_first_boss_name = self.rng.choice(boss_names)
-            remaining = [n for n in boss_names if n != self._act3_first_boss_name]
-            boss_name = self.rng.choice(remaining) if remaining else self.rng.choice(boss_names)
-        else:
-            boss_name = self.rng.choice(boss_names)
-        
+        if not hasattr(self, "boss_queue"):
+            self.boss_queue = self._prepare_boss_queue(
+                getattr(game_state.config, "seen_bosses", None), getattr(game_state.config, "daily_run", False))
+        index = boss_index if is_act3_a20 else 0
+        if not 0 <= index < len(self.boss_queue):
+            return [], ""
+        boss_name = self.boss_queue[index]
+
         factory = self.boss_pool[boss_name]
         with using_streams(self.random_streams):
             enemies = factory()

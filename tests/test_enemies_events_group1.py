@@ -1,5 +1,5 @@
 """E-02, E-04, E-07: encounter variants, Sentry scaling, and Library access."""
-from engine.random_streams import get_rng, StreamRandom
+from engine.random_streams import get_rng, RandomStreams, StreamRandom, using_streams
 from typing import cast
 
 import pytest
@@ -19,15 +19,17 @@ from map.encounter_pool import (
 from tests.test_combat_utils import create_test_helper
 
 
-@pytest.mark.parametrize('roll,expected', [
-    (0.0, AcidSlimeL), (0.499999, AcidSlimeL),
-    (0.5, SpikeSlimeL), (0.999999, SpikeSlimeL),
+@pytest.mark.parametrize('seed,expected', [
+    (0, AcidSlimeL), (42, AcidSlimeL),
+    (3, SpikeSlimeL), (12345, SpikeSlimeL),
 ])
-def test_large_slime_factory_uses_equal_probability_branches(monkeypatch, roll, expected):
-    monkeypatch.setattr(get_rng("misc"), "random", lambda: roll)
-    enemies = _create_large_slime()
+def test_large_slime_factory_uses_seeded_boolean_branch(seed, expected):
+    streams = RandomStreams(seed)
+    with using_streams(streams):
+        enemies = _create_large_slime()
     assert len(enemies) == 1
     assert isinstance(enemies[0], expected)
+    assert streams["misc"].counter == 1
 
 
 @pytest.mark.parametrize('ascension,hp_max,damage,dazed', [
