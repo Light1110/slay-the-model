@@ -7,7 +7,7 @@ import pytest
 
 from actions.card import AddCardAction, ExhaustCardAction
 from actions.combat import AddEnemyAction, DealDamageAction, LoseHPAction
-from actions.reward import AddRandomRelicAction, AddRelicAction
+from actions.reward import AddRelicAction
 from cards.colorless.doubt import Doubt
 from cards.colorless.shiv import Shiv
 from cards.ironclad.inflame import Inflame
@@ -194,14 +194,12 @@ def test_matryoshka_large_chest_never_requests_rare_relic(monkeypatch):
     relic = Matryoshka()
     player.relics.append(relic)
 
-    monkeypatch.setattr(get_rng("card_random"), "random", lambda: 0.99)
+    monkeypatch.setattr(get_rng("relic"), "random_boolean", lambda chance: False)
+    helper.game_state.relic_pools.remaining["UNCOMMON"] = ["HornCleat"]
 
-    relic.on_chest_open("large")
-
-    queued = helper.game_state.action_queue.peek_next()
-    assert isinstance(queued, AddRandomRelicAction)
-    queued = cast(AddRandomRelicAction, queued)
-    assert queued.rarities == [RarityType.UNCOMMON]
+    action = relic.on_chest_open("large")
+    assert isinstance(action, AddRelicAction)
+    assert action.relic.idstr == "HornCleat"
 
 
 def test_omamori_negates_curse_without_removing_relic():

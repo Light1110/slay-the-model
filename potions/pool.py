@@ -18,8 +18,8 @@ def definitions():
     return {row["id"]: row for row in catalog()["potions"]}
 
 
-def draw_potion(namespace, rarities=None, *, uniform=False, limited=False):
-    rng = cast(StreamRandom, get_rng("potion"))
+def draw_potion(namespace, rarities=None, *, uniform=False, limited=False, rng=None):
+    rng = rng if rng is not None else cast(StreamRandom, get_rng("potion"))
     ids = catalog()["pools"][namespace]
     rows = definitions()
     if uniform:

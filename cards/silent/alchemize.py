@@ -26,4 +26,4 @@ class Alchemize(Card):
         from engine.game_state import game_state
         from engine.runtime_api import add_actions
 
-        add_actions([AddRandomPotionAction(character=game_state.player.namespace)])
+        add_actions([AddRandomPotionAction(character=game_state.player.namespace, limited=True)])

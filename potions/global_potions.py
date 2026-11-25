@@ -6,7 +6,7 @@ from actions.card import ChooseAddRandomCardAction, ChooseReplaceCardAction, Dis
 from actions.combat import DealDamageAction, GainBlockAction, GainEnergyAction, ApplyPowerAction, HealAction
 from actions.display import InputRequestAction
 from actions.misc import EscapeAction
-from actions.reward import AddRandomPotionAction
+from actions.reward import AddPotionAction, AddRandomPotionAction
 from potions.base import Potion
 from utils.types import CardType, CombatType, DamageType, RarityType, TargetType
 from utils.option import Option
@@ -591,14 +591,21 @@ class EntropicBrew(Potion):
 
     def on_use(self, targets) -> None:
         from engine.game_state import game_state
-        
-        actions = []
-        occupied_slots = len(game_state.player.potions)
-        if self in game_state.player.potions:
+        from utils.random import get_random_potion
+
+        player = game_state.player
+        if game_state.current_combat is not None:
+            self.queue_actions([
+                AddPotionAction(get_random_potion(characters=[player.namespace], limited=True),
+                                allow_replace=False)
+                for _ in range(player.potion_limit)
+            ])
+            return
+
+        occupied_slots = len(player.potions)
+        if self in player.potions:
             occupied_slots -= 1
-        
-        # reuse AddRandomPotionAction for each empty slot
-        for _ in range(max(0, game_state.player.potions.limit - occupied_slots)):
-            actions.append(AddRandomPotionAction(game_state.player.character))
-            
-        self.queue_actions(actions)
+        self.queue_actions([
+            AddRandomPotionAction(player.character)
+            for _ in range(player.potion_limit - occupied_slots)
+        ])

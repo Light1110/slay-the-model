@@ -2,11 +2,11 @@
 Uncommon Global Relics
 Global relics available to all characters at uncommon rarity.
 """
-from engine.random_streams import get_rng
+from engine.random_streams import StreamRandom, get_rng
 from engine.runtime_api import add_action, add_actions
 from engine.messages import EnemyDefeatedMessage
 from engine.subscriptions import MessagePriority, subscribe
-from typing import List
+from typing import List, cast
 from actions.base import Action, LambdaAction
 from actions.card import DrawCardsAction
 from actions.combat import GainBlockAction, GainEnergyAction, HealAction, DealDamageAction, ApplyPowerAction, ModifyMaxHpAction
@@ -281,48 +281,19 @@ class Matryoshka(Relic):
         """Grant an extra relic from next two non-boss chests."""
         if chest_type == "boss" or self.chests_to_spawn <= 0:
             return
-        from actions.reward import AddRandomRelicAction
-        from engine.game_state import game_state
+        from actions.reward import AddRelicAction
+        from utils.random import get_random_relic
 
         self.chests_to_spawn -= 1
-        if chest_type == "small":
-            rarity = (
-                RarityType.COMMON
-                if get_rng("relic").random() < 0.75
-                else RarityType.UNCOMMON
-            )
-        elif chest_type == "medium":
-            rarity_roll = get_rng("relic").random()
-            if rarity_roll < 0.35:
-                rarity = RarityType.COMMON
-            elif rarity_roll < 0.85:
-                rarity = RarityType.UNCOMMON
-            else:
-                rarity = RarityType.RARE
-        elif chest_type == "large":
-            rarity = (
-                RarityType.COMMON
-                if get_rng("relic").random() < 0.25
-                else RarityType.UNCOMMON
-            )
-        else:
-            rarity = RarityType.UNCOMMON
-
-        character = (
-            game_state.player.namespace
-            if game_state and game_state.player
-            else None
+        rng = cast(StreamRandom, get_rng("relic"))
+        rarity = (
+            RarityType.COMMON
+            if rng.random_boolean(0.75)
+            else RarityType.UNCOMMON
         )
-        from engine.game_state import game_state
-        add_actions(
-        [
-            AddRandomRelicAction(
-                rarities=[rarity],
-                characters=[character] if character else None,
-            )
-        ]
-        )
-        return
+        # Reserve the extra relic before the chest reserves its base reward.
+        relic = get_random_relic(rarities=[rarity])
+        return AddRelicAction(relic) if relic is not None else None
 
 
 @register("relic")

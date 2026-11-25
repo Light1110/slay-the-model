@@ -2,6 +2,7 @@
 Boss Global Relics
 Global relics available at boss rarity.
 """
+from engine.random_streams import get_rng
 from engine.runtime_api import add_action, add_actions
 from typing import List
 from actions.base import Action, LambdaAction
@@ -12,9 +13,8 @@ from powers.definitions.strength import StrengthPower
 from cards.colorless.curse_of_the_bell import CurseOfTheBell
 from relics.base import Relic
 from relics.character.ironclad import BlackBlood, MarkOfPain
-from utils.types import CombatType, RarityType, CardType
+from utils.types import CombatType, RarityType
 from utils.registry import register
-from utils.random import get_random_card
 
 # NOTE: AddRandomRelicAction must be imported lazily inside methods
 # to avoid circular import between actions.reward -> relics.base -> relics.global_relics.boss
@@ -67,9 +67,8 @@ class BlackStar(Relic):
     def on_elite_victory(self):
         """Drop an additional random relic when defeating an elite."""
         from actions.reward import AddEliteRelicAction
-        from engine.game_state import game_state
-        add_actions([AddEliteRelicAction(non_campfire=True)])
-        return
+
+        return [AddEliteRelicAction(non_campfire=True)]
 @register("relic")
 class BustedCrown(Relic):
     """Gain 1 Energy at start of each turn. On Card Reward screens, you have 2 fewer Cards to choose from."""
@@ -137,16 +136,11 @@ class CursedKey(Relic):
         """Gain a Curse when opening a non-boss chest."""
         if chest_type == "boss":
             return
-        curse = get_random_card(
-            namespaces=["colorless"],
-            card_types=[CardType.CURSE],
-            rarities=[RarityType.CURSE],
-        )
-        if curse is None:
-            return
-        from engine.game_state import game_state
-        add_actions([AddCardAction(curse, "deck")])
-        return
+        from engine.card_pools import CURSE_TRANSFORM_IDS, definitions
+
+        index = get_rng("card").randint(0, len(CURSE_TRANSFORM_IDS) - 1)
+        curse = definitions()[CURSE_TRANSFORM_IDS[index]].make_card()
+        return AddCardAction(curse, "deck")
 @register("relic")
 class Ectoplasm(Relic):
     """Gain 1 Energy at start of each turn. You can no longer gain Gold."""
@@ -319,18 +313,15 @@ class TinyHouse(Relic):
         from actions.combat import ModifyMaxHpAction
         from actions.card import ChooseObtainCardAction, UpgradeRandomCardAction
         from engine.game_state import game_state
-        
-        from engine.game_state import game_state
-        add_actions(
-        [
-            AddRandomPotionAction(game_state.player.namespace),
-            AddGoldAction(amount=50),
+
+        namespace = game_state.player.namespace
+        add_actions([
+            UpgradeRandomCardAction(selection_kind="shuffle"),
             ModifyMaxHpAction(amount=5),
-            ChooseObtainCardAction(total=3, namespace=game_state.player.namespace, encounter_type="noraml", use_rolling_offset=True),
-            UpgradeRandomCardAction(count=1, namespace=game_state.player.namespace)
-        ]
-        )
-        return
+            AddGoldAction(amount=50),
+            AddRandomPotionAction(namespace, uniform=True, rng_domain="misc"),
+            ChooseObtainCardAction(total=3, namespace=namespace, encounter_type="normal", use_rolling_offset=True),
+        ])
 
 @register("relic")
 class VelvetChoker(Relic):

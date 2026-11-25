@@ -9,6 +9,7 @@ Global action queue architecture:
 from typing import List, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from actions.base import Action
     from engine.card_pools import CardPools
 
 from engine.input_protocol import InputRequest, InputSubmission
@@ -167,9 +168,13 @@ class GameState:
         self.run_clock.reset()
         self.run_clock.start()
 
-    def publish_message(self, message) -> None:
-        """Publish a runtime message and queue follow-up actions immediately."""
-        self.action_queue.add_actions(self.message_bus.publish(message))
+    def publish_message(self, message, *, followups: list["Action"] | None = None) -> None:
+        """Publish a runtime message and append its actions to the chosen queue."""
+        actions = self.message_bus.publish(message)
+        if followups is None:
+            self.action_queue.add_actions(actions)
+        else:
+            followups.extend(actions)
 
     def add_action(self, action, to_front: bool = False) -> None:
         """Queue a single action through the runtime scheduler."""

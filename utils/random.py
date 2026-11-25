@@ -213,7 +213,7 @@ def _get_registry_relic(characters: Optional[List[str]] = None,
     return selected_relic_cls() if selected_relic_cls else None
 
 def _get_registry_potion(characters: Optional[List[str]] = None,
-                      rarities: Optional[List[RarityType]] = None):
+                      rarities: Optional[List[RarityType]] = None, *, rng=None):
     """
     Get a random potion from registry based on criteria.
     
@@ -263,9 +263,10 @@ def _get_registry_potion(characters: Optional[List[str]] = None,
 
     if not filtered_potion_idstrs:
         return None
+    rng = rng if rng is not None else get_rng("potion")
 
     if not rarities:
-        rarity_roll = get_rng("potion").random()
+        rarity_roll = rng.random()
         if rarity_roll < 0.65:
             rolled_rarity = RarityType.COMMON
         elif rarity_roll < 0.90:
@@ -282,7 +283,7 @@ def _get_registry_potion(characters: Optional[List[str]] = None,
         if rarity_filtered:
             filtered_potion_idstrs = rarity_filtered
 
-    selected_potion_idstr = get_rng("potion").choice(filtered_potion_idstrs)
+    selected_potion_idstr = rng.choice(filtered_potion_idstrs)
     selected_potion_cls = get_registered("potion", selected_potion_idstr)
     return selected_potion_cls() if selected_potion_cls else None
 
@@ -305,13 +306,13 @@ def get_random_relic(characters=None, rarities=None, exclude=None, *, from_end=F
     return game_state.relic_pools.draw(tier, exclude or (), characters, from_end=from_end)
 
 
-def get_random_potion(characters=None, rarities=None, *, uniform=False, limited=False):
+def get_random_potion(characters=None, rarities=None, *, uniform=False, limited=False, rng=None):
     from engine.game_state import game_state
     from potions.pool import catalog, draw_potion
     roles = {value.lower() for value in characters} if characters else {game_state.player.namespace}
     if len(roles) != 1 or not roles.issubset(catalog()["pools"]):
-        return _get_registry_potion(characters, rarities)
-    return draw_potion(next(iter(roles)), rarities, uniform=uniform, limited=limited)
+        return _get_registry_potion(characters, rarities, rng=rng)
+    return draw_potion(next(iter(roles)), rarities, uniform=uniform, limited=limited, rng=rng)
 
 
 def get_random_events(act: int = 1, count: int = 1) -> List[Any]:

@@ -12,7 +12,7 @@ from relics.base import Relic
 from utils.types import RarityType, CardType
 from utils.registry import register
 
-# NOTE: AddRandomPotionAction must be imported lazily inside methods
+# Reward actions are imported lazily inside methods.
 # to avoid circular import between actions.reward -> relics.base -> relics.global_relics.shop
 
 @register("relic")
@@ -24,15 +24,15 @@ class Cauldron(Relic):
         self.rarity = RarityType.SHOP
     
     def on_obtain(self):
-        # Lazy import to avoid circular dependency
-        from actions.reward import AddRandomPotionAction
+        from actions.reward import AddPotionAction
         from engine.game_state import game_state
-        actions = []
-        for _ in range(5):
-            actions.append(AddRandomPotionAction(game_state.player.namespace))
-        from engine.game_state import game_state
-        add_actions(actions)
-        return
+        from utils.random import get_random_potion
+
+        characters = [game_state.player.namespace]
+        add_actions([
+            AddPotionAction(get_random_potion(characters=characters, uniform=True))
+            for _ in range(5)
+        ])
 @register("relic")
 class ChemicalX(Relic):
     """Whenever you play a cost X Card, its effects are increased by 2."""

@@ -316,23 +316,22 @@ class LoseGoldAction(Action):
             
 @register("action")
 class AddRandomPotionAction(Action):
-    """Add a random potion to player
-    
-    Required:
-        character (str): Player character
-        
-    Optional:
-        None
-    """
-    def __init__(self, character: str, uniform: bool = False):
+    """Generate a potion with the producer's sampling rules, then offer it."""
+
+    def __init__(self, character: str, uniform: bool = False, *,
+                 limited: bool = False, rng_domain: str = "potion"):
         self.character = character
         self.uniform = uniform
+        self.limited = limited
+        self.rng_domain = rng_domain
     
     def execute(self) -> None:
-        if self.uniform:
-            potion = get_random_potion(characters=[self.character], uniform=True)
-        else:
-            potion = get_random_potion(characters=[self.character])
+        potion = get_random_potion(
+            characters=[self.character],
+            uniform=self.uniform,
+            limited=self.limited,
+            rng=get_rng(self.rng_domain),
+        )
         if potion:
             AddPotionAction(potion=potion).execute()
 
@@ -346,8 +345,9 @@ class AddPotionAction(Action):
     Optional:
         None
     """
-    def __init__(self, potion):
+    def __init__(self, potion, *, allow_replace: bool = True):
         self.potion = potion
+        self.allow_replace = allow_replace
     
     def execute(self) -> None:
         from engine.game_state import game_state
@@ -362,6 +362,8 @@ class AddPotionAction(Action):
             return
 
         if len(player.potions) >= player.potion_limit:
+            if not self.allow_replace:
+                return
             options = [
                 Option(name=LocalStr("ui.skip_potion_option"), actions=[]),
             ]

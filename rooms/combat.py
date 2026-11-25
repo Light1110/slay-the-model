@@ -2,7 +2,7 @@
 Combat room implementation - manages Combat instance execution.
 """
 from engine.random_streams import get_rng
-from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
+from engine.runtime_api import add_action, add_actions, request_input, set_terminal_state
 from typing import TYPE_CHECKING, List
 
 from actions.base import Action
@@ -112,14 +112,6 @@ class CombatRoom(Room):
         if self.room_type == RoomType.ELITE:
             if self.encounter_name:
                 game_state.elite_history.append(self.encounter_name)
-            publish_message(
-                EliteVictoryMessage(
-                    owner=game_state.player,
-                    room=self,
-                    encounter_name=self.encounter_name,
-                    entities=[],
-                )
-            )
 
         # Act 3/4 boss combats should not grant combat rewards.
         if (
@@ -139,6 +131,15 @@ class CombatRoom(Room):
 
         if self.room_type == RoomType.ELITE:
             actions.append(AddEliteRelicAction())
+            game_state.publish_message(
+                EliteVictoryMessage(
+                    owner=game_state.player,
+                    room=self,
+                    encounter_name=self.encounter_name,
+                    entities=[],
+                ),
+                followups=actions,
+            )
 
         # Add card reward (non-boss)
         if self.room_type != RoomType.BOSS:

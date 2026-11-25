@@ -145,7 +145,7 @@ def test_black_star_all_campfire_pool_reaches_ordinary_circlet(monkeypatch):
     assert game_state.relic_pools.remaining['RARE'] == []
 
 
-def test_elite_victory_message_only_marks_black_star_extra_reward():
+def test_elite_victory_queues_base_reward_before_black_star_extra():
     from relics.global_relics.boss import BlackStar
     from rooms.combat import CombatRoom
     from utils.types import RoomType
@@ -154,11 +154,9 @@ def test_elite_victory_message_only_marks_black_star_extra_reward():
     room = CombatRoom(room_type=RoomType.ELITE)
     room.init()
     actions = room._handle_victory()
-    extras = [action for action in game_state.action_queue.queue if isinstance(action, AddEliteRelicAction)]
-    bases = [action for action in actions if isinstance(action, AddEliteRelicAction)]
-    assert len(extras) == len(bases) == 1
-    assert cast(AddEliteRelicAction, extras[0]).non_campfire
-    assert not cast(AddEliteRelicAction, bases[0]).non_campfire
+    rewards = [action for action in actions if isinstance(action, AddEliteRelicAction)]
+    assert [cast(AddEliteRelicAction, reward).non_campfire for reward in rewards] == [False, True]
+    assert not any(isinstance(action, AddEliteRelicAction) for action in game_state.action_queue.queue)
 
 
 def test_shop_initial_inventory_and_restock_use_shop_context(monkeypatch):
