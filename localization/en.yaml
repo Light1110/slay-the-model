@@ -2163,7 +2163,7 @@ powers:
     description: Whenever you play a Power, draw {amount} card(s).
   HelloWorldPower:
     name: Hello
-    description: At the start of your turn, add 1 random common card to your hand.
+    description: At the start of your turn, add {amount} random common card(s) to your hand.
   LockOnPower:
     name: Lock-On
     description: Orb effects on this target are increased by 50%.

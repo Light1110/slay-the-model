@@ -2131,7 +2131,7 @@ powers:
     description: 每当你打出一张能力牌，抽 {amount} 张牌。
   HelloWorldPower:
     name: 你好
-    description: 在你的回合开始时，将 1 张随机普通牌加入手牌。
+    description: 在你的回合开始时，将 {amount} 张随机普通牌加入手牌。
   LockOnPower:
     name: 跟踪锁定
     description: 该目标受到的充能球效果提高 50%。

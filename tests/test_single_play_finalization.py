@@ -4,6 +4,7 @@ Cross-character hands are explicit prepared combat inputs. Randomness is only
 fixed where indicated; card, potion, selection and effect implementations run.
 """
 from engine.random_streams import get_rng, StreamRandom
+from typing import cast
 
 import pytest
 
@@ -162,21 +163,27 @@ def test_offering_draws_its_three_cards_and_one_exhaust_bonus(monkeypatch):
     assert [message.card for message in events(messages, CardExhaustedMessage)] == [card]
 
 
-@pytest.mark.parametrize("roll,prevented", [(0.0, True), (0.9, False)])
-def test_strange_spoon_decides_single_final_destination_and_exhaust_benefits(roll, prevented, monkeypatch):
+@pytest.mark.parametrize("seed,prevented,next_roll", [(0, True, 960), (4, False, 633)])
+@pytest.mark.parametrize("forced_exhaust", [False, True])
+def test_strange_spoon_decides_single_final_destination_and_exhaust_benefits(
+    seed, prevented, next_roll, forced_exhaust, monkeypatch,
+):
     helper, player, enemy, _, messages = prepare(monkeypatch)
     player.relics.append(StrangeSpoonShop())
     player.add_power(FeelNoPainPower(amount=3, owner=player))
     player.add_power(DarkEmbracePower(amount=1, owner=player))
-    # Prepared RNG input chooses the real relic's two branches; no hook replaced.
-    monkeypatch.setattr(get_rng("card_random"), "random", lambda: roll)
-    card = Shiv()
+    rng = cast(StreamRandom, get_rng("card_random"))
+    rng.seed(seed)
+    if forced_exhaust:
+        player.add_power(CorruptionPower(owner=player))
+    card = Defend() if forced_exhaust else Shiv()
     assert play(helper, card) is None
-    assert enemy.hp == 996
-    assert player.block == (0 if prevented else 3)
+    assert enemy.hp == (1000 if forced_exhaust else 996)
+    assert player.block == (5 if forced_exhaust else 0) + (0 if prevented else 3)
     assert len(events(messages, CardDrawnMessage)) == (0 if prevented else 1)
     assert [message.card for message in events(messages, CardExhaustedMessage)] == ([] if prevented else [card])
     assert player.card_manager.get_card_location(card) == ("discard_pile" if prevented else "exhaust_pile")
+    assert (rng.counter, rng.randint(0, 999)) == (1, next_roll)
 
 
 def test_real_blade_dance_generated_shiv_exhausts_only_once(monkeypatch):
