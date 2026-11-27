@@ -561,8 +561,8 @@ class SneckoOil(Potion):
     def randomize_costs(self, game_state):
         # Randomize costs of cards in hand (including newly drawn cards)
         for card in game_state.player.card_manager.get_pile("hand"):
-            # random: [0, 3]
-            card.cost_until_end_of_turn = get_rng("card_random").randint(0, 3)
+            if card._cost >= 0:
+                card.cost_until_end_of_turn = get_rng("card_random").randint(0, 3)
 
 @register("potion")
 class CultistPotion(Potion):

@@ -1,13 +1,17 @@
 """Silent-specific relics."""
+from engine.messages import EnemyDefeatedMessage
 from engine.random_streams import get_rng
-from engine.runtime_api import add_actions
+from engine.runtime_api import add_action, add_actions
+from engine.subscriptions import MessagePriority, subscribe
 
 from actions.base import LambdaAction
 from actions.card import AddCardAction, DrawCardsAction
-from actions.combat import ApplyPowerAction, DealDamageAction, GainBlockAction, GainEnergyAction
+from actions.combat import ApplyPowerAction, GainBlockAction, GainEnergyAction
+from actions.random_damage import DamageRandomEnemyAction
 from cards.colorless.shiv import Shiv
 from powers.definitions.poison import PoisonPower
 from relics.base import Relic
+from utils.combat import living_enemies
 from utils.damage_phase import DamagePhase
 from utils.registry import register
 from utils.types import RarityType, CardType
@@ -83,22 +87,25 @@ class TheSpecimen(Relic):
         super().__init__()
         self.rarity = RarityType.RARE
 
-    def on_damage_dealt(self, damage, target, source=None, card=None, damage_type="direct"):
-        if target.is_dead():
-            poison_amount = 0
-            for power in target.powers:
-                if power.idstr == "PoisonPower":
-                    poison_amount = power.amount
-                    break
-            if poison_amount > 0:
-                alive_enemies = self.alive_enemies()
-                if alive_enemies:
+    @subscribe(EnemyDefeatedMessage, priority=MessagePriority.PLAYER_RELIC)
+    def on_enemy_defeated(self, target):
+        if not target.is_dead():
+            return
+        poison = target.get_power("Poison")
+        if poison is not None and poison.amount > 0 and living_enemies():
+            add_action(LambdaAction(self.transfer_poison, args=(poison.amount,)))
 
-                    target_enemy = get_rng("card_random").choice(alive_enemies)
-                    add_actions([
-                        ApplyPowerAction(power="Poison", target=target_enemy, amount=poison_amount)
-                    ])
-        return
+    def transfer_poison(self, amount: int) -> None:
+        from engine.game_state import game_state
+
+        enemies = living_enemies()
+        if enemies:
+            target = get_rng("card_random").choice(enemies)
+            add_action(ApplyPowerAction(
+                power=PoisonPower(amount=amount, duration=amount),
+                target=target,
+                source=game_state.player,
+            ), to_front=True)
 
 
 @register("relic")
@@ -112,13 +119,7 @@ class Tingsha(Relic):
     def on_card_discard(self, card):
         from engine.game_state import game_state
 
-        assert game_state.current_combat is not None
-        alive_enemies = [enemy for enemy in game_state.current_combat.enemies if not enemy.is_dead()]
-        if alive_enemies:
-
-            target_enemy = get_rng("card_random").choice(alive_enemies)
-            add_actions([DealDamageAction(damage=3, target=target_enemy)])
-        return
+        add_action(DamageRandomEnemyAction(3, source=game_state.player))
 
 
 @register("relic")

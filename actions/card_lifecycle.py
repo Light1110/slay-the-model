@@ -331,7 +331,6 @@ class ExhaustRandomCardAction(Action):
 
     def execute(self) -> None:
         from engine.game_state import game_state
-        from engine.messages import ShuffleMessage
 
         if not game_state.player:
             return
@@ -339,18 +338,17 @@ class ExhaustRandomCardAction(Action):
         card_manager = game_state.player.card_manager
         cards_in_pile = list(card_manager.get_pile(self.pile))
 
-        if not cards_in_pile:
+        if not cards_in_pile or self.amount <= 0:
             return
 
-        amount_to_exhaust = min(self.amount, len(cards_in_pile))
-        cards_to_exhaust = get_rng("card_random").sample(cards_in_pile, amount_to_exhaust)
-
-        actions = []
-        for card in cards_to_exhaust:
-            actions.append(ExhaustCardAction(card=card, source_pile=self.pile))
-
-        if actions:
-            add_actions(actions, to_front=True)
+        if self.amount >= len(cards_in_pile):
+            cards_to_exhaust = list(reversed(cards_in_pile))
+        else:
+            cards_to_exhaust = get_rng("card_random").sample(cards_in_pile, self.amount)
+        add_actions([
+            ExhaustCardAction(card=card, source_pile=self.pile)
+            for card in cards_to_exhaust
+        ], to_front=True)
 
 @register("action")
 class ShuffleAction(Action):
