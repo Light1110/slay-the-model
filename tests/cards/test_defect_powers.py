@@ -195,7 +195,7 @@ class TestDefectPowers:
     def test_creative_ai_never_generates_self_repair(self, monkeypatch):
         from cards.defect.buffer import Buffer
         from cards.defect.self_repair import SelfRepair
-        import actions.card_transform as card_transform_module
+        import cards.defect.white_noise as white_noise_module
 
         self.helper.start_combat([_NoOpEnemy()])
         combat = self.helper.game_state.current_combat
@@ -209,13 +209,28 @@ class TestDefectPowers:
                 return Buffer()
             return SelfRepair()
 
-        monkeypatch.setattr(card_transform_module, "get_random_card", fake_random_card)
+        monkeypatch.setattr(white_noise_module, "get_random_card", fake_random_card)
 
         assert self.helper.play_card(card) is True
         combat._start_player_turn()
         self.helper.game_state.drive_actions()
         hand = self.player.card_manager.get_pile("hand")
         assert not any(isinstance(card_in_hand, SelfRepair) for card_in_hand in hand)
+
+    def test_white_noise_selects_before_queued_card_enters_hand(self):
+        game_state = self.helper.game_state
+        self.player.namespace = "defect"
+        rng = game_state.random_streams["card_random"]
+        rng.seed(0)
+
+        WhiteNoise().on_play()
+
+        assert rng.counter == 1
+        assert self.player.card_manager.get_pile("hand") == []
+        game_state.drive_actions()
+        generated, = self.player.card_manager.get_pile("hand")
+        assert generated.cost_until_end_of_turn == 0
+        assert (rng.counter, rng.randint(0, 999)) == (1, 960)
 
     def test_biased_cognition_loses_focus_each_turn(self):
         self.helper.start_combat([_NoOpEnemy()])

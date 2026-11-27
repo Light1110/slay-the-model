@@ -132,14 +132,14 @@ def test_actual_event_draw_receives_original_exordium_candidates(monkeypatch):
     for key in reversed(reference["project_ids"]):
         pool.register_event(DummyEvent, key)
     rng = pool._get_state().rng
-    choose = rng.choices
+    choose = rng.choice
     seen = []
 
-    def observe(values, **kwargs):
+    def observe(values):
         seen.append([metadata.event_id for metadata in values])
-        return choose(values, **kwargs)
+        return choose(values)
 
-    monkeypatch.setattr(rng, "choices", observe)
+    monkeypatch.setattr(rng, "choice", observe)
     chosen = pool.draw_metadata(1)
     assert seen == [reference["project_ids"]]
     assert chosen is not None

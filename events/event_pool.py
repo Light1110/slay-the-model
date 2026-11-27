@@ -91,6 +91,8 @@ class EventPool:
                 and self._is_event_available(self._event_registry[key], act)]
 
     def draw_metadata(self, act: int = 1) -> EventMetadata | None:
+        from engine.event_order import original_event_ids
+
         if act not in (1, 2, 3):
             return None
         state = self._get_state()
@@ -104,7 +106,11 @@ class EventPool:
         candidates = primary or fallback
         if not candidates:
             return None
-        selected = state.rng.choices(candidates, weights=[m.weight for m in candidates], k=1)[0]
+        original_ids = set(original_event_ids(act))
+        if all(m.event_id in original_ids and m.weight == 100 for m in candidates):
+            selected = state.rng.choice(candidates)
+        else:
+            selected = state.rng.choices(candidates, weights=[m.weight for m in candidates], k=1)[0]
         self.mark_event_used(selected.event_id)
         return selected
 

@@ -24,8 +24,12 @@ SPECIAL = ("ominous_forge", "bonfire_spirits", "designer_in_spire", "duplicator"
            "secret_portal", "the_joust", "we_meet_again", "woman_in_blue")
 
 
+def original_event_ids(act: int) -> tuple[str, ...]:
+    return EVENTS.get(act, ()) + SHRINES.get(act, ()) + SPECIAL
+
+
 def ordered_ids(act: int, registered) -> list[str]:
-    original = EVENTS.get(act, ()) + SHRINES.get(act, ()) + SPECIAL
+    original = original_event_ids(act)
     known = set(original)
     # Extensions/unrecognized test events remain deterministic and never
     # reorder original entries through registration/import order.

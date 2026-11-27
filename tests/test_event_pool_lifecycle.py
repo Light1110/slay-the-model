@@ -7,6 +7,7 @@ import pytest
 
 from engine.game_state import game_state
 from engine.run_clock import RunClock
+from engine.random_streams import StreamRandom
 from events.event_pool import EventPool
 from events.secret_portal import SecretPortal
 from events.the_cleric import TheClericEvent
@@ -50,6 +51,20 @@ def test_conditions_do_not_consume_and_excluded_events_never_draw():
     assert [m.event_id for m in pool.get_available_events()] == ['temporary']
     assert pool.get_random_event() is DummyEvent
     assert pool.draw_metadata() is None
+
+
+def test_custom_event_keeps_weighted_selection_with_builtin_candidate():
+    pool = EventPool(seed=0)
+    pool.register_event(DummyEvent, "big_fish")
+    pool.register_event(DummyEvent, "extension", weight=200)
+    reference = StreamRandom(0)
+    reference.random()
+    expected = reference.choices(["big_fish", "extension"], weights=[100, 200])[0]
+
+    selected = pool.draw_metadata()
+
+    assert selected is not None and selected.event_id == expected
+    assert pool._get_state().rng.getstate() == reference.getstate()
 
 
 def test_seed_is_independent_of_registration_order_and_global_random():
