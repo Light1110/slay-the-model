@@ -8,42 +8,36 @@ from actions.combat import AttackAction, GainBlockAction
 
 
 class Steal(Intention):
-    """Steal a card from player's draw pile."""
+    """Steal from the draw pile, or from the discard pile if the draw pile is empty."""
 
     def __init__(self, enemy):
         super().__init__("Steal", enemy)
-        # Note: Card stealing is complex, this is a simplified implementation
 
     def execute(self) -> None:
-        """Steal a random high-rarity card from draw pile."""
+        from engine.card_pools import java_id_key, original_id, original_rarity
         from engine.game_state import game_state
         from utils.types import RarityType
-        
+
         if not game_state.player:
             return
         card_manager = game_state.player.card_manager
-        draw_pile = card_manager.get_pile('draw_pile')
-        
-        if not draw_pile:
+        pile_name = "draw_pile" if card_manager.get_pile("draw_pile") else "discard_pile"
+        pile = card_manager.get_pile(pile_name)
+        if not pile:
             return
-        # Prefer stealing higher rarity cards
-        rarity_priority = [RarityType.RARE, RarityType.UNCOMMON, RarityType.COMMON, RarityType.STARTER]
-        
-        for rarity in rarity_priority:
-            # Find cards of this rarity
-            candidates = [c for c in draw_pile if c.rarity == rarity]
-            if candidates:
-                stolen_card = get_rng("card_random").choice(candidates)
-                # Remove from draw pile
-                card_manager.remove_from_pile(stolen_card, 'draw_pile')
-                # Store in enemy's stolen cards
-                self.enemy.stolen_cards.append(stolen_card)
-                return
-        
-        # Fallback: steal any card
-        stolen_card = get_rng("card_random").choice(draw_pile)
-        card_manager.remove_from_pile(stolen_card, 'draw_pile')
+
+        candidates = pile
+        for rarity in (RarityType.RARE, RarityType.UNCOMMON, RarityType.COMMON):
+            matching = [card for card in pile if original_rarity(card) == rarity]
+            if matching:
+                candidates = sorted(matching, key=lambda card: java_id_key(original_id(card)))
+                break
+
+        stolen_card = get_rng("card_random").choice(candidates)
+        card_manager.remove_from_pile(stolen_card, pile_name)
         self.enemy.stolen_cards.append(stolen_card)
+
+
 class SupportBeam(Intention):
     """Give Bronze Automaton 11 Block."""
 

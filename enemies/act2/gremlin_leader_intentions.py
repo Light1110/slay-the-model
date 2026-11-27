@@ -1,4 +1,5 @@
 """Gremlin Leader intentions - Act 2 Elite enemy."""
+from engine.random_streams import get_rng
 from engine.runtime_api import add_action, add_actions
 
 from typing import TYPE_CHECKING, List
@@ -24,6 +25,9 @@ class Encourage(Intention):
     def execute(self) -> None:
         """Execute encourage - buff all allies."""
         from engine.game_state import game_state
+
+        # The original dialogue advances the AI stream before the next move is rolled.
+        get_rng("ai").randint(0, 2)
         enemies = (
             game_state.current_combat.enemies
             if game_state.current_combat is not None
