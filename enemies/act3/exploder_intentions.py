@@ -1,10 +1,7 @@
 """Exploder enemy intentions for Act 3."""
-from engine.runtime_api import add_action, add_actions
-
-import random
-from typing import List
-
-from actions.combat import AttackAction
+from actions.base import LambdaAction
+from actions.combat import AttackAction, RollEnemyIntentionAction
+from engine.runtime_api import add_actions
 from enemies.intention import Intention
 
 
@@ -45,13 +42,14 @@ class Explode(Intention):
         """Execute explode action - deals damage and enemy dies."""
         from engine.game_state import game_state
         
-        actions = [AttackAction(
-            damage=self.base_damage,
-            target=game_state.player,
-            source=self.enemy,
-            damage_type="attack"
-        )]
-        # Enemy dies after exploding
-        self.enemy.hp = 0
-        from engine.game_state import game_state
-        add_actions(actions)
+        # The turn queues a roll before the explosive power resolves.
+        add_actions([
+            RollEnemyIntentionAction(self.enemy),
+            LambdaAction(setattr, args=[self.enemy, "hp", 0]),
+            AttackAction(
+                damage=self.base_damage,
+                target=game_state.player,
+                source=self.enemy,
+                damage_type="attack",
+            ),
+        ])

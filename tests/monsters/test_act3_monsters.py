@@ -37,8 +37,9 @@ class TestAct3Monsters(unittest.TestCase):
         self.assertIn(m.hp, range(20, 26))
 
     def test_darkling_hp(self):
+        game_state.ascension = 0
         m = Darkling()
-        self.assertGreaterEqual(m.hp, 50)
+        self.assertIn(m.hp, range(48, 57))
 
     def test_exploder_hp(self):
         m = Exploder()

@@ -1,6 +1,7 @@
-"""Regressions for Bronze Orb selection and Gremlin Leader's shared AI stream."""
+"""Regressions for enemy random draws and action ordering."""
 import pytest
 
+from actions.combat import RollEnemyIntentionAction
 from cards.colorless.clumsy import Clumsy
 from cards.colorless.doubt import Doubt
 from cards.ironclad.defend import Defend
@@ -11,8 +12,11 @@ from cards.ironclad.strike import Strike
 from enemies.act1.cultist import Cultist
 from enemies.act2.bronze_orb import BronzeOrb
 from enemies.act2.gremlin_leader import GremlinLeader
+from enemies.act3.exploder import Exploder
 from engine.combat import Combat
 from engine.game_state import game_state
+from map.encounter_pool import _create_darkling
+from utils.result_types import GameTerminalState
 
 
 @pytest.mark.parametrize("pile_name", ["draw_pile", "discard_pile"])
@@ -99,3 +103,53 @@ def test_gremlin_leader_encourage_consumes_ai_before_next_intention():
     assert leader.current_intention is leader.intentions["Rally!"]
     assert rng.counter == 2
     assert rng.randint(0, 999) == 188
+
+
+@pytest.mark.parametrize(("ascension", "hp", "nip"), [
+    (1, [52, 48, 48], [7, 9, 10]),
+    (2, [52, 48, 48], [9, 11, 12]),
+    (6, [52, 48, 48], [9, 11, 12]),
+    (7, [52, 52, 51], [9, 11, 12]),
+])
+def test_darkling_factory_rolls_hp_then_nip_at_each_ascension_boundary(ascension, hp, nip):
+    game_state.ascension = ascension
+    rng = game_state.random_streams["monster_hp"]
+    rng.seed(0)
+
+    enemies = _create_darkling()
+
+    assert [enemy.hp for enemy in enemies] == hp
+    assert [enemy.intentions["Nip"].base_damage for enemy in enemies] == nip
+    assert rng.counter == 6
+    assert rng.randint(0, 999) == 442
+
+
+@pytest.mark.parametrize("survivor", [False, True])
+def test_exploder_rolls_before_dying_even_as_the_last_enemy(survivor, monkeypatch):
+    game_state.ascension = 0
+    game_state.player.relics.clear()
+    rng = game_state.random_streams["ai"]
+    rng.seed(0)
+    exploder = Exploder()
+    combat = Combat(enemies=[exploder, Cultist()] if survivor else [exploder])
+    combat._init_combat()
+    assert game_state.drive_actions() is None
+
+    for _ in range(2):
+        assert combat.execute_enemy_phase() is None
+    assert rng.counter == (6 if survivor else 3)
+    assert exploder.current_intention is exploder.intentions["Explode"]
+    health_at_roll = []
+    original = RollEnemyIntentionAction.execute
+
+    def observe_roll(action):
+        health_at_roll.append(action.enemy.hp)
+        original(action)
+
+    monkeypatch.setattr(RollEnemyIntentionAction, "execute", observe_roll)
+    assert combat.execute_enemy_phase() is None
+    assert health_at_roll == [exploder.max_hp]
+    assert exploder.is_dead()
+    assert rng.counter == (8 if survivor else 4)
+    assert rng.randint(0, 999) == (179 if survivor else 231)
+    assert combat._check_combat_end() == (None if survivor else GameTerminalState.COMBAT_WIN)

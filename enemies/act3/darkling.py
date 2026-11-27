@@ -25,7 +25,9 @@ class Darkling(Enemy):
     select_intention_after_enemy_turn = True
 
     def __init__(self):
-        super().__init__(hp_range=(50, 56))
+        from engine.game_state import game_state
+
+        super().__init__(hp_range=(50, 59) if game_state.ascension >= 7 else (48, 56))
         self._first_move = True
         self._is_regrowing = False
 

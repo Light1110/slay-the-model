@@ -33,13 +33,13 @@ class Nip(Intention):
 
     def __init__(self, enemy):
         super().__init__("Nip", enemy)
-        self.base_damage = 9  # Random 7-11, A17+: 9-13
         self._roll_damage()
 
     def _roll_damage(self):
-        """Roll damage at start of combat."""
+        """Roll damage once during construction, after HP."""
         from engine.game_state import game_state
-        if game_state.ascension >= 17:
+
+        if game_state.ascension >= 2:
             self.base_damage = get_rng("monster_hp").randint(9, 13)
         else:
             self.base_damage = get_rng("monster_hp").randint(7, 11)
