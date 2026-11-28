@@ -534,7 +534,8 @@ events:
     memory_3: "你想起端着一碗汤走过院子。走到门口时，汤已经不冒热气了。"
     memory_4: "你想起末班渡船离岸。甲板上的灯已经看不见了，码头上还有人在挥手。"
   shining_light:
-    enter_detail: "失去 {hp} 点生命。随机升级 2 张牌。"
+    enter_detail: "失去 {hp} 点生命。随机升级 {count} 张牌。"
+    no_upgradable_cards: "没有可升级的牌。"
     title: 闪耀之光
     enter: 走进
     leave: 离开

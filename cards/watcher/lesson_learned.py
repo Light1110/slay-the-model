@@ -17,7 +17,7 @@ class LessonLearned(Card):
     text_description = "Deal {damage} damage. If Fatal, upgrade a card in your deck."
 
     def on_fatal(self, damage, target=None, source=None, card=None, damage_type: str = "direct"):
-        if card is not self:
+        if card is not self or target is None or getattr(target, "is_minion", False):
             return
         candidates = [
             candidate

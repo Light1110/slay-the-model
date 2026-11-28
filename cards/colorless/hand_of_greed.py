@@ -24,7 +24,7 @@ class HandOfGreed(Card):
 
     def on_fatal(self, damage: int, target=None, source=None, card=None, damage_type: str = "direct"):
         """If this kills enemy, gain gold"""
-        if card is not self or target is None:
+        if card is not self or target is None or getattr(target, "is_minion", False):
             return
 
         gold_amount = self.get_magic_value("gold_on_kill")

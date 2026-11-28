@@ -2,6 +2,7 @@
 Event Relics
 Relics obtained through events.
 """
+from engine.random_streams import get_rng
 from engine.runtime_api import add_action, add_actions
 from typing import List
 from actions.base import Action, LambdaAction
@@ -251,18 +252,22 @@ class WarpedTongs(Relic):
         super().__init__()
         self.rarity = RarityType.EVENT
         
-    def on_player_turn_start(self):
-        """Upgrade a random card in hand for rest of combat"""
-        from actions.card import UpgradeRandomCardAction
+    def on_player_turn_post_draw(self):
+        add_action(LambdaAction(self._upgrade_hand_card))
+
+    @staticmethod
+    def _upgrade_hand_card() -> None:
+        from actions.card import UpgradeCardAction
         from engine.game_state import game_state
-        
-        hand = game_state.player.card_manager.get_pile('hand')
-        if hand:
-            # Upgrade a random upgradable card in hand
-            from engine.game_state import game_state
-            add_actions([UpgradeRandomCardAction(count=1, namespace=game_state.player.namespace)])
-            return
-        return
+
+        candidates = [
+            card for card in game_state.player.card_manager.get_pile("hand")
+            if card.card_type != CardType.STATUS and card.can_upgrade()
+        ]
+        if candidates:
+            get_rng("shuffle").shuffle(candidates)
+            UpgradeCardAction(candidates[0]).execute()
+
 @register("relic")
 class RedMask(Relic):
     """At start of each combat, apply 1 Weakness to ALL enemies."""

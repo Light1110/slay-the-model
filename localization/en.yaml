@@ -551,7 +551,8 @@ events:
     memory_3: "You remember carrying a bowl of soup across a yard. By the time you reached the door, it had stopped steaming."
     memory_4: "You remember the last ferry pulling away. Someone on the pier kept waving long after the deck lights disappeared."
   shining_light:
-    enter_detail: "Lose {hp} HP. Upgrade 2 random cards."
+    enter_detail: "Lose {hp} HP. Upgrade {count} random card(s)."
+    no_upgradable_cards: "No cards can be upgraded."
     title: Shining Light
     enter: Enter
     leave: Leave

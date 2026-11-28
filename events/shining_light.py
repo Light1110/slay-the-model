@@ -1,8 +1,8 @@
-"""Event: Shining Light - Act 1 Event (A15+)
+"""Event: Shining Light - Act 1 Event.
 
-Upgrade 2 random cards at the cost of Max HP.
+Lose HP to upgrade up to two random cards.
 """
-from engine.runtime_api import add_action, add_actions, publish_message, request_input, set_terminal_state
+from engine.runtime_api import add_actions
 
 from events.base_event import Event
 from events.event_pool import register_event
@@ -28,16 +28,22 @@ class ShiningLight(Event):
         
         # HP cost: 20% on normal, 30% on A15+
         hp_percent = 0.30 if game_state.ascension >= 15 else 0.20
+        upgrade_count = min(2, sum(card.can_upgrade() for card in game_state.player.deck))
         
         # Build options
         options = [
             Option(
                 name=LocalStr('events.shining_light.enter'),
-                detail=LocalStr('events.shining_light.enter_detail', hp=int(game_state.player.max_hp * hp_percent)),
+                detail=LocalStr(
+                    'events.shining_light.enter_detail',
+                    hp=int(game_state.player.max_hp * hp_percent),
+                    count=upgrade_count,
+                ),
+                enabled=upgrade_count > 0,
+                disabled_reason=LocalStr('events.shining_light.no_upgradable_cards'),
                 actions=[
                     LoseHPAction(percent=hp_percent),
-                    UpgradeRandomCardAction(),
-                    UpgradeRandomCardAction()  # Two upgrades
+                    UpgradeRandomCardAction(count=2, selection_kind="shuffle"),
                 ]
             ),
             Option(

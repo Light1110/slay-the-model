@@ -23,7 +23,7 @@ class RitualDagger(Card):
 
     def on_fatal(self, damage: int, target=None, source=None, card=None, damage_type: str = "direct"):
         """If this kills enemy, permanently increase this Card's damage"""
-        if card is not self or target is None:
+        if card is not self or target is None or getattr(target, "is_minion", False):
             return
 
         fatal_bonus = self.get_magic_value(
