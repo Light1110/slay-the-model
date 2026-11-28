@@ -137,7 +137,7 @@ def test_scrap_ooze_loses_hp_and_then_rolls(monkeypatch):
     helper = create_test_helper()
     player = helper.create_player()
     game_state.ascension = 0
-    monkeypatch.setattr(get_rng("misc"), "random", lambda: 0.0)
+    monkeypatch.setattr(get_rng("misc"), "randint", lambda low, high: 74)
 
     event = ScrapOoze()
     options = _options(event)
@@ -176,7 +176,7 @@ def test_scrap_ooze_can_reach_again_after_a_failure(monkeypatch):
     helper = create_test_helper()
     player = helper.create_player()
     game_state.ascension = 15
-    monkeypatch.setattr(get_rng("misc"), "random", lambda: 0.99)
+    monkeypatch.setattr(get_rng("misc"), "randint", lambda low, high: 73)
 
     event = ScrapOoze()
     options = _options(event)

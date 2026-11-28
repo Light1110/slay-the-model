@@ -163,7 +163,7 @@ def test_scrap_ooze_refreshes_hp_and_probability_after_failed_attempt(player, mo
     assert str(base) in resolve_text(option.detail) and '25%' in resolve_text(option.detail)
     assert isinstance(option.actions[0], LoseHPAction)
     option.actions[0].execute()
-    monkeypatch.setattr(get_rng("misc"), "random", lambda: 1.0)
+    monkeypatch.setattr(get_rng("misc"), "randint", lambda low, high: 73)
     event._resolve_reach()
     refreshed = cast(InputRequestAction, game_state.action_queue.queue[-1])
     assert isinstance(refreshed, InputRequestAction)

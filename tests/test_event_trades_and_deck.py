@@ -1,13 +1,12 @@
 """Trades and deck changes for We Meet Again, the note, and Match and Keep."""
-from engine.random_streams import get_rng
+from engine.random_streams import StreamRandom, get_rng
 
 from typing import cast
 
 import pytest
 
-from actions.card import AddCardAction, ChooseRemoveCardAction, RemoveCardAction
+from actions.card import AddCardAction, RemoveCardAction
 from actions.display import InputRequestAction
-from actions.reward import AddRandomRelicAction, LoseGoldAction, LosePotionAction
 from cards.colorless.doubt import Doubt
 from cards.ironclad.inflame import Inflame
 from cards.ironclad.iron_wave import IronWave
@@ -19,6 +18,7 @@ from events.match_and_keep import _generate_card_pairs
 from events.we_meet_again import WeMeetAgain
 from potions.ironclad import BloodPotion
 from tests.test_combat_utils import create_test_helper
+from tests.test_designer_joust_protocol import choose, next_menu, open_event
 from utils.types import RarityType
 
 
@@ -38,96 +38,100 @@ def _options(event) -> list:
     return list(cast(InputRequestAction, request).options)
 
 
-def _removal(actions) -> ChooseRemoveCardAction:
-    removal = next(action for action in actions if isinstance(action, ChooseRemoveCardAction))
-    return cast(ChooseRemoveCardAction, removal)
-
-
-def _pick(kind: str):
-    def choice(seq):
-        if kind in seq:
-            return kind
-        return seq[0]
-
-    return choice
-
-
-def test_we_meet_again_designates_one_potion_and_locks_it(monkeypatch):
+def test_we_meet_again_locks_only_the_designated_potion_until_leaving():
     from actions.combat import UsePotionAction
-    from rooms.event import EventRoom
 
-    helper = create_test_helper()
-    player = helper.create_player()
+    player = game_state.player
+    player.gold = 49
+    player.deck.clear()
     potions = [BloodPotion(), BloodPotion()]
     player.potions.extend(potions)
-    player.gold = 100
-    player.deck.append(Inflame())
-    monkeypatch.setattr(get_rng("misc"), "choice", _pick("potion"))
+    game_state.random_streams["misc"].seed(0)
+    event = WeMeetAgain()
+    room = open_event(event)
+    assert [option.enabled for option in next_menu().options] == [True, False, False, True]
+    offered = event.potion_option
+    assert offered is not None and offered.event_locked and not offered.can_use([])
+    assert all(not potion.event_locked for potion in potions if potion is not offered)
 
-    options = _options(WeMeetAgain())
-    trades = [option for option in options if option.actions]
-
-    assert len(trades) == 1
-    assert any(not option.actions for option in options)
-    loss = next(action for action in trades[0].actions if isinstance(action, LosePotionAction))
-    assert loss.potion is potions[0]
-    assert loss.index is None
-    assert any(isinstance(action, AddRandomRelicAction) for action in trades[0].actions)
-    assert potions[0].event_locked is True
-    assert potions[1].event_locked is False
-    assert potions[0].can_use([]) is False
-
-    UsePotionAction(potion=potions[0], target=player).execute()
-    assert potions[0] in player.potions
-
-    EventRoom().leave()
-    assert potions[0].event_locked is False
-    assert potions[0].can_use([]) is True
+    UsePotionAction(potion=offered, target=player).execute()
+    assert list(player.potions) == potions
+    choose(3)
+    game_state.drive_actions()
+    assert room.should_leave
+    room.leave()
+    assert offered.can_use([]) and list(player.potions) == potions
 
 
-def test_we_meet_again_asks_for_gold_or_a_card_but_not_both(monkeypatch):
-    helper = create_test_helper()
-    player = helper.create_player()
-    player.gold = 120
-    player.deck.append(Inflame())
-    monkeypatch.setattr(get_rng("misc"), "choice", _pick("gold"))
-    monkeypatch.setattr(get_rng("misc"), "randint", lambda a, b: 50)
+@pytest.mark.parametrize("payment", [0, 1, 2])
+def test_we_meet_again_preselects_all_three_and_only_collects_the_chosen_payment(payment):
+    player = game_state.player
+    player.gold = 151
+    first, second = Inflame(), Inflame()
+    first.bottled = True
+    deck = [Strike(), first, Doubt(), second]
+    player.card_manager.piles["deck"] = deck.copy()
+    potions = [BloodPotion(), BloodPotion()]
+    player.potions.extend(potions)
+    player.relics.clear()
+    game_state.relic_pools.remaining.update(COMMON=["Anchor"], UNCOMMON=["HornCleat"], RARE=["IncenseBurner"])
+    rng = game_state.random_streams["misc"]
+    rng.seed(0)
+    reference = StreamRandom(0)
+    potion_order = potions.copy()
+    reference.shuffle(potion_order)
+    expected_gold = reference.randint(50, 150)
+    card_order = [first, second]
+    reference.shuffle(card_order)
+    event = WeMeetAgain()
+    room = open_event(event)
+    assert event.potion_option is potion_order[0]
+    assert event.gold_amount == expected_gold
+    assert event.card_option is card_order[0]
+    assert all(option.enabled for option in next_menu().options)
+    assert rng.export_state() == reference.export_state()
 
-    options = _options(WeMeetAgain())
-    trades = [option for option in options if option.actions]
-
-    assert len(trades) == 1
-    gold = next(
-        action
-        for action in trades[0].actions
-        if isinstance(action, LoseGoldAction)
-    )
-    assert gold.amount == 50
-    assert any(isinstance(action, AddRandomRelicAction) for action in trades[0].actions)
-
-    monkeypatch.setattr(get_rng("misc"), "choice", _pick("card"))
-    card_options = _options(WeMeetAgain())
-    card_trades = [option for option in card_options if option.actions]
-    assert len(card_trades) == 1
-    removal = _removal(card_trades[0].actions)
-    assert removal.exclude_rarities is not None
-    assert RarityType.STARTER in removal.exclude_rarities
-    assert RarityType.CURSE in removal.exclude_rarities
-    assert removal.exclude_bottled is True
+    choose(payment)
+    game_state.drive_actions()
+    assert room.should_leave and len(player.relics) == 1
+    assert list(player.potions) == [p for p in potions if not (payment == 0 and p is potion_order[0])]
+    assert player.deck == [card for card in deck if not (payment == 2 and card is card_order[0])]
+    assert player.gold == 151 - (expected_gold if payment == 1 else 0)
+    assert rng.export_state() == reference.export_state()
+    room.leave()
+    assert all(not p.event_locked for p in player.potions)
 
 
-def test_we_meet_again_only_offers_attack_when_nothing_can_be_traded():
-    helper = create_test_helper()
-    player = helper.create_player()
-    player.gold = 40
+def test_we_meet_again_disables_missing_requirements_and_can_offer_bottled_card():
+    player = game_state.player
+    player.gold = 49
     bottled = Inflame()
     bottled.bottled = True
-    player.deck.extend([Strike(), Doubt(), bottled])
+    player.card_manager.piles["deck"] = [Strike(), Doubt(), bottled]
+    event = WeMeetAgain()
+    open_event(event)
 
-    options = _options(WeMeetAgain())
+    assert event.card_option is bottled
+    assert [option.enabled for option in next_menu().options] == [False, False, True, True]
 
-    assert options
-    assert all(not option.actions for option in options)
+
+def test_we_meet_again_rechecks_payment_before_giving_a_relic():
+    player = game_state.player
+    player.gold = 50
+    event = WeMeetAgain()
+    room = open_event(event)
+    choose(1)
+    player.gold = 49
+    relics = list(player.relics)
+    rng = game_state.random_streams["misc"]
+    state = rng.export_state()
+
+    assert not next_menu().options[1].enabled
+    assert player.gold == 49 and player.relics == relics and not room.should_leave
+    assert rng.export_state() == state
+    choose(3)
+    game_state.drive_actions()
+    assert room.should_leave
 
 
 def test_note_defaults_to_iron_wave_and_stores_the_card_you_leave(monkeypatch, tmp_path):

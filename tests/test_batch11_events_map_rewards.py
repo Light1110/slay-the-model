@@ -414,33 +414,23 @@ def test_hypnotizing_mushrooms_option_text_describes_effects():
     assert any("25%" in text and "Parasite" in text for text in option_details)
 
 
-def test_we_meet_again_option_text_describes_trade_effects(monkeypatch):
+def test_we_meet_again_option_text_describes_trade_effects():
     from events.we_meet_again import WeMeetAgain
     from cards.ironclad.inflame import Inflame
     from potions.global_potions import FruitJuice
 
-    def offer(kind: str) -> list[str]:
-        helper = create_test_helper()
-        player = helper.create_player()
-        player.gold = 100
-        player.potions.append(FruitJuice())
-        player.card_manager.deck.append(Inflame())
-        helper.game_state.action_queue.clear()
-        monkeypatch.setattr(
-            get_rng("misc"), "choice",
-            lambda seq: kind if kind in seq else seq[0],
-        )
-        monkeypatch.setattr(get_rng("misc"), "randint", lambda a, b: 50)
-        WeMeetAgain().trigger()
-        menu = cast(InputRequestAction, helper.game_state.action_queue.queue[-1])
-        assert isinstance(menu, InputRequestAction)
-        return [str(option.name) for option in menu.options]
+    helper = create_test_helper()
+    player = helper.create_player()
+    player.gold = 100
+    player.potions.append(FruitJuice())
+    player.card_manager.deck.append(Inflame())
+    helper.game_state.action_queue.clear()
+    event = WeMeetAgain()
+    event.trigger()
+    menu = cast(InputRequestAction, helper.game_state.action_queue.queue[-1])
+    assert all(option.enabled for option in menu.options)
+    texts = [str(option.name).lower() for option in menu.options]
 
-    potion_texts = offer("potion")
-    assert any("random relic" in text.lower() and "potion" in text.lower() for text in potion_texts)
-
-    gold_texts = offer("gold")
-    assert any("gold" in text.lower() and "random relic" in text.lower() for text in gold_texts)
-
-    card_texts = offer("card")
-    assert any("remove" in text.lower() and "random relic" in text.lower() for text in card_texts)
+    assert "fruit juice" in texts[0] and "random relic" in texts[0]
+    assert str(event.gold_amount) in texts[1] and "random relic" in texts[1]
+    assert "inflame" in texts[2] and "random relic" in texts[2]
