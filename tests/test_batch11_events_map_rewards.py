@@ -227,19 +227,15 @@ def test_act4_map_uses_five_room_sequence():
     ]
 
 
-def test_juzu_bracelet_keeps_monster_counter_reset_when_monster_roll_is_redirected():
+def test_juzu_bracelet_keeps_monster_counter_reset_when_monster_roll_is_redirected(monkeypatch):
     from map.map_manager import MapManager
 
     manager = MapManager(seed=11, act_id=1)
     manager.set_relic_effect("juzu_bracelet", True)
     manager.unknown_room_visits[RoomType.MONSTER] = 3
 
-    original_randint = manager.random_streams["event"].randint
-    manager.random_streams["event"].randint = lambda a, b: 1
-    try:
-        result = manager._resolve_unknown_type(7)
-    finally:
-        manager.random_streams["event"].randint = original_randint
+    monkeypatch.setattr(StreamRandom, "random_float", lambda _rng, _bound: 0.5)
+    result = manager._resolve_unknown_type(7)
 
     assert result == RoomType.EVENT
     assert manager.unknown_room_visits[RoomType.MONSTER] == 0

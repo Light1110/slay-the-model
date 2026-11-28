@@ -5,9 +5,16 @@ from pathlib import Path
 
 import pytest
 
+from actions.map_selection import MoveToMapNodeAction
 from engine.game_state import game_state
 from engine.random_streams import RandomStreams, StreamRandom
+from map.map_manager import MapManager
+from map.map_node import MapNode
 from map.original_map import GridNode, generate_paths, assign_rooms, assignable
+from relics.global_relics.common import JuzuBracelet, TinyChest
+from relics.global_relics.event import SsserpentHead
+from rooms.event import EventRoom
+from rooms.shop import ShopRoom
 from utils.types import RoomType
 
 REFERENCES = json.loads(gzip.decompress((Path(__file__).parent / "fixtures/original_map_vectors.json.gz").read_bytes()))
@@ -84,8 +91,6 @@ def test_original_row_limits(row, kind):
 
 @pytest.mark.parametrize("relic", [None, "juzu", "tiny_chest"])
 def test_generated_unknown_node_enters_real_resolver_once(monkeypatch, relic):
-    from relics.global_relics.common import JuzuBracelet, TinyChest
-
     game_state.random_streams = RandomStreams(2)
     game_state.current_act = 1
     game_state.initialize_map()
@@ -129,8 +134,78 @@ def test_generated_unknown_node_enters_real_resolver_once(monkeypatch, relic):
     assert calls == [target_path[-1][0]]
     current_node = manager.map_data.get_current_node()
     assert current_node is not None and current_node.room_type == RoomType.UNKNOWN
-    assert room.room_type == (RoomType.EVENT if relic == "juzu" else RoomType.TREASURE if relic == "tiny_chest" else RoomType.MONSTER)
-    assert game_state.random_streams["event"].counter == (0 if relic == "tiny_chest" else 1)
+    assert room.room_type == (RoomType.TREASURE if relic == "tiny_chest" else RoomType.EVENT)
+    assert game_state.random_streams["event"].counter == 1
+
+
+@pytest.mark.parametrize(
+    "seed,prior,previous_shop,force,expected,next_roll,misses",
+    [
+        (0, 0, False, True, RoomType.TREASURE, 419, (1, 1, 1, 0)),
+        (1, 1, False, False, RoomType.EVENT, 529, (1, 1, 1, 1)),
+        (14, 2, False, False, RoomType.MERCHANT, 682, (1, 1, 0, 1)),
+        (14, 2, True, False, RoomType.EVENT, 682, (1, 1, 1, 1)),
+    ],
+)
+def test_unknown_room_moves_match_fixed_original_jars(
+    seed, prior, previous_shop, force, expected, next_roll, misses, monkeypatch,
+):
+    game_state.random_streams = streams = RandomStreams(seed)
+    game_state.current_act = 1
+    manager = game_state.map_manager = MapManager(seed, random_streams=streams)
+    manager.map_data.nodes = [
+        [MapNode(0, 0, RoomType.UNKNOWN, connections_up=[0])],
+        [MapNode(1, 0, RoomType.UNKNOWN)],
+    ]
+    manager.map_data.set_current_position(0, 0)
+    game_state.current_room = ShopRoom() if previous_shop else EventRoom()
+    player = game_state.player
+    player.gold = 100
+    chest = TinyChest()
+    chest.event_count = 3 if force else 2
+    player.relics = [SsserpentHead(), chest]
+    rng = streams["event"]
+    for _ in range(prior):
+        rng.random_int(999)
+    original = StreamRandom.random_float
+
+    def observe_roll(rng, amount):
+        assert player.gold == 150
+        return original(rng, amount)
+
+    monkeypatch.setattr(StreamRandom, "random_float", observe_roll)
+    with pytest.raises(ValueError):
+        MoveToMapNodeAction(1, 1).execute()
+    assert player.gold == 100 and rng.counter == prior
+    assert chest.event_count == (3 if force else 2)
+
+    MoveToMapNodeAction(1, 0).execute()
+
+    room = game_state.current_room
+    assert room is not None and room.room_type == expected
+    assert player.gold == 150 and chest.event_count == (0 if force else 3)
+    assert rng.counter == prior + 1
+    assert rng.random_int(1000) == next_roll
+    kinds = (RoomType.ELITE, RoomType.MONSTER, RoomType.MERCHANT, RoomType.TREASURE)
+    assert tuple(manager.unknown_room_visits[kind] for kind in kinds) == misses
+
+
+@pytest.mark.parametrize(
+    "visits,bucket,expected",
+    [
+        ((8, 4, 5), 89, RoomType.MONSTER),
+        ((8, 4, 5), 90, RoomType.MERCHANT),
+        ((8, 4, 5), 98, RoomType.MERCHANT),
+        ((8, 4, 5), 99, RoomType.TREASURE),
+        ((0, 2, 4), 27, RoomType.TREASURE),
+        ((0, 2, 4), 28, RoomType.EVENT),
+    ],
+)
+def test_unknown_room_bucket_boundaries_include_float32_ramping(visits, bucket, expected, monkeypatch):
+    manager = MapManager(523)
+    manager.unknown_room_visits.update(zip((RoomType.MONSTER, RoomType.MERCHANT, RoomType.TREASURE), visits))
+    monkeypatch.setattr(StreamRandom, "random_float", lambda _rng, _bound: bucket + 0.5)
+    assert manager._resolve_unknown_type(8) == expected
 
 
 @pytest.mark.parametrize("ascension", [0, 20])

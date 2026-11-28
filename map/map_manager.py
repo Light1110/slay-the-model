@@ -8,6 +8,7 @@ from .map_node import MapNode
 from .map_data import MapData
 from .encounter_pool import EncounterPool
 from engine.random_streams import RandomStreams, StreamRandom, using_streams
+from utils.compatible_random import float32
 
 from tui.print_utils import tui_print
 # Avoid circular import - use TYPE_CHECKING for type hints
@@ -248,6 +249,10 @@ class MapManager:
         
         # Create room instance based on room type
         with using_streams(self.random_streams):
+            if node.room_type == RoomType.UNKNOWN and self.has_ssserpent_head:
+                from actions.reward import AddGoldAction
+
+                AddGoldAction(amount=50).execute()
             room = self._create_room_instance(node.room_type, floor_in_act=floor_in_act)
         
         # Update current position
@@ -862,86 +867,69 @@ class MapManager:
         return "\n".join(lines)
 
     def _resolve_unknown_type(self, floor: int) -> RoomType:
-        """
-        Determine what type an unknown room becomes when entered.
-        
-        Based on Slay the Spire's ? room mechanics:
-        - Base chances: Monster 10%, Treasure 2%, Shop 3%, Elite 20% (with deadly_events, floor 6+)
-        - Each visit that doesn't result in a type increases its chance
-        - Event fills remaining probability
-        - Tiny Chest relic: Every 4th ? room is Treasure (resets treasure chance)
-        - Juzu Bracelet: Regular enemy combats no longer in ? rooms
-        - Ssserpent Head: Gain 50 Gold on entering ? room
-        
-        Args:
-            floor: The current floor number
-            
-        Returns:
-            The actual RoomType for this unknown room
-        """
-        # Check Tiny Chest relic - every 4th ? room is Treasure
+        """Resolve one question-mark visit and update the odds for the next one."""
         from relics.global_relics.common import TinyChest
 
         tiny_chest = next(
             (relic for relic in self._get_player_relics() if isinstance(relic, TinyChest)),
             None,
         )
-        if tiny_chest is not None and tiny_chest.advance_unknown_room():
-            # Tiny Chest forces Treasure room, resets treasure visit counter
-            self.unknown_room_visits[RoomType.TREASURE] = 0
-            return RoomType.TREASURE
-        
-        # Calculate current probabilities based on visit counts
-        monster_chance = 10 + (self.unknown_room_visits[RoomType.MONSTER] * 10)
-        treasure_chance = 2 + (self.unknown_room_visits[RoomType.TREASURE] * (4 if self.deadly_events else 2))
-        shop_chance = 3 + (self.unknown_room_visits[RoomType.MERCHANT] * 3)
-        
-        # Elite only appears with deadly_events modifier on floor 6+
-        elite_chance = 0
-        if self.deadly_events and floor >= 6:
-            elite_chance = 20 + (self.unknown_room_visits[RoomType.ELITE] * 20)
-        
-        # Event fills remaining probability
-        total_chances = monster_chance + treasure_chance + shop_chance + elite_chance
-        event_chance = 100 - total_chances
-        
-        # Roll for encounter type
+        if self.deadly_events:
+            if tiny_chest is not None and tiny_chest.advance_unknown_room():
+                self.unknown_room_visits[RoomType.TREASURE] = 0
+                return RoomType.TREASURE
+            chosen = self._roll_deadly_unknown_type(floor)
+        else:
+            chosen = self._roll_normal_unknown_type()
+            if tiny_chest is not None and tiny_chest.advance_unknown_room():
+                chosen = RoomType.TREASURE
+
+        for room_type, missed in self.unknown_room_visits.items():
+            self.unknown_room_visits[room_type] = 0 if room_type == chosen else missed + 1
+        if chosen == RoomType.MONSTER and self.has_juzu_bracelet:
+            return RoomType.EVENT
+        return chosen
+
+    def _roll_normal_unknown_type(self) -> RoomType:
+        from engine.game_state import game_state
+        from rooms.shop import ShopRoom
+
+        event_rng = self.random_streams["event"]
+        # Room entry rebuilds the event stream by counter, then keeps the result.
+        rng = StreamRandom(self.random_streams.seed, event_rng.counter)
+        bucket = int(rng.random_float(100.0))
+        event_rng.restore_state(rng.export_state())
+
+        results = [RoomType.EVENT] * 100
+        fill_index = 0
+        previous_shop = isinstance(game_state.current_room, ShopRoom)
+        for room_type, base in (
+            (RoomType.MONSTER, 0.1),
+            (RoomType.MERCHANT, 0.03),
+            (RoomType.TREASURE, 0.02),
+        ):
+            step = chance = float32(base)
+            for _ in range(self.unknown_room_visits[room_type]):
+                chance = float32(chance + step)
+            size = 0 if previous_shop and room_type == RoomType.MERCHANT else int(float32(chance * 100.0))
+            start = min(99, fill_index)
+            fill_index += size
+            end = min(100, fill_index)
+            results[start:end] = [room_type] * (end - start)
+        return results[bucket]
+
+    def _roll_deadly_unknown_type(self, floor: int) -> RoomType:
+        """Keep the existing modifier's room selection scheme."""
         roll = self.random_streams["event"].randint(1, 100)
-        
-        rolled_monster = roll <= monster_chance
-        if rolled_monster:
-            chosen_type = RoomType.MONSTER
-        elif roll <= monster_chance + treasure_chance:
-            chosen_type = RoomType.TREASURE
-        elif roll <= monster_chance + treasure_chance + shop_chance:
-            chosen_type = RoomType.MERCHANT
-        elif roll <= monster_chance + treasure_chance + shop_chance + elite_chance:
-            chosen_type = RoomType.ELITE
-        else:
-            chosen_type = RoomType.EVENT  # Event
-
-        if rolled_monster and self.has_juzu_bracelet:
-            chosen_type = RoomType.EVENT
-        
-        redirected_from_monster = rolled_monster and chosen_type == RoomType.EVENT
-
-        # Reset visit counter for the chosen type
-        if rolled_monster:
-            self.unknown_room_visits[RoomType.MONSTER] = 0
-        else:
-            self.unknown_room_visits[chosen_type] = 0
-        
-        # Increment visit counters for all other types
-        for room_type in self.unknown_room_visits:
-            if redirected_from_monster and room_type == RoomType.MONSTER:
-                continue
-            if room_type != chosen_type:
-                self.unknown_room_visits[room_type] += 1
-        
-        # Ssserpent Head effect: gain 50 Gold
-        if self.has_ssserpent_head:
-            from actions.reward import AddGoldAction
-
-            AddGoldAction(amount=50).execute()
-        
-        return chosen_type
+        threshold = 0
+        for room_type, weight in (
+            (RoomType.MONSTER, 10),
+            (RoomType.TREASURE, 4),
+            (RoomType.MERCHANT, 3),
+            (RoomType.ELITE, 20 if floor >= 6 else 0),
+        ):
+            base = 2 if room_type == RoomType.TREASURE else weight
+            threshold += base + self.unknown_room_visits[room_type] * weight
+            if roll <= threshold:
+                return room_type
+        return RoomType.EVENT

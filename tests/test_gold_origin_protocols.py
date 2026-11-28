@@ -112,11 +112,11 @@ def test_lethal_boss_play_creates_modified_reward(role, ascension, act, base, id
 
 @pytest.mark.parametrize('role', ROLES)
 @pytest.mark.parametrize('act', [1, 2, 3])
-@pytest.mark.parametrize('roll', [1, 11, 13, 100])
+@pytest.mark.parametrize('room_type', [RoomType.MONSTER, RoomType.MERCHANT, RoomType.TREASURE, RoomType.EVENT])
 @pytest.mark.parametrize('idol,bloody,ectoplasm', [(False, False, False), (True, False, False), (False, True, False),
                                                  (True, True, False), (False, False, True), (True, False, True),
                                                  (False, True, True), (True, True, True)])
-def test_unknown_map_move_snake_uses_gold_receipt(role, act, roll, idol, bloody, ectoplasm, monkeypatch):
+def test_unknown_map_move_snake_uses_gold_receipt(role, act, room_type, idol, bloody, ectoplasm, monkeypatch):
     player = player_with_relics(role, idol, bloody, ectoplasm)
     player.relics.append(SsserpentHead())
     hp = player.hp
@@ -129,7 +129,7 @@ def test_unknown_map_move_snake_uses_gold_receipt(role, act, roll, idol, bloody,
     game_state.map_manager = manager
     game_state.current_act = act
     game_state.current_floor = start
-    monkeypatch.setattr(get_rng('event'), 'randint', lambda *_: roll)
+    monkeypatch.setattr(manager, '_roll_normal_unknown_type', lambda: room_type)
     MoveToMapNodeAction(start + 1, 0).execute()
     assert game_state.drive_actions() is None
     assert player.gold == 100 + (0 if ectoplasm else 50)
