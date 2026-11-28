@@ -283,8 +283,11 @@ events:
   designer_in_spire:
     punch_detail: "失去 {hp} 点生命。"
     full_service_detail: "支付 {gold} 金币。移除一张牌并随机升级一张牌。"
-    clean_up_detail: "支付 {gold} 金币。50% 概率选择移除一张牌，否则随机变化 2 张牌。"
-    adjustments_detail: "支付 {gold} 金币。50% 概率选择升级一张牌，否则随机升级 2 张牌。"
+    clean_remove_detail: "支付 {gold} 金币。选择移除一张牌。"
+    clean_transform_detail: "支付 {gold} 金币。选择两张牌进行变化。"
+    adjust_one_detail: "支付 {gold} 金币。选择升级一张牌。"
+    adjust_random_detail: "支付 {gold} 金币。随机升级至多两张牌。"
+    not_enough_cards: "牌组中符合条件的牌不足。"
     title: “尖端”设计师
     adjustments: 小修一下
     clean_up: 清洁一下
@@ -572,6 +575,11 @@ events:
 
       你被 打晕了 ……'
   the_joust:
+    start: 开始决斗
+    reveal: 查看结果
+    leave: 离开
+    owner_wins: "主人赢得了决斗。"
+    murderer_wins: "凶手赢得了决斗。"
     owner_detail: "支付 50 金币。30% 概率获得 250 金币。"
     murderer_detail: "支付 50 金币。70% 概率获得 100 金币。"
     title: 长枪决斗

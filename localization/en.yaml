@@ -293,8 +293,11 @@ events:
   designer_in_spire:
     punch_detail: "Lose {hp} HP."
     full_service_detail: "Pay {gold} Gold. Remove a card and upgrade a random card."
-    clean_up_detail: "Pay {gold} Gold. 50%: choose a card to remove; otherwise transform 2 random cards."
-    adjustments_detail: "Pay {gold} Gold. 50%: choose a card to upgrade; otherwise upgrade 2 random cards."
+    clean_remove_detail: "Pay {gold} Gold. Choose a card to remove."
+    clean_transform_detail: "Pay {gold} Gold. Choose two cards to transform."
+    adjust_one_detail: "Pay {gold} Gold. Choose a card to upgrade."
+    adjust_random_detail: "Pay {gold} Gold. Upgrade up to two random cards."
+    not_enough_cards: "Your deck has too few eligible cards."
     title: Designer In-Spire
     adjustments: Adjustments
     clean_up: Clean Up
@@ -589,6 +592,11 @@ events:
 
       You were knocked unconscious...'
   the_joust:
+    start: Start the joust
+    reveal: See the result
+    leave: Leave
+    owner_wins: "The owner wins the joust."
+    murderer_wins: "The murderer wins the joust."
     owner_detail: "Pay 50 Gold. 30% chance to gain 250 Gold."
     murderer_detail: "Pay 50 Gold. 70% chance to gain 100 Gold."
     title: The Joust
