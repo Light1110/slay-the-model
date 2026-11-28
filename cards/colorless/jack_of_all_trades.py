@@ -1,13 +1,13 @@
 """
 Colorless Uncommon Skill card - Jack of All Trades
 """
-from engine.runtime_api import add_action, add_actions
+from engine.runtime_api import add_actions
 
 from typing import List
-from actions.base import Action
-from actions.card import AddRandomCardAction
+from actions.card import AddCardAction
 from cards.base import Card
 from entities.creature import Creature
+from utils.random import get_random_card
 from utils.registry import register
 from utils.types import CardType, RarityType
 
@@ -26,19 +26,10 @@ class JackOfAllTrades(Card):
     upgrade_magic = {"cards": 2}
 
     def on_play(self, targets: List[Creature] = []):
-        target = targets[0] if targets else None
         super().on_play(targets)
         actions = []
-        # Add random colorless card(s)
-        add_count = self.get_magic_value("cards")
-        for _ in range(add_count):
-            actions.append(AddRandomCardAction(
-                pile="hand",
-                namespace="colorless"
-            ))
-
-        from engine.game_state import game_state
-
+        for _ in range(self.get_magic_value("cards")):
+            card = get_random_card(namespaces=["colorless"], pool_kind="combat")
+            if card is not None:
+                actions.append(AddCardAction(card=card, dest_pile="hand"))
         add_actions(actions)
-
-        return
