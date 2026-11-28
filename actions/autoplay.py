@@ -54,7 +54,7 @@ class PlayTopCardAction(Action):
             return
         cm = player.card_manager
         draw = cm.get_pile("draw_pile")
-        if not draw:
+        if not draw and cm.get_pile("discard_pile"):
             cm.shuffle_discard_to_draw()
             draw = cm.get_pile("draw_pile")
         if not draw:

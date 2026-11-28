@@ -67,10 +67,12 @@ class CardManager:
             publish_message(ShuffleMessage(owner=player))
         return had_discard
 
-    def draw_one(self) -> Optional[Card]:
+    def draw_one(self, *, allow_empty_shuffle: bool = False) -> Optional[Card]:
         if len(self.piles['hand']) >= self.HAND_LIMIT:
             return None
         if not self.piles['draw_pile']:
+            if not self.piles['discard_pile'] and not allow_empty_shuffle:
+                return None
             if not self.shuffle_discard_to_draw():
                 return None
         card = self.piles['draw_pile'].pop()
@@ -80,7 +82,8 @@ class CardManager:
     def draw_many(self, amount: int) -> List[Card]:
         drawn = []
         for _ in range(amount):
-            card = self.draw_one()
+            # An overdraw can schedule an empty shuffle after drawing real cards.
+            card = self.draw_one(allow_empty_shuffle=bool(drawn))
             if not card:
                 break
             drawn.append(card)

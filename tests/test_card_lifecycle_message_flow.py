@@ -140,8 +140,7 @@ def test_auto_shuffle_from_empty_draw_publishes_shuffle_message(monkeypatch):
     assert "CardDrawnMessage" in published
 
 
-def test_draw_many_stops_after_one_shuffle_when_not_enough_cards(monkeypatch):
-    """抽牌数大于抽牌堆+弃牌堆可提供的张数时：洗入弃牌只触发一次计数，之后弃牌空则不再抽。"""
+def test_overdraw_can_shuffle_the_last_discard_then_shuffle_empty(monkeypatch):
     helper = create_test_helper()
     player = helper.create_player(hp=80, max_hp=80, energy=3)
     enemy = helper.create_enemy(Cultist, hp=20)
@@ -160,7 +159,7 @@ def test_draw_many_stops_after_one_shuffle_when_not_enough_cards(monkeypatch):
     assert published.count("CardDrawnMessage") == 3
 
 
-def test_auto_shuffle_skips_message_when_discard_empty(monkeypatch):
+def test_draw_started_with_two_empty_piles_skips_shuffle_message(monkeypatch):
     helper = create_test_helper()
     player = helper.create_player(hp=80, max_hp=80, energy=3)
     enemy = helper.create_enemy(Cultist, hp=20)
@@ -174,14 +173,11 @@ def test_auto_shuffle_skips_message_when_discard_empty(monkeypatch):
     DrawCardsAction(count=1).execute()
     helper.game_state.drive_actions()
 
-    assert published.count("ShuffleMessage") == 1
+    assert "ShuffleMessage" not in published
 
 
 def test_sundial_with_pommel_plus_and_shrug_it_off_shuffle_count_and_energy(monkeypatch):
-    """抽/弃皆空、手牌剑柄+与耸肩：先剑柄再耸肩洗牌计数 2 不回能；重置后先耸肩再剑柄计数 3 并回 2 能。
-
-    依赖当前 shuffle_discard_to_draw 在弃牌为空时仍会发布 ShuffleMessage 的行为。
-    """
+    """Only the second play can shuffle; Pommel Strike can then overdraw."""
     helper = create_test_helper()
     player = helper.create_player(hp=80, max_hp=80, energy=3)
     enemy = helper.create_enemy(Cultist, hp=50)
@@ -207,8 +203,8 @@ def test_sundial_with_pommel_plus_and_shrug_it_off_shuffle_count_and_energy(monk
     helper.play_card(shrug, target=player)
     helper.game_state.drive_actions()
 
-    assert published.count("ShuffleMessage") == 2
-    assert sundial.shuffle_count == 2
+    assert published.count("ShuffleMessage") == 1
+    assert sundial.shuffle_count == 1
     assert player.energy == 1
 
     published.clear()
@@ -230,9 +226,9 @@ def test_sundial_with_pommel_plus_and_shrug_it_off_shuffle_count_and_energy(monk
     helper.play_card(pommel2, target=enemy)
     helper.game_state.drive_actions()
 
-    assert published.count("ShuffleMessage") == 3
-    assert sundial.shuffle_count == 0
-    assert player.energy == 3
+    assert published.count("ShuffleMessage") == 2
+    assert sundial.shuffle_count == 2
+    assert player.energy == 1
 
 
 def test_shuffle_action_publishes_shuffle_message(monkeypatch):

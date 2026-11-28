@@ -27,13 +27,19 @@ class Scrape(Card):
         from engine.messages import CardDrawnMessage
         from engine.runtime_api import add_action
 
+        has_drawn = False
+        finished = False
+
         def _draw_and_process_one() -> None:
+            nonlocal has_drawn, finished
             player = game_state.player
-            if player is None:
+            if player is None or finished:
                 return
-            drawn_card = player.card_manager.draw_one()
+            drawn_card = player.card_manager.draw_one(allow_empty_shuffle=has_drawn)
             if drawn_card is None:
+                finished = True
                 return
+            has_drawn = True
             game_state.publish_message(CardDrawnMessage(card=drawn_card, owner=player))
             if drawn_card.cost != 0:
                 add_action(DiscardCardAction(card=drawn_card, source_pile="hand"))
