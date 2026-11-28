@@ -334,9 +334,11 @@ events:
 
       "Stop."'
   falling:
-    strike_detail: "Remove a random Attack from your deck."
-    channel_detail: "Remove a random Power from your deck."
-    land_detail: "Remove a random Skill from your deck."
+    strike_with_card: "Strike (lose {card})"
+    channel_with_card: "Channel (lose {card})"
+    land_with_card: "Land (lose {card})"
+    no_eligible_card: "No eligible card of this type."
+    leave: Leave
     title: Falling
     land: Land
     channel: Channel

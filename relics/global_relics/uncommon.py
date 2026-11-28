@@ -6,7 +6,7 @@ from engine.random_streams import StreamRandom, get_rng
 from engine.runtime_api import add_action, add_actions
 from engine.messages import EnemyDefeatedMessage
 from engine.subscriptions import MessagePriority, subscribe
-from typing import List, cast
+from typing import List, TYPE_CHECKING, cast
 from actions.base import Action, LambdaAction
 from actions.card import DrawCardsAction
 from actions.combat import GainBlockAction, GainEnergyAction, HealAction, DealDamageAction, ApplyPowerAction, ModifyMaxHpAction
@@ -16,6 +16,9 @@ from relics.base import Relic
 from utils.types import RarityType, CardType, PilePosType
 from utils.registry import register
 from utils.damage_phase import DamagePhase
+
+if TYPE_CHECKING:
+    from cards.base import Card
 
 
 def _egg_should_upgrade(card, dest_pile, expected_type):
@@ -76,54 +79,59 @@ class BlueCandle(Relic):
         return 1
 
 
-@register("relic")
-class BottledFlame(Relic):
-    """Upon pick up, choose an Attack. Start each combat with this Card in your hand."""
-    
+class BottledRelic(Relic):
+    card_type: CardType
+
     def __init__(self):
         super().__init__()
         self.rarity = RarityType.UNCOMMON
-        self.selected_card = None
+        self.selected_card: Card | None = None
 
     def on_obtain(self):
-        """Choose an Attack card when this relic is obtained."""
+        add_action(BottledCardInputRequestAction(self, self.card_type))
+
+    def bind_card(self, card: "Card") -> None:
         from engine.game_state import game_state
-        add_actions([BottledCardInputRequestAction(self, CardType.ATTACK)])
-        return
-    # Combat prepares the selected card's combat copy on top of the draw pile.
-    # No extra card is created by this relic at battle start.
+
+        player = game_state.player
+        if (player is not None and self in player.relics and self.selected_card is None
+                and any(candidate is card for candidate in player.deck)):
+            self.selected_card = card
+            card.bottled = True
+
+    def on_lose(self) -> None:
+        from engine.game_state import game_state
+
+        card = self.selected_card
+        self.selected_card = None
+        if card is not None and not any(
+            isinstance(relic, BottledRelic) and relic.selected_card is card
+            for relic in game_state.player.relics
+        ):
+            card.bottled = False
+
+
 @register("relic")
-class BottledLightning(Relic):
-    """Upon pick up, choose a Skill. Start each combat with this Card in your hand."""
-    
-    def __init__(self):
-        super().__init__()
-        self.rarity = RarityType.UNCOMMON
-        self.selected_card = None
+class BottledFlame(BottledRelic):
+    """Bottle an Attack."""
 
-    def on_obtain(self):
-        """Choose a Skill card when this relic is obtained."""
-        from engine.game_state import game_state
-        add_actions([BottledCardInputRequestAction(self, CardType.SKILL)])
-        return
-    # Combat prepares the selected card's combat copy on top of the draw pile.
-    # No extra card is created by this relic at battle start.
+    card_type = CardType.ATTACK
+
+
 @register("relic")
-class BottledTornado(Relic):
-    """Upon pick up, choose a Power. Start each combat with this Card in your hand."""
-    
-    def __init__(self):
-        super().__init__()
-        self.rarity = RarityType.UNCOMMON
-        self.selected_card = None
+class BottledLightning(BottledRelic):
+    """Bottle a Skill."""
 
-    def on_obtain(self):
-        """Choose a Power card when this relic is obtained."""
-        from engine.game_state import game_state
-        add_actions([BottledCardInputRequestAction(self, CardType.POWER)])
-        return
-    # Combat prepares the selected card's combat copy on top of the draw pile.
-    # No extra card is created by this relic at battle start.
+    card_type = CardType.SKILL
+
+
+@register("relic")
+class BottledTornado(BottledRelic):
+    """Bottle a Power."""
+
+    card_type = CardType.POWER
+
+
 @register("relic")
 class DarkstonePeriapt(Relic):
     """Whenever you obtain a Curse, increase your Max HP by 6."""

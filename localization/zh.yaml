@@ -324,9 +324,11 @@ events:
 
       “请留步。”'
   falling:
-    strike_detail: "随机移除牌组中的一张攻击牌。"
-    channel_detail: "随机移除牌组中的一张能力牌。"
-    land_detail: "随机移除牌组中的一张技能牌。"
+    strike_with_card: "猛击（失去 {card}）"
+    channel_with_card: "释放（失去 {card}）"
+    land_with_card: "落地（失去 {card}）"
+    no_eligible_card: "没有可失去的此类型卡牌。"
+    leave: 离开
     title: 坠落
     land: 落地
     channel: 释放

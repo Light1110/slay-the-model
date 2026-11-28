@@ -179,15 +179,16 @@ class LoseRelicAction(Action):
         if not game_state.player:
             return
 
-        if self.relic and self.relic in game_state.player.relics:
-            game_state.player.relics.remove(self.relic)
-            return
-
-        if self.relic_type is not None:
-            for relic in list(game_state.player.relics):
-                if isinstance(relic, self.relic_type):
-                    game_state.player.relics.remove(relic)
-                    break
+        relics = game_state.player.relics
+        lost = self.relic
+        if lost not in relics:
+            lost = next((relic for relic in relics
+                         if self.relic_type is not None and isinstance(relic, self.relic_type)), None)
+        if lost is not None:
+            relics.remove(lost)
+            on_lose = getattr(lost, "on_lose", None)
+            if callable(on_lose):
+                on_lose()
 
 @register("action")
 class ChooseBossRelicAction(Action):

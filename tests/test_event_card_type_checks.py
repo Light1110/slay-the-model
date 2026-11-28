@@ -34,17 +34,6 @@ def _options(event) -> list:
     return list(_input_request().options)
 
 
-def _option_for(options, card_type: CardType):
-    return next(
-        option
-        for option in options
-        if any(
-            isinstance(action, RemoveRandomCardAction) and action.card_type == card_type
-            for action in option.actions
-        )
-    )
-
-
 def test_divine_fountain_appears_for_curses_and_offers_to_remove_them():
     helper = create_test_helper()
     player = helper.create_player()
@@ -85,7 +74,7 @@ def test_wing_statue_offers_gold_for_an_attack_dealing_at_least_10():
     assert _options(WingStatue())[1].enabled
 
 
-def test_falling_removes_a_deck_card_and_locks_missing_types():
+def test_random_removal_helper_removes_only_the_requested_type():
     helper = create_test_helper()
     player = helper.create_player()
     strike = Strike()
@@ -97,15 +86,11 @@ def test_falling_removes_a_deck_card_and_locks_missing_types():
     assert defend not in player.deck
     assert strike in player.deck
 
-    player.deck.clear()
-    player.deck.append(Strike())
-    options = _options(Falling())
-    assert _option_for(options, CardType.ATTACK).enabled
-    assert not _option_for(options, CardType.SKILL).enabled
-    assert not _option_for(options, CardType.POWER).enabled
+
+def test_falling_disables_types_missing_from_the_deck():
+    player = create_test_helper().create_player()
+    player.deck = [Strike()]
+    assert [option.enabled for option in _options(Falling())] == [False, False, True]
 
     player.deck.extend([Defend(), Inflame()])
-    options = _options(Falling())
-    assert _option_for(options, CardType.ATTACK).enabled
-    assert _option_for(options, CardType.SKILL).enabled
-    assert _option_for(options, CardType.POWER).enabled
+    assert [option.enabled for option in _options(Falling())] == [True, True, True]

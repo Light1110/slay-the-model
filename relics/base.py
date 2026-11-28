@@ -109,6 +109,9 @@ class Relic(Localizable):
     def on_obtain(self):
         return
     
+    def on_lose(self) -> None:
+        """Clean up effects after this relic leaves the player's inventory."""
+
     # ==================== Phase Hooks ====================
 
     @subscribe(CombatPreDrawMessage, priority=MessagePriority.PLAYER_RELIC)
